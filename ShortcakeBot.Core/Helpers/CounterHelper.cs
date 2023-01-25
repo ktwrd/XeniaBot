@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using MongoDB.Driver;
+using MongoDB.Driver.Core.Bindings;
 using ShortcakeBot.Core.Models;
 using ShortcakeBot.Core.Modules;
 using System;
@@ -10,43 +11,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using IChannel = Discord.IChannel;
 
 namespace ShortcakeBot.Core.Helpers
 {
     public static class CounterHelper
     {
+        /// <summary>
+        /// Key: Channel Id
+        /// Value: Value
+        /// </summary>
+        public static Dictionary<ulong, ulong> CachedItems = new Dictionary<ulong, ulong>();
         public static readonly string CollectionName = "countingGuildModel";
         public static IMongoCollection<T>? GetCollection<T>()
         {
             return Program.GetMongoDatabase()?.GetCollection<T>(CollectionName);
-        }
-        /// <returns><see cref="null"/> when doesn't exist</returns>
-        public static CounterGuildModel Get(IGuild guild)
-        {
-            var collection = GetCollection<CounterGuildModel>();
-
-            var filter = Builders<CounterGuildModel>
-                .Filter
-                .Eq("GuildId", guild.Id);
-
-            return collection.Find(filter).FirstOrDefault();
-        }
-        public static CounterGuildModel Get<T>(T channel) where T : IChannel
-        {
-            var collection = GetCollection<CounterGuildModel>();
-
-            var filter = Builders<CounterGuildModel>
-                .Filter
-                .Eq("ChannelId", channel.Id);
-
-            return collection.Find(filter).FirstOrDefault();
-        }
-        public static CounterGuildModel[] GetAll()
-        {
-            var collection = GetCollection<CounterGuildModel>();
-            var filter = Builders<CounterGuildModel>
-                .Filter.Empty;
-            return collection.Find(filter).ToList().ToArray();
         }
         public static async Task Set(CounterGuildModel model)
         {
@@ -68,6 +47,83 @@ namespace ShortcakeBot.Core.Helpers
                 CachedItems.Add(model.ChannelId, model.Count);
             CachedItems[model.ChannelId] = model.Count;
         }
+        #region Get
+        /// <returns><see cref="null"/> when doesn't exist</returns>
+        public static async Task<CounterGuildModel?> Get(IGuild guild)
+        {
+            var collection = GetCollection<CounterGuildModel>();
+
+            var filter = Builders<CounterGuildModel>
+                .Filter
+                .Eq("GuildId", guild.Id);
+
+            var result = await collection.FindAsync(filter);
+            return result.FirstOrDefault();
+        }
+        public static async Task<CounterGuildModel?> Get<T>(IGuild guild, T channel) where T : IChannel
+        {
+            var collection = GetCollection<CounterGuildModel>();
+
+            var filter = Builders<CounterGuildModel>
+                .Filter
+                .Eq("GuildId", guild.Id);
+            
+            var result = await collection.FindAsync(filter);
+            var filtered = result.ToList().Where(v => v.ChannelId == channel.Id);
+            return filtered.FirstOrDefault();
+        }
+        public static CounterGuildModel Get<T>(T channel) where T : IChannel
+        {
+            var collection = GetCollection<CounterGuildModel>();
+
+            var filter = Builders<CounterGuildModel>
+                .Filter
+                .Eq("ChannelId", channel.Id);
+
+            return collection.Find(filter).FirstOrDefault();
+        }
+        public static async Task<CounterGuildModel?> GetOrCreate(IGuild guild, IChannel channel)
+        {
+            CounterGuildModel? data = await Get(guild, channel);
+            if (data != null)
+                return data;
+
+            data = new CounterGuildModel(channel, guild);
+            await Set(data);
+            return data;
+        }
+        #endregion
+        #region Get All
+        public static async Task<CounterGuildModel[]> GetAll()
+        {
+            var collection = GetCollection<CounterGuildModel>();
+            var filter = Builders<CounterGuildModel>
+                .Filter.Empty;
+            var result = await collection.FindAsync(filter);
+            return result.ToList().ToArray();
+        }
+        public static async Task<CounterGuildModel[]> GetAll(IChannel channel)
+        {
+            var collection = GetCollection<CounterGuildModel>();
+            var filter = Builders<CounterGuildModel>
+                .Filter
+                .Eq("ChannelId", channel.Id);
+
+            var result = await collection.FindAsync(filter);
+            return result.ToList().ToArray();
+        }
+        public static async Task<CounterGuildModel[]> GetAll(IGuild guild)
+        {
+            var collection = GetCollection<CounterGuildModel>();
+            var filter = Builders<CounterGuildModel>
+            .Filter
+                .Eq("GuildId", guild.Id);
+
+            var result = await collection.FindAsync(filter);
+            return result.ToList().ToArray();
+        }
+        #endregion
+        #region Delete
         public static async Task Delete(CounterGuildModel model)
         {
             await Delete(model.ChannelId);
@@ -92,10 +148,12 @@ namespace ShortcakeBot.Core.Helpers
                 .Eq("GuildId", guild.Id);
             await collection?.DeleteManyAsync(filter);
         }
+        #endregion
 
+        #region Discord Events
         public static async Task Ready()
         {
-            foreach (var item in GetAll())
+            foreach (var item in await GetAll())
             {
                 CachedItems.Add(item.ChannelId, item.Count);
             }
@@ -128,7 +186,7 @@ namespace ShortcakeBot.Core.Helpers
             }
 
 
-            var data = Get(context.Guild);
+            var data = await Get(context.Guild);
             if (data == null)
             {
                 data = new CounterGuildModel((IChannel)context.Channel, (IGuild)context.Guild);
@@ -137,11 +195,7 @@ namespace ShortcakeBot.Core.Helpers
             data.Count = value;
             await Set(data);
         }
+        #endregion
 
-        /// <summary>
-        /// Key: Channel Id
-        /// Value: Value
-        /// </summary>
-        public static Dictionary<ulong, ulong> CachedItems = new Dictionary<ulong, ulong>();
     }
 }
