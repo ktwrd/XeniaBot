@@ -38,6 +38,9 @@ namespace ShortcakeBot.Core
         {
             return MongoClient.GetDatabase(MongoDatabaseName);
         }
+        /// <summary>
+        /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
+        /// </summary>
         public static long StartTimestamp { get; private set; }
         public static void Main(string[] args)
         {
