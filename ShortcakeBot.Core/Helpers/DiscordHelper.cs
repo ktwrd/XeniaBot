@@ -15,6 +15,20 @@ namespace ShortcakeBot.Core.Helpers
 {
     public static class DiscordHelper
     {
+        public static string GetUptimeString()
+        {
+            var current = DateTimeOffset.UtcNow;
+            var start = DateTimeOffset.FromUnixTimeSeconds(Program.StartTimestamp);
+            var diff = current - start;
+            var data = new List<string>();
+            if (Math.Floor(diff.TotalHours) > 0)
+                data.Add($"{Math.Floor(diff.TotalHours)}hr");
+            if (diff.Minutes > 0)
+                data.Add($"{diff.Minutes}m");
+            if (diff.Seconds > 0)
+                data.Add($"{diff.Seconds}s");
+            return string.Join(" ", data);
+        }
         public static async Task ReportError(HttpResponseMessage response, ICommandContext commandContext)
         {
             await ReportError(response,
