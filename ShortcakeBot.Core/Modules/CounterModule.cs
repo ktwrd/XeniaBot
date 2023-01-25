@@ -106,5 +106,18 @@ namespace ShortcakeBot.Core.Modules
             }
             await Context.Interaction.RespondAsync($"Removed server from database.");
         }
+
+        [SlashCommand("info", "Information about the counter module for this guild")]
+        public async Task Info()
+        {
+            var data = await CounterHelper.Get(Context.Guild);
+            if (data == null)
+            {
+                await Context.Interaction.RespondAsync($"The Counter Module has not been setup. Use `/counter setchannel` to do that");
+                return;
+            }
+
+            await Context.Interaction.RespondAsync($"<#{data.ChannelId}> is currently at `{data.Count}`");
+        }
     }
 }
