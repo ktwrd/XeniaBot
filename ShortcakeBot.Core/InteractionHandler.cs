@@ -23,7 +23,19 @@ namespace ShortcakeBot.Core
 
             var mods = _interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), _services).Result;
             _interactionService.RegisterCommandsGloballyAsync().Wait();
-            Log.Debug($"Loaded [{mods.Count()}] modules");
+            var lines = new List<string>();
+            foreach (var item in mods)
+            {
+                int count = 0;
+                count += item.AutocompleteCommands.Count;
+                count += item.ComponentCommands.Count;
+                count += item.ContextCommands.Count;
+                count += item.ModalCommands.Count;
+                count += item.SlashCommands.Count;
+                lines.Add($"- {item.Name} ({count})");
+            }
+            Log.Debug($"Loaded [{mods.Count()}] modules\n" + string.Join("\n", lines));
+
 
             _client.InteractionCreated += InteractionCreateAsync;
         }
