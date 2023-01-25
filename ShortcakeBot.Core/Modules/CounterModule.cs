@@ -24,7 +24,7 @@ namespace ShortcakeBot.Core.Modules
                 return;
             }
 
-            CounterGuildModel data = CounterHelper.Get(Context.Guild);
+            CounterGuildModel data = await CounterHelper.Get(Context.Guild);
             if (data == null)
             {
                 data = new CounterGuildModel(targetChannel, Context.Guild);
@@ -86,7 +86,7 @@ namespace ShortcakeBot.Core.Modules
                 return;
             }
 
-            CounterGuildModel data = CounterHelper.Get(Context.Guild);
+            CounterGuildModel data = await CounterHelper.Get(Context.Guild);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync("Server not found in database");
