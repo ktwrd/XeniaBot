@@ -11,6 +11,11 @@ using System.Text;
 using System.Threading.Tasks;
 using HeyRed.Mime;
 using ShortcakeBot.Core.Helpers;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using ShortcakeBot.Core.Models;
 
 namespace ShortcakeBot.Core.Modules
 {
@@ -37,15 +42,42 @@ namespace ShortcakeBot.Core.Modules
         {
             try
             {
+                var url = $"https://api.tinyfox.dev/img?animal={animalType}";
+                var jsonUrl = url + "&json";
+                var response = Program.HttpClient.GetAsync(jsonUrl).Result;
+
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    var content = response.Content.ReadAsStringAsync().Result;
+                    var substr = content.Substring(0, Math.Min(content.Length, 900));
+                    await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
+                    {
+                        Color = Color.Red,
+                        Description = $"Failed to fetch image\n```\n{substr}\n```"
+                    }.Build());
+                    return;
+                };
+                var stringContent = response.Content.ReadAsStringAsync().Result;
+                var deserialized = JsonSerializer.Deserialize<TinyFoxImageModel>(stringContent, Program.SerializerOptions);
+
+                if (deserialized == null)
+                    throw new Exception("Deserialized content to null");
+                
                 await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                 {
-                    ImageUrl = @"https://api.tinyfox.dev/img?animal=" + animalType
+                    Title = "Random Animal",
+                    Color = new Color(255, 255, 255),
+                    ImageUrl = deserialized.ImageLocation,
+                    Footer = new EmbedFooterBuilder()
+                    {
+                        Text = url
+                    }
                 }.Build());
             }
             catch (Exception exception)
             {
                 Log.Error(exception.ToString());
-                await Context.Interaction.RespondAsync($"A fatal error occoured. The developers have been notified");
+                await Context.Interaction.RespondAsync($"A fatal error occoured. The developers have been notified\n```\n{exception.Message}\n```");
                 await DiscordHelper.ReportError(exception, Context);
             }
         }
