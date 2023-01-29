@@ -77,26 +77,26 @@ namespace ShortcakeBot.Core.Controllers
             switch (arg.Severity)
             {
                 case Discord.LogSeverity.Debug:
-                    Log.Debug(arg.Message, methodName, fileName);
+                    Log.Debug(arg.Message, methodname: methodName, methodfile: fileName);
                     break;
                 case Discord.LogSeverity.Verbose:
-                    Log.Debug(arg.Message, methodName, fileName);
+                    Log.Debug(arg.Message, methodname: methodName, methodfile: fileName);
                     break;
                 case Discord.LogSeverity.Info:
-                    Log.WriteLine(arg.Message, methodName, fileName);
+                    Log.WriteLine(arg.Message, methodname: methodName, methodfile: fileName);
                     break;
                 case Discord.LogSeverity.Warning:
-                    Log.Warn(arg.Message, methodName, fileName);
+                    Log.Warn(arg.Message, methodname: methodName, methodfile: fileName);
                     break;
                 case Discord.LogSeverity.Error:
-                    Log.Error(arg.Message, methodName, fileName);
+                    Log.Error(arg.Message, methodname: methodName, methodfile: fileName);
                     break;
                 case Discord.LogSeverity.Critical:
-                    Log.Error(arg.Message, methodName, fileName);
+                    Log.Error(arg.Message, methodname: methodName, methodfile: fileName);
                     break;
             }
             if (arg.Exception != null)
-                Log.Error(arg.Exception, methodName, fileName);
+                Log.Error(arg.Exception, methodname: methodName, methodfile: fileName);
             return Task.CompletedTask;
         }
         #endregion
