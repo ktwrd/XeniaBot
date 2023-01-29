@@ -20,9 +20,12 @@ namespace ShortcakeBot.Core
             _interactionService = services.GetRequiredService<InteractionService>();
             _client = services.GetRequiredService<DiscordSocketClient>();
             _services = services;
-
+        }
+        public async Task InitializeAsync()
+        {
             var mods = _interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), _services).Result;
-            _interactionService.RegisterCommandsGloballyAsync().Wait();
+            await _interactionService.RegisterCommandsGloballyAsync();
+
             var lines = new List<string>();
             foreach (var item in mods)
             {
@@ -35,8 +38,6 @@ namespace ShortcakeBot.Core
                 lines.Add($"- {item.Name} ({count})");
             }
             Log.Debug($"Loaded [{mods.Count()}] modules\n" + string.Join("\n", lines));
-
-
             _client.InteractionCreated += InteractionCreateAsync;
         }
 
