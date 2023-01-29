@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static ShortcakeBot.Core.ConfigManager;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ShortcakeBot.Core.Helpers
 {
@@ -58,6 +59,7 @@ namespace ShortcakeBot.Core.Helpers
         }
         public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage message)
         {
+            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
             var stack = Environment.StackTrace;
             var embed = new EmbedBuilder()
             {
@@ -91,7 +93,7 @@ namespace ShortcakeBot.Core.Helpers
                 "```"
             }));
 
-            await Program.DiscordSocketClient
+            await client
                 .GetGuild(Program.Config.ErrorGuild)
                 .GetTextChannel(Program.Config.ErrorChannel)
                 .SendMessageAsync(embed: embed.Build());
@@ -114,6 +116,7 @@ namespace ShortcakeBot.Core.Helpers
         }
         public static async Task ReportError(Exception response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage message)
         {
+            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
             var stack = Environment.StackTrace;
             var embed = new EmbedBuilder()
             {
@@ -133,7 +136,7 @@ namespace ShortcakeBot.Core.Helpers
             if (message != null)
                 embed.AddField("Message Content", $"```\n{message.Content}\n```");
 
-            await Program.DiscordSocketClient
+            await client
                 .GetGuild(Program.Config.ErrorGuild)
                 .GetTextChannel(Program.Config.ErrorChannel)
                 .SendFileAsync(

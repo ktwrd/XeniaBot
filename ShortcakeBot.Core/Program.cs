@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using ShortcakeBot.Core.Controllers;
 using ShortcakeBot.Core.Helpers;
 using System;
 using System.IO;
@@ -21,6 +22,7 @@ namespace ShortcakeBot.Core
         public static ConfigManager.Config Config = null;
         public static HttpClient HttpClient = null;
         public static MongoClient MongoClient = null;
+        private static DiscordController _discordController;
         /// <summary>
         /// Created after <see cref="DiscordMain"/> is called in <see cref="MainAsync(string[])"/>
         /// </summary>
@@ -32,16 +34,16 @@ namespace ShortcakeBot.Core
             IncludeFields = true,
             WriteIndented = true
         };
-        #endregion
-        public const string MongoDatabaseName = "shortcake";
-        public static IMongoDatabase? GetMongoDatabase()
-        {
-            return MongoClient.GetDatabase(MongoDatabaseName);
-        }
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
         /// </summary>
         public static long StartTimestamp { get; private set; }
+        public const string MongoDatabaseName = "shortcake";
+        #endregion
+        public static IMongoDatabase? GetMongoDatabase()
+        {
+            return MongoClient.GetDatabase(MongoDatabaseName);
+        }
         public static void Main(string[] args)
         {
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -50,6 +52,7 @@ namespace ShortcakeBot.Core
             HttpClient = new HttpClient();
             try
             {
+                Log.Debug("Connecting to MongoDB");
                 MongoClient = new MongoClient(Config.MongoDBServer);
                 MongoClient.StartSession();
             }
@@ -73,15 +76,29 @@ namespace ShortcakeBot.Core
         }
         private static async Task MainAsync(string[] args)
         {
-            await DiscordMain();
             CreateServiceProdiver();
+            Log.Debug("Connecting to Discord");
+            _discordController = Services.GetRequiredService<DiscordController>();
+            _discordController.MessageRecieved += _discordController_MessageRecieved;
+            await _discordController.Run();
 
             await Task.Delay(-1);
         }
+
+        private static Task _discordController_MessageRecieved(SocketMessage arg)
+        {
+            return Task.CompletedTask;
+        }
+
         private static void CreateServiceProdiver()
         {
+            Log.Debug("Initializing Services");
+            var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
             var services = new ServiceCollection()
-                .AddSingleton(DiscordSocketClient)
+                .AddSingleton(ConfigManager)
+                .AddSingleton(Config)
+                .AddSingleton(dsc)
+                .AddSingleton<DiscordController>()
                 .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
@@ -89,11 +106,6 @@ namespace ShortcakeBot.Core
 
             var built = services.BuildServiceProvider();
             Services = built;
-        }
-        public static async Task DiscordReady()
-        {
-            await Services.GetRequiredService<CommandHandler>()?.InitializeAsync();
-            Services.GetRequiredService<InteractionHandler>();
         }
         public static MessageReference ToMessageReference(ICommandContext context)
         {
@@ -103,71 +115,9 @@ namespace ShortcakeBot.Core
         {
             return new MessageReference(context.Interaction.Id, context.Channel.Id, context.Guild.Id);
         }
-        
-
-        #region Discord Boilerplate
-        public static DiscordSocketClient DiscordSocketClient = null;
-        private static async Task DiscordMain()
-        {
-            DiscordSocketClient = new DiscordSocketClient(new DiscordSocketConfig()
-            {
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent | GatewayIntents.GuildMembers,
-                UseInteractionSnowflakeDate = false,
-                HandlerTimeout = 6000
-            });
-            DiscordSocketClient.Log += DiscordSocketClient_Log;
-            DiscordSocketClient.Ready += DiscordSocketClient_Ready;
-            await DiscordSocketClient.LoginAsync(TokenType.Bot, Config.DiscordToken);
-            await DiscordSocketClient.StartAsync();
-
-            DiscordSocketClient.MessageReceived += DiscordSocketClient_MessageReceived;
-        }
-
-        private static bool Ready = false;
-        private static async Task DiscordSocketClient_Ready()
-        {
-            Ready = true;
-            await DiscordReady();
-            CounterHelper.Ready();
-        }
-
-        private static Task DiscordSocketClient_MessageReceived(SocketMessage arg)
-        {
-            CounterHelper.MessageRecieved(arg);
-            return Task.CompletedTask;
-        }
-
         public static string GetGuildPrefix(ulong id)
         {
             return Config.Prefix;
         }
-
-        private static Task DiscordSocketClient_Log(Discord.LogMessage arg)
-        {
-            switch (arg.Severity)
-            {
-                case Discord.LogSeverity.Debug:
-                    Log.Debug(arg.ToString());
-                    break;
-                case Discord.LogSeverity.Verbose:
-                    Log.Debug(arg.ToString());
-                    break;
-                case Discord.LogSeverity.Info:
-                    Log.WriteLine(arg.ToString());
-                    break;
-                case Discord.LogSeverity.Warning:
-                    Log.Warn(arg.ToString());
-                    break;
-                case Discord.LogSeverity.Error:
-                    Log.Error(arg.ToString());
-                    break;
-                case Discord.LogSeverity.Critical:
-                    Log.Error(arg.ToString());
-                    break;
-            }
-            return Task.CompletedTask;
-        }
-
-        #endregion
     }
 }
