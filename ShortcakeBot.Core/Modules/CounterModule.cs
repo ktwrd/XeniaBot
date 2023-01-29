@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Microsoft.Extensions.DependencyInjection;
+using ShortcakeBot.Core.Controllers;
 using ShortcakeBot.Core.Helpers;
 using ShortcakeBot.Core.Models;
 using System;
@@ -24,11 +26,12 @@ namespace ShortcakeBot.Core.Modules
                 return;
             }
 
-            CounterGuildModel data = await CounterHelper.Get(Context.Guild);
+            CounterController controller = Program.Services.GetRequiredService<CounterController>();
+            CounterGuildModel data = await controller.Get(Context.Guild);
             if (data == null)
             {
                 data = new CounterGuildModel(targetChannel, Context.Guild);
-                CounterHelper.Set(data);
+                controller.Set(data);
             }
             else if (data != null && targetChannel.Id == data.ChannelId)
             {
@@ -37,9 +40,11 @@ namespace ShortcakeBot.Core.Modules
             }
 
             data.ChannelId = targetChannel.Id;
-            CounterHelper.Set(data);
+            controller.Set(data);
 
-            await Program.DiscordSocketClient.GetGuild(Context.Guild.Id)?.GetTextChannel(targetChannel.Id).SendMessageAsync($"Counting has been enabled, start with `1`");
+            var guild = await Context.Client.GetGuildAsync(Context.Guild.Id);
+            var targetTextChannel = await guild.GetTextChannelAsync(targetChannel.Id);
+            await targetTextChannel.SendMessageAsync($"Counting has been enabled, start with `1`");
 
             await Context.Interaction.RespondAsync($"Counting channel changed to <#{data.ChannelId}>");
             return;
@@ -56,7 +61,8 @@ namespace ShortcakeBot.Core.Modules
                 return;
             }
 
-            CounterGuildModel data = CounterHelper.Get(targetChannel);
+            CounterController controller = Program.Services.GetRequiredService<CounterController>();
+            CounterGuildModel data = controller.Get(targetChannel);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync($"Channel not found in database.");
@@ -65,7 +71,7 @@ namespace ShortcakeBot.Core.Modules
 
             try
             {
-                await CounterHelper.Delete(targetChannel);
+                await controller.Delete(targetChannel);
             }
             catch (Exception ex)
             {
@@ -86,7 +92,8 @@ namespace ShortcakeBot.Core.Modules
                 return;
             }
 
-            CounterGuildModel data = await CounterHelper.Get(Context.Guild);
+            var controller = Program.Services.GetRequiredService<CounterController>();
+            CounterGuildModel data = await controller.Get(Context.Guild);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync("Server not found in database");
@@ -95,7 +102,7 @@ namespace ShortcakeBot.Core.Modules
 
             try
             {
-                await CounterHelper.Delete(Context.Guild);
+                await controller.Delete(Context.Guild);
             }
             catch (Exception ex)
             {
@@ -110,7 +117,8 @@ namespace ShortcakeBot.Core.Modules
         [SlashCommand("info", "Information about the counter module for this guild")]
         public async Task Info()
         {
-            var data = await CounterHelper.Get(Context.Guild);
+            var controller = Program.Services.GetRequiredService<CounterController>();
+            var data = await controller.Get(Context.Guild);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync($"The Counter Module has not been setup. Use `/counter setchannel` to do that");

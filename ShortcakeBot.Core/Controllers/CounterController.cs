@@ -1,33 +1,43 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Bindings;
+using ShortcakeBot.Core.Helpers;
 using ShortcakeBot.Core.Models;
-using ShortcakeBot.Core.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Channels;
 using System.Threading.Tasks;
-using IChannel = Discord.IChannel;
 
-namespace ShortcakeBot.Core.Helpers
+namespace ShortcakeBot.Core.Controllers
 {
-    public static class CounterHelper
+    public class CounterController
     {
-        /// <summary>
-        /// Key: Channel Id
-        /// Value: Value
-        /// </summary>
-        public static Dictionary<ulong, ulong> CachedItems = new Dictionary<ulong, ulong>();
-        public static readonly string CollectionName = "countingGuildModel";
-        public static IMongoCollection<T>? GetCollection<T>()
+        protected static Dictionary<ulong, ulong> CachedItems = new Dictionary<ulong, ulong>();
+
+        private readonly DiscordSocketClient _client;
+        private readonly DiscordController _discord;
+        private readonly IServiceProvider _services;
+        public CounterController(IServiceProvider services)
         {
-            return Program.GetMongoDatabase()?.GetCollection<T>(CollectionName);
+            _client = services.GetRequiredService<DiscordSocketClient>();
+            _discord = services.GetRequiredService<DiscordController>();
+            _services = services;
+
+            _discord.Ready += _discord_Ready;
+            _discord.MessageRecieved += _discord_MessageRecieved;
         }
-        public static async Task Set(CounterGuildModel model)
+        #region MongoDB Wrapper
+        public const string MongoCollectionName = "countingGuildModel";
+        protected static IMongoCollection<T>? GetCollection<T>()
+        {
+            return Program.GetMongoDatabase()?.GetCollection<T>(MongoCollectionName);
+        }
+        protected static IMongoCollection<CounterGuildModel>? GetCollection()
+            => GetCollection<CounterGuildModel>();
+        public async Task Set(CounterGuildModel model)
         {
             var collection = GetCollection<CounterGuildModel>();
 
@@ -49,7 +59,7 @@ namespace ShortcakeBot.Core.Helpers
         }
         #region Get
         /// <returns><see cref="null"/> when doesn't exist</returns>
-        public static async Task<CounterGuildModel?> Get(IGuild guild)
+        public async Task<CounterGuildModel?> Get(IGuild guild)
         {
             var collection = GetCollection<CounterGuildModel>();
 
@@ -60,19 +70,19 @@ namespace ShortcakeBot.Core.Helpers
             var result = await collection.FindAsync(filter);
             return result.FirstOrDefault();
         }
-        public static async Task<CounterGuildModel?> Get<T>(IGuild guild, T channel) where T : IChannel
+        public async Task<CounterGuildModel> Get<T>(IGuild guild, T channel) where T : IChannel
         {
             var collection = GetCollection<CounterGuildModel>();
 
             var filter = Builders<CounterGuildModel>
                 .Filter
                 .Eq("GuildId", guild.Id);
-            
+
             var result = await collection.FindAsync(filter);
             var filtered = result.ToList().Where(v => v.ChannelId == channel.Id);
-            return filtered.FirstOrDefault();
+            return filtered.FirstOrDefault() ?? new CounterGuildModel(channel, guild);
         }
-        public static CounterGuildModel Get<T>(T channel) where T : IChannel
+        public CounterGuildModel Get<T>(T channel) where T : IChannel
         {
             var collection = GetCollection<CounterGuildModel>();
 
@@ -82,7 +92,7 @@ namespace ShortcakeBot.Core.Helpers
 
             return collection.Find(filter).FirstOrDefault();
         }
-        public static async Task<CounterGuildModel?> GetOrCreate(IGuild guild, IChannel channel)
+        public async Task<CounterGuildModel?> GetOrCreate(IGuild guild, IChannel channel)
         {
             CounterGuildModel? data = await Get(guild, channel);
             if (data != null)
@@ -94,7 +104,7 @@ namespace ShortcakeBot.Core.Helpers
         }
         #endregion
         #region Get All
-        public static async Task<CounterGuildModel[]> GetAll()
+        public async Task<CounterGuildModel[]> GetAll()
         {
             var collection = GetCollection<CounterGuildModel>();
             var filter = Builders<CounterGuildModel>
@@ -102,7 +112,7 @@ namespace ShortcakeBot.Core.Helpers
             var result = await collection.FindAsync(filter);
             return result.ToList().ToArray();
         }
-        public static async Task<CounterGuildModel[]> GetAll(IChannel channel)
+        public async Task<CounterGuildModel[]> GetAll(IChannel channel)
         {
             var collection = GetCollection<CounterGuildModel>();
             var filter = Builders<CounterGuildModel>
@@ -112,7 +122,7 @@ namespace ShortcakeBot.Core.Helpers
             var result = await collection.FindAsync(filter);
             return result.ToList().ToArray();
         }
-        public static async Task<CounterGuildModel[]> GetAll(IGuild guild)
+        public async Task<CounterGuildModel[]> GetAll(IGuild guild)
         {
             var collection = GetCollection<CounterGuildModel>();
             var filter = Builders<CounterGuildModel>
@@ -124,15 +134,15 @@ namespace ShortcakeBot.Core.Helpers
         }
         #endregion
         #region Delete
-        public static async Task Delete(CounterGuildModel model)
+        public async Task Delete(CounterGuildModel model)
         {
             await Delete(model.ChannelId);
         }
-        public static async Task Delete<T>(T channel) where T : IChannel
+        public async Task Delete<T>(T channel) where T : IChannel
         {
             await Delete(channel.Id);
         }
-        public static async Task Delete(ulong channelId)
+        public async Task Delete(ulong channelId)
         {
             var collection = GetCollection<CounterGuildModel>();
             var filter = Builders<CounterGuildModel>
@@ -140,7 +150,7 @@ namespace ShortcakeBot.Core.Helpers
                 .Eq("ChannelId", channelId);
             await collection?.DeleteManyAsync(filter);
         }
-        public static async Task Delete(IGuild guild)
+        public async Task Delete(IGuild guild)
         {
             var collection = GetCollection<CounterGuildModel>();
             var filter = Builders<CounterGuildModel>
@@ -149,17 +159,16 @@ namespace ShortcakeBot.Core.Helpers
             await collection?.DeleteManyAsync(filter);
         }
         #endregion
+        #endregion
 
-        #region Discord Events
-        public static async Task Ready()
+        private async void _discord_Ready(DiscordController controller)
         {
             foreach (var item in await GetAll())
             {
                 CachedItems.Add(item.ChannelId, item.Count);
             }
         }
-
-        public static async Task MessageRecieved(SocketMessage arg)
+        private async Task _discord_MessageRecieved(SocketMessage arg)
         {
             if (!(arg is SocketUserMessage message))
                 return;
@@ -168,34 +177,33 @@ namespace ShortcakeBot.Core.Helpers
             if (!CachedItems.ContainsKey(arg.Channel.Id))
                 return;
 
+            // Try and parse the content as a ulong, if we fail
+            // then we delete the message. FormatException is
+            // thrown when we fail to parse as a ulong.
             ulong value = 0;
             try
             {
                 value = ulong.Parse(arg.Content);
             }
-            catch
+            catch (FormatException)
             {
+                await DiscordHelper.DeleteMessage(_client, arg);
                 return;
             }
-            var context = new SocketCommandContext(Program.DiscordSocketClient, message);
-            ulong targetValue = ulong.Parse(CachedItems[arg.Channel.Id].ToString()) + 1;
+
+            // If number is not the next number, then we delete the message.
+            var context = new SocketCommandContext(_client, message);
+            ulong targetValue = value + 1;
             if (value != targetValue)
             {
-                await context.Guild.GetTextChannel(arg.Channel.Id).GetMessageAsync(arg.Id).Result.DeleteAsync();
+                await DiscordHelper.DeleteMessage(_client, arg);
                 return;
             }
 
-
-            var data = await Get(context.Guild);
-            if (data == null)
-            {
-                data = new CounterGuildModel((IChannel)context.Channel, (IGuild)context.Guild);
-            }
-
+            // Update record
+            CounterGuildModel data = await Get(context.Guild, context.Channel);
             data.Count = value;
             await Set(data);
         }
-        #endregion
-
     }
 }
