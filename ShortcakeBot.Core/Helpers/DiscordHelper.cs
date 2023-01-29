@@ -15,6 +15,17 @@ namespace ShortcakeBot.Core.Helpers
 {
     public static class DiscordHelper
     {
+        public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage argu)
+        {
+            if (!(argu is SocketUserMessage message))
+                return;
+            var context = new SocketCommandContext(client, message);
+            var guild = context.Guild.GetTextChannel(argu.Channel.Id);
+            var msg = await guild.GetMessageAsync(argu.Id);
+
+            if (msg != null)
+                await msg.DeleteAsync();
+        }
         public static string GetUptimeString()
         {
             var current = DateTimeOffset.UtcNow;
