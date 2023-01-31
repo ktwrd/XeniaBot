@@ -82,6 +82,8 @@ namespace ShortcakeBot.Core.Helpers
             return await HasGuildPermission(context, new GuildPermission[] { permission }, sendReply);
         }
         #endregion
+
+        #region Error Reporting
         public static async Task ReportError(HttpResponseMessage response, ICommandContext commandContext)
         {
             await ReportError(response,
@@ -186,5 +188,6 @@ namespace ShortcakeBot.Core.Helpers
                     text: "",
                     embeds: new Embed[] { embed.Build() });
         }
+        #endregion
     }
 }
