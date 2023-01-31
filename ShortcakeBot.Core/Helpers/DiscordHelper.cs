@@ -188,6 +188,26 @@ namespace ShortcakeBot.Core.Helpers
                     text: "",
                     embeds: new Embed[] { embed.Build() });
         }
+        public static async Task ReportError(Exception exception)
+        {
+            var stack = Environment.StackTrace;
+            var exceptionContent = exception.ToString();
+            var embed = new EmbedBuilder()
+            {
+                Title = "Uncaught Exception",
+                Description = "```\n" + exceptionContent.Substring(0, Math.Min(exceptionContent.Length, 4080)) + "\n```"
+            };
+
+            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
+
+            var textChannel = client.GetGuild(Program.Config.ErrorChannel).GetTextChannel(Program.Config.ErrorChannel);
+            var attachments = new FileAttachment[]
+            {
+                new FileAttachment(stream: new MemoryStream(Encoding.UTF8.GetBytes(stack)), fileName: "stack.txt"),
+                new FileAttachment(stream: new MemoryStream(Encoding.UTF8.GetBytes(exceptionContent)), fileName: "exception.txt")
+            };
+            await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
+        }
         #endregion
     }
 }
