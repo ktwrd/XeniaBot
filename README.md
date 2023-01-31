@@ -46,3 +46,12 @@ When you first start Shortcake, it will definitely not work at all. Make sure th
 | `ErrorChannel` | Text Channel where errors get reported to |
 | `ErrorGuild` | Guild where `ErrorChannel` is in |
 | `MongoDBServer` | MongoDB Connection URL, same thing you'd put into MongoDB Compass |
+
+
+
+
+# Module Demos
+## Confession Module
+![screen recording](https://res.kate.pet/upload/03bcb777-911d-4774-9454-523b3b238267/DiscordCanary_S5Wm6jtwOd.gif)
+## Random Animal
+![screen recording](https://res.kate.pet/upload/fd22bbc7-2ec1-4f71-9b28-bf23c0aafdca/DiscordCanary_y05soKK3fv.gif)
