@@ -41,6 +41,47 @@ namespace ShortcakeBot.Core.Helpers
                 data.Add($"{diff.Seconds}s");
             return string.Join(" ", data);
         }
+
+        #region HasGuildPermission
+        public static async Task<bool> HasGuildPermission(IGuild guild, IUser user, GuildPermission[] permissions)
+        {
+            var guildUser = await guild.GetUserAsync(user.Id);
+            foreach (var item in permissions)
+                if (guildUser.GuildPermissions.Has(item))
+                    return true;
+            return false;
+        }
+        public static async Task<bool> HasGuildPermission(IGuild guild, IUser user, GuildPermission permission)
+        {
+            return await HasGuildPermission(guild, user, new GuildPermission[] { permission });
+        }
+        public static async Task<bool> HasGuildPermission(IInteractionContext context, GuildPermission[] permissions, bool sendReply = false)
+        {
+            var missingPermissions = new List<GuildPermission>();
+            var guildUser = await context.Guild.GetUserAsync(context.User.Id);
+            foreach (var item in permissions)
+                if (!guildUser.GuildPermissions.Has(item))
+                    missingPermissions.Add(item);
+
+            if (missingPermissions.Count > 0)
+            {
+                if (sendReply)
+                {
+                    var missingPermissionsContent = string.Join("\n", missingPermissions.Select(v => v.ToString()));
+                    await context.Interaction.RespondAsync($"You do not have permission to execute this command. You require the following permissions\n```\n{missingPermissionsContent}\n```");
+                }
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        public static async Task<bool> HasGuildPermission(IInteractionContext context, GuildPermission permission, bool sendReply = false)
+        {
+            return await HasGuildPermission(context, new GuildPermission[] { permission }, sendReply);
+        }
+        #endregion
         public static async Task ReportError(HttpResponseMessage response, ICommandContext commandContext)
         {
             await ReportError(response,
