@@ -7,6 +7,7 @@ using MongoDB.Driver;
 using ShortcakeBot.Core.Controllers;
 using ShortcakeBot.Core.Helpers;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -75,7 +76,7 @@ namespace ShortcakeBot.Core
                 DiscordHelper.ReportError(except).Wait();
             }
 #if DEBUG
-            throw except;
+            Debugger.Break();
 #endif
         }
 
