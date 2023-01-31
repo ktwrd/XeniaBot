@@ -68,7 +68,7 @@ namespace ShortcakeBot.Core.Helpers
                 if (sendReply)
                 {
                     var missingPermissionsContent = string.Join("\n", missingPermissions.Select(v => v.ToString()));
-                    await context.Interaction.RespondAsync($"You do not have permission to execute this command. You require the following permissions\n```\n{missingPermissionsContent}\n```");
+                    await context.Interaction.RespondAsync($"You do not have permission to execute this command. You require the following permissions\n```\n{missingPermissionsContent}\n```", ephemeral: true);
                 }
                 return false;
             }

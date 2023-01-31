@@ -102,7 +102,8 @@ namespace ShortcakeBot.Core
                 .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
-                .AddSingleton<InteractionHandler>();
+                .AddSingleton<InteractionHandler>()
+                .AddSingleton<ConfessionController>();
 
             var built = services.BuildServiceProvider();
             Services = built;
