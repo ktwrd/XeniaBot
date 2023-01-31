@@ -27,6 +27,8 @@ namespace ShortcakeBot.Core.Controllers
             _services = services;
 
             _discord.Ready += _discord_Ready;
+            if (_discord.IsReady)
+                _discord_Ready(_discord);
             _discord.MessageRecieved += _discord_MessageRecieved;
         }
         #region MongoDB Wrapper
