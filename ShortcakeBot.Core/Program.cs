@@ -46,6 +46,7 @@ namespace ShortcakeBot.Core
         }
         public static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             ConfigManager = new ConfigManager();
             Config = ConfigManager.Read();
@@ -64,6 +65,20 @@ namespace ShortcakeBot.Core
 
             MainAsync(args).Wait();
         }
+
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            var except = (Exception)e.ExceptionObject;
+            Console.Error.WriteLine(except);
+            if (_discordController.IsReady)
+            {
+                DiscordHelper.ReportError(except).Wait();
+            }
+#if DEBUG
+            throw except;
+#endif
+        }
+
         public static void Quit(int exitCode = 0)
         {
             BeforeQuit();
