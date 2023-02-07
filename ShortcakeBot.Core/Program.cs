@@ -95,15 +95,9 @@ namespace ShortcakeBot.Core
             CreateServiceProdiver();
             Log.Debug("Connecting to Discord");
             _discordController = Services.GetRequiredService<DiscordController>();
-            _discordController.MessageRecieved += _discordController_MessageRecieved;
             await _discordController.Run();
 
             await Task.Delay(-1);
-        }
-
-        private static Task _discordController_MessageRecieved(SocketMessage arg)
-        {
-            return Task.CompletedTask;
         }
 
         private static void CreateServiceProdiver()
@@ -123,14 +117,6 @@ namespace ShortcakeBot.Core
 
             var built = services.BuildServiceProvider();
             Services = built;
-        }
-        public static MessageReference ToMessageReference(ICommandContext context)
-        {
-            return new MessageReference(context.Message.Id, context.Channel.Id, context.Guild.Id);
-        }
-        public static MessageReference ToMessageReference(IInteractionContext context)
-        {
-            return new MessageReference(context.Interaction.Id, context.Channel.Id, context.Guild.Id);
         }
         public static string GetGuildPrefix(ulong id)
         {
