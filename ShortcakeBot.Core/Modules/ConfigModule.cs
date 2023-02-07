@@ -13,8 +13,8 @@ namespace ShortcakeBot.Core.Modules
     {
         [SlashCommand("ticket", "Configure the Ticket Module")]
         public async Task TicketConfig(
-            [ChannelTypes(ChannelType.Category)] ICategoryChannel ticketCategory,
-            IRole roleThing)
+            [ChannelTypes(ChannelType.Category)] ICategoryChannel ticketCategory = null,
+            IRole managerRole = null)
         {
             await Context.Interaction.RespondAsync(".");
         }
