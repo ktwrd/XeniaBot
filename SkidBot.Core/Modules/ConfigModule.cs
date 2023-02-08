@@ -12,6 +12,7 @@ namespace SkidBot.Core.Modules
     public class ConfigModule : InteractionModuleBase
     {
         [SlashCommand("ticket", "Configure the Ticket Module")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task TicketConfig(
             [ChannelTypes(ChannelType.Category)] ICategoryChannel ticketCategory = null,
             IRole managerRole = null)

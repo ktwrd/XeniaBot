@@ -15,11 +15,9 @@ namespace SkidBot.Core.Modules
     public class ConfessionAdminModule : InteractionModuleBase
     {
         [SlashCommand("purge", "Remove all traces of the Confession Module from this guild")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Purge()
         {
-            if (await DiscordHelper.HasGuildPermission(Context, GuildPermission.ManageChannels, true) == false)
-                return;
-
             var controller = Program.Services.GetRequiredService<ConfessionController>();
             var item = await controller.GetGuild(Context.Guild.Id);
             if (item == null)
@@ -42,6 +40,7 @@ namespace SkidBot.Core.Modules
         }
 
         [SlashCommand("set", "Setup the Confession Module")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Set([ChannelTypes(ChannelType.Text)] IChannel confessionOutputChannel, [ChannelTypes(ChannelType.Text)] IChannel confessionModalChannel)
         {
             if (await DiscordHelper.HasGuildPermission(Context, GuildPermission.ManageChannels, true) == false)

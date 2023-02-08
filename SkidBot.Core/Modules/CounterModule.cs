@@ -16,16 +16,10 @@ namespace SkidBot.Core.Modules
     public class CounterModule : InteractionModuleBase
     {
         [SlashCommand("setchannel", "Set the channel for counting")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetChannel(
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
-            var guildUser = await Context.Guild.GetUserAsync(Context.User.Id);
-            if (!guildUser.GuildPermissions.ManageChannels)
-            {
-                await Context.Interaction.RespondAsync("You do not have permission to execute this command. You need the `ManageChannels` permission");
-                return;
-            }
-
             CounterController controller = Program.Services.GetRequiredService<CounterController>();
             CounterGuildModel data = await controller.Get(Context.Guild);
             if (data == null)
@@ -51,16 +45,10 @@ namespace SkidBot.Core.Modules
         }
 
         [SlashCommand("deletechannel", "Remove channel from storage")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task DeleteChannel(
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
-            var guildUser = await Context.Guild.GetUserAsync(Context.User.Id);
-            if (!guildUser.GuildPermissions.ManageChannels)
-            {
-                await Context.Interaction.RespondAsync("You do not have permission to execute this command. You need the `ManageChannels` permission");
-                return;
-            }
-
             CounterController controller = Program.Services.GetRequiredService<CounterController>();
             CounterGuildModel data = controller.Get(targetChannel);
             if (data == null)
@@ -83,15 +71,9 @@ namespace SkidBot.Core.Modules
             await Context.Interaction.RespondAsync($"Removed channel from database.");
         }
         [SlashCommand("delete", "Delete all Counting Channels in this server")]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Delete()
         {
-            var guildUser = await Context.Guild.GetUserAsync(Context.User.Id);
-            if (!guildUser.GuildPermissions.ManageChannels)
-            {
-                await Context.Interaction.RespondAsync("You do not have permission to execute this command. You need the `ManageChannels` permission");
-                return;
-            }
-
             var controller = Program.Services.GetRequiredService<CounterController>();
             CounterGuildModel data = await controller.Get(Context.Guild);
             if (data == null)
