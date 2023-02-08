@@ -1,15 +1,15 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using ShortcakeBot.Core.Controllers;
-using ShortcakeBot.Core.Helpers;
+using SkidBot.Core.Controllers;
+using SkidBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core.Modules
+namespace SkidBot.Core.Modules
 {
     [Discord.Interactions.Group("confessadmin", "Administrative tools for the Confession Module")]
     public class ConfessionAdminModule : InteractionModuleBase

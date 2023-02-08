@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core.Models
+namespace SkidBot.Core.Models
 {
     public class ConfessionGuildModel
     {

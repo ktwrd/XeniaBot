@@ -8,11 +8,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using static ShortcakeBot.Core.ConfigManager;
+using static SkidBot.Core.ConfigManager;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ShortcakeBot.Core.Helpers
+namespace SkidBot.Core.Helpers
 {
     public static class DiscordHelper
     {

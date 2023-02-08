@@ -3,15 +3,15 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using ShortcakeBot.Core.Helpers;
-using ShortcakeBot.Core.Models;
+using SkidBot.Core.Helpers;
+using SkidBot.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core.Controllers
+namespace SkidBot.Core.Controllers
 {
     public class CounterController
     {

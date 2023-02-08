@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core
+namespace SkidBot.Core
 {
     public class ConfigManager
     {

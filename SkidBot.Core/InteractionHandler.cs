@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core
+namespace SkidBot.Core
 {
     public class InteractionHandler
     {

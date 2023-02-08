@@ -2,18 +2,18 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using ShortcakeBot.Core.Helpers;
+using SkidBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core.Modules
+namespace SkidBot.Core.Modules
 {
     public class MiscModule : InteractionModuleBase
     {
-        [SlashCommand("info", "Information about Shortcake")]
+        [SlashCommand("info", "Information about Skid")]
         public async Task Info()
         {
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
@@ -25,7 +25,7 @@ namespace ShortcakeBot.Core.Modules
                     IconUrl = client.CurrentUser.GetAvatarUrl()
                 },
                 Timestamp = DateTimeOffset.UtcNow,
-                Description = "Heya I'm Shortcake, a general-purpose Discord Bot made by [kate](https://kate.pet). If you're having any issues with using Shortcake, don't hesitate to open a [Git Issue](https://github.com/ktwrd/shortcake-issues/issues)."
+                Description = "Heya I'm Skid, a general-purpose Discord Bot made by [kate](https://kate.pet). If you're having any issues with using Skid, don't hesitate to open a [Git Issue](https://github.com/ktwrd/shortcake-issues/issues)."
             };
             embed.AddField("Uptime", DiscordHelper.GetUptimeString(), true);
             embed.AddField("Latency", $"{client.Latency}ms", true);

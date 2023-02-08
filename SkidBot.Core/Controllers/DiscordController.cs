@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using ShortcakeBot.Core.Helpers;
+using SkidBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core.Controllers
+namespace SkidBot.Core.Controllers
 {
     public class DiscordController
     {

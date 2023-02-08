@@ -8,9 +8,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using static ShortcakeBot.Core.ConfigManager;
+using static SkidBot.Core.ConfigManager;
 
-namespace ShortcakeBot.Core
+namespace SkidBot.Core
 {
     public class CommandHandler
     {

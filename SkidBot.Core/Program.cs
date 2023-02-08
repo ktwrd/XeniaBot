@@ -4,8 +4,8 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using ShortcakeBot.Core.Controllers;
-using ShortcakeBot.Core.Helpers;
+using SkidBot.Core.Controllers;
+using SkidBot.Core.Helpers;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -14,7 +14,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace ShortcakeBot.Core
+namespace SkidBot.Core
 {
     public static class Program
     {

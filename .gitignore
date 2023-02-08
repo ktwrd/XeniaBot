@@ -397,4 +397,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 Data
-ShortcakeBot.Core/Properties/launchSettings.json
+SkidBot.Core/Properties/launchSettings.json

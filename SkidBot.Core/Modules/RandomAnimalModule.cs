@@ -10,14 +10,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HeyRed.Mime;
-using ShortcakeBot.Core.Helpers;
+using SkidBot.Core.Helpers;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using ShortcakeBot.Core.Models;
+using SkidBot.Core.Models;
 
-namespace ShortcakeBot.Core.Modules
+namespace SkidBot.Core.Modules
 {
     [Discord.Interactions.Group("randomanimal", "Random Animal Pic")]
     public class RandomAnimalModule : InteractionModuleBase
