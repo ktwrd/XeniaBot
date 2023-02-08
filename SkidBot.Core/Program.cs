@@ -113,7 +113,8 @@ namespace SkidBot.Core
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<InteractionHandler>()
-                .AddSingleton<ConfessionController>();
+                .AddSingleton<ConfessionController>()
+                .AddSingleton<TicketController>();
 
             var built = services.BuildServiceProvider();
             Services = built;
