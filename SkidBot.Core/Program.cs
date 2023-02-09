@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using IdGen;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SkidBot.Core.Controllers;
@@ -32,8 +33,7 @@ namespace SkidBot.Core
         {
             IgnoreReadOnlyFields = true,
             IgnoreReadOnlyProperties = true,
-            IncludeFields = true,
-            WriteIndented = true
+            IncludeFields = true
         };
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
@@ -51,6 +51,7 @@ namespace SkidBot.Core
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             ConfigManager = new ConfigManager();
             Config = ConfigManager.Read();
+            IdGenerator = SnowflakeHelper.Create(Config.GeneratorId);
             HttpClient = new HttpClient();
             try
             {
@@ -105,6 +106,7 @@ namespace SkidBot.Core
             Log.Debug("Initializing Services");
             var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
             var services = new ServiceCollection()
+                .AddSingleton(IdGenerator)
                 .AddSingleton(ConfigManager)
                 .AddSingleton(Config)
                 .AddSingleton(dsc)
@@ -119,6 +121,7 @@ namespace SkidBot.Core
             var built = services.BuildServiceProvider();
             Services = built;
         }
+        public static IdGenerator IdGenerator;
         public static string GetGuildPrefix(ulong id)
         {
             return Config.Prefix;

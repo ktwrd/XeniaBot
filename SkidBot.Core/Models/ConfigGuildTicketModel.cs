@@ -15,5 +15,6 @@ namespace SkidBot.Core.Models
         public ulong GuildId { get; set; }
         public ulong CategoryId { get; set; }
         public ulong RoleId { get; set; }
+        public ulong LogChannelId { get; set; }
     }
 }

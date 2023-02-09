@@ -18,7 +18,8 @@ namespace SkidBot.Core.Modules
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task TicketConfig(
             [ChannelTypes(ChannelType.Category)] ICategoryChannel ticketCategory = null,
-            IRole managerRole = null)
+            IRole managerRole = null,
+            [ChannelTypes(ChannelType.Text)] ITextChannel logChannel = null)
         {
             TicketController controller = Program.Services.GetRequiredService<TicketController>();
 
@@ -33,14 +34,18 @@ namespace SkidBot.Core.Modules
 
             bool updateCategory = ticketCategory != null;
             bool updateRole = managerRole != null;
+            bool updateChannel = logChannel != null;
             model.CategoryId = ticketCategory?.Id ?? model.CategoryId;
             model.RoleId = managerRole?.Id ?? model.RoleId;
+            model.LogChannelId = logChannel?.Id ?? model.LogChannelId;
 
             var content = new List<string>();
             if (updateCategory)
                 content.Add($"Ticket Category to <#{ticketCategory.Id}>");
             if (updateRole)
                 content.Add($"Manager Role to <@&{managerRole.Id}>");
+            if (updateChannel)
+                content.Add($"Logging Channel to <#{logChannel.Id}>");
 
             var embed = new EmbedBuilder()
             {
@@ -48,16 +53,13 @@ namespace SkidBot.Core.Modules
                 Color = new Color(255, 255, 255)
             };
 
-            if (!updateCategory && !updateRole)
+            embed.AddField("Current Config", string.Join("\n", new string[]
             {
-                embed.Description = string.Join("\n", new string[]
-                {
-                    "Current Config",
-                    $"<#{model.CategoryId}> (`{model.CategoryId}`)",
-                    $"<@&{model.RoleId}> (`{model.RoleId}`)"
-                });
-            }
-            else
+                    $"Channel Category: <#{model.CategoryId}> (`{model.CategoryId}`)",
+                    $"Manager Role: <@&{model.RoleId}> (`{model.RoleId}`)",
+                    $"Log: <#{model.LogChannelId}> (`{model.LogChannelId}`)"
+            }));
+            if (content.Count > 0)
             {
                 embed.Description = "Updated " + string.Join(" and ", content);
             }
