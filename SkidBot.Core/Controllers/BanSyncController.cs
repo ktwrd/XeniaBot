@@ -22,6 +22,7 @@ namespace SkidBot.Core.Controllers
             _discord = services.GetRequiredService<DiscordController>();
             _config = services.GetRequiredService<BanSyncConfigController>();
             _services = services;
+            _client.UserUnbanned += _client_UserUnbanned;
             _client.UserBanned += _client_UserBanned;
         }
 
@@ -59,6 +60,14 @@ namespace SkidBot.Core.Controllers
         private async Task NotifyBan(BanSyncInfoModel info)
         {
 
+        }
+
+        /// <summary>
+        /// Remove user from the database if they exist
+        /// </summary>
+        private async Task _client_UserUnbanned(SocketUser arg1, SocketGuild arg2)
+        {
+            await RemoveInfo(arg1.Id, arg2.Id);
         }
         }
 
