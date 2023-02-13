@@ -14,5 +14,6 @@ namespace SkidBot.Core.Models
         public ObjectId _id { get; set; }
         public ulong GuildId { get; set; }
         public ulong LogChannel { get; set; }
+        public bool Enable { get; set; }
     }
 }
