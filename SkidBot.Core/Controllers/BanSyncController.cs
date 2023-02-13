@@ -1,11 +1,11 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SkidBot.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SkidBot.Core.Controllers
@@ -22,6 +22,8 @@ namespace SkidBot.Core.Controllers
             _discord = services.GetRequiredService<DiscordController>();
             _config = services.GetRequiredService<BanSyncConfigController>();
             _services = services;
+
+            _client.UserJoined += _client_UserJoined;
             _client.UserUnbanned += _client_UserUnbanned;
             _client.UserBanned += _client_UserBanned;
         }
@@ -69,6 +71,61 @@ namespace SkidBot.Core.Controllers
         {
             await RemoveInfo(arg1.Id, arg2.Id);
         }
+
+        private async Task _client_UserJoined(SocketGuildUser arg)
+        {
+            var guildConfig = await _config.Get(arg.Guild.Id);
+            
+            // Check if the guild has config stuff setup
+            // If not then we just ignore
+            if (guildConfig == null)
+                return;
+
+            // Check if config channel has been made, if not then ignore
+            SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig.LogChannel);
+            if (logChannel == null)
+                return;
+
+            // Check if this user has been banned before, if not then ignore
+            var userInfo = await GetInfoEnumerable(arg.Id);
+            if (!userInfo.Any())
+                return;
+
+            // Create embed then send message in log channel.
+            var embed = await GenerateEmbed(userInfo);
+            await logChannel.SendMessageAsync(embed: embed.Build());
+        }
+        private async Task<EmbedBuilder> GenerateEmbed(IEnumerable<BanSyncInfoModel> data)
+        {
+            var sortedData = data.OrderByDescending(v => v.Timestamp).ToArray();
+            var last = sortedData.LastOrDefault();
+            var userId = last?.UserId;
+            var user = await _client.GetUserAsync(userId ?? 0);
+            var embed = new EmbedBuilder()
+            {
+                Title = "User has been banned previously",
+                Color = Color.Red
+            };
+            var name = user.Username ?? last?.UserName ?? "<Unknown Username>";
+            var discrim = user.Discriminator ?? last?.UserDiscriminator ?? "0000";
+            embed.WithDescription($"User {name}#{discrim} ({user.Id}) has been banned from {sortedData.Length} guilds.");
+
+            for (int i = 0; i < Math.Min(sortedData.Length, 25); i++)
+            {
+                var item = sortedData[i];
+                
+                embed.AddField(
+                    item.GuildName,
+                    string.Join("\n", new string[] {
+                        "```",
+                        item.Reason,
+                        "```",
+                        $"<t:{item.Timestamp}:F>"
+                    }),
+                    true);
+            }
+
+            return embed;
         }
 
         #region Mongo Helpers
