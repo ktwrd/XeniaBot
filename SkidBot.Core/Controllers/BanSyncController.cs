@@ -14,12 +14,52 @@ namespace SkidBot.Core.Controllers
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
+        private readonly BanSyncConfigController _config;
         private readonly IServiceProvider _services;
         public BanSyncController(IServiceProvider services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
+            _config = services.GetRequiredService<BanSyncConfigController>();
             _services = services;
+            _client.UserBanned += _client_UserBanned;
+        }
+
+        /// <summary>
+        /// Add user to database
+        /// </summary>
+        private async Task _client_UserBanned(SocketUser user, SocketGuild guild)
+        {
+            if (await InfoExists(user.Id, guild.Id))
+            {
+                await RemoveInfo(user.Id, guild.Id);
+            }
+
+            var banInfo = await guild.GetBanAsync(user);
+
+            var info = new BanSyncInfoModel()
+            {
+                UserId = user.Id,
+                UserName = user.Username,
+                UserDiscriminator = user.Discriminator.ToString(),
+                GuildId = guild.Id,
+                GuildName = guild.Name,
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                Reason = banInfo?.Reason ?? "null",
+            };
+
+            await NotifyBan(info);
+        }
+
+        /// <summary>
+        /// TODO: Notify all guilds that the user is in that the user has been banned.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <returns></returns>
+        private async Task NotifyBan(BanSyncInfoModel info)
+        {
+
+        }
         }
 
         #region Mongo Helpers
