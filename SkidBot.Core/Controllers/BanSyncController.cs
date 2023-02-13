@@ -50,7 +50,7 @@ namespace SkidBot.Core.Controllers
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Reason = banInfo?.Reason ?? "null",
             };
-
+            await SetInfo(info);
             await NotifyBan(info);
         }
 
@@ -61,7 +61,31 @@ namespace SkidBot.Core.Controllers
         /// <returns></returns>
         private async Task NotifyBan(BanSyncInfoModel info)
         {
+            var taskList = new List<Task>();
+            foreach (var guild in _client.Guilds)
+            {
+                var guildUser = guild.GetUser(info.UserId);
+                if (guildUser == null)
+                    continue;
 
+                var guildConfig = await _config.Get(guild.Id);
+                if (guildConfig == null)
+                    continue;
+                taskList.Add(new Task(async delegate
+                {
+                    var textChannel = guild.GetTextChannel(guildConfig.LogChannel);
+                    var embed = new EmbedBuilder()
+                    {
+                        Title = "User in your server just got banned",
+                        Description = $"<@{info.UserId}> just got banned from `{guild.Name}` at <t:{info.Timestamp}:F>",
+                    };
+                    embed.AddField("Reason", $"```\n{info.Reason}\n```");
+                    await textChannel.SendMessageAsync(embed: embed.Build());
+                }));
+            }
+            foreach (var i in taskList)
+                i.Start();
+            await Task.WhenAll(taskList);
         }
 
         /// <summary>
