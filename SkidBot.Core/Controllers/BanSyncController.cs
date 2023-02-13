@@ -33,10 +33,10 @@ namespace SkidBot.Core.Controllers
         /// </summary>
         private async Task _client_UserBanned(SocketUser user, SocketGuild guild)
         {
-            if (await InfoExists(user.Id, guild.Id))
-            {
-                await RemoveInfo(user.Id, guild.Id);
-            }
+            // Ignore if guild config is disabled
+            var config = await _config.Get(guild.Id);
+            if ((config?.Enable ?? false) == false)
+                return;
 
             var banInfo = await guild.GetBanAsync(user);
 
