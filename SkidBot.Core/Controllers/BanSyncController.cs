@@ -100,6 +100,15 @@ namespace SkidBot.Core.Controllers
                 await collection.InsertOneAsync(data);
             }
         }
+        public async Task RemoveInfo(ulong userId, ulong guildId)
+        {
+            var collection = GetInfoCollection();
+            var filter = Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => v.UserId == userId && v.GuildId == guildId);
+
+            await collection.DeleteManyAsync(filter);
+        }
         #endregion
 
         #region Info Exists
