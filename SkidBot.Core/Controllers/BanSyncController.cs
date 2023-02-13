@@ -29,7 +29,7 @@ namespace SkidBot.Core.Controllers
         }
 
         /// <summary>
-        /// Add user to database
+        /// Add user to database and notify mutual servers. <see cref="NotifyBan(BanSyncInfoModel)"/>
         /// </summary>
         private async Task _client_UserBanned(SocketUser user, SocketGuild guild)
         {
@@ -55,7 +55,7 @@ namespace SkidBot.Core.Controllers
         }
 
         /// <summary>
-        /// TODO: Notify all guilds that the user is in that the user has been banned.
+        /// Notify all guilds that the user is in that the user has been banned.
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
