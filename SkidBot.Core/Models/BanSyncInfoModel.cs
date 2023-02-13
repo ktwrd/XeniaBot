@@ -17,6 +17,9 @@ namespace SkidBot.Core.Models
         public string UserDiscriminator { get; set; }
         public ulong GuildId { get; set; }
         public string GuildName { get; set; }
+        /// <summary>
+        /// Unix Epoch in UTC Seconds
+        /// </summary>
         public double Timestamp { get; set; }
         public string Reason { get; set; }
         public BanSyncInfoModel()
