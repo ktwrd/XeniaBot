@@ -91,9 +91,14 @@ namespace SkidBot.Core.Controllers
         /// <summary>
         /// Remove user from the database if they exist
         /// </summary>
-        private async Task _client_UserUnbanned(SocketUser arg1, SocketGuild arg2)
+        private async Task _client_UserUnbanned(SocketUser user, SocketGuild guild)
         {
-            await RemoveInfo(arg1.Id, arg2.Id);
+            // Ignore if guild config is disabled
+            var config = await _config.Get(guild.Id);
+            if ((config?.Enable ?? false) == false)
+                return;
+
+            await RemoveInfo(user.Id, guild.Id);
         }
 
         private async Task _client_UserJoined(SocketGuildUser arg)
