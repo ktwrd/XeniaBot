@@ -13,8 +13,10 @@ namespace SkidBot.Core.Models
         [Browsable(false)]
         public ObjectId _id { get; set; }
         public ulong UserId { get; set; }
+        public string UserName { get; set; }
+        public string UserDiscriminator { get; set; }
         public ulong GuildId { get; set; }
-        public ulong BannerUserId { get; set; }
+        public string GuildName { get; set; }
         public double Timestamp { get; set; }
         public string Reason { get; set; }
         public BanSyncInfoModel()
