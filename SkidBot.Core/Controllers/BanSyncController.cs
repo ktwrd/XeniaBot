@@ -159,6 +159,24 @@ namespace SkidBot.Core.Controllers
             return embed;
         }
 
+        public enum BanSyncGuildKind
+        {
+            TooYoung,
+            NotEnougMembers,
+            Blacklisted,
+            Valid
+        }
+        public BanSyncGuildKind GetGuildKind(ulong guildId)
+        {
+            var guild = _client.GetGuild(guildId);
+
+            if (guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
+                return BanSyncGuildKind.TooYoung;
+            else if (guild.MemberCount < 50)
+                return BanSyncGuildKind.NotEnougMembers;
+            else
+                return BanSyncGuildKind.Valid;
+        }
         #region Mongo Helpers
         public const string MongoInfoCollectionName = "banSyncInfo";
         protected IMongoCollection<T>? GetInfoCollection<T>()
