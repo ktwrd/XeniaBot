@@ -19,6 +19,7 @@ namespace SkidBot.Core.Controllers
         private readonly ConfigManager.Config _config;
         private readonly CommandHandler _commandHandler;
         private readonly InteractionHandler _interactionHandler;
+        private readonly BanSyncController _banSync;
         public DiscordController(IServiceProvider services)
         {
             _config = services.GetRequiredService<ConfigManager.Config>();
@@ -66,6 +67,7 @@ namespace SkidBot.Core.Controllers
             InvokeReady();
             await _commandHandler.InitializeAsync();
             await _interactionHandler.InitializeAsync();
+            _services.GetRequiredService<BanSyncController>();
         }
 
         private Task _client_Log(LogMessage arg)
@@ -105,9 +107,8 @@ namespace SkidBot.Core.Controllers
         {
             return new DiscordSocketConfig()
             {
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent | GatewayIntents.GuildMembers,
-                UseInteractionSnowflakeDate = false,
-                HandlerTimeout = 6000
+                GatewayIntents = GatewayIntents.All,
+                UseInteractionSnowflakeDate = false
             };
         }
     }

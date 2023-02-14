@@ -33,7 +33,8 @@ namespace SkidBot.Core
         {
             IgnoreReadOnlyFields = true,
             IgnoreReadOnlyProperties = true,
-            IncludeFields = true
+            IncludeFields = true,
+            WriteIndented = true
         };
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
@@ -116,7 +117,9 @@ namespace SkidBot.Core
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<InteractionHandler>()
                 .AddSingleton<ConfessionController>()
-                .AddSingleton<TicketController>();
+                .AddSingleton<TicketController>()
+                .AddSingleton<BanSyncConfigController>()
+                .AddSingleton<BanSyncController>();
 
             var built = services.BuildServiceProvider();
             Services = built;
