@@ -112,6 +112,9 @@ namespace SkidBot.Core
             public ulong ErrorGuild = 0;
             public string MongoDBServer = "";
             public int GeneratorId = 0;
+            public ulong BanSync_AdminServer = 0;
+            public ulong BanSync_GlobalLogChannel = 0;
+            public ulong BanSync_RequestChannel = 0;
         }
     }
 }
