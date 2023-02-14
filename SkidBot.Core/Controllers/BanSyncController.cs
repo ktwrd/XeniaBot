@@ -177,6 +177,43 @@ namespace SkidBot.Core.Controllers
             else
                 return BanSyncGuildKind.Valid;
         }
+        public async Task RequestGuildEnable(ulong guildId)
+        {
+            var guild = _client.GetGuild(guildId);
+            var config = await _config.Get(guildId);
+            if (config?.Enable ?? false)
+                return;
+            if (config == null)
+                config = new ConfigBanSyncModel()
+                {
+                    GuildId = guildId,
+                    Enable = false
+                };
+            await _config.Set(config);
+
+            var logGuild = _client.GetGuild(Program.Config.BanSync_AdminServer);
+            var logRequestChannel = logGuild.GetTextChannel(Program.Config.BanSync_RequestChannel);
+            var firstTextChannel = guild.Channels.OfType<ITextChannel>().FirstOrDefault();
+            IInviteMetadata? invite = null;
+            if (firstTextChannel != null)
+                invite = await firstTextChannel.CreateInviteAsync(null);
+            var inviteUrl = invite?.Url ?? "none";
+            await logRequestChannel.SendMessageAsync(embed: new EmbedBuilder()
+            {
+                Description = string.Join("\n", new string[]
+                {
+                    "```",
+                    $"Id: {guild.Id}",
+                    $"Name: {guild.Name}",
+                    $"Owner: {guild.Owner.Username}#{guild.Owner.Discriminator} ({guild.Owner.Id})",
+                    $"Member Count: {guild.MemberCount}",
+                    $"User Count: {guild.Users.Count()}",
+                    $"Invite: {inviteUrl}",
+                    "```"
+                })
+            }.Build());
+        }
+
         #region Mongo Helpers
         public const string MongoInfoCollectionName = "banSyncInfo";
         protected IMongoCollection<T>? GetInfoCollection<T>()

@@ -102,5 +102,21 @@ namespace SkidBot.Core.Modules
             }
             await Context.Interaction.RespondAsync(responseContent);
         }
+
+        [SlashCommand("request", "Request for this guild to have Ban Sync support")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task RequestGuild()
+        {
+            var controller = Program.Services.GetRequiredService<BanSyncController>();
+            var kind = controller.GetGuildKind(Context.Guild.Id);
+            if (kind != BanSyncController.BanSyncGuildKind.Valid)
+            {
+                await Context.Interaction.RespondAsync($"Your server does not meet the requirements.\nReason: `{kind}`", ephemeral: true);
+                return;
+            }
+
+            await controller.RequestGuildEnable(Context.Guild.Id);
+            await Context.Interaction.RespondAsync($"Your guild is under review for Ban Sync to be enabled.");
+        }
     }
 }
