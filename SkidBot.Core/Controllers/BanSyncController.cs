@@ -5,6 +5,7 @@ using MongoDB.Driver;
 using SkidBot.Core.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -26,12 +27,13 @@ namespace SkidBot.Core.Controllers
             _client.UserJoined += _client_UserJoined;
             _client.UserUnbanned += _client_UserUnbanned;
             _client.UserBanned += _client_UserBanned;
+            Log.Debug("hi");
         }
 
         /// <summary>
         /// Add user to database and notify mutual servers. <see cref="NotifyBan(BanSyncInfoModel)"/>
         /// </summary>
-        private async Task _client_UserBanned(SocketUser user, SocketGuild guild)
+        public async Task _client_UserBanned(SocketUser user, SocketGuild guild)
         {
             // Ignore if guild config is disabled
             var config = await _config.Get(guild.Id);
@@ -59,7 +61,7 @@ namespace SkidBot.Core.Controllers
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        private async Task NotifyBan(BanSyncInfoModel info)
+        public async Task NotifyBan(BanSyncInfoModel info)
         {
             var taskList = new List<Task>();
             foreach (var guild in _client.Guilds)
@@ -91,7 +93,7 @@ namespace SkidBot.Core.Controllers
         /// <summary>
         /// Remove user from the database if they exist
         /// </summary>
-        private async Task _client_UserUnbanned(SocketUser user, SocketGuild guild)
+        public async Task _client_UserUnbanned(SocketUser user, SocketGuild guild)
         {
             // Ignore if guild config is disabled
             var config = await _config.Get(guild.Id);
@@ -116,7 +118,7 @@ namespace SkidBot.Core.Controllers
                 return;
 
             // Check if this user has been banned before, if not then ignore
-            var userInfo = await GetInfoEnumerable(arg.Id);
+            var userInfo = (await GetInfoEnumerable(arg.Id)).ToArray();
             if (!userInfo.Any())
                 return;
 
@@ -124,7 +126,7 @@ namespace SkidBot.Core.Controllers
             var embed = await GenerateEmbed(userInfo);
             await logChannel.SendMessageAsync(embed: embed.Build());
         }
-        private async Task<EmbedBuilder> GenerateEmbed(IEnumerable<BanSyncInfoModel> data)
+        public async Task<EmbedBuilder> GenerateEmbed(IEnumerable<BanSyncInfoModel> data)
         {
             var sortedData = data.OrderByDescending(v => v.Timestamp).ToArray();
             var last = sortedData.LastOrDefault();
