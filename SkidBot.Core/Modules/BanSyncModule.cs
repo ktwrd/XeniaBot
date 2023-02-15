@@ -102,6 +102,41 @@ namespace SkidBot.Core.Modules
             }
             await Context.Interaction.RespondAsync(responseContent);
         }
+        [SlashCommand("setguildstate", "Set state field of guild")]
+        public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
+        {
+            if (!Program.Config.UserWhitelist.Contains(Context.User.Id))
+                return;
+            ulong guildId = 0;
+            try
+            {
+                guildId = ulong.Parse(guild);
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.RespondAsync($"Failed to parse guildId\n```\n{ex.Message}\n```", ephemeral: true);
+                return;
+            }
+            var targetGuild = await Context.Client.GetGuildAsync(guildId);
+            if (targetGuild == null)
+            {
+                await Context.Interaction.RespondAsync($"Guild `{guildId}` not found (GetGuildAsync responded with null)", ephemeral: true);
+                return;
+            }
+
+            try
+            {
+                var controller = Program.Services.GetRequiredService<BanSyncController>();
+                await controller.SetGuildState(guildId, state, reason);
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.RespondAsync($"Failed to set guild state\n```\n{ex.Message}\n```", ephemeral: true);
+                await DiscordHelper.ReportError(ex, Context);
+                return;
+            }
+            await Context.Interaction.RespondAsync($"Set state of `{targetGuild.Name}` to `{state}`", ephemeral: true);
+        }
 
         [SlashCommand("request", "Request for this guild to have Ban Sync support")]
         [RequireUserPermission(GuildPermission.ManageGuild)]
