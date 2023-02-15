@@ -177,27 +177,89 @@ namespace SkidBot.Core.Controllers
             else
                 return BanSyncGuildKind.Valid;
         }
-        public async Task RequestGuildEnable(ulong guildId)
+        /// <summary>
+        /// Set guild state and write to log channel.
+        /// </summary>
+        /// <param name="guildId">Target Guild snowflake</param>
+        /// <param name="state">New state for the guild config</param>
+        /// <param name="reason">Required when <paramref name="state"/> is <see cref="BanSyncGuildState.Blacklisted"/> or <see cref="BanSyncGuildState.RequestDenied"/></param>
+        /// <returns></returns>
+        /// <exception cref="Exception">When <paramref name="reason"/> is empty when required.</exception>
+        public async Task<ConfigBanSyncModel?> SetGuildState(ulong guildId, BanSyncGuildState state, string reason = "")
         {
-            var guild = _client.GetGuild(guildId);
             var config = await _config.Get(guildId);
-            if (config?.Enable ?? false)
-                return;
             if (config == null)
+                return null;
+
+            if (state == BanSyncGuildState.Blacklisted || state == BanSyncGuildState.RequestDenied)
+            {
+                if (config.Reason.Length < 1)
+                    throw new Exception("Reason parameter is required");
+
+                config.Reason = reason;
+            }
+
+            await SetGuildState_Notify(config);
+
+            await _config.Set(config);
+            return config;
+        }
+        protected async Task SetGuildState_Notify(ConfigBanSyncModel model)
+        {
+            var guild = _client.GetGuild(model.GuildId);
+            var logGuild = _client.GetGuild(Program.Config.BanSync_AdminServer);
+            var logChannel = logGuild.GetTextChannel(Program.Config.BanSync_GlobalLogChannel);
+
+            await logChannel.SendMessageAsync(embed: new EmbedBuilder()
+            {
+                Title = "SetGuildState",
+                Description = string.Join("\n", new string[]
+                {
+                    "```",
+                    $"Guild: {guild.Name ?? "<null>"} ({model.GuildId})",
+                    $"State: {model.State}",
+                    $"Reason: {model.Reason}",
+                    "```"
+                })
+            }.WithCurrentTimestamp().Build());
+        }
+        public async Task<ConfigBanSyncModel> RequestGuildEnable(ulong guildId)
+        {
+            var config = await _config.Get(guildId);
+            if (config == null)
+            {
                 config = new ConfigBanSyncModel()
                 {
-                    GuildId = guildId,
-                    Enable = false
+                    GuildId = guildId
                 };
+            }
+            // When state is blacklisted/denied/pending, reject
+            if (config.State == BanSyncGuildState.Blacklisted || config.State == BanSyncGuildState.RequestDenied || config.State == BanSyncGuildState.PendingRequest)
+            {
+                return config;
+            }
+
+            config.State = BanSyncGuildState.PendingRequest;
             await _config.Set(config);
 
+            await RequestGuildEnable_SendNotification(config);
+
+            return config;
+        }
+        protected async Task RequestGuildEnable_SendNotification(ConfigBanSyncModel model)
+        {
+            var guild = _client.GetGuild(model.GuildId);
             var logGuild = _client.GetGuild(Program.Config.BanSync_AdminServer);
             var logRequestChannel = logGuild.GetTextChannel(Program.Config.BanSync_RequestChannel);
+            // Fetch first text channel to create invite for
             var firstTextChannel = guild.Channels.OfType<ITextChannel>().FirstOrDefault();
+
+            // Generate invite from firstTextChannel and fetch the URL for the invite
             IInviteMetadata? invite = null;
             if (firstTextChannel != null)
                 invite = await firstTextChannel.CreateInviteAsync(null);
-            var inviteUrl = invite?.Url ?? "none";
+            string inviteUrl = invite?.Url ?? "none";
+
             await logRequestChannel.SendMessageAsync(embed: new EmbedBuilder()
             {
                 Description = string.Join("\n", new string[]
@@ -207,7 +269,6 @@ namespace SkidBot.Core.Controllers
                     $"Name: {guild.Name}",
                     $"Owner: {guild.Owner.Username}#{guild.Owner.Discriminator} ({guild.Owner.Id})",
                     $"Member Count: {guild.MemberCount}",
-                    $"User Count: {guild.Users.Count()}",
                     $"Invite: {inviteUrl}",
                     "```"
                 })
