@@ -2,6 +2,8 @@
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using SkidBot.Core.Controllers;
+using SkidBot.Core.Helpers;
+using SkidBot.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,20 +40,29 @@ namespace SkidBot.Core.Modules
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task SetChannel([ChannelTypes(ChannelType.Text)] ITextChannel logChannel)
         {
-            var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
-            var data = await controller.Get(Context.Guild.Id);
-            if (data == null)
+            try
             {
-                data = new Models.ConfigBanSyncModel()
+                var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
+                var data = await controller.Get(Context.Guild.Id);
+                if (data == null)
                 {
-                    GuildId = Context.Guild.Id,
-                    LogChannel = logChannel.Id,
-                    Enable = false
-                };
-            }
+                    data = new Models.ConfigBanSyncModel()
+                    {
+                        GuildId = Context.Guild.Id,
+                        LogChannel = logChannel.Id,
+                        Enable = false
+                    };
+                }
 
-            data.LogChannel = logChannel.Id;
-            await controller.Set(data);
+                data.LogChannel = logChannel.Id;
+                await controller.Set(data);
+            }
+            catch (Exception ex)
+            {
+                await Context.Interaction.RespondAsync($"Failed to set log channel\n```\n{ex.Message}\n```");
+                await DiscordHelper.ReportError(ex, Context);
+                return;
+            }
             await Context.Interaction.RespondAsync($"Updated Log Channel to <#{logChannel.Id}>");
         }
 
@@ -77,20 +88,29 @@ namespace SkidBot.Core.Modules
                 return;
             }
 
-            var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
-            var data = await controller.Get(guildId);
             var notes = new List<string>();
-            if (data == null)
+            try
             {
-                data = new Models.ConfigBanSyncModel()
+                var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
+                var data = await controller.Get(guildId);
+                if (data == null)
                 {
-                    GuildId = guildId
-                };
-                notes.Add("Created new database entry");
+                    data = new Models.ConfigBanSyncModel()
+                    {
+                        GuildId = guildId
+                    };
+                    notes.Add("Created new database entry");
+                }
+
+                data.Enable = true;
+                await controller.Set(data);
             }
-            
-            data.Enable = true;
-            await controller.Set(data);
+            catch (Exception ex)
+            {
+                await Context.Interaction.RespondAsync($"Failed to update guild config\n```\n{ex.Message}\n```");
+                await DiscordHelper.ReportError(ex, Context);
+                return;
+            }
 
             var responseContent = $"Enabled guild `{guildId}`";
             if (notes.Count > 0)
@@ -144,14 +164,46 @@ namespace SkidBot.Core.Modules
         {
             var controller = Program.Services.GetRequiredService<BanSyncController>();
             var kind = controller.GetGuildKind(Context.Guild.Id);
+
+            var embed = new EmbedBuilder()
+            {
+                Title = "Request BanSync Access",
+                Color = Color.Red
+            }.WithCurrentTimestamp();
+
             if (kind != BanSyncController.BanSyncGuildKind.Valid)
             {
-                await Context.Interaction.RespondAsync($"Your server does not meet the requirements.\nReason: `{kind}`", ephemeral: true);
+                embed.Description = "Your server doesn't meet the requirements";
+                embed.AddField("Reason", $"`{kind}`", true);
+                await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                return;
+            }
+            ConfigBanSyncModel? response;
+            try
+            {
+                response = await controller.RequestGuildEnable(Context.Guild.Id);
+            }
+            catch (Exception ex)
+            {
+                embed.Description = $"Failed to request guild BanSync support.\n```\n{ex.Message}\n```";
+                await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                await DiscordHelper.ReportError(ex, Context);
+                return;
+            }
+            if (response.State == Models.BanSyncGuildState.PendingRequest)
+            {
+                embed.Color = Color.Green;
+                embed.Description = "Your guild is under review for Ban Sync to be enabled.";
+                await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
                 return;
             }
 
-            await controller.RequestGuildEnable(Context.Guild.Id);
-            await Context.Interaction.RespondAsync($"Your guild is under review for Ban Sync to be enabled.");
+            embed.Description = $"Failed to request BanSync for this guild.\n`{response.State}`";
+            if (response.State == Models.BanSyncGuildState.Blacklisted || response.State == Models.BanSyncGuildState.RequestDenied)
+            {
+                embed.AddField("Reason", $"```\n{response.Reason}\n```", true);
+            }
+            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
         }
     }
 }
