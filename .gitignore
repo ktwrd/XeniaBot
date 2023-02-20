@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 Data
 SkidBot.Core/Properties/launchSettings.json
+.vscode
