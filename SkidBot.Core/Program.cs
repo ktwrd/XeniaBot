@@ -50,28 +50,52 @@ namespace SkidBot.Core
         {
             return MongoClient.GetDatabase(MongoDatabaseName);
         }
+
+        #region Main
         public static void Main(string[] args)
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            MainInit();
+            MainInit_ValidateMongo();
+
+            MainAsync(args).Wait();
+        }
+        private static void MainInit()
+        {
             ConfigManager = new ConfigManager();
             Config = ConfigManager.Read();
             IdGenerator = SnowflakeHelper.Create(Config.GeneratorId);
             HttpClient = new HttpClient();
+        }
+        private static void MainInit_ValidateMongo()
+        {
             try
             {
                 Log.Debug("Connecting to MongoDB");
                 MongoClient = new MongoClient(Config.MongoDBServer);
                 MongoClient.StartSession();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Error($"Failed to connect to MongoDB Server\n{ex}");
                 Quit(1);
             }
-
-            MainAsync(args).Wait();
         }
+        private static async Task MainAsync(string[] args)
+        {
+            CreateServiceProdiver();
+            Log.Debug("Connecting to Discord");
+            _discordController = Services.GetRequiredService<DiscordController>();
+            _discordController.Ready += (c) =>
+            {
+                RunServicesReadyFunc();
+            };
+            await _discordController.Run();
+
+            await Task.Delay(-1);
+        }
+        #endregion
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
@@ -96,20 +120,10 @@ namespace SkidBot.Core
             if (ConfigManager != null && Config != null)
                 ConfigManager.Write(Config);
         }
-        private static async Task MainAsync(string[] args)
-        {
-            CreateServiceProdiver();
-            Log.Debug("Connecting to Discord");
-            _discordController = Services.GetRequiredService<DiscordController>();
-            _discordController.Ready += (c) =>
-            {
-                RunServicesReadyFunc();
-            };
-            await _discordController.Run();
 
-            await Task.Delay(-1);
-        }
-
+        /// <summary>
+        /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
+        /// </summary>
         private static void CreateServiceProdiver()
         {
             Log.Debug("Initializing Services");
@@ -146,7 +160,7 @@ namespace SkidBot.Core
         /// </summary>
         private static List<Type> ServiceClassExtendsBaseController = new List<Type>();
         /// <summary>
-        /// Run the InitializeAsync function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>
+        /// Run the InitializeAsync function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
         /// </summary>
         private static void RunServicesInitFunc()
         {
@@ -156,6 +170,9 @@ namespace SkidBot.Core
                 return Task.CompletedTask;
             });
         }
+        /// <summary>
+        /// Call the OnReady function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
+        /// </summary>
         private static void RunServicesReadyFunc()
         {
             BaseServiceFunc((contr) =>
@@ -164,6 +181,10 @@ namespace SkidBot.Core
                 return Task.CompletedTask;
             });
         }
+        /// <summary>
+        /// For every instance of something that extends <see cref="BaseController"/> on <see cref="Services"/>, call <paramref name="func"/> so you can do what you want.
+        /// </summary>
+        /// <param name="func"></param>
         private static void BaseServiceFunc(Func<BaseController, Task> func)
         {
             var taskList = new List<Task>();
