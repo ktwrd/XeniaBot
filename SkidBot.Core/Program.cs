@@ -121,6 +121,8 @@ namespace SkidBot.Core
                 .AddSingleton<BanSyncConfigController>()
                 .AddSingleton<BanSyncController>();
 
+            SkidBot.Shared.AttributeHelper.InjectControllerAttributes(typeof(Program).Assembly, services);
+
             var built = services.BuildServiceProvider();
             Services = built;
         }

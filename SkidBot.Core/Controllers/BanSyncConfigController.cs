@@ -7,16 +7,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SkidBot.Shared;
 
 namespace SkidBot.Core.Controllers
 {
-    public class BanSyncConfigController
+    [SkidController]
+    public class BanSyncConfigController : BaseController
     {
-        private readonly IServiceProvider _services;
         public BanSyncConfigController(IServiceProvider services)
+            : base(services)
         {
-            _services = services;
         }
+
+        public override Task InitializeAsync() => Task.CompletedTask;
 
         public const string MongoCollectionName = "banSyncGuildConfig";
         protected static IMongoCollection<T>? GetCollection<T>()
