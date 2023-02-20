@@ -121,6 +121,7 @@ namespace SkidBot.Core
                 ConfigManager.Write(Config);
         }
 
+        #region Services
         /// <summary>
         /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
         /// </summary>
@@ -207,6 +208,8 @@ namespace SkidBot.Core
             Task.WaitAll(taskList.ToArray());
             Debugger.Break();
         }
+        #endregion
+        
         public static IdGenerator IdGenerator;
         public static string GetGuildPrefix(ulong id)
         {
