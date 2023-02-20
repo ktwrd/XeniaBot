@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SkidBot.Core.Helpers;
 using SkidBot.Core.Models;
+using SkidBot.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,23 +14,31 @@ using System.Threading.Tasks;
 
 namespace SkidBot.Core.Controllers
 {
-    public class CounterController
+    [SkidController]
+    public class CounterController : BaseController
     {
         protected static Dictionary<ulong, ulong> CachedItems = new Dictionary<ulong, ulong>();
 
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
-        private readonly IServiceProvider _services;
         public CounterController(IServiceProvider services)
+            : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
-            _services = services;
-
-            _discord.Ready += _discord_Ready;
-            if (_discord.IsReady)
-                _discord_Ready(_discord);
+        }
+        public override Task InitializeAsync()
+        {
             _discord.MessageRecieved += _discord_MessageRecieved;
+
+            return Task.CompletedTask;
+        }
+        public override async Task OnReady()
+        {
+            foreach (var item in await GetAll())
+            {
+                CachedItems.Add(item.ChannelId, item.Count);
+            }
         }
         #region MongoDB Wrapper
         public const string MongoCollectionName = "countingGuildModel";
@@ -162,14 +171,6 @@ namespace SkidBot.Core.Controllers
         }
         #endregion
         #endregion
-
-        private async void _discord_Ready(DiscordController controller)
-        {
-            foreach (var item in await GetAll())
-            {
-                CachedItems.Add(item.ChannelId, item.Count);
-            }
-        }
         private async Task _discord_MessageRecieved(SocketMessage arg)
         {
             if (!(arg is SocketUserMessage message))

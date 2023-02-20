@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SkidBot.Core.Models;
+using SkidBot.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,19 +13,23 @@ using System.Threading.Tasks;
 
 namespace SkidBot.Core.Controllers
 {
-    public class ConfessionController
+    [SkidController]
+    public class ConfessionController : BaseController
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
-        private readonly IServiceProvider _services;
         public ConfessionController(IServiceProvider services)
+            : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
-            _services = services;
+        }
 
+        public override Task InitializeAsync()
+        {
             _client.ButtonExecuted += _client_ButtonExecuted;
             _client.ModalSubmitted += _client_ModalSubmitted;
+            return Task.CompletedTask;
         }
 
         private async Task _client_ModalSubmitted(SocketModal arg)

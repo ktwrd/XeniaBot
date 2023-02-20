@@ -6,6 +6,7 @@ using MongoDB.Driver;
 using MongoDB.Driver.Core.Bindings;
 using SkidBot.Core.Exceptions;
 using SkidBot.Core.Models;
+using SkidBot.Shared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,17 +30,18 @@ namespace SkidBot.Core.Controllers
         public SocketTextChannel TicketChannel;
         public SocketGuildUser ClosingUser;
     }
-    public class TicketController
+    [SkidController]
+    public class TicketController : BaseController
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
-        private readonly IServiceProvider _services;
         public TicketController(IServiceProvider services)
+            : base (services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
-            _services = services;
         }
+        public override Task InitializeAsync() => Task.CompletedTask;
 
         public async Task<TicketModel> CreateTicket(ulong guildId)
         {

@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SkidBot.Core.Models;
+using SkidBot.Shared;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,24 +12,25 @@ using System.Threading.Tasks;
 
 namespace SkidBot.Core.Controllers
 {
-    public class BanSyncController
+    [SkidController]
+    public class BanSyncController : BaseController
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
         private readonly BanSyncConfigController _config;
-        private readonly IServiceProvider _services;
         public BanSyncController(IServiceProvider services)
+            : base (services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
             _config = services.GetRequiredService<BanSyncConfigController>();
-            _services = services;
 
             _client.UserJoined += _client_UserJoined;
             _client.UserUnbanned += _client_UserUnbanned;
             _client.UserBanned += _client_UserBanned;
-            Log.Debug("hi");
         }
+
+        public override Task InitializeAsync() => Task.CompletedTask;
 
         /// <summary>
         /// Add user to database and notify mutual servers. <see cref="NotifyBan(BanSyncInfoModel)"/>

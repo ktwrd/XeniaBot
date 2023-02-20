@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SkidBot.Shared;
+using System.Diagnostics;
 
 namespace SkidBot.Core.Controllers
 {

@@ -7,10 +7,14 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SkidBot.Core.Controllers;
 using SkidBot.Core.Helpers;
+using SkidBot.Shared;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -97,6 +101,10 @@ namespace SkidBot.Core
             CreateServiceProdiver();
             Log.Debug("Connecting to Discord");
             _discordController = Services.GetRequiredService<DiscordController>();
+            _discordController.Ready += (c) =>
+            {
+                RunServicesReadyFunc();
+            };
             await _discordController.Run();
 
             await Task.Delay(-1);
@@ -106,8 +114,9 @@ namespace SkidBot.Core
         {
             Log.Debug("Initializing Services");
             var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
-            var services = new ServiceCollection()
-                .AddSingleton(IdGenerator)
+            var services = new ServiceCollection();
+
+            services.AddSingleton(IdGenerator)
                 .AddSingleton(ConfigManager)
                 .AddSingleton(Config)
                 .AddSingleton(dsc)
@@ -115,16 +124,67 @@ namespace SkidBot.Core
                 .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
-                .AddSingleton<InteractionHandler>()
-                .AddSingleton<ConfessionController>()
-                .AddSingleton<TicketController>()
-                .AddSingleton<BanSyncConfigController>()
-                .AddSingleton<BanSyncController>();
+                .AddSingleton<InteractionHandler>();
 
-            SkidBot.Shared.AttributeHelper.InjectControllerAttributes(typeof(Program).Assembly, services);
+            AttributeHelper.InjectControllerAttributes(typeof(Program).Assembly, services);
+            ServiceClassExtendsBaseController = new List<Type>();
+
+            foreach (var item in services)
+            {
+                if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !ServiceClassExtendsBaseController.Contains(item.ServiceType))
+                {
+                    ServiceClassExtendsBaseController.Add(item.ServiceType);
+                }
+            }
 
             var built = services.BuildServiceProvider();
             Services = built;
+            RunServicesInitFunc();
+        }
+        /// <summary>
+        /// Used to generate a list of all types that extend <see cref="BaseController"/> in <see cref="Services"/> before it's built.
+        /// </summary>
+        private static List<Type> ServiceClassExtendsBaseController = new List<Type>();
+        /// <summary>
+        /// Run the InitializeAsync function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>
+        /// </summary>
+        private static void RunServicesInitFunc()
+        {
+            BaseServiceFunc((contr) =>
+            {
+                contr.InitializeAsync().Wait();
+                return Task.CompletedTask;
+            });
+        }
+        private static void RunServicesReadyFunc()
+        {
+            BaseServiceFunc((contr) =>
+            {
+                contr.OnReady().Wait();
+                return Task.CompletedTask;
+            });
+        }
+        private static void BaseServiceFunc(Func<BaseController, Task> func)
+        {
+            var taskList = new List<Task>();
+            foreach (var service in ServiceClassExtendsBaseController)
+            {
+                var svc = Services.GetServices(service);
+                foreach (var item in svc)
+                {
+                    if (item != null && item.GetType().IsAssignableTo(typeof(BaseController)))
+                    {
+                        taskList.Add(new Task(delegate
+                        {
+                            func((BaseController)item).Wait();
+                        }));
+                    }
+                }
+            }
+            foreach (var i in taskList)
+                i.Start();
+            Task.WaitAll(taskList.ToArray());
+            Debugger.Break();
         }
         public static IdGenerator IdGenerator;
         public static string GetGuildPrefix(ulong id)

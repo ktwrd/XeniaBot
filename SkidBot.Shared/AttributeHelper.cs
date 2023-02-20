@@ -11,16 +11,16 @@ namespace SkidBot.Shared
         public static void InjectControllerAttributes(Assembly assembly, IServiceCollection services)
         {
             var classes = GetTypesWithAttribute<SkidControllerAttribute>(assembly);
-            Debugger.Break();
             foreach (var item in classes)
             {
                 services.AddSingleton(item);
+                Console.WriteLine($"Injected {item}");
             }
         }
         public static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly)
         {
             foreach(Type type in assembly.GetTypes()) {
-                if (type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableFrom(typeof(BaseController))) {
+                if (type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableTo(typeof(BaseController))) {
                     yield return type;
                 }
             }

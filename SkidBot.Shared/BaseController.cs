@@ -10,6 +10,20 @@ namespace SkidBot.Shared
         {
             _services = services;
         }
+
+        /// <summary>
+        /// Called when all services have been added to the collection.
+        /// </summary>
+        /// <returns></returns>
         public abstract Task InitializeAsync();
+
+        /// <summary>
+        /// Called when discord is ready
+        /// </summary>
+        /// <returns></returns>
+        public virtual Task OnReady()
+        {
+            return Task.CompletedTask;
+        }
     }
 }
