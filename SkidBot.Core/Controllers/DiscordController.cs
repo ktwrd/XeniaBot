@@ -65,6 +65,8 @@ namespace SkidBot.Core.Controllers
         private async Task _client_Ready()
         {
             InvokeReady();
+            await _commandHandler.InitializeAsync();
+            await _interactionHandler.InitializeAsync();
         }
 
         private Task _client_Log(LogMessage arg)
