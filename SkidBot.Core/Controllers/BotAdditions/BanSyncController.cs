@@ -10,7 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SkidBot.Core.Controllers
+namespace SkidBot.Core.Controllers.BotAdditions
 {
     [SkidController]
     public class BanSyncController : BaseController
@@ -19,7 +19,7 @@ namespace SkidBot.Core.Controllers
         private readonly DiscordController _discord;
         private readonly BanSyncConfigController _config;
         public BanSyncController(IServiceProvider services)
-            : base (services)
+            : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
@@ -108,7 +108,7 @@ namespace SkidBot.Core.Controllers
         private async Task _client_UserJoined(SocketGuildUser arg)
         {
             var guildConfig = await _config.Get(arg.Guild.Id);
-            
+
             // Check if the guild has config stuff setup
             // If not then we just ignore
             if (guildConfig == null)
@@ -146,7 +146,7 @@ namespace SkidBot.Core.Controllers
             for (int i = 0; i < Math.Min(sortedData.Length, 25); i++)
             {
                 var item = sortedData[i];
-                
+
                 embed.AddField(
                     item.GuildName,
                     string.Join("\n", new string[] {

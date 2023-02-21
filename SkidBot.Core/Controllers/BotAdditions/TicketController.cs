@@ -18,7 +18,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace SkidBot.Core.Controllers
+namespace SkidBot.Core.Controllers.BotAdditions
 {
     public class InternalTicketDetails
     {
@@ -36,7 +36,7 @@ namespace SkidBot.Core.Controllers
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
         public TicketController(IServiceProvider services)
-            : base (services)
+            : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
@@ -291,7 +291,7 @@ namespace SkidBot.Core.Controllers
 
             // Fetch all messages in channel
             var messages = await channel.GetMessagesAsync(int.MaxValue).FlattenAsync();
-            
+
             var model = new TicketTranscriptModel()
             {
                 TicketUid = ticket.Uid,

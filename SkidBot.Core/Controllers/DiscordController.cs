@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using SkidBot.Core.Controllers.BotAdditions;
 using SkidBot.Core.Helpers;
 using System;
 using System.Collections.Generic;

@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SkidBot.Core.Controllers
+namespace SkidBot.Core.Controllers.BotAdditions
 {
     [SkidController]
     public class CounterController : BaseController

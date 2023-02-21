@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using SkidBot.Shared;
 using System.Diagnostics;
 
-namespace SkidBot.Core.Controllers
+namespace SkidBot.Core.Controllers.BotAdditions
 {
     [SkidController]
     public class BanSyncConfigController : BaseController

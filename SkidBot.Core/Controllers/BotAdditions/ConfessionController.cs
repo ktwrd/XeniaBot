@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace SkidBot.Core.Controllers
+namespace SkidBot.Core.Controllers.BotAdditions
 {
     [SkidController]
     public class ConfessionController : BaseController
@@ -84,7 +84,7 @@ namespace SkidBot.Core.Controllers
             var channel = guild.GetTextChannel(modalChannelId);
             var components = new ComponentBuilder()
                 .WithButton("Confess", "confessioncontroller_confess_button", ButtonStyle.Primary);
-            
+
             var message = await channel.SendMessageAsync(embed: confessionEmbed.Build(), components: components.Build());
             data.ModalMessageId = message.Id;
             await Set(data);

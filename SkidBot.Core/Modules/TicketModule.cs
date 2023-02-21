@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using SkidBot.Core.Controllers;
+using SkidBot.Core.Controllers.BotAdditions;
 using SkidBot.Core.Exceptions;
 using SkidBot.Core.Models;
 using System;
