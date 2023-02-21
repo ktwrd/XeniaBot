@@ -1,0 +1,51 @@
+{
+    "location": {
+        "name": "Perth",
+        "region": "Western Australia",
+        "country": "Australia",
+        "lat": -31.93,
+        "lon": 115.83,
+        "tz_id": "Australia/Perth",
+        "localtime_epoch": 1676973716,
+        "localtime": "2023-02-21 18:01"
+    },
+    "current": {
+        "last_updated_epoch": 1676972700,
+        "last_updated": "2023-02-21 17:45",
+        "temp_c": 26.0,
+        "feelslike_c": 27.5,
+        "temp_f": 78.8,
+        "feelslike_f": 81.5,
+        "is_day": 1,
+        "condition": {
+            "text": "Sunny",
+            "icon": "//cdn.weatherapi.com/weather/64x64/day/113.png",
+            "code": 1000
+        },
+        "wind_mph": 16.1,
+        "wind_kph": 25.9,
+        "wind_degree": 210,
+        "wind_dir": "SSW",
+        "pressure_mb": 1009.0,
+        "pressure_in": 29.8,
+        "precip_mm": 0.0,
+        "precip_in": 0.0,
+        "humidity": 61,
+        "cloud": 0,
+        "vis_km": 10.0,
+        "vis_miles": 6.0,
+        "uv": 7.0,
+        "gust_mph": 18.1,
+        "gust_kph": 29.2,
+        "air_quality": {
+            "co": 223.60000610351562,
+            "no2": 4.300000190734863,
+            "o3": 57.20000076293945,
+            "so2": 4.099999904632568,
+            "pm2_5": 4.0,
+            "pm10": 10.300000190734863,
+            "us-epa-index": 1,
+            "gb-defra-index": 1
+        }
+    }
+}
