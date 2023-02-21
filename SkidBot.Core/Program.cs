@@ -206,7 +206,6 @@ namespace SkidBot.Core
             foreach (var i in taskList)
                 i.Start();
             Task.WaitAll(taskList.ToArray());
-            Debugger.Break();
         }
         #endregion
         
