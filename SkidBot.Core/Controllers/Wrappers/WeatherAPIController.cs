@@ -85,7 +85,9 @@ namespace SkidBot.Core.Controllers.Wrappers
                 Log.Error("Cannot run function, controller disabled");
                 throw new Exception("Client failed validation when init. Aborting");
             }
+#if DEBUG
             Log.Debug($"Query {location} (airQuality: {airQuality})");
+#endif
             var url = WeatherAPIEndpoint.Current(_sysconfig.WeatherAPI_Key, location, airQuality);
             var response = await HttpClient.GetAsync(url);
             int statusCode = (int)response.StatusCode;
@@ -107,7 +109,9 @@ namespace SkidBot.Core.Controllers.Wrappers
                 Log.Error("Cannot run function, controller disabled");
                 throw new Exception("Client failed validation when init. Aborting");
             }
+#if DEBUG
             Log.Debug($"Requesting autocomplete for \"{query}\"");
+#endif
             string url = WeatherAPIEndpoint.Search(_sysconfig.WeatherAPI_Key, query);
             var response = await HttpClient.GetAsync(url);
             int statusCode = (int)response.StatusCode;
