@@ -47,6 +47,35 @@ namespace SkidBot.Core.Helpers
 
             return embed;
         }
+        public static EmbedBuilder GenerateEmbed_Forecast(WeatherResponse result, MeasurementSystem syst)
+        {
+            var embed = new EmbedBuilder()
+            {
+                Title = $"Forecast for {result.Location.Name}, {result.Location.Region}",
+                Url = $"https://google.com/maps/@{result.Location.Longitude},{result.Location.Latitude}",
+                Color = Color.Blue
+            }.WithCurrentTimestamp();
+
+            var fields = new List<(string, string)>();
+
+            foreach (var item in result.Forecast.ForecastDay)
+            {
+                fields.Add(($"{item.Date.Year}-{item.Date.Month}-{item.Date.Day} ",
+                    string.Join("\n", new string[]
+                    {
+                        $"High: " + (syst == MeasurementSystem.Metric ? $"{item.Day.TemperatureMaximumCelcius}°C" : $"{item.Day.TemperatureMaximumFahrenheit}°F"),
+                        $"Low: "   + (syst == MeasurementSystem.Metric ? $"{item.Day.TemperatureMinimumCelcius}°C" : $"{item.Day.TemperatureMinimumFahrenheit}°F"),
+                        $"Rain Chance: {item.Day.ChanceOfRain}%"
+                    })));
+            }
+
+            foreach (var (name, value) in fields)
+            {
+                embed.AddField(name, value, true);
+            }
+
+            return embed;
+        }
         public static async Task<EmbedBuilder> CurrentForecast(string location, MeasurementSystem syst)
         {
             var controller = Program.Services.GetRequiredService<WeatherAPIController>();
