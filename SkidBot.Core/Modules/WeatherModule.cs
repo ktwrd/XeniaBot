@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using SkidBot.Core.Controllers.Wrappers;
 using SkidBot.Core.Helpers;
+using SkidBot.Shared.Helpers;
 using SkidBot.Shared.Schema.WeatherAPI;
 using System;
 using System.Collections.Generic;
@@ -16,11 +17,6 @@ namespace SkidBot.Core.Modules
     [Group("weather", "Get info about the weather")]
     public class WeatherModule : InteractionModuleBase
     {
-        public enum MeasurementSystem
-        {
-            Metric,
-            Imperial
-        }
         [SlashCommand("get", "Fetch weather")]
         public async Task Fetch([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location, MeasurementSystem syst)
         {
