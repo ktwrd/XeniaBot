@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -13,6 +14,16 @@ namespace SkidBot.Shared.Schema.WeatherAPI
         public WeatherLocation? Location = null;
         [JsonPropertyName("current")]
         public ForecastCurrent? Current = null;
+        [JsonPropertyName("forecast")]
+        public ForecastParent? Forecast = null;
+        [JsonPropertyName("alerts")]
+        public WeatherAlert? Alert = null;
+
+        [JsonPropertyName("astronomy")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public AstronomyParent? AstronomyValue = null;
+
+        public ForecastAstrology? Astronomy => AstronomyValue?.Data;
         [JsonPropertyName("error")]
         public WeatherError? Error = null;
     }

@@ -88,6 +88,11 @@ namespace SkidBot.Shared.Schema.WeatherAPI
         public bool IsMoonUp => IsMoonUpValue == 1;
         public bool IsSunUp => IsSunUpValue == 1;
     }
+    public class AstronomyParent
+    {
+        [JsonPropertyName("astro")]
+        public ForecastAstrology? Data = null;
+    }
     public class ForecastHourItem : BaseForecastData
     {
         /// <summary>
