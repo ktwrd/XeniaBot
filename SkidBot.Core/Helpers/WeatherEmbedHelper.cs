@@ -19,6 +19,8 @@ namespace SkidBot.Core.Helpers
     {
         public static EmbedBuilder GenerateEmbed_CurrentForecast(WeatherResponse result, MeasurementSystem syst)
         {
+            // we can ignore all null checks since we check for any invalid WeatherResponse
+            // in WHelper.ValidateResponse_Current.
             var embed = new EmbedBuilder()
             {
                 Title = $"Weather in {result.Location.Name}, {result.Location.Region}",
@@ -70,9 +72,9 @@ namespace SkidBot.Core.Helpers
                 embed.Description = $"Exception occurred; `{ex.Message}`";
                 return embed;
             }
-            
+
             var validateResponse = WHelper.ValidateResponse_Current(result);
-            
+
             // when success is true, result will never be null.
             // any result null errors from now on can be ignored.
             if (!validateResponse.Success)
@@ -83,6 +85,5 @@ namespace SkidBot.Core.Helpers
 
             return GenerateEmbed_CurrentForecast(result, syst);
         }
-
     }
 }
