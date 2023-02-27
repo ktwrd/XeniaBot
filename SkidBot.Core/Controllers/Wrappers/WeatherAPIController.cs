@@ -96,6 +96,9 @@ namespace SkidBot.Core.Controllers.Wrappers
             if (!deser)
             {
                 Log.Error($"Failed to fetch {url}, invalid status code {statusCode}.\n{stringContent}");
+#if DEBUG
+                Debugger.Break();
+#endif
                 throw new Exception($"Invalid status code of {statusCode}");
             }
 
