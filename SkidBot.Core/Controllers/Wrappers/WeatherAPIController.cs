@@ -142,5 +142,37 @@ namespace SkidBot.Core.Controllers.Wrappers
 
             return instance;
         }
+    
+        public async Task<WeatherResponse?> FetchForecast(string location, int days = 7, bool airQuality = true, bool alerts = true)
+        {
+            if (!Enable)
+            {
+                Log.Error("Cannot run function, controller disabled");
+                throw new Exception("Client failed validation when init. Aborting");
+            }
+#if DEBUG
+            Log.Debug($"Requesting {days}d forecast for \"{location}\". (airQuality: {airQuality}, alerts: {alerts})");
+#endif
+            if (days < 1 || days > 10)
+                throw new ArgumentException("Argument \"days\" must be >= 1 or <= 10");
+
+            var url = WeatherAPIEndpoint.Forecast(_sysconfig.WeatherAPI_Key, location, days, airQuality, alerts);
+            var response = await HttpClient.GetAsync(url);
+
+            int statusCode = (int)response.StatusCode;
+            bool deser = WeatherAPIEndpoint.StatusCodeError.Contains(statusCode) || WeatherAPIEndpoint.StatusCodeSuccess.Contains(statusCode);
+            var stringContent = response.Content.ReadAsStringAsync().Result;
+            if (!deser)
+            {
+                Log.Error($"Failed to fetch {url}, invalid status code {statusCode}.\n{stringContent}");
+#if DEBUG
+                Debugger.Break();
+#endif
+                throw new Exception($"Invalid status code of {statusCode}");
+            }
+
+            var content = JsonSerializer.Deserialize<WeatherResponse>(stringContent, serializerOptions);
+            return content;
+        }
     }
 }
