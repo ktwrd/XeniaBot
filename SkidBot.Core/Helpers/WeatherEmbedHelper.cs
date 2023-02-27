@@ -114,5 +114,43 @@ namespace SkidBot.Core.Helpers
 
             return GenerateEmbed_CurrentForecast(result, syst);
         }
+        public static async Task<EmbedBuilder> Forecast(string location, MeasurementSystem syst)
+        {
+            var controller = Program.Services.GetRequiredService<WeatherAPIController>();
+            var embed = new EmbedBuilder()
+            {
+                Color = Color.Red
+            }.WithCurrentTimestamp();
+
+            if (controller == null)
+            {
+                Log.Error($"WeatherAPIController is null!");
+                embed.Description = "WeatherAPIController is null!";
+                return embed;
+            }
+
+            WeatherResponse? result = null;
+            try
+            {
+                result = await controller.FetchForecast(location, 3);
+            }
+            catch (Exception ex)
+            {
+                embed.Description = $"Exception occurred; `{ex.Message}`";
+                return embed;
+            }
+
+            var validateResponse = WHelper.ValidateResponse_Forecast(result);
+
+            // when success is true, result will never be null.
+            // any result null errors from now on can be ignored.
+            if (!validateResponse.Success)
+            {
+                embed.Description = validateResponse.Message;
+                return embed;
+            }
+
+            return GenerateEmbed_Forecast(result, syst);
+        }
     }
 }
