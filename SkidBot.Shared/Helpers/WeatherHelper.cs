@@ -102,7 +102,7 @@ namespace SkidBot.Shared.Helpers
         public static ValidateResponseResult ValidateResponse_Current(WeatherResponse? result)
             => ValidateResponse(result, true, true, false);
         public static ValidateResponseResult ValidateResponse_Forecast(WeatherResponse? result, bool matchAlerts = false)
-            => ValidateResponse(result, true, true, true, matchAlerts: matchAlerts);
+            => ValidateResponse(result, false, true, true, matchAlerts: matchAlerts);
         public static ValidateResponseResult ValidateResponse_Astro(WeatherResponse? result)
             => ValidateResponse(result, false, false, false, false, true);
     }
