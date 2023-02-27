@@ -23,5 +23,12 @@ namespace SkidBot.Core.Modules
             var resultEmbed = await WeatherEmbedHelper.CurrentForecast(location, syst);
             await Context.Interaction.RespondAsync(embed: resultEmbed.Build());
         }
+
+        [SlashCommand("forecast", "Fetch 3 day weather forecast")]
+        public async Task Forecast([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location, MeasurementSystem syst)
+        {
+            var resultEmbed = await WeatherEmbedHelper.Forecast(location, syst);
+            await Context.Interaction.RespondAsync(embed: resultEmbed.Build());
+        }
     }
 }
