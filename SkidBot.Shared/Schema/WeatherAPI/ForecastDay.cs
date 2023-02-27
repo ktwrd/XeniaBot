@@ -9,8 +9,10 @@ namespace SkidBot.Shared.Schema.WeatherAPI
 {
     public class ForecastDay
     {
-        public string DateString = "1970-01-01 00:00";
-        public long DateTimestamp = 0;
+        [JsonPropertyName("date")]
+        public string DateString;
+        [JsonPropertyName("date_epoch")]
+        public long DateTimestamp;
         public DateTime Date
         {
             get
@@ -18,9 +20,21 @@ namespace SkidBot.Shared.Schema.WeatherAPI
                 return DateTimeOffset.FromUnixTimeSeconds(DateTimestamp).Date;
             }
         }
-        public ForecastDayChild? Day = null;
-        public ForecastAstrology? Astrology = null;
-        public ForecastHourItem[] Hour = Array.Empty<ForecastHourItem>();
+        [JsonPropertyName("day")]
+        public ForecastDayChild? Day;
+        [JsonPropertyName("astro")]
+        public ForecastAstrology? Astrology;
+        [JsonPropertyName("hour")]
+        public ForecastHourItem[] Hour;
+
+        public ForecastDay()
+        {
+            DateString = "1970-01-01 00:00";
+            DateTimestamp = 0;
+            Day = null;
+            Astrology = null;
+            Hour = Array.Empty<ForecastHourItem>();
+        }
     }
     public class ForecastDayChild
     {
