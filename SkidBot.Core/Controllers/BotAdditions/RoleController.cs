@@ -109,7 +109,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
             var roleConfigAll = await _config.GetAll(false, uid: targetRoleConfigId);
             var roleConfig = roleConfigAll?.FirstOrDefault();
 
-            var validateResult = await ValidateReactionObjects(message, reaction, roleConfig, targetRoleConfigId);
+            var validateResult = ValidateReactionObjects(message, reaction, roleConfig, targetRoleConfigId);
             if (!validateResult)
                 return;
 
@@ -135,7 +135,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
             var roleConfigAll = await _config.GetAll(false, uid: targetRoleConfigId);
             var roleConfig = roleConfigAll?.FirstOrDefault();
 
-            var validateResult = await ValidateReactionObjects(message, reaction, roleConfig, targetRoleConfigId);
+            var validateResult = ValidateReactionObjects(message, reaction, roleConfig, targetRoleConfigId);
             if (!validateResult)
                 return;
 
@@ -144,7 +144,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
 
             await GrantUser(member, roleConfig);
         }
-        private async Task<bool> ValidateReactionObjects(ReactionMessage message, SocketReaction reaction, RoleConfigModel model, string targetRoleConfigId)
+        private bool ValidateReactionObjects(ReactionMessage message, SocketReaction reaction, RoleConfigModel model, string targetRoleConfigId)
         {
             if (model == null)
             {
