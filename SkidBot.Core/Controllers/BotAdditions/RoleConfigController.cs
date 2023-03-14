@@ -53,7 +53,6 @@ namespace SkidBot.Core.Controllers.BotAdditions
         }
         #endregion
 
-
         #region Get All
         /// <param name="all">When true, all other filter parameters are ignored</param>
         /// <param name="guildId"></param>
@@ -67,6 +66,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
             bool all = false,
             ulong? guildId = null,
             ulong? roleId = null,
+            string? uid = null,
             ulong? requiredRoleId = null,
             ulong? blacklistRoleId = null,
             string? name = null,
@@ -84,6 +84,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
                     // set mc based on the parameters
                     mc += guildId == null ? 0 : 1;
                     mc += roleId == null ? 0 : 1;
+                    mc += uid == null ? 0 : 1;
                     mc += requiredRoleId == null ? 0 : 1;
                     mc += blacklistRoleId == null ? 0 : 1;
                     mc += name == null ? 0 : 1;
@@ -91,6 +92,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
 
                     c += v.GuildId == guildId ? 1 : 0;
                     c += v.RoleId == roleId ? 1 : 0;
+                    c += v.Uid == uid ? 1 : 0;
                     c += v.RequiredRoleId == requiredRoleId ? 1 : 0;
                     c += v.BlacklistRoleId == blacklistRoleId ? 1 : 0;
                     c += v.Name == name ? 1 : 0;
