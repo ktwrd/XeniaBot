@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using static System.Collections.Specialized.BitVector32;
+
 using ReactionMessage = Discord.Cacheable<Discord.IUserMessage, ulong>;
 using ReactionChannel = Discord.Cacheable<Discord.IMessageChannel, ulong>;
 
