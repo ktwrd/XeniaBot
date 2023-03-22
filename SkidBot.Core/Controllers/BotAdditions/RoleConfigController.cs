@@ -117,6 +117,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
                 false,
                 model.GuildId,
                 model.RoleId,
+                model.Uid,
                 model.RequiredRoleId,
                 model.BlacklistRoleId,
                 model.Name,
