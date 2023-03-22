@@ -72,14 +72,6 @@ namespace SkidBot.Core.Controllers.BotAdditions
             return result;
         }
 
-        private bool FieldSearchFunction(LevelMemberModel model, ulong? user=null, ulong? guild=null)
-        {
-            return FieldSearchFunction(
-                model,
-                user,
-                guild,
-                (Func<ulong, bool>)null);
-        }
         private bool FieldSearchFunction(LevelMemberModel model, ulong? user = null, ulong? guild = null, Func<ulong, bool>? xpFilter = null)
         {
             int found = 0;
