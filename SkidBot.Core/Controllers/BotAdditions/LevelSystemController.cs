@@ -52,6 +52,43 @@ namespace SkidBot.Core.Controllers.BotAdditions
             }
         }
 
+        public class ExperienceMetadata
+        {
+            public ulong UserLevel;
+            public ulong UserXp;
+            public ulong NextLevelXp;
+            public double NextLevelProgress;
+        }
+        public const int XpPerLevel = 100;
+        public ExperienceMetadata Generate(LevelMemberModel model)
+        {
+            ulong level = 0;
+            ulong xp = model.Xp;
+            ulong targetXp = 0; // default: 0
+            double progress = 0;
+
+            while (true)
+            {
+                targetXp +=
+                    (XpPerLevel / 2 * (level ^ 2))
+                    + (XpPerLevel / 2 * level);
+
+                if (xp < targetXp)
+                {
+                    double perc = xp / targetXp;
+                    progress = Math.Round(perc, 3);
+                    return new ExperienceMetadata()
+                    {
+                        UserLevel = level,
+                        UserXp = xp,
+                        NextLevelXp = targetXp,
+                        NextLevelProgress = progress
+                    };
+                }
+                level += 1;
+            }
+        }
+
         public async Task GrantXp(LevelMemberModel model)
         {
             var data = await Get(model.UserId, model.GuildId);
@@ -70,25 +107,6 @@ namespace SkidBot.Core.Controllers.BotAdditions
             var collection = GetCollection();
             var result = await collection.FindAsync(filter);
             return result;
-        }
-
-        private bool FieldSearchFunction(LevelMemberModel model, ulong? user = null, ulong? guild = null, Func<ulong, bool>? xpFilter = null)
-        {
-            int found = 0;
-            int required = 0;
-
-            required += user == null ? 0 : 1;
-            required += guild == null ? 0 : 1;
-            required += xpFilter == null ? 0 : 1;
-
-            found += user == model.UserId ? 1 : 0;
-            found += guild == model.GuildId ? 1 : 0;
-            if (xpFilter != null)
-            {
-                found += xpFilter(model.Xp) ? 1 : 0;
-            }
-
-            return found >= required;
         }
 
         public async Task<LevelMemberModel?> Get(ulong? user=null, ulong? guild=null)
@@ -147,6 +165,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
             var exists = (await Get(model.UserId, model.GuildId)) != null;
 
             var collection = GetCollection();
+            // Replace if exists, if not then we just insert
             if (exists)
             {
                 await collection.ReplaceOneAsync(filter, model);
