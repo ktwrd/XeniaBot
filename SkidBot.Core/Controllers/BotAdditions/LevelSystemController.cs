@@ -1,4 +1,6 @@
 ﻿using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SkidBot.Core.Models;
@@ -15,10 +17,47 @@ namespace SkidBot.Core.Controllers.BotAdditions
     public class LevelSystemController : BaseController
     {
         private IMongoDatabase _db;
+        private DiscordSocketClient _client;
+        private Random _random;
         public LevelSystemController(IServiceProvider services)
             : base(services)
         {
             _db = services.GetRequiredService<IMongoDatabase>();
+            _client = services.GetRequiredService<DiscordSocketClient>();
+            _random = new Random();
+            _client.MessageReceived += _client_MessageReceived;
+        }
+
+        private async Task _client_MessageReceived(SocketMessage rawMessage)
+        {// ensures we don't process system/other bot messages
+            if (!(rawMessage is SocketUserMessage message))
+            {
+                return;
+            }
+            var context = new SocketCommandContext(_client, message);
+            var data = await Get(message.Author.Id, context.Guild.Id);
+            if (data == null)
+                data = new LevelMemberModel()
+                {
+                    UserId = message.Author.Id,
+                    GuildId = context.Guild.Id
+                };
+            await Set(data);
+
+            var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var previousMessageDiff = currentTimestamp - data.LastMessageTimestamp;
+            if (previousMessageDiff >= 8000)
+            {
+                await GrantXp(data);
+            }
+        }
+
+        public async Task GrantXp(LevelMemberModel model)
+        {
+            var data = await Get(model.UserId, model.GuildId);
+            var amount = (ulong)_random.Next(1, 5);
+            data.Xp += amount;
+            await Set(data);
         }
 
         public const string MongoCollectionName = "levelSystem";
@@ -33,13 +72,12 @@ namespace SkidBot.Core.Controllers.BotAdditions
             return result;
         }
 
-        private bool FieldSearchFunction(LevelMemberModel model, ulong? user=null, ulong? guild=null, ulong? xp=null)
+        private bool FieldSearchFunction(LevelMemberModel model, ulong? user=null, ulong? guild=null)
         {
             return FieldSearchFunction(
                 model,
                 user,
-                guild,
-                xp == null ? null : (v) => v == xp);
+                guild);
         }
         private bool FieldSearchFunction(LevelMemberModel model, ulong? user = null, ulong? guild = null, Func<ulong, bool>? xpFilter = null)
         {
