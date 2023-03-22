@@ -11,12 +11,14 @@ namespace SkidBot.Core.Models
         public ulong UserId { get; set; }
         public ulong GuildId { get; set; }
         public ulong Xp { get; set; }
+        public long LastMessageTimestamp { get; set; }
 
         public LevelMemberModel()
         {
             UserId = 0;
             GuildId = 0;
             Xp = 0;
+            LastMessageTimestamp = 0;
         }
     }
 }
