@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using SkidBot.Core.Models;
 using SkidBot.Shared;
 using System;
@@ -13,17 +14,19 @@ namespace SkidBot.Core.Controllers.BotAdditions
     [SkidController]
     public class RoleMessageConfigController : BaseController
     {
+        private IMongoDatabase _db;
         public RoleMessageConfigController(IServiceProvider services)
             : base(services)
         {
+            _db = services.GetRequiredService<IMongoDatabase>();
         }
 
         public const string MongoCollectionName = "roleMessageConfig";
-        protected static IMongoCollection<T>? GetCollection<T>()
+        protected IMongoCollection<T>? GetCollection<T>()
         {
-            return Program.GetMongoDatabase()?.GetCollection<T>(MongoCollectionName);
+            return _db.GetCollection<T>(MongoCollectionName);
         }
-        protected static IMongoCollection<RoleMessageConfigModel>? GetCollection()
+        protected IMongoCollection<RoleMessageConfigModel>? GetCollection()
             => GetCollection<RoleMessageConfigModel>();
 
         protected async Task<IAsyncCursor<RoleMessageConfigModel>?> InternalFetch(FilterDefinition<RoleMessageConfigModel> filter)
