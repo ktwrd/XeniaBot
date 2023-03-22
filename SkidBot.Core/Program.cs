@@ -135,6 +135,7 @@ namespace SkidBot.Core
                 .AddSingleton(ConfigManager)
                 .AddSingleton(Config)
                 .AddSingleton(dsc)
+                .AddSingleton(GetMongoDatabase())
                 .AddSingleton<DiscordController>()
                 .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()

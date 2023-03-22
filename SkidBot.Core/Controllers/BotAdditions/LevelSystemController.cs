@@ -77,7 +77,8 @@ namespace SkidBot.Core.Controllers.BotAdditions
             return FieldSearchFunction(
                 model,
                 user,
-                guild);
+                guild,
+                (Func<ulong, bool>)null);
         }
         private bool FieldSearchFunction(LevelMemberModel model, ulong? user = null, ulong? guild = null, Func<ulong, bool>? xpFilter = null)
         {
@@ -102,7 +103,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
         {
             var filter = Builders<LevelMemberModel>
                 .Filter
-                .Where(v => FieldSearchFunction(v, user, guild, null));
+                .Where(v => v.UserId == user && v.GuildId == guild);
 
             var result = await InternalFind(filter);
             var first = result.FirstOrDefault();
@@ -150,7 +151,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
         {
             var filter = Builders<LevelMemberModel>
                 .Filter
-                .Where(v => FieldSearchFunction(v, model.UserId, model.GuildId, null));
+                .Where(v => v.UserId == model.UserId && v.GuildId == model.GuildId);
             var exists = (await Get(model.UserId, model.GuildId)) != null;
 
             var collection = GetCollection();
@@ -158,6 +159,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
             {
                 await collection.ReplaceOneAsync(filter, model);
             }
+            else
             {
                 await collection.InsertOneAsync(model);
             }
