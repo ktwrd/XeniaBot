@@ -1,8 +1,10 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using SkidBot.Core.Helpers;
 using SkidBot.Core.Models;
 using SkidBot.Shared;
 using System;
@@ -29,7 +31,8 @@ namespace SkidBot.Core.Controllers.BotAdditions
         }
 
         private async Task _client_MessageReceived(SocketMessage rawMessage)
-        {// ensures we don't process system/other bot messages
+        {
+            // ensures we don't process system/other bot messages
             if (!(rawMessage is SocketUserMessage message))
             {
                 return;
@@ -48,55 +51,49 @@ namespace SkidBot.Core.Controllers.BotAdditions
             var previousMessageDiff = currentTimestamp - data.LastMessageTimestamp;
             if (previousMessageDiff >= 8000)
             {
-                await GrantXp(data);
-            }
-        }
-
-        public class ExperienceMetadata
-        {
-            public ulong UserLevel;
-            public ulong UserXp;
-            public ulong NextLevelXp;
-            public double NextLevelProgress;
-        }
-        public const int XpPerLevel = 100;
-        public ExperienceMetadata Generate(LevelMemberModel model)
-        {
-            ulong level = 0;
-            ulong xp = model.Xp;
-            ulong targetXp = 0; // default: 0
-            double progress = 0;
-
-            while (true)
-            {
-                targetXp +=
-                    (XpPerLevel / 2 * (level ^ 2))
-                    + (XpPerLevel / 2 * level);
-
-                if (xp < targetXp)
+                var (levelUp, metadata) = await GrantXp(data, message);
+                if (levelUp)
                 {
-                    double perc = xp / targetXp;
-                    progress = Math.Round(perc, 3);
-                    return new ExperienceMetadata()
-                    {
-                        UserLevel = level,
-                        UserXp = xp,
-                        NextLevelXp = targetXp,
-                        NextLevelProgress = progress
-                    };
+                    await message.ReplyAsync($"Leveled up to {metadata.UserLevel}!");
                 }
-                level += 1;
             }
         }
 
-        public async Task GrantXp(LevelMemberModel model)
+
+        /// <returns>Did the user "level up"</returns>
+        public async Task<(bool, ExperienceMetadata)> GrantXp(LevelMemberModel model, SocketUserMessage message)
         {
             var data = await Get(model.UserId, model.GuildId);
             var amount = (ulong)_random.Next(1, 5);
-            data.Xp += amount;
-            await Set(data);
-        }
 
+            // Generate previous and current metadata
+            var metadataPrevious = LevelSystemHelper.Generate(data);
+            data.Xp += amount;
+            var metadata = LevelSystemHelper.Generate(data);
+
+            // Set previous Ids
+            data.LastMessageChannelId = message.Channel.Id;
+            data.LastMessageId = message.Id;
+
+            bool levelUp = metadataPrevious.UserLevel != metadata.UserLevel;
+            if (levelUp)
+            {
+                OnUserLevelUp(model, metadataPrevious, metadata);
+            }
+
+            await Set(data);
+            return (levelUp, metadata);
+        }
+        protected void OnUserLevelUp(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
+        {
+            if (UserLevelUp != null)
+            {
+                UserLevelUp?.Invoke(model, previous, current);
+            }
+        }
+        public event ExperienceComparisonDelegate UserLevelUp;
+
+        #region MongoDB
         public const string MongoCollectionName = "levelSystem";
         protected IMongoCollection<LevelMemberModel> GetCollection()
         {
@@ -175,5 +172,6 @@ namespace SkidBot.Core.Controllers.BotAdditions
                 await collection.InsertOneAsync(model);
             }
         }
+        #endregion
     }
 }
