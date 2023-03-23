@@ -14,15 +14,6 @@ namespace SkidBot.Core.Modules
     [Group("xp", "Experience")]
     public class XpModule : InteractionModuleBase
     {
-        [SlashCommand("about", "What is the XP module")]
-        public async Task About()
-        {
-            await Context.Interaction.RespondAsync(embed: new EmbedBuilder(){
-                Title = "XP Module: About",
-                Description = "Every time you send a message (and the previous one was <8s ago) you get a random amount of XP (between 1 and 5)"
-            }.Build(), ephemeral: true);
-        }
-
         [SlashCommand("profile", "See the amount of XP you have and what level you are")]
         public async Task Profile()
         {
