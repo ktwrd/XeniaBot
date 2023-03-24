@@ -11,7 +11,7 @@
     <PackageReference Include="kate.shared" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="MimeTypesMap" Version="1.0.8" />
-    <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.19.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SkidBot.Shared\SkidBot.Shared.csproj" />
