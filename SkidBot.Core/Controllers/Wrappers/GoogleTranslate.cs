@@ -64,6 +64,15 @@ namespace SkidBot.Core.Controllers.Wrappers
                 return;
             }
         }
+        public IEnumerable<Language> GetLanguages()
+        {
+            if (_translateClient == null)
+            {
+                throw new Exception("Translation Client is null");
+            }
+
+            return _translateClient.ListLanguages();
+        }
 
         public async Task<TranslationResult> Translate(string message, string to="en", string? from=null)
         {
