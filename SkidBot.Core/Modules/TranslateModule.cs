@@ -15,8 +15,15 @@ namespace SkidBot.Core.Modules
     public class TranslateModule : InteractionModuleBase
     {
         [SlashCommand("translate", "Translate anything to whatever language you want")]
-        public async Task Translate(string phrase, string targetLanguage="en", string? sourceLanguage=null)
+        public async Task Translate(
+            string phrase,
+            [Summary("language_output"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string targetLanguage="en",
+            [Summary("language_input"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string? sourceLanguage=null)
         {
+            if (targetLanguage == "null" || targetLanguage.Length < 1)
+                targetLanguage = "en";
+            if (sourceLanguage == "null" || sourceLanguage?.Length < 1)
+                sourceLanguage = null;
             var controller = Program.Services.GetRequiredService<GoogleTranslate>();
             TranslationResult result = null;
             try
@@ -40,10 +47,10 @@ namespace SkidBot.Core.Modules
 
             var embed = new EmbedBuilder()
             {
-                Description = $"Detected language as {result.DetectedSourceLanguage ?? result.SpecifiedSourceLanguage ?? "null"}, using Model {result.ModelName}",
+                Description = $"Detected language as {result.DetectedSourceLanguage ?? result.SpecifiedSourceLanguage ?? "null"}",
             };
-            embed.AddField("From", result.OriginalText);
-            embed.AddField("To", result.TranslatedText);
+            embed.AddField($"From ({result.SpecifiedSourceLanguage ?? result.DetectedSourceLanguage})", result.OriginalText);
+            embed.AddField($"To ({result.TargetLanguage})", result.TranslatedText);
             embed.WithFooter("Translated with Google Cloud Translate API");
             await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
         }
