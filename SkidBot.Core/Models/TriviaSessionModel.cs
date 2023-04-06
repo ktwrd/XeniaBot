@@ -33,5 +33,16 @@ namespace SkidBot.Core.Models
         /// Value: User Answer
         /// </summary>
         public Dictionary<ulong, string> UserAnswers = new Dictionary<ulong, string>();
+
+        public static TriviaSessionQuestionModel FromQuestion(OpenTDBQuestion question)
+        {
+            var options = new JsonSerializerOptions()
+            {
+                IncludeFields = true
+            };
+            var questionString = JsonSerializer.Serialize(question, options);
+            var result = JsonSerializer.Deserialize<TriviaSessionQuestionModel>(questionString, options);
+            return result;
+        }
     }
 }
