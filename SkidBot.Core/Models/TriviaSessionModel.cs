@@ -31,6 +31,10 @@ namespace SkidBot.Core.Models
         /// Did the users abort this session?
         /// </summary>
         public bool WasAborted = false;
+        /// <summary>
+        /// When was this session created?
+        /// </summary>
+        public long Timestamp;
 
         public TriviaSessionModel()
         { }
