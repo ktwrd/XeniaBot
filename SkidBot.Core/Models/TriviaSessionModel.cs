@@ -11,29 +11,43 @@ namespace SkidBot.Core.Models
 {
     public class TriviaSessionModel : BaseModel
     {
-        public string SessionId;
+        public string SessionId = Guid.NewGuid().ToString();
         public ulong ChannelId;
         public ulong GuildId;
         public int MaxQuestions;
-        public TriviaSessionQuestionModel[] QuestionStack;
-        public int QuestionsCompleted;
+        public TriviaSessionQuestionModel[] QuestionStack = Array.Empty<TriviaSessionQuestionModel>();
+        public int QuestionsCompleted = 0;
+        public int CurrentQuestion = 0;
+        /// <summary>
+        /// Unix Timestamp when the current question timer started
+        /// </summary>
+        public long QuestionTimerStart = 0;
+        /// <summary>
+        /// Amount of time in seconds where the user must respond in time.
+        /// </summary>
+        public int QuestionAnswerTime = 10;
         public bool Complete = false;
+        /// <summary>
+        /// Did the users abort this session?
+        /// </summary>
         public bool WasAborted = false;
 
         public TriviaSessionModel()
+        { }
+        public TriviaSessionModel(ulong guildId, ulong channelId, int questionCount)
         {
-            QuestionStack = Array.Empty<TriviaSessionQuestionModel>();
-            QuestionsCompleted = 0;
-            SessionId = Guid.NewGuid().ToString();
+            GuildId = guildId;
+            ChannelId = channelId;
+            MaxQuestions = questionCount;
         }
     }
     public class TriviaSessionQuestionModel : OpenTDBQuestion
     {
+        public List<TriviaSessionQuestionAnswerModel> UserAnswers = new List<TriviaSessionQuestionAnswerModel>();
         /// <summary>
-        /// Key: Discord Snowflake
-        /// Value: User Answer
+        /// Unix timestamp when question was shown in session.
         /// </summary>
-        public Dictionary<ulong, string> UserAnswers = new Dictionary<ulong, string>();
+        public long QuestionTimestamp = 0;
 
         public static TriviaSessionQuestionModel FromQuestion(OpenTDBQuestion question)
         {
@@ -45,5 +59,18 @@ namespace SkidBot.Core.Models
             var result = JsonSerializer.Deserialize<TriviaSessionQuestionModel>(questionString, options);
             return result;
         }
+    }
+    public class TriviaSessionQuestionAnswerModel
+    {
+        /// <summary>
+        /// Discord User Snowflake
+        /// </summary>
+        public ulong UserId;
+        public string Answer = "";
+        /// <summary>
+        /// True if user did not answer within the time limit
+        /// </summary>
+        public bool TooSlow = false;
+        public long Timestamp = 0;
     }
 }
