@@ -35,7 +35,7 @@ namespace SkidBot.Core.Controllers.Wrappers
             }
             var response = await _httpClient.GetAsync(url);
             var stringContent = response.Content.ReadAsStringAsync().Result;
-            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+            if (response.StatusCode != HttpStatusCode.OK)
             {
                 string errorContent = $"Failed to fetch questions from \"{url}\" (code: {response.StatusCode})\n========String Content========\n{stringContent}";
                 Log.Error(errorContent);
@@ -47,6 +47,15 @@ namespace SkidBot.Core.Controllers.Wrappers
             {
                 throw new Exception("Failed to deserialize");
             }
+
+            if (deser.Results.Length < 1 || deser.ResponseCode == OpenTDBResponseCode.NoResults)
+                throw new TriviaException("No results");
+            if (deser.ResponseCode == OpenTDBResponseCode.InvalidParameter)
+                throw new TriviaException("Invalid Request Parameter");
+            if (deser.ResponseCode == OpenTDBResponseCode.TokenNotFound)
+                throw new TriviaException("Token not found");
+            if (deser.ResponseCode == OpenTDBResponseCode.TokenEmpty)
+                throw new TriviaException("Token is required but is empty");
             return deser;
         }
     }
