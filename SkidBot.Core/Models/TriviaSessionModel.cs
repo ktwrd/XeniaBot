@@ -23,7 +23,7 @@ namespace SkidBot.Core.Models
         {
             QuestionStack = Array.Empty<TriviaSessionQuestionModel>();
             QuestionsCompleted = 0;
-            SessionId = GeneralHelper.GenerateUID();
+            SessionId = Guid.NewGuid().ToString();
         }
     }
     public class TriviaSessionQuestionModel : OpenTDBQuestion
