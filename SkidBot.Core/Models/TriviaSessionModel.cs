@@ -48,6 +48,10 @@ namespace SkidBot.Core.Models
         /// Unix timestamp when question was shown in session.
         /// </summary>
         public long QuestionTimestamp = 0;
+        /// <summary>
+        /// Snowflake of the message that members use to answer this question.
+        /// </summary>
+        public ulong MessageId;
 
         public static TriviaSessionQuestionModel FromQuestion(OpenTDBQuestion question)
         {
