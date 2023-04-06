@@ -40,6 +40,8 @@ namespace SkidBot.Core.Controllers.BotAdditions
             var res = await InternalFetch(filter);
             return res.FirstOrDefault();
         }
+        public async Task<TriviaSessionModel?> Get(TriviaSessionModel model)
+            => await Get(model.SessionId);
         public async Task<TriviaSessionModel?> Get(string sessionId)
         {
             var filter = Builders<TriviaSessionModel>
