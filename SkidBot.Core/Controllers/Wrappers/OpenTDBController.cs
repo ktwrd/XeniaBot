@@ -1,12 +1,17 @@
-﻿using SkidBot.Shared;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SkidBot.Core.Controllers.BotAdditions;
+using SkidBot.Core.Models;
+using SkidBot.Shared;
 using SkidBot.Shared.Schema.OpenTDB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace SkidBot.Core.Controllers.Wrappers
 {
@@ -14,9 +19,11 @@ namespace SkidBot.Core.Controllers.Wrappers
     public class OpenTDBController : BaseController
     {
         private HttpClient _httpClient;
+        private TriviaSessionController _session;
         public OpenTDBController(IServiceProvider services)
             : base(services)
         {
+            _session = services.GetRequiredService<TriviaSessionController>();
             _httpClient = new HttpClient();
         }
 
@@ -35,7 +42,6 @@ namespace SkidBot.Core.Controllers.Wrappers
                 string errorContent = $"Failed to fetch questions from \"{url}\" (code: {response.StatusCode})\n========String Content========\n{stringContent}";
                 Log.Error(errorContent);
                 throw new Exception(errorContent);
-                return null;
             }
 
             var deser = JsonSerializer.Deserialize<OpenTDBResponse>(stringContent, Program.SerializerOptions);
