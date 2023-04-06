@@ -21,9 +21,13 @@ namespace SkidBot.Core.Controllers.Wrappers
         }
 
         public const string Endpoint = "https://opentdb.com";
-        public async Task<OpenTDBResponse> FetchQuestions(int amount = 10)
+        public async Task<OpenTDBResponse> FetchQuestions(int amount = 10, string? category = null)
         {
             var url = $"{Endpoint}/api.php?amount={amount}";
+            if (category != null)
+            {
+                url += $"&category={HttpUtility.UrlEncode(category)}";
+            }
             var response = await _httpClient.GetAsync(url);
             var stringContent = response.Content.ReadAsStringAsync().Result;
             if (response.StatusCode != System.Net.HttpStatusCode.OK)
