@@ -44,6 +44,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
 
             // Initialize new data and populate question stack.
             data = new TriviaSessionModel(guildId, channelId, questionCount);
+            data.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
             // Populate question stack
             OpenTDBResponse openTDBResponse;
@@ -98,7 +99,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
                 .Filter
                 .Where(v => v.GuildId == guildId && v.ChannelId == channelId);
             var res = await InternalFetch(filter);
-            return res.FirstOrDefault();
+            return res.ToList().OrderBy(v => v.Timestamp).FirstOrDefault();
         }
         public async Task<TriviaSessionModel?> Get(TriviaSessionModel model)
             => await Get(model.SessionId);
@@ -108,7 +109,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
                 .Filter
                 .Where(v => v.SessionId == sessionId);
             var res = await InternalFetch(filter);
-            return res.First();
+            return res.ToList().OrderBy(v => v.Timestamp).FirstOrDefault();
         }
 
         public async Task<IEnumerable<TriviaSessionModel>> GetAll(
@@ -146,7 +147,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
             }
 
             var res = await InternalFetch(filter);
-            return res.ToEnumerable();
+            return res.ToList().OrderBy(v => v.Timestamp);
         }
 
         public async Task<IEnumerable<TriviaSessionModel>> GetAll()
