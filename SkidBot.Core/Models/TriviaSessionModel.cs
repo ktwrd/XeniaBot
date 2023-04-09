@@ -19,7 +19,7 @@ namespace SkidBot.Core.Models
         public int QuestionsCompleted = 0;
         public int CurrentQuestion = 0;
         /// <summary>
-        /// Unix Timestamp when the current question timer started
+        /// Unix Timestamp when the current question timer started (milliseconds)
         /// </summary>
         public long QuestionTimerStart = 0;
         /// <summary>
