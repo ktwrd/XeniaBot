@@ -22,7 +22,6 @@ namespace SkidBot.Core.Controllers.BotAdditions
             _tdb = services.GetRequiredService<OpenTDBController>();
         }
 
-
         /// <summary>
         /// Safely create a trivia session.
         /// </summary>
@@ -77,6 +76,47 @@ namespace SkidBot.Core.Controllers.BotAdditions
 
             // Should never be null since we just pushed it to the database above.
             return await Get(data);
+        }
+        public async Task AnswerTriviaSessionQuestion(string sessionId, ulong userId, string answer)
+        {
+            TriviaSessionModel session = await Get(sessionId);
+            if (session == null)
+            {
+                throw new TriviaException("Trivia Session invalid");
+            }
+
+            var sessionQuestionTimestampEnd = session.QuestionTimerStart + (session.QuestionAnswerTime * 1000);
+            var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            var userAnswerResult = session.QuestionStack[session.CurrentQuestion].UserAnswers.Where(v => v.UserId == userId);
+            // User has answered already, abort
+            if (userAnswerResult.Any())
+            {
+                throw new TriviaException("You have already answered the question!");
+            }
+
+            // User has not answered and submitted their answer too late, abort and save to db.
+            if (currentTimestamp < sessionQuestionTimestampEnd)
+            {
+                session.QuestionStack[session.CurrentQuestion].UserAnswers.Add(new TriviaSessionQuestionAnswerModel()
+                {
+                    UserId = userId,
+                    Answer = "",
+                    TooSlow = true,
+                    Timestamp = currentTimestamp
+                });
+                await Set(session);
+                throw new TriviaException("You didn't answer in time!");
+            }
+
+            session.QuestionStack[session.CurrentQuestion].UserAnswers.Add(new TriviaSessionQuestionAnswerModel()
+            {
+                UserId = userId,
+                Answer = answer,
+                TooSlow = false,
+                Timestamp = currentTimestamp
+            });
+            await Set(session);
         }
 
         public const string MongoCollectionName = "triviaSession";
