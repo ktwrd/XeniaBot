@@ -116,6 +116,8 @@ namespace SkidBot.Core
             public ulong BanSync_GlobalLogChannel = 0;
             public ulong BanSync_RequestChannel = 0;
             public string WeatherAPI_Key = "";
+            public string ESix_Username = "";
+            public string ESix_ApiKey = "";
         }
     }
 }
