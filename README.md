@@ -58,6 +58,12 @@ When you first start Skid, it will definitely not work at all. Make sure that th
 | `ErrorGuild` | ✔️ | `0` | Guild where `ErrorChannel` is in |
 | `MongoDBServer` | ✔️ | `""` | MongoDB Connection URL, same thing you'd put into MongoDB Compass |
 
+## Environment Variables
+| Key | Type | Description |
+| --- | ---- | ----------- |
+| `SKIDBOT_WRITELOG` | boolean | Write log output to file. (default: false) |
+| `SKIDBOT_CONFIGLOCATION` | string | Config file location (default: `./config.json` ) |
+
 # Module Demos
 ## Confession Module
 ![screen recording](https://res.kate.pet/upload/03bcb777-911d-4774-9454-523b3b238267/DiscordCanary_S5Wm6jtwOd.gif)
