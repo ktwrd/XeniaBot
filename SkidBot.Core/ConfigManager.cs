@@ -118,6 +118,8 @@ namespace SkidBot.Core
             public ulong BanSync_RequestChannel = 0;
             public string WeatherAPI_Key = "";
             public GoogleCloudKey GCSKey_Translate = new GoogleCloudKey();
+            public string ESix_Username = "";
+            public string ESix_ApiKey = "";
         }
         public class GoogleCloudKey
         {
