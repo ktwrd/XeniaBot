@@ -399,3 +399,4 @@ FodyWeavers.xsd
 Data
 SkidBot.Core/Properties/launchSettings.json
 .vscode
+mongoData
