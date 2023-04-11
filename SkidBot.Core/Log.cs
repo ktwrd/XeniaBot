@@ -45,6 +45,8 @@ namespace SkidBot.Core
         private static void CreateTimer()
         {
             if (_timer != null) return;
+            if ((Environment.GetEnvironmentVariable("SKIDBOT_WRITELOG") ?? "true") == "false")
+                return;
             if (!Directory.Exists(Path.GetDirectoryName(LogOutput)))
                 Directory.CreateDirectory(Path.GetDirectoryName(LogOutput));
             _timer = new System.Timers.Timer();

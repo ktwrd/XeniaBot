@@ -100,7 +100,7 @@ namespace SkidBot.Core
         public ConfigValidationResponse Validate(Config config) => Validate(JsonSerializer.Serialize(config, Program.SerializerOptions) ?? "{}");
         #endregion
         
-        public string Location => Path.Combine(Directory.GetCurrentDirectory(), "config.json");
+        public string Location => Environment.GetEnvironmentVariable("SKIDBOT_CONFIGLOCATION") ?? Path.Combine(Directory.GetCurrentDirectory(), "config.json");
         public class Config
         {
             public string DiscordToken = "";
