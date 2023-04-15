@@ -17,22 +17,25 @@ namespace SkidBot.Core.Controllers.Wrappers
         public ESixController(IServiceProvider services) : base (services)
         {
             _config = services.GetRequiredService<ConfigManager.Config>();
-            
+
+            _client = new E621ClientBuilder()
+                .WithUserAgent("SkidBot", "1.0.0", "@kate@dariox.club", "Email")
+                .Build();
+            if (!_client.HasLogin)
+            {
+                Log.Error("Failed to login");
+            }
+        }
+
+        public override async Task InitializeAsync()
+        {
             try
             {
-                _client = new E621ClientBuilder()
-                    .WithUserAgent("SkidBot", "1.0.0", "@kate@dariox.club", "Email")
-                    .Build();
-                _client.LogInAsync(_config.ESix_Username, _config.ESix_ApiKey, false).Wait();
+                await _client.LogInAsync(_config.ESix_Username, _config.ESix_ApiKey, false);
             }
             catch (Exception ex)
             {
                 Log.Error($"Failed to login to e621\n{ex}");
-            }
-            if (!_client.HasLogin)
-            {
-                Log.Error("Failed to login");
-                Program.Quit(1);
             }
         }
 
