@@ -25,7 +25,7 @@ namespace SkidBot.Core.Modules
                     IconUrl = client.CurrentUser.GetAvatarUrl()
                 },
                 Timestamp = DateTimeOffset.UtcNow,
-                Description = "Heya I'm Skid, a general-purpose Discord Bot made by [kate](https://kate.pet). If you're having any issues with using Skid, don't hesitate to open a [Git Issue](https://github.com/ktwrd/shortcake-issues/issues)."
+                Description = "Heya I'm Skid, a general-purpose Discord Bot made by [kate](https://kate.pet). If you're having any issues with using Skid, don't hesitate to open a [Git Issue](https://github.com/ktwrd/skidbot-issues/issues)."
             };
             embed.AddField("Statistics", string.Join("\n", new string[]
             {
