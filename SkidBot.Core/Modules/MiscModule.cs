@@ -27,8 +27,12 @@ namespace SkidBot.Core.Modules
                 Timestamp = DateTimeOffset.UtcNow,
                 Description = "Heya I'm Skid, a general-purpose Discord Bot made by [kate](https://kate.pet). If you're having any issues with using Skid, don't hesitate to open a [Git Issue](https://github.com/ktwrd/shortcake-issues/issues)."
             };
-            embed.AddField("Uptime", DiscordHelper.GetUptimeString(), true);
-            embed.AddField("Latency", $"{client.Latency}ms", true);
+            embed.AddField("Statistics", string.Join("\n", new string[]
+            {
+                $"Guilds: {client.Guilds.Count}",
+                $"Latency: {client.Latency}ms",
+                $"Uptime: {DiscordHelper.GetUptimeString()}"
+            }));
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
     }
