@@ -28,6 +28,9 @@ public class ServerLogController : BaseController
         _discord.UserLeft += Event_UserLeave;
         _discord.UserBanned += Event_UserBan;
         _discord.UserUnbanned += Event_UserBanRemove;
+
+        _discord.MessageDeleted += Event_MessageDelete;
+        _discord.MessageUpdated += Event_MessageEdit;
     }
     private async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed)
     {
@@ -143,6 +146,41 @@ public class ServerLogController : BaseController
         await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
     }
     #endregion
+    
     #region Message Events
+
+    private async Task Event_MessageDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
+    {
+        var socketChannel = channel.Value as SocketGuildChannel;
+        var embed = new EmbedBuilder()
+            .WithTitle("Message Deleted")
+            .WithDescription($"Deleted in <#{channel.Id}> at <t:{message.Value.CreatedAt.ToUnixTimeMilliseconds()}:F>")
+            .AddField("Content", message.Value.Content)
+            .WithColor(Color.Orange);
+        await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed);
+    }
+
+    private async Task Event_MessageEdit(Cacheable<IMessage, ulong> previousMessage, SocketMessage currentMessage,
+        IMessageChannel channel)
+    {
+        var previousContent = previousMessage.Value?.Content ?? "";
+        if (previousContent == currentMessage.Content)
+            return;
+        var socketChannel = channel as SocketGuildChannel;
+        var embed = new EmbedBuilder()
+            .WithTitle("Message Edited")
+            .WithDescription($"From `{currentMessage.Author.Username}#{currentMessage.Author.Discriminator}`\nID: `{currentMessage.Author.Id}`")
+            .AddField("Difference", string.Join("\n",
+                new string[]
+                {
+                    "```",
+                    string.Join("\n", SGeneralHelper.GenerateDifference(previousContent, currentMessage.Content)),
+                    "```",
+                }))
+            .WithColor(new Color(255, 255, 255))
+            .WithUrl($"https://discord.com/channels/{socketChannel.Guild.Id}/{socketChannel.Id}/{currentMessage.Id}")
+            .WithThumbnailUrl(currentMessage.Author.GetAvatarUrl());
+        await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed);
+    }
     #endregion
 }
