@@ -400,3 +400,4 @@ Data
 SkidBot.Core/Properties/launchSettings.json
 .vscode
 mongoData
+config.json
