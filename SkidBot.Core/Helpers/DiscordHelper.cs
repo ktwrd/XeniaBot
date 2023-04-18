@@ -100,7 +100,7 @@ namespace SkidBot.Core.Helpers
                 context.Channel,
                 null);
         }
-        public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage message)
+        public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage? message)
         {
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
             var stack = Environment.StackTrace;
@@ -157,7 +157,7 @@ namespace SkidBot.Core.Helpers
                 context.Channel,
                 null);
         }
-        public static async Task ReportError(Exception response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage message)
+        public static async Task ReportError(Exception response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage? message)
         {
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
             var stack = Environment.StackTrace;
