@@ -13,27 +13,14 @@ namespace SkidBot.Core.Modules;
 [RequireUserPermission(GuildPermission.ManageGuild)]
 public class ServerLogModule : InteractionModuleBase
 {
-    private async Task<EmbedBuilder> Logic(LogEvent logEvent, ulong channelId)
+    private async Task<EmbedBuilder> Logic(ServerLogEvent logEvent, ulong channelId)
     {
         try
         {
             var controller = Program.Services.GetRequiredService<ServerLogConfigController>();
 
             var data = await controller.Get(Context.Guild.Id);
-            switch (logEvent)
-            {
-                case LogEvent.Fallback:
-                    data.DefaultLogChannel = channelId;
-                    break;
-                case LogEvent.Join:
-                    data.JoinChannel = channelId;
-                    break;
-                case LogEvent.Leave:
-                    data.LeaveChannel = channelId;
-                    break;
-                default:
-                    throw new Exception($"LogEvent {logEvent} not implemented in database");
-            }
+            data.SetChannel(logEvent, channelId);
 
             await controller.Set(data);
         }
@@ -58,21 +45,13 @@ public class ServerLogModule : InteractionModuleBase
             Color = Color.Green
         };
     }
-    public enum LogEvent
-    {
-        Fallback,
-        Leave,
-        Join,
-        Ban,
-        Kick
-    }
 
     [SlashCommand("setchannel", "Set channel")]
     public async Task SetChannel(
-        LogEvent logEvent, [ChannelTypes(ChannelType.Text)] ITextChannel channel)
+        ServerLogEvent logEvent,
+        [ChannelTypes(ChannelType.Text)] ITextChannel channel)
     {
-        //Console.WriteLine(JsonSerialize.Serialize(data.products["ENCHANTED_POTATO"].quick_status));
-        var res = await Logic(logEvent);
+        var res = await Logic(logEvent, channel.Id);
         await Context.Interaction.RespondAsync(embed: res.Build());
     }
     
