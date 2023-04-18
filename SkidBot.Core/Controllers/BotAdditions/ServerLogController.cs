@@ -49,6 +49,7 @@ public class ServerLogController : BaseController
         await logChannel.SendMessageAsync(embed: embed.Build());
     }
     
+    #region User Events
     private async Task Event_UserJoined(SocketGuildUser user)
     {
         var userSafe = user.Username.Replace("`", "\\`");
@@ -119,4 +120,7 @@ public class ServerLogController : BaseController
 
         await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
     }
+    #endregion
+    #region Message Events
+    #endregion
 }
