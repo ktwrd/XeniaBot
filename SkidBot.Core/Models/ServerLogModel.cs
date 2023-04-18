@@ -25,4 +25,49 @@ public class ServerLogModel : BaseModel
     public ulong? MessageEditChannel = null;
     public ulong? MessageDeleteChannel = null;
 
+    public ulong GetChannel(ServerLogEvent logEvent)
+    {
+        var dict = new Dictionary<ServerLogEvent, ulong?>()
+        {
+            {ServerLogEvent.Join, MemberJoinChannel},
+            {ServerLogEvent.Leave, MemberLeaveChannel},
+            {ServerLogEvent.Ban, MemberBanChannel},
+            {ServerLogEvent.Kick, MemberKickChannel},
+            {ServerLogEvent.MessageEdit, MessageEditChannel},
+            {ServerLogEvent.MessageDelete, MessageDeleteChannel}
+        };
+        dict.TryGetValue(logEvent, out var targetChannel);
+        return targetChannel ?? DefaultLogChannel;
+    }
+
+    public void SetChannel(ServerLogEvent logEvent, ulong? channelId)
+    {
+        
+        switch (logEvent)
+        {
+            case ServerLogEvent.Fallback:
+                DefaultLogChannel = channelId ?? 0;
+                break;
+            case ServerLogEvent.Join:
+                MemberJoinChannel = channelId;
+                break;
+            case ServerLogEvent.Leave:
+                MemberLeaveChannel = channelId;
+                break;
+            case ServerLogEvent.Ban:
+                MemberBanChannel = channelId;
+                break;
+            case ServerLogEvent.Kick:
+                MemberKickChannel = channelId;
+                break;
+            case ServerLogEvent.MessageEdit:
+                MessageEditChannel = channelId;
+                break;
+            case ServerLogEvent.MessageDelete:
+                MessageDeleteChannel = channelId;
+                break;
+            default:
+                throw new Exception($"LogEvent {logEvent} not implemented in database");
+        }
+    }
 }
