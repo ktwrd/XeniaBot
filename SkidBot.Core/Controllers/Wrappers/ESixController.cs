@@ -13,10 +13,10 @@ namespace SkidBot.Core.Controllers.Wrappers
     public class ESixController : BaseController
     {
         private IE621Client _client;
-        private ConfigManager.Config _config;
+        private SkidConfig _config;
         public ESixController(IServiceProvider services) : base (services)
         {
-            _config = services.GetRequiredService<ConfigManager.Config>();
+            _config = services.GetRequiredService<SkidConfig>();
 
             _client = new E621ClientBuilder()
                 .WithUserAgent("SkidBot", "1.0.0", "@kate@dariox.club", "Email")

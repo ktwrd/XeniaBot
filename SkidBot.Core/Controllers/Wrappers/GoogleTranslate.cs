@@ -18,13 +18,13 @@ namespace SkidBot.Core.Controllers.Wrappers
     [SkidController]
     public class GoogleTranslate : BaseController
     {
-        private ConfigManager.Config _config;
+        private SkidConfig _config;
         private GoogleCredential _gcsCred;
         private TranslationClient _translateClient;
         public GoogleTranslate(IServiceProvider services)
             : base(services)
         {
-            _config = services.GetRequiredService<ConfigManager.Config>();
+            _config = services.GetRequiredService<SkidConfig>();
         }
 
         private void Validate()
@@ -33,7 +33,7 @@ namespace SkidBot.Core.Controllers.Wrappers
                 _config.GCSKey_Translate == null;
             var configDictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(
                 JsonSerializer.Serialize(
-                    _config.GCSKey_Translate ?? new ConfigManager.GoogleCloudKey(),
+                    _config.GCSKey_Translate ?? new GoogleCloudKey(),
                     Program.SerializerOptions) ?? "{}",
                 Program.SerializerOptions) ?? new Dictionary<string, string>();
             int dictRequired = configDictionary.Count;

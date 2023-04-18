@@ -16,7 +16,7 @@ namespace SkidBot.Core.Controllers.Wrappers
     [SkidController]
     public class WeatherAPIController : BaseController
     {
-        protected ConfigManager.Config _sysconfig;
+        protected SkidConfig _sysconfig;
         public WeatherAPIController(IServiceProvider services)
             : base(services)
         {
@@ -28,7 +28,7 @@ namespace SkidBot.Core.Controllers.Wrappers
                 WriteIndented = true
             };
 
-            _sysconfig = services.GetRequiredService<ConfigManager.Config>();
+            _sysconfig = services.GetRequiredService<SkidConfig>();
             if (_sysconfig == null)
             {
                 Log.Error("Service \"ConfigManager.Config\" is null!!!");

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using SkidBot.Shared;
 
 namespace SkidBot.Core.Controllers
 {
@@ -17,13 +18,13 @@ namespace SkidBot.Core.Controllers
     {
         private readonly IServiceProvider _services;
         private readonly DiscordSocketClient _client;
-        private readonly ConfigManager.Config _config;
+        private readonly SkidConfig _config;
         private readonly CommandHandler _commandHandler;
         private readonly InteractionHandler _interactionHandler;
         private readonly BanSyncController _banSync;
         public DiscordController(IServiceProvider services)
         {
-            _config = services.GetRequiredService<ConfigManager.Config>();
+            _config = services.GetRequiredService<SkidConfig>();
             _client = services.GetRequiredService<DiscordSocketClient>();
 
             _commandHandler = services.GetRequiredService<CommandHandler>();

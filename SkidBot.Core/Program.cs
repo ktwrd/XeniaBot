@@ -25,7 +25,7 @@ namespace SkidBot.Core
     {
         #region Fields
         public static ConfigManager ConfigManager = null;
-        public static ConfigManager.Config Config = null;
+        public static SkidConfig Config = null;
         public static HttpClient HttpClient = null;
         public static MongoClient MongoClient = null;
         private static DiscordController _discordController;

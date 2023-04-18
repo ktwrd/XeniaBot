@@ -6,19 +6,20 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using SkidBot.Shared;
 
 namespace SkidBot.Core
 {
     public class ConfigManager
     {
         #region Read/Write
-        public Config Read()
+        public SkidConfig Read()
         {
-            var config = new Config();
+            var config = new SkidConfig();
             if (File.Exists(Location))
             {
                 var content = File.ReadAllText(Location);
-                config = JsonSerializer.Deserialize<Config>(content, Program.SerializerOptions);
+                config = JsonSerializer.Deserialize<SkidConfig>(content, Program.SerializerOptions);
                 var validationResponse = Validate(content);
                 if (validationResponse.Failure)
                 {
@@ -33,7 +34,7 @@ namespace SkidBot.Core
                     Program.Quit(1);
 
                     // This is only here to make VS2022 shut up
-                    return new Config();
+                    return new SkidConfig();
                 }
             }
             else
@@ -44,7 +45,7 @@ namespace SkidBot.Core
             Write(config);
             return config;
         }
-        public void Write(Config config)
+        public void Write(SkidConfig config)
         {
             var content = JsonSerializer.Serialize(config, Program.SerializerOptions);
             File.WriteAllText(Location, content);
@@ -64,8 +65,8 @@ namespace SkidBot.Core
         public ConfigValidationResponse Validate(Dictionary<string, object> configDict)
         {
             Dictionary<string, object> defaultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(
-                JsonSerializer.Serialize(new Config(), Program.SerializerOptions),
-                Program.SerializerOptions);
+                JsonSerializer.Serialize(new SkidConfig(), Program.SerializerOptions),
+                Program.SerializerOptions) ?? new Dictionary<string, object>();
 
             var unchangedNoIgnore = new List<string>();
             var missing = new List<string>();
@@ -97,65 +98,9 @@ namespace SkidBot.Core
             };
         }
         public ConfigValidationResponse Validate(string fileContent) => Validate(JsonSerializer.Deserialize<Dictionary<string, object>>(fileContent, Program.SerializerOptions) ?? new Dictionary<string, object>());
-        public ConfigValidationResponse Validate(Config config) => Validate(JsonSerializer.Serialize(config, Program.SerializerOptions) ?? "{}");
+        public ConfigValidationResponse Validate(SkidConfig config) => Validate(JsonSerializer.Serialize(config, Program.SerializerOptions) ?? "{}");
         #endregion
         
         public string Location => Environment.GetEnvironmentVariable("SKIDBOT_CONFIGLOCATION") ?? Path.Combine(Directory.GetCurrentDirectory(), "config.json");
-        public class Config
-        {
-            public string DiscordToken = "";
-            public bool DeveloperMode = true;
-            public ulong DeveloperMode_Server = 0;
-            public bool UserWhitelistEnable = false;
-            public ulong[] UserWhitelist = Array.Empty<ulong>();
-            public string Prefix = "sk.";
-            public ulong ErrorChannel = 0;
-            public ulong ErrorGuild = 0;
-            public string MongoDBServer = "";
-            public int GeneratorId = 0;
-            public ulong BanSync_AdminServer = 0;
-            public ulong BanSync_GlobalLogChannel = 0;
-            public ulong BanSync_RequestChannel = 0;
-            public string WeatherAPI_Key = "";
-            public GoogleCloudKey GCSKey_Translate = new GoogleCloudKey();
-            public string ESix_Username = "";
-            public string ESix_ApiKey = "";
-        }
-        public class GoogleCloudKey
-        {
-            [JsonPropertyName("type")]
-            public string Type;
-            [JsonPropertyName("project_id")]
-            public string ProjectId;
-            [JsonPropertyName("private_key_id")]
-            public string PrivateKeyId;
-            [JsonPropertyName("private_key")]
-            public string PrivateKey;
-            [JsonPropertyName("client_email")]
-            public string ClientEmail;
-            [JsonPropertyName("client_id")]
-            public string ClientId;
-            [JsonPropertyName("auth_uri")]
-            public string AuthUri;
-            [JsonPropertyName("token_uri")]
-            public string TokenUri;
-            [JsonPropertyName("auth_provider_x509_cert_url")]
-            public string AuthProviderCertUrl;
-            [JsonPropertyName("client_x509_cert_url")]
-            public string ClientCertUrl;
-            public GoogleCloudKey()
-            {
-                Type = "";
-                ProjectId = "";
-                PrivateKeyId = "";
-                PrivateKey = "";
-                ClientEmail = "";
-                ClientId = "";
-                AuthUri = "";
-                TokenUri = "";
-                AuthProviderCertUrl = "";
-                ClientCertUrl = "";
-            }
-        }
     }
 }
