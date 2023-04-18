@@ -67,6 +67,10 @@ namespace SkidBot.Core
 
         public static void SetColor(LogColor? color = null)
         {
+            
+            string? envEnableColor = Environment.GetEnvironmentVariable("SKIDBOT_LOG_COLOR");
+            if ((envEnableColor ?? "true") != "true")
+                return;
             LogColor targetColor = color ?? DefaultColor;
             Console.BackgroundColor = targetColor.Background;
             Console.ForegroundColor = targetColor.Foreground;

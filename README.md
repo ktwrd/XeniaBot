@@ -63,6 +63,7 @@ When you first start Skid, it will definitely not work at all. Make sure that th
 | --- | ---- | ----------- |
 | `SKIDBOT_WRITELOG` | boolean | Write log output to file. (default: false) |
 | `SKIDBOT_CONFIGLOCATION` | string | Config file location (default: `./config.json` ) |
+| `SKIDBOT_LOG_COLOR` | boolean | Enable colors in log output |
 
 # Module Demos
 ## Confession Module
