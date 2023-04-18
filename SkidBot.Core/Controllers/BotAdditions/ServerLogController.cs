@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -25,6 +26,8 @@ public class ServerLogController : BaseController
     {
         _discord.UserJoined += Event_UserJoined;
         _discord.UserLeft += Event_UserLeave;
+        _discord.UserBanned += Event_UserBan;
+        // _discord.UserUnbanned += Event_UserBanRemove;
     }
     private async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed)
     {
@@ -35,9 +38,13 @@ public class ServerLogController : BaseController
             return;
 
         var targetChannel = selectChannel(data) ?? data.DefaultLogChannel;
+        if (targetChannel == null || targetChannel == 0)
+            return;
 
         var server = _discord.GetGuild(serverId);
         var logChannel = server.GetTextChannel(targetChannel);
+        if (logChannel == null)
+            return;
 
         await logChannel.SendMessageAsync(embed: embed.Build());
     }
@@ -62,7 +69,7 @@ public class ServerLogController : BaseController
             .WithThumbnailUrl(user.GetAvatarUrl())
             .WithColor(Color.Green);
 
-        await EventHandle(user.Guild.Id, (v) => v.JoinChannel, embed);
+        await EventHandle(user.Guild.Id, (v) => v.MemberJoinChannel, embed);
     }
     private async Task Event_UserLeave(SocketGuild guild, SocketUser user)
     {
@@ -84,6 +91,32 @@ public class ServerLogController : BaseController
             .WithThumbnailUrl(user.GetAvatarUrl())
             .WithColor(Color.Red);
 
-        await EventHandle(guild.Id, (v) => v.LeaveChannel, embed);
+        await EventHandle(guild.Id, (v) => v.MemberLeaveChannel, embed);
+    }
+
+    private async Task Event_UserBan(SocketUser user, SocketGuild guild)
+    {
+        var userSafe = user.Username.Replace("`", "\\`");
+        var banDetails = await guild.GetBanAsync(user.Id);
+        var reason = banDetails.Reason ?? "<Unknown Reason>";
+        var embed = new EmbedBuilder()
+            .WithTitle("User Left")
+            .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
+            {
+                "```",
+                $"{userSafe}#{user.Discriminator}",
+                $"ID: {user.Id}",
+                "```",
+            }))
+            .AddField("Account Age", string.Join("\n", new string[]
+            {
+                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
+                $"`{user.CreatedAt}`"
+            }))
+            .AddField("Ban Reason", $"```\n{reason}\n```")
+            .WithThumbnailUrl(user.GetAvatarUrl())
+            .WithColor(Color.Red);
+
+        await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
     }
 }
