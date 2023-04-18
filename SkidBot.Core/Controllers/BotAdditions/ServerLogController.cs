@@ -27,7 +27,7 @@ public class ServerLogController : BaseController
         _discord.UserJoined += Event_UserJoined;
         _discord.UserLeft += Event_UserLeave;
         _discord.UserBanned += Event_UserBan;
-        // _discord.UserUnbanned += Event_UserBanRemove;
+        _discord.UserUnbanned += Event_UserBanRemove;
     }
     private async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed)
     {
@@ -101,7 +101,7 @@ public class ServerLogController : BaseController
         var banDetails = await guild.GetBanAsync(user.Id);
         var reason = banDetails.Reason ?? "<Unknown Reason>";
         var embed = new EmbedBuilder()
-            .WithTitle("User Left")
+            .WithTitle("User Banned")
             .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
             {
                 "```",
@@ -115,6 +115,28 @@ public class ServerLogController : BaseController
                 $"`{user.CreatedAt}`"
             }))
             .AddField("Ban Reason", $"```\n{reason}\n```")
+            .WithThumbnailUrl(user.GetAvatarUrl())
+            .WithColor(Color.Red);
+
+        await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+    }
+    private async Task Event_UserBanRemove(SocketUser user, SocketGuild guild)
+    {
+        var userSafe = user.Username.Replace("`", "\\`");
+        var embed = new EmbedBuilder()
+            .WithTitle("User Unbanned")
+            .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
+            {
+                "```",
+                $"{userSafe}#{user.Discriminator}",
+                $"ID: {user.Id}",
+                "```",
+            }))
+            .AddField("Account Age", string.Join("\n", new string[]
+            {
+                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
+                $"`{user.CreatedAt}`"
+            }))
             .WithThumbnailUrl(user.GetAvatarUrl())
             .WithColor(Color.Red);
 
