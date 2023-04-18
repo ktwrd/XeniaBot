@@ -22,7 +22,7 @@ public class ServerLogController : BaseController
         _discord = services.GetRequiredService<DiscordSocketClient>();
     }
 
-    public override async Task InitializeAsync()
+    public override Task InitializeAsync()
     {
         _discord.UserJoined += Event_UserJoined;
         _discord.UserLeft += Event_UserLeave;
@@ -31,6 +31,8 @@ public class ServerLogController : BaseController
 
         _discord.MessageDeleted += Event_MessageDelete;
         _discord.MessageUpdated += Event_MessageEdit;
+
+        return Task.CompletedTask;
     }
     private async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed)
     {
