@@ -14,6 +14,8 @@
     <PackageReference Include="MimeTypesMap" Version="1.0.8" />
     <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
     <PackageReference Include="Noppes.E621Client" Version="0.8.0" />
+    <PackageReference Include="prometheus-net" Version="8.0.0" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SkidBot.Shared\SkidBot.Shared.csproj" />
