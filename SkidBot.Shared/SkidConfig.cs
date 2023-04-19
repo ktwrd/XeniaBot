@@ -32,6 +32,11 @@ public class SkidConfig
     public GoogleCloudKey GCSKey_Translate = new GoogleCloudKey();
     public string ESix_Username = "";
     public string ESix_ApiKey = "";
+
+    public bool   Prometheus_Enable = true;
+    public int    Prometheus_Port = 4828;
+    public string Prometheus_Url = "/metrics";
+    public string Prometheus_Hostname = "+";
 }
 public class GoogleCloudKey
 {
