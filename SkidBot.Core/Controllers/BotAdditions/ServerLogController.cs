@@ -176,7 +176,7 @@ public class ServerLogController : BaseController
                 new string[]
                 {
                     "```",
-                    string.Join("\n", SGeneralHelper.GenerateDifference(previousContent, currentMessage.Content)),
+                    string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentMessage?.Content ?? "")),
                     "```",
                 }))
             .WithColor(new Color(255, 255, 255))

@@ -9,6 +9,10 @@ public static class SGeneralHelper
 {
     public static string[] GenerateDifference(string before, string after)
     {
+        if (before == null)
+            before = "";
+        if (after == null)
+            after = "";
         var diff = InlineDiffBuilder.Diff(before, after);
         var lines = new List<string>();
         foreach (var line in diff.Lines)
