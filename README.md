@@ -1,6 +1,8 @@
 # Skid Discord Bot
 Another General-purpose Discord Bot for the masses.
 
+[Invite](https://discord.com/oauth2/authorize?client_id=1067393803427790929&scope=bot&permissions=415471496311)
+
 - [Setup Development Environment](#setup-development-environment)
 - [`config.json` Description](#config-description)
 - [Module Demos](#module-demos)
