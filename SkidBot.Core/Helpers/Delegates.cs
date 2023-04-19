@@ -8,4 +8,5 @@ using System.Threading.Tasks;
 namespace SkidBot.Core.Helpers
 {
     public delegate void DiscordControllerDelegate(DiscordController controller);
+    public delegate Task TaskDelegate();
 }
