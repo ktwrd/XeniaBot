@@ -59,7 +59,7 @@ namespace SkidBot.Core.Controllers
             }
         }
 
-        public event Func<SocketMessage, Task> MessageRecieved;
+        public event Func<SocketMessage, Task> MessageReceived;
         #endregion
 
         #region Event Handling
@@ -108,7 +108,8 @@ namespace SkidBot.Core.Controllers
             return new DiscordSocketConfig()
             {
                 GatewayIntents = GatewayIntents.All,
-                UseInteractionSnowflakeDate = false
+                UseInteractionSnowflakeDate = false,
+                AlwaysDownloadUsers = true
             };
         }
     }
