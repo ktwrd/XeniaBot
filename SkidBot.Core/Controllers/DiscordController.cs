@@ -40,7 +40,7 @@ namespace SkidBot.Core.Controllers
         {
             _client.MessageReceived += (arg) =>
             {
-                MessageRecieved?.Invoke(arg);
+                MessageReceived?.Invoke(arg);
                 return Task.CompletedTask;
             };
 
