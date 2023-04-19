@@ -29,7 +29,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
         }
         public override Task InitializeAsync()
         {
-            _discord.MessageRecieved += _discord_MessageRecieved;
+            _discord.MessageReceived += DiscordMessageReceived;
 
             return Task.CompletedTask;
         }
@@ -171,7 +171,7 @@ namespace SkidBot.Core.Controllers.BotAdditions
         }
         #endregion
         #endregion
-        private async Task _discord_MessageRecieved(SocketMessage arg)
+        private async Task DiscordMessageReceived(SocketMessage arg)
         {
             if (!(arg is SocketUserMessage message))
                 return;

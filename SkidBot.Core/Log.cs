@@ -19,18 +19,24 @@ namespace SkidBot.Core
         #region Init Colors
         public static LogColor WarnColor = new LogColor
         {
-            Background = ConsoleColor.Yellow,
-            Foreground = ConsoleColor.Black
+            Background = ConsoleColor.DarkYellow,
+            Foreground = ConsoleColor.White
         };
         public static LogColor ErrorColor = new LogColor
         {
-            Background = ConsoleColor.Red,
-            Foreground = ConsoleColor.Black
+            Background = ConsoleColor.DarkRed,
+            Foreground = ConsoleColor.White
         };
         public static LogColor DebugColor = new LogColor
         {
-            Background = ConsoleColor.Blue,
+            Background = ConsoleColor.DarkBlue,
             Foreground = ConsoleColor.White
+        };
+
+        public static LogColor NoteColor = new LogColor
+        {
+            Background = ConsoleColor.Magenta,
+            Foreground = ConsoleColor.Black
         };
         public static LogColor DefaultColor = new LogColor
         {
@@ -79,15 +85,25 @@ namespace SkidBot.Core
         public static string ErrorPrefix = "[ERR] ";
         public static string LogPrefix = "[LOG] ";
         public static string DebugPrefix = "[DEBG]";
+        public static string NotePrefix = "[NOTE]";
         public static bool ShowMethodName = true;
         public static bool ShowTimestamp = false;
 
-        public static void Warn(string content, [CallerMemberName] string methodname = null, [CallerFilePath] string methodfile = null)
+        public static void Warn(string content, [CallerMemberName] string methodname = null,
+            [CallerFilePath] string methodfile = null)
             => WriteLine(content, WarnColor, WarnPrefix, ShowMethodName, methodname, methodfile);
-        public static void Error(string content, [CallerMemberName] string methodname = null, [CallerFilePath] string methodfile = null)
+
+        public static void Error(string content, [CallerMemberName] string methodname = null,
+            [CallerFilePath] string methodfile = null)
             => WriteLine(content, ErrorColor, ErrorPrefix, ShowMethodName, methodname, methodfile);
-        public static void Debug(string content, [CallerMemberName] string methodname = null, [CallerFilePath] string methodfile = null)
+
+        public static void Debug(string content, [CallerMemberName] string methodname = null,
+            [CallerFilePath] string methodfile = null)
             => WriteLine(content, DebugColor, DebugPrefix, ShowMethodName, methodname, methodfile);
+
+        public static void Note(string content, [CallerMemberName] string methodname = null,
+            [CallerFilePath] string methodfile = null)
+            => WriteLine(content, NoteColor, NotePrefix, ShowMethodName, methodfile, methodfile);
 
         #region Object Overload
         public static void Warn(object content, [CallerMemberName] string methodname = null, [CallerFilePath] string methodfile = null)
