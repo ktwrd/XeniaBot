@@ -32,6 +32,9 @@ namespace SkidBot.Core.Controllers.BotAdditions
 
         private async Task _client_MessageReceived(SocketMessage rawMessage)
         {
+            // Ignore messages from bots
+            if (rawMessage.Author.IsBot)
+                return;
             // ensures we don't process system/other bot messages
             if (!(rawMessage is SocketUserMessage message))
             {
