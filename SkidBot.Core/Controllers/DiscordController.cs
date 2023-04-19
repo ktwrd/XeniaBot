@@ -21,7 +21,6 @@ namespace SkidBot.Core.Controllers
         private readonly SkidConfig _config;
         private readonly CommandHandler _commandHandler;
         private readonly InteractionHandler _interactionHandler;
-        private readonly BanSyncController _banSync;
         public DiscordController(IServiceProvider services)
         {
             _config = services.GetRequiredService<SkidConfig>();
