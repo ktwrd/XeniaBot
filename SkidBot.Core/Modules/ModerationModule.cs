@@ -150,6 +150,71 @@ public class ModerationModule : InteractionModuleBase
         
         await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`", ephemeral: true);
     }
+
+
+    [SlashCommand("purge", "Purge messages")]
+    [RequireUserPermission(GuildPermission.ManageMessages)]
+    public async Task PurgeMessages(
+        int count,
+        [ChannelTypes(ChannelType.Text)] IChannel? channel = null)
+    {
+        var client = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var guild = client.GetGuild(Context.Guild.Id);
+        
+        // Use Context.Channel when no channel given.
+        SocketTextChannel targetChannel = guild.GetTextChannel(channel?.Id ?? Context.Channel.Id);
+        SocketTextChannel currentChannel = guild.GetTextChannel(Context.Channel.Id);
+
+        // Let the user know that it might take a while.
+        
+        await Context.Interaction.RespondAsync($"Calculating (this may take a while)");
+        List<IMessage> messageList = new List<IMessage>();
+        try
+        {
+            messageList = await FetchRecursiveMessages(targetChannel, count);
+        }
+        catch (Exception e)
+        {
+            
+            await currentChannel.SendMessageAsync(embed: DiscordHelper.BaseEmbed()
+                .WithTitle("Failed to fetch message list")
+                .WithDescription($"```\n{e.Message}\n```")
+                .WithColor(Color.Red).Build());
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        if (messageList.Count < 1)
+        {
+            await currentChannel.SendMessageAsync(embed: DiscordHelper.BaseEmbed()
+                .WithTitle("No messages found")
+                .WithColor(Color.Red).Build());
+            return;
+        }
+
+        var notifyMessage = await currentChannel.SendMessageAsync(embed: DiscordHelper.BaseEmbed()
+            .WithTitle($"Purged {messageList.Count} messages")
+            .WithDescription(string.Join("\n", new string[]
+            {
+                $"```",
+                $"From: {messageList.Last().Timestamp}",
+                $"To  : {messageList.First().Timestamp}",
+                $"```"
+            })).Build());
+        try
+        {
+            await targetChannel.DeleteMessagesAsync(messageList);
+        }
+        catch (Exception e)
+        {
+            await notifyMessage.ReplyAsync(embed: DiscordHelper.BaseEmbed()
+                .WithTitle("Failed to delete messages")
+                .WithDescription($"```\n{e.Message}\n```")
+                .WithColor(Color.Red).Build());
+            await DiscordHelper.ReportError(e, Context);
+        }
+    }
+
     private async Task<List<IMessage>> FetchRecursiveMessages(SocketTextChannel channel, int? max = null)
     {
         List<IMessage> messageList = new List<IMessage>();
