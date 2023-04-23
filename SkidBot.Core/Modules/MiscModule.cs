@@ -32,9 +32,13 @@ namespace SkidBot.Core.Modules
             };
             embed.AddField("Statistics", string.Join("\n", new string[]
             {
-                $"Guilds: {client.Guilds.Count}",
-                $"Latency: {client.Latency}ms",
-                $"Uptime: {DiscordHelper.GetUptimeString()}"
+                "```",
+                $"Guilds:     {client.Guilds.Count}",
+                $"Latency:    {client.Latency}ms",
+                $"Uptime:     {DiscordHelper.GetUptimeString()}",
+                $"Version:    {Program.Version}",
+                $"Build Date: {Program.VersionDate}",
+                "```"
             }));
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
