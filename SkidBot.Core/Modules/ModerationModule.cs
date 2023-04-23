@@ -13,6 +13,7 @@ namespace SkidBot.Core.Modules;
 
 public class ModerationModule : InteractionModuleBase
 {
+    /// <exception cref="NonfatalException">When failed to fetch client/guild/member. This should be displayed to the user as well as the developers.</exception>
     private async Task<SocketGuildUser?> SafelyFetchUser(ulong userId)
     {
         var embed = DiscordHelper.BaseEmbed()
