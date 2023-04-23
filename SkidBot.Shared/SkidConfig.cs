@@ -37,6 +37,9 @@ public class SkidConfig
     public int    Prometheus_Port = 4828;
     public string Prometheus_Url = "/metrics";
     public string Prometheus_Hostname = "+";
+
+    public ulong Invite_ClientId = 0;
+    public ulong Invite_Permissions = 415471496311;
 }
 public class GoogleCloudKey
 {
