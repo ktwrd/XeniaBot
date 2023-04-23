@@ -5,10 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 using SkidBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Flurl.Util;
+using System.Text.Json;
 using SkidBot.Core.Controllers;
 using SkidBot.Shared;
 
@@ -98,6 +100,19 @@ namespace SkidBot.Core.Modules
                 .WithDescription(
                     "To invite SkidBot to your own server, click on the \"Invite SkidBot\" link and it should take you to Discord's Website to invite SkidBot to any of your servers!")
                 .Build());
+        }
+
+        [SlashCommand("fetch_config", "Fetch data from config file")]
+        [RequireOwner]
+        public async Task FetchConfig()
+        {
+            var config = Program.Services.GetRequiredService<SkidConfig>();
+            var fileContent = JsonSerializer.Serialize(config, Program.SerializerOptions);
+            await Context.Interaction.RespondWithFileAsync(
+                new MemoryStream(Encoding.UTF8.GetBytes(fileContent)), 
+                "config.json",
+                "Attached as JSON",
+                ephemeral: true);
         }
     }
 }
