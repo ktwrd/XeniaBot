@@ -45,6 +45,42 @@ namespace SkidBot.Core
         /// </summary>
         public static long StartTimestamp { get; private set; }
         public const string MongoDatabaseName = "shortcake";
+
+        public static string Version
+        {
+            get
+            {
+                string result = "";
+                var targetAppend = VersionRaw;
+                result += targetAppend ?? "null_version";
+#if DEBUG
+                result += "-DEBUG";
+#endif
+                return result;
+            }
+        }
+
+        private static string? VersionRaw
+        {
+            get
+            {
+                var asm = Assembly.GetAssembly(typeof(Program));
+                var name = asm?.GetName();
+                if (name == null || name.Version == null)
+                {
+                    if (name == null)
+                    {
+                        Log.Warn($"Assembly.GetName() resulted in null (when Assembly is from {asm?.Location})");
+                    }
+                    else if (name.Version == null)
+                    {
+                        Log.Warn($"Assembly.GetName().Version is null (when Assembly is from {asm?.Location})");
+                    }
+                    return null;
+                }
+                return name.Version.ToString();
+            }
+        }
         #endregion
         public static IMongoDatabase? GetMongoDatabase()
         {
