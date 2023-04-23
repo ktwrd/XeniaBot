@@ -93,4 +93,58 @@ public class ModerationModule : InteractionModuleBase
             embed: embed.Build(),
             ephemeral: true);
     }
+
+    [SlashCommand("ban", "Ban member from server")]
+    [RequireUserPermission(GuildPermission.BanMembers)]
+    public async Task BanMember(SocketGuildUser user, string? reason = null, int pruneDays=0)
+    {
+        var embed = DiscordHelper.BaseEmbed()
+            .WithTitle("Ban Member");
+        if (pruneDays < 0)
+        {
+            embed.WithColor(Color.Red).WithDescription("Parameter `pruneDays` cannot be less than `0`");
+            await Context.Interaction.RespondAsync(
+                embed: embed.Build(),
+                ephemeral: true);
+            return;
+        }
+        
+        SocketGuildUser? member = await SafelyFetchUser(user.Id);
+        if (member == null)
+            return;
+
+        try
+        {
+            await member.BanAsync(pruneDays, reason);
+        }
+        catch (Exception e)
+        {
+            embed.WithDescription(string.Join("\n", new string[]
+            {
+                "Failed to ban member, this has been reported to the developers.",
+                "```",
+                e.Message,
+                "```"
+            }));
+            embed.WithColor(Color.Red);
+            await Context.Interaction.RespondAsync(
+                embed: embed.Build(),
+                ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        string description = $"Successfully banned `{user.Username}#{user.DiscriminatorValue}`";
+        if (pruneDays > 0)
+        {
+            description += $"\nRemoved all messages in the last {pruneDays} day" + (pruneDays > 1 ? "s" : "");
+        }
+
+        embed.WithDescription(description);
+        embed.WithColor(Color.Blue);
+        if (reason != null)
+            embed.AddField("Reason", reason);
+        
+        await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`", ephemeral: true);
+    }
 }
