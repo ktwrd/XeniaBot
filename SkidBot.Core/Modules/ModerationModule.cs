@@ -153,7 +153,7 @@ public class ModerationModule : InteractionModuleBase
     private async Task<List<IMessage>> FetchRecursiveMessages(SocketTextChannel channel, int? max = null)
     {
         List<IMessage> messageList = new List<IMessage>();
-        IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
+        IEnumerable<IMessage> messages = await channel.GetMessagesAsync(Math.Min(max ?? 100, 100)).FlattenAsync();
         
         bool allowContinue = true;
         while (allowContinue)
@@ -161,7 +161,7 @@ public class ModerationModule : InteractionModuleBase
             foreach (var item in messages)
             {
                 // Once we've reached our limit, we break the loop
-                if (max != null && messageList.Count > max)
+                if (max != null && messageList.Count + 1 > max)
                 {
                     allowContinue = false;
                     break;
