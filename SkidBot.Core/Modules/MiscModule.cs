@@ -20,26 +20,23 @@ namespace SkidBot.Core.Modules
         public async Task Info()
         {
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
-            var embed = new EmbedBuilder()
-            {
-                Author = new EmbedAuthorBuilder()
+            var embed = DiscordHelper.BaseEmbed()
+                .WithDescription(string.Join(" ", new string[]
                 {
-                    Name = client.CurrentUser.Username,
-                    IconUrl = client.CurrentUser.GetAvatarUrl()
-                },
-                Timestamp = DateTimeOffset.UtcNow,
-                Description = "Heya I'm Skid, a general-purpose Discord Bot made by [kate](https://kate.pet). If you're having any issues with using Skid, don't hesitate to open a [Git Issue](https://github.com/ktwrd/skidbot-issues/issues)."
-            };
-            embed.AddField("Statistics", string.Join("\n", new string[]
-            {
-                "```",
-                $"Guilds:     {client.Guilds.Count}",
-                $"Latency:    {client.Latency}ms",
-                $"Uptime:     {DiscordHelper.GetUptimeString()}",
-                $"Version:    {Program.Version}",
-                $"Build Date: {Program.VersionDate}",
-                "```"
-            }));
+                    "Heya I'm Skid, a general-purpose Discord Bot made by [kate](https://kate.pet).",
+                    "If you're having any issues with using Skid, don't hesitate to open a [Git Issue](https://github.com/ktwrd/skidbot-issues/issues)."
+                }))
+                .AddField("Statistics", string.Join("\n", new string[]
+                {
+                    "```",
+                    $"Guilds:     {client.Guilds.Count}",
+                    $"Latency:    {client.Latency}ms",
+                    $"Uptime:     {DiscordHelper.GetUptimeString()}",
+                    $"Version:    {Program.Version}",
+                    $"Build Date: {Program.VersionDate}",
+                    "```"
+                }))
+                .WithColor(new Color(255, 255, 255));
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
 
@@ -48,9 +45,14 @@ namespace SkidBot.Core.Modules
         public async Task ReloadMetrics()
         {
             var config = Program.Services.GetRequiredService<SkidConfig>();
+            var embed = DiscordHelper.BaseEmbed()
+                .WithTitle("Reload Prometheus Metrics");
+            
             if (!config.Prometheus_Enable)
             {
-                await Context.Interaction.RespondAsync("Prometheus exporter is disabled", ephemeral: true);
+                await Context.Interaction.RespondAsync(
+                    embed: embed.WithDescription("Prometheus Exporter is disabled").Build(),
+                    ephemeral: true);
                 return;
             }
 
@@ -58,7 +60,7 @@ namespace SkidBot.Core.Modules
             if (prom == null)
             {
                 await Context.Interaction.RespondAsync(
-                    "Failed to get required service \"PrometheusController\" since it's null.",
+                    embed: embed.WithDescription("Failed to get required service \"PrometheusController\" since it's null.").Build(),
                     ephemeral: true);
                 return;
             }
@@ -70,12 +72,17 @@ namespace SkidBot.Core.Modules
             catch (Exception e)
             {
                 await Context.Interaction.RespondAsync(
-                    $"```\n{e.Message}\n```",
+                    embed: embed
+                        .WithDescription($"```\n{e.Message}\n```")
+                        .WithTitle("Failed to Reload Prometheus Metrics")
+                        .Build(),
                     ephemeral: true);
                 throw;
             }
 
-            await Context.Interaction.RespondAsync("Done!", ephemeral: true);
+            await Context.Interaction.RespondAsync(
+                embed: embed.WithDescription("Done!").Build(),
+                ephemeral: true);
         }
 
         [SlashCommand("invite", "Get invite link for SkidBot")]
