@@ -3,6 +3,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <AssemblyVersion>1.0.*</AssemblyVersion>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Deterministic>false</Deterministic>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.1" />
