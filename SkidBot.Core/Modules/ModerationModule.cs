@@ -55,4 +55,42 @@ public class ModerationModule : InteractionModuleBase
         }
         return null;
     }
+    
+    [SlashCommand("kick", "Kick member from server")]
+    [RequireUserPermission(GuildPermission.KickMembers)]
+    public async Task KickMember(SocketGuildUser user, string? reason = null)
+    {
+        SocketGuildUser? member = await SafelyFetchUser(user.Id);
+        if (member == null)
+            return;
+
+        var embed = DiscordHelper.BaseEmbed().WithTitle("Kick Member");
+        
+        try
+        {
+            await member.KickAsync(reason);
+        }
+        catch (Exception e)
+        {
+            embed.WithDescription(string.Join("\n", new string[]
+            {
+                "Failed to kick member, this has been reported to the developers",
+                "```",
+                e.Message,
+                "```"
+            }));
+            embed.WithColor(Color.Red);
+            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+        }
+
+        embed.WithDescription($"Successfully kicked `{user.Username}#{user.DiscriminatorValue}`")
+             .WithColor(Color.Blue);
+        if (reason != null)
+            embed.AddField("Reason", reason);
+        
+        await Context.Interaction.RespondAsync(
+            embed: embed.Build(),
+            ephemeral: true);
+    }
 }
