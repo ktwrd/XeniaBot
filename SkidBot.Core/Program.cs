@@ -60,7 +60,28 @@ namespace SkidBot.Core
             }
         }
 
+        public static string VersionFull => $"{Version} ({VersionDate})";
+
+        public static DateTime VersionDate
+        {
+            get
+            {
+                DateTime buildDate = new DateTime(2000, 1, 1)
+                    .AddDays(VersionReallyRaw?.Build ?? 0)
+                    .AddSeconds((VersionReallyRaw?.Revision ?? 0) * 2);
+                return buildDate;
+            }
+        }
+
         private static string? VersionRaw
+        {
+            get
+            {
+                return VersionReallyRaw?.ToString() ?? null;
+            }
+        }
+
+        private static Version? VersionReallyRaw
         {
             get
             {
@@ -78,7 +99,7 @@ namespace SkidBot.Core
                     }
                     return null;
                 }
-                return name.Version.ToString();
+                return name.Version;
             }
         }
         #endregion
