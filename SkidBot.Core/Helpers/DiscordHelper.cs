@@ -16,6 +16,20 @@ namespace SkidBot.Core.Helpers
 {
     public static class DiscordHelper
     {
+        public static EmbedBuilder BaseEmbed(EmbedBuilder? embed=null)
+        {
+            if (embed == null)
+                embed = new EmbedBuilder();
+
+            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
+            var icon = client.CurrentUser.GetAvatarUrl();
+
+            return embed
+                .WithTimestamp(DateTimeOffset.UtcNow)
+                .WithFooter(new EmbedFooterBuilder()
+                    .WithText($"SkidBot v{Program.Version}")
+                    .WithIconUrl(icon));
+        }
         public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage argu)
         {
             if (!(argu is SocketUserMessage message))
