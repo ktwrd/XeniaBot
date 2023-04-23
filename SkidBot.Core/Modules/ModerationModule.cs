@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using SkidBot.Core.Helpers;
 
 namespace SkidBot.Core.Modules;
@@ -146,5 +149,38 @@ public class ModerationModule : InteractionModuleBase
             embed.AddField("Reason", reason);
         
         await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`", ephemeral: true);
+    }
+    private async Task<List<IMessage>> FetchRecursiveMessages(SocketTextChannel channel, int? max = null)
+    {
+        List<IMessage> messageList = new List<IMessage>();
+        IEnumerable<IMessage> messages = await channel.GetMessagesAsync().FlattenAsync();
+        
+        bool allowContinue = true;
+        while (allowContinue)
+        {
+            foreach (var item in messages)
+            {
+                // Once we've reached our limit, we break the loop
+                if (max != null && messageList.Count > max)
+                {
+                    allowContinue = false;
+                    break;
+                }
+                
+                messageList.Add(item);
+                var isLast = messages.Last().Id == item.Id;
+                if (isLast)
+                {
+                    messages = await channel.GetMessagesAsync(fromMessageId: item.Id, Direction.Before).FlattenAsync();
+                    var last = messages.LastOrDefault();
+                    if (last == null || last?.Id == item.Id || last?.Timestamp > item.Timestamp)
+                    {
+                        allowContinue = false;
+                    }
+                }
+            }
+        }
+
+        return messageList;
     }
 }
