@@ -51,6 +51,7 @@ public class BB_MessageModel : BigBrotherBaseModel, ISnowflakeEntity
     
     public ulong AuthorId { get; set; }
     public ulong ChannelId { get; set; }
+    public ulong GuildId { get; set; }
 
     public BB_MessageModel()
     {
@@ -93,6 +94,7 @@ public class BB_MessageModel : BigBrotherBaseModel, ISnowflakeEntity
             Id = message.Id,
             AuthorId = message.Author.Id,
             ChannelId = message.Channel.Id,
+            GuildId = 0
         };
     }
 }
