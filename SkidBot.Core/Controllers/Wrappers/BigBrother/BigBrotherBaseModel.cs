@@ -52,6 +52,8 @@ public class BB_MessageModel : BigBrotherBaseModel, ISnowflakeEntity
     public ulong AuthorId { get; set; }
     public ulong ChannelId { get; set; }
     public ulong GuildId { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTimeOffset DeletedTimestamp { get; set; }
 
     public BB_MessageModel()
     {
@@ -59,6 +61,8 @@ public class BB_MessageModel : BigBrotherBaseModel, ISnowflakeEntity
         ContentClean = "";
         Embeds = Array.Empty<BB_MessageEmbed>();
         Tags = Array.Empty<BB_MessageTag>();
+        IsDeleted = false;
+        DeletedTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(0);
     }
 
     public static BB_MessageModel FromMessage(IMessage message)
