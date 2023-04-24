@@ -38,12 +38,9 @@ public class BigBrotherGenericConfigController<T> : BaseConfigController<T> wher
         var first = findResult.FirstOrDefault();
         if (first != null)
         {
-            await collection.ReplaceOneAsync(filter, model);
+            await collection.DeleteManyAsync(filter);
         }
-        else
-        {
-            await collection.InsertOneAsync(model);
-        }
+        await collection.InsertOneAsync(model);
 
         if (OnModelSet != null)
         {

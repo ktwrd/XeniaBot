@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using SkidBot.Core.Controllers.Wrappers;
+using SkidBot.Core.Controllers.Wrappers.BigBrother;
 using SkidBot.Core.Helpers;
 using SkidBot.Core.Models;
 using SkidBot.Shared;
@@ -15,11 +17,13 @@ public class ServerLogController : BaseController
 {
     private ServerLogConfigController _config;
     private DiscordSocketClient _discord;
+    private BigBrotherController _bb;
     public ServerLogController(IServiceProvider services)
         : base(services)
     {
         _config = services.GetRequiredService<ServerLogConfigController>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
+        _bb = services.GetRequiredService<BigBrotherController>();
     }
 
     public override Task InitializeAsync()
@@ -30,9 +34,43 @@ public class ServerLogController : BaseController
         _discord.UserUnbanned += Event_UserBanRemove;
 
         _discord.MessageDeleted += Event_MessageDelete;
-        _discord.MessageUpdated += Event_MessageEdit;
+        // _discord.MessageUpdated += Event_MessageEdit;
+        _bb.MessageChange += _bb_MessageChange_Update;
 
         return Task.CompletedTask;
+    }
+
+    private async void _bb_MessageChange_Update(MessageChangeType type, BB_MessageModel current, BB_MessageModel? previous)
+    {
+        if (type != MessageChangeType.Update)
+            return;
+
+        var previousContent = previous?.Content ?? "";
+        var currentContent = current.Content ?? "";
+        if (previousContent == currentContent)
+            return;
+
+        var author = _discord.GetUser(current.AuthorId);
+        if (author == null)
+            return;
+
+        var embed = DiscordHelper.BaseEmbed()
+            .WithTitle("Message Edited")
+            .WithDescription(string.Join("\n", new string[]
+            {
+                $"From: `{author.Username}#{author.Discriminator}`",
+                $"ID: `{current.AuthorId}`"
+            }))
+            .WithColor(new Color(255, 255, 255))
+            .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
+            .WithThumbnailUrl(author.GetAvatarUrl())
+            .AddField("Difference", string.Join("\n", new string[]
+            {
+                "```",
+                string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? "")),
+                "```"
+            }));
+        await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
     }
     private async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed)
     {
@@ -154,11 +192,24 @@ public class ServerLogController : BaseController
     private async Task Event_MessageDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
     {
         var socketChannel = channel.Value as SocketGuildChannel;
-        var embed = new EmbedBuilder()
+        if (socketChannel?.Guild == null)
+            return;
+        var funkyMessage = await _bb.BBMessageConfig.Get(message.Id);
+        
+        string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
+        long timestamp = 
+            message.Value?.CreatedAt.ToUnixTimeMilliseconds()
+            ?? funkyMessage?.CreatedAt.ToUnixTimeMilliseconds()
+            ?? 0;
+        SocketUser? author = _discord.GetUser(message.Value?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
+        var embed = DiscordHelper.BaseEmbed()
             .WithTitle("Message Deleted")
-            .WithDescription($"Deleted in <#{channel.Id}> at <t:{message.Value.CreatedAt.ToUnixTimeMilliseconds()}:F>")
-            .AddField("Content", message.Value.Content)
+            .WithDescription($"Deleted in <#{channel.Id}> at <t:{timestamp}:F>")
             .WithColor(Color.Orange);
+        if (author != null)
+            embed.WithThumbnailUrl(author.GetAvatarUrl());
+        if (messageContent.Length > 0)
+            embed.AddField("Content", messageContent);
         await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed);
     }
 
@@ -169,7 +220,7 @@ public class ServerLogController : BaseController
         if (previousContent == currentMessage.Content)
             return;
         var socketChannel = channel as SocketGuildChannel;
-        var embed = new EmbedBuilder()
+        var embed = DiscordHelper.BaseEmbed()
             .WithTitle("Message Edited")
             .WithDescription($"From `{currentMessage.Author.Username}#{currentMessage.Author.Discriminator}`\nID: `{currentMessage.Author.Id}`")
             .AddField("Difference", string.Join("\n",

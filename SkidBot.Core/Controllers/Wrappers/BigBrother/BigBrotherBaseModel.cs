@@ -13,10 +13,8 @@ public class BigBrotherBaseModel : BaseModel
     public ulong Snowflake;
 }
 
-public class BB_MessageModel : BigBrotherBaseModel, ISnowflakeEntity
+public class BB_MessageModel : BigBrotherBaseModel
 {
-    public new ulong Snowflake => Id;   
-    
     #region IMessage
     public string Content { get; set; }
     public string ContentClean { get; set; }
@@ -46,7 +44,6 @@ public class BB_MessageModel : BigBrotherBaseModel, ISnowflakeEntity
     
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
-    public ulong Id { get; set; }
     #endregion
     
     public ulong AuthorId { get; set; }
@@ -65,41 +62,48 @@ public class BB_MessageModel : BigBrotherBaseModel, ISnowflakeEntity
         DeletedTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(0);
     }
 
+    public BB_MessageModel? Clone()
+    {
+        return BigBrotherHelper.ForceTypeCast<BB_MessageModel, BB_MessageModel>(this);
+    }
+
     public static BB_MessageModel FromMessage(IMessage message)
     {
-        return new BB_MessageModel()
-        {
-            Content = message.Content,
-            ContentClean = message.CleanContent,
-            Timestamp = message.Timestamp,
-            EditedTimestamp = message.EditedTimestamp,
-            Embeds = message.Embeds.Select(v => BigBrotherHelper.ForceTypeCast<IEmbed, BB_MessageEmbed>(v)).ToArray(),
-            Tags = message.Tags.Select(v => BigBrotherHelper.ForceTypeCast<ITag, BB_MessageTag>(v)).ToArray(),
-            Source = message.Source,
-            IsTTS = message.IsTTS,
-            Pinned = message.IsPinned,
-            IsSuppressed = message.IsSuppressed,
-            MentionedEveryone = message.MentionedEveryone,
-            MentionedChannelIds = message.MentionedChannelIds.ToArray(),
-            MentionedRoleIds = message.MentionedRoleIds.ToArray(),
-            MentionedUserIds = message.MentionedUserIds.ToArray(),
-            Activity = (BB_MessageActivity)message.Activity,
-            Application = (BB_MessageApplication)message.Application,
-            Reference = BB_MessageReference.FromMessageReference(message.Reference),
-            Components = message.Components
+        var instance = new BB_MessageModel();
+        instance.Content = message.Content;
+        instance.ContentClean = message.CleanContent;
+        instance.Timestamp = message.Timestamp;
+        instance.EditedTimestamp = message.EditedTimestamp;
+        instance.Embeds = message.Embeds.Select(v => BigBrotherHelper.ForceTypeCast<IEmbed, BB_MessageEmbed>(v)).ToArray();
+        instance.Tags = message.Tags.Select(v => BigBrotherHelper.ForceTypeCast<ITag, BB_MessageTag>(v)).ToArray();
+        instance.Source = message.Source;
+        instance.IsTTS = message.IsTTS;
+        instance.Pinned = message.IsPinned;
+        instance.IsSuppressed = message.IsSuppressed;
+        instance.MentionedEveryone = message.MentionedEveryone;
+        instance.MentionedChannelIds = message.MentionedChannelIds.ToArray();
+        instance.MentionedRoleIds = message.MentionedRoleIds.ToArray();
+        instance.MentionedUserIds = message.MentionedUserIds.ToArray();
+        instance.Activity = BigBrotherHelper.ForceTypeCast<MessageActivity, BB_MessageActivity>(message.Activity);
+        instance.Application = BigBrotherHelper.ForceTypeCast<MessageApplication, BB_MessageApplication>(message.Application);
+        instance.Reference = BB_MessageReference.FromMessageReference(message.Reference);
+        instance.Components = message.Components
                 .Select(v => BigBrotherHelper.ForceTypeCast<IMessageComponent, BB_MessageComponent>(v))
                 .Where(v => v != null)
                 .Cast<BB_MessageComponent>()
-                .ToArray(),
-            Stickers = (BB_StickerItem[])message.Stickers.ToArray(),
-            Flags = message.Flags,
-            Interaction = BigBrotherHelper.ForceTypeCast<IMessageInteraction, BB_MessageInteraction>(message.Interaction),
-            CreatedAt = message.CreatedAt,
-            Id = message.Id,
-            AuthorId = message.Author.Id,
-            ChannelId = message.Channel.Id,
-            GuildId = 0
-        };
+                .ToArray();
+        instance.Stickers = message.Stickers
+                .Select(v => BigBrotherHelper.ForceTypeCast<IStickerItem, BB_StickerItem>(v))
+                .Where(v => v != null)
+                .ToArray();
+        instance.Flags = message.Flags;
+        instance.Interaction = BigBrotherHelper.ForceTypeCast<IMessageInteraction, BB_MessageInteraction>(message.Interaction);
+        instance.CreatedAt = message.CreatedAt;
+        instance.Snowflake = message.Id;
+        instance.AuthorId = message.Author.Id;
+        instance.ChannelId = message.Channel.Id;
+        instance.GuildId = 0;
+        return instance;
     }
 }
 
@@ -156,6 +160,16 @@ public class BB_MessageInteraction
     public InteractionType Type { get; set; }
     public string Name { get; set; }
     public BB_User User { get; set; }
+
+    public static BB_MessageInteraction FromInteraction(IMessageInteraction interaction)
+    {
+        var instance = new BB_MessageInteraction();
+        instance.Id = interaction.Id;
+        instance.Type = interaction.Type;
+        instance.Name = interaction.Name;
+        instance.User = BB_User.FromUser(interaction.User);
+        return instance;
+    }
 }
 
 public class BB_StickerItem : IStickerItem
@@ -165,7 +179,10 @@ public class BB_StickerItem : IStickerItem
     public StickerFormatType Format { get; set; }
 }
 
-public class BB_MessageActivity : MessageActivity
+/// <summary>
+/// Same as <see cref="MessageActivity"/>
+/// </summary>
+public class BB_MessageActivity
 {
     public new MessageActivityType Type { get; set; }
     public new string PartyId { get; set; }
@@ -176,7 +193,7 @@ public class BB_MessageActivity : MessageActivity
     }
 }
 
-public class BB_MessageApplication : MessageApplication
+public class BB_MessageApplication
 {
     public ulong Id { get; set; }
     public string CoverImage { get; set; }
@@ -193,14 +210,14 @@ public class BB_MessageReference
     public ulong GuildId { get; set; }
     public bool FailIfNotExists { get; set; }
 
-    public static BB_MessageReference FromMessageReference(MessageReference r)
+    public static BB_MessageReference FromMessageReference(MessageReference? r)
     {
         return new BB_MessageReference()
         {
-            MessageId = r.MessageId.IsSpecified ? r.MessageId.Value : 0,
-            ChannelID = r.ChannelId != null ? r.ChannelId : 0,
-            GuildId = r.GuildId.IsSpecified ? r.GuildId.Value : 0,
-            FailIfNotExists = r.FailIfNotExists.IsSpecified ? true : r.FailIfNotExists.Value
+            MessageId = (r?.MessageId.IsSpecified ?? false) ? r?.MessageId.Value ?? 0 : 0,
+            ChannelID = r != null && r?.ChannelId != null ? r?.ChannelId ?? 0 : 0,
+            GuildId = (r?.GuildId.IsSpecified ?? false) ? r?.GuildId.Value ?? 0 : 0,
+            FailIfNotExists = (r?.FailIfNotExists.IsSpecified ?? false) ? true : r?.FailIfNotExists.Value ?? true
         };
     }
 }
@@ -332,12 +349,9 @@ public class BB_MessageEmbedAuthor
 
 
 public class BB_User
-    : BigBrotherBaseModel, ISnowflakeEntity, IEntity<ulong>, IMentionable
+    : BigBrotherBaseModel, IMentionable
 {
-    public new ulong Snowflake => Id;
-    
     #region ISnowflakeEntity
-    public ulong Id { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     #endregion
     
@@ -394,6 +408,27 @@ public class BB_User
     {
         ActiveClients = Array.Empty<ClientType>();
         Activities = Array.Empty<BB_Activity>();
+    }
+
+    public static BB_User? FromUser(IUser? user)
+    {
+        if (user == null)
+            return null;
+        var instance = new BB_User();
+        instance.Snowflake = user.Id;
+        instance.CreatedAt = user.CreatedAt;
+        instance.AvatarId = user.AvatarId;
+        instance.Discriminator = user.Discriminator;
+        instance.DiscriminatorValue = user.DiscriminatorValue;
+        instance.IsBot = user.IsBot;
+        instance.IsWebhook = user.IsWebhook;
+        instance.Username = user.Username;
+        instance.PublicFlags = user.PublicFlags;
+        instance.Mention = user.Mention;
+        instance.Status = user.Status;
+        instance.ActiveClients = user.ActiveClients.ToArray();
+        instance.Activities = BigBrotherHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, BB_Activity[]>(user.Activities) ?? Array.Empty<BB_Activity>();
+        return instance;
     }
 }
 

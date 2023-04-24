@@ -20,10 +20,29 @@ public class BigBrotherController : BaseController
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
         BBMessageConfig = new BigBrotherGenericConfigController<BB_MessageModel>("bb_store_message", services);
+    }
 
+    public override Task InitializeAsync()
+    {
         _client.MessageReceived += _client_MessageReceived;
         _client.MessageUpdated += _client_MessageUpdated;
         _client.MessageDeleted += _client_MessageDeleted;
+        _client.UserUpdated += _client_UserUpdated;
+        return Task.CompletedTask;
+    }
+
+    public event MessageDiffDelegate MessageChange;
+    private void OnMessageChange(MessageChangeType type, BB_MessageModel current, BB_MessageModel? previous)
+    {
+        if (MessageChange != null)
+        {
+            MessageChange?.Invoke(type, current, previous);
+        }
+    }
+
+    private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
+    {
+        
     }
 
     private async Task _client_MessageReceived(SocketMessage message)
@@ -32,14 +51,34 @@ public class BigBrotherController : BaseController
         if (message.Channel is SocketGuildChannel socketChannel)
             data.GuildId = socketChannel.Id;
         await BBMessageConfig.Set(data);
+        OnMessageChange(
+            MessageChangeType.Create, 
+            data, 
+            null);
     }
 
-    private async Task _client_MessageUpdated(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+    private async Task _client_MessageUpdated(
+        Cacheable<IMessage, ulong> useless_object,
+        SocketMessage newMessage,
+        ISocketMessageChannel channel)
     {
+        // convert data to type that mongo can support
         var data = BB_MessageModel.FromMessage(newMessage);
+        
+        // set guild if message was actually sent in a server (and not dms)
         if (channel is SocketGuildChannel { Guild: not null } socketChannel)
             data.GuildId = socketChannel.Guild.Id;
+        // fetch previous message for event emit
+        var previous = await BBMessageConfig.Get(data.Snowflake);
+        
+        // save in db
         await BBMessageConfig.Set(data);
+        
+        // emit event for other controllers.
+        OnMessageChange(
+            MessageChangeType.Update,
+            data,
+            previous);
     }
 
     private async Task _client_MessageDeleted(Cacheable<IMessage, ulong> message,
@@ -48,9 +87,14 @@ public class BigBrotherController : BaseController
         var data = await BBMessageConfig.Get(message.Id);
         if (data != null)
         {
+            var previous = data.Clone();
             data.IsDeleted = true;
             data.DeletedTimestamp = DateTimeOffset.UtcNow;
             await BBMessageConfig.Set(data);
+            OnMessageChange(
+                MessageChangeType.Delete,
+                data,
+                previous);
         }
     }
 }
