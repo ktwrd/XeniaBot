@@ -12,6 +12,10 @@ public class BigBrotherGenericConfigController<T> : BaseConfigController<T> wher
     {
     }
 
+    public delegate void ModelSetDelegate(T? current, T? previous, bool isNewEntry);
+
+    public event ModelSetDelegate OnModelSet;
+    
     public async Task<T?> Get(ulong snowflake)
     {
         var collection = GetCollection();
@@ -31,13 +35,19 @@ public class BigBrotherGenericConfigController<T> : BaseConfigController<T> wher
             .Eq("Snowflake", model.Snowflake);
 
         var findResult = await collection.FindAsync(filter);
-        if (findResult.Any())
+        var first = findResult.FirstOrDefault();
+        if (first != null)
         {
             await collection.ReplaceOneAsync(filter, model);
         }
         else
         {
             await collection.InsertOneAsync(model);
+        }
+
+        if (OnModelSet != null)
+        {
+            OnModelSet?.Invoke(model, first, first == null);
         }
     }
 }
