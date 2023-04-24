@@ -4,6 +4,7 @@ using System.Linq;
 using Discord;
 using System.Text.Json;
 using System.Threading.Tasks;
+using SkidBot.Core.Helpers;
 using SkidBot.Core.Models;
 
 namespace SkidBot.Core.Controllers.Wrappers.BigBrother;
@@ -104,22 +105,6 @@ public class BB_MessageModel : BigBrotherBaseModel
         instance.ChannelId = message.Channel.Id;
         instance.GuildId = 0;
         return instance;
-    }
-}
-
-public static class BigBrotherHelper
-{
-    public static TH? ForceTypeCast<T, TH>(T input)
-    {
-        var options = new JsonSerializerOptions()
-        {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
-            IncludeFields = true
-        };
-        var text = JsonSerializer.Serialize(input, options);
-        var output = JsonSerializer.Deserialize<TH>(text, options);
-        return output;
     }
 }
 
