@@ -16,6 +16,7 @@ public enum ServerLogEvent
     ChannelDelete,
     ChannelEdit,
     ChannelCreate,
+    MemberVoiceChange
 }
 public class ServerLogModel : BaseModel
 {
@@ -30,6 +31,7 @@ public class ServerLogModel : BaseModel
     public ulong? ChannelCreateChannel = null;
     public ulong? ChannelEditChannel = null;
     public ulong? ChannelDeleteChannel = null;
+    public ulong? MemberVoiceChangeChannel = null;
 
     public ulong GetChannel(ServerLogEvent logEvent)
     {
@@ -43,7 +45,8 @@ public class ServerLogModel : BaseModel
             {ServerLogEvent.MessageDelete, MessageDeleteChannel},
             {ServerLogEvent.ChannelCreate, ChannelCreateChannel},
             {ServerLogEvent.ChannelEdit, ChannelEditChannel},
-            {ServerLogEvent.ChannelDelete, ChannelDeleteChannel}
+            {ServerLogEvent.ChannelDelete, ChannelDeleteChannel},
+            {ServerLogEvent.MemberVoiceChange, MemberVoiceChangeChannel}
         };
         dict.TryGetValue(logEvent, out var targetChannel);
         return targetChannel ?? DefaultLogChannel;
@@ -83,6 +86,9 @@ public class ServerLogModel : BaseModel
                 break;
             case ServerLogEvent.ChannelDelete:
                 ChannelDeleteChannel = channelId;
+                break;
+            case ServerLogEvent.MemberVoiceChange:
+                MemberVoiceChangeChannel = channelId;
                 break;
             default:
                 throw new Exception($"LogEvent {logEvent} not implemented in database");

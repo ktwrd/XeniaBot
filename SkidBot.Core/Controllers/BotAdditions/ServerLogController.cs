@@ -35,6 +35,7 @@ public class ServerLogController : BaseController
 
         _discord.ChannelDestroyed += Event_ChannelDestroyed;
         _discord.ChannelCreated += Event_ChannelCreated;
+        _discord.UserVoiceStateUpdated += Event_UserVoiceStateUpdated;
 
         _discord.MessageDeleted += Event_MessageDelete;
         // _discord.MessageUpdated += Event_MessageEdit;
@@ -95,7 +96,29 @@ public class ServerLogController : BaseController
 
         await logChannel.SendMessageAsync(embed: embed.Build());
     }
-    
+
+    private async Task Event_UserVoiceStateUpdated(
+        SocketUser user,
+        SocketVoiceState previous,
+        SocketVoiceState current)
+    {
+        if (!(user is SocketGuildUser guildUser))
+            return;
+        var changeList = new List<string>();
+        if (previous.IsStreaming != current.IsStreaming)
+            changeList.Add(current.IsStreaming ? "+ Streaming" : "- Streaming");
+        if (previous.IsVideoing != current.IsVideoing)
+            changeList.Add(current.IsVideoing ? "+ Camera" : "- Camera");
+        if (previous.IsSelfMuted != current.IsSelfMuted)
+            changeList.Add(current.IsSelfMuted ? "+ Muted Self" : "- Muted Self");
+        if (previous.IsSelfDeafened != current.IsSelfDeafened)
+            changeList.Add(current.IsSelfDeafened ? "+ Deafened Self" : "- Deafened Self");
+
+        var embed = new EmbedBuilder()
+            .WithTitle("User Voice State changed")
+            .AddField("Changes", "```\n" + string.Join("\n", changeList) + "\n```");
+        await EventHandle(guildUser.Guild.Id, (v) => v.MemberVoiceChangeChannel, embed);
+    }
     private async Task Event_ChannelDestroyed(SocketChannel channel)
     {
         if (!(channel is SocketGuildChannel guildChannel))
