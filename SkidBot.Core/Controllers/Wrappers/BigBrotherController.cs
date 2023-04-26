@@ -15,7 +15,7 @@ public class BigBrotherController : BaseController
 
     public BigBrotherGenericConfigController<BB_MessageModel> BBMessageConfig;
     public BigBrotherGenericConfigController<BB_UserModel> BBUserConfig;
-    public BigBrotherGenericConfigController<BB_ChannelModel> BBChannelConfig;
+    public BigBrotherGenericConfigController<BB_BaseChannel> BBChannelConfig;
     private readonly DiscordSocketClient _client;
     public BigBrotherController(IServiceProvider services)
         : base(services)
