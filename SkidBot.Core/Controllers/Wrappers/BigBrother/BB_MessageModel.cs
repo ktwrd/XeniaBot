@@ -105,6 +105,12 @@ public class BB_MessageModel : BigBrotherBaseModel
 public class BB_Emote
 {
     public string Name { get; set; }
+
+    public BB_Emote FromExisting(IEmote emote)
+    {
+        Name = emote.Name;
+        return this;
+    }
 }
 
 public class BB_ReactionMetadata
@@ -155,6 +161,14 @@ public class BB_StickerItem : IStickerItem
     public ulong Id { get; set; }
     public string Name { get; set; }
     public StickerFormatType Format { get; set; }
+
+    public BB_StickerItem FromExisting(IStickerItem sticker)
+    {
+        Id = sticker.Id;
+        Name = sticker.Name;
+        Format = sticker.Format;
+        return this;
+    }
 }
 
 /// <summary>
