@@ -401,3 +401,4 @@ SkidBot.Core/Properties/launchSettings.json
 .vscode
 mongoData
 config.json
+.idea/.idea.SkidBot/.idea/.name
