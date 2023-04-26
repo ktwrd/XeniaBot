@@ -8,7 +8,7 @@ using SkidBot.Core.Helpers;
 namespace SkidBot.Core.Controllers.Wrappers.BigBrother;
 
 
-public class BB_User
+public class BB_UserModel
     : BigBrotherBaseModel, IMentionable
 {
     #region ISnowflakeEntity
@@ -35,46 +35,19 @@ public class BB_User
     public ClientType[] ActiveClients { get; set; }
     public BB_Activity[] Activities { get; set; }
     #endregion
-
-    /// <summary>
-    /// Will always return empty string.
-    /// </summary>
-    /// <returns>Empty String</returns>
-    public string GetAvatarUrl(ImageFormat format = ImageFormat.Auto, ushort size = 128)
-    {
-        return "";
-    }
-
-    /// <summary>
-    /// Will always return empty string.
-    /// </summary>
-    /// <returns>Empty String</returns>
-    public string GetDefaultAvatarUrl()
-    {
-        return "";
-    }
     #endregion
 
-    /// <summary>
-    /// Always returns null.
-    /// </summary>
-    /// <returns>Null</returns>
-    public async Task<IDMChannel> CreateDMChannelAsync(RequestOptions options = null)
-    {
-        return null;
-    }
-
-    public BB_User()
+    public BB_UserModel()
     {
         ActiveClients = Array.Empty<ClientType>();
         Activities = Array.Empty<BB_Activity>();
     }
 
-    public static BB_User? FromUser(IUser? user)
+    public static BB_UserModel? FromUser(IUser? user)
     {
         if (user == null)
             return null;
-        var instance = new BB_User();
+        var instance = new BB_UserModel();
         instance.Snowflake = user.Id;
         instance.CreatedAt = user.CreatedAt;
         instance.AvatarId = user.AvatarId;

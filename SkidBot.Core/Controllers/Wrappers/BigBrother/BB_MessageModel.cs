@@ -137,7 +137,7 @@ public class BB_MessageInteraction
     public ulong Id { get; set; }
     public InteractionType Type { get; set; }
     public string Name { get; set; }
-    public BB_User User { get; set; }
+    public BB_UserModel User { get; set; }
 
     public static BB_MessageInteraction FromInteraction(IMessageInteraction interaction)
     {
@@ -145,7 +145,7 @@ public class BB_MessageInteraction
         instance.Id = interaction.Id;
         instance.Type = interaction.Type;
         instance.Name = interaction.Name;
-        instance.User = BB_User.FromUser(interaction.User);
+        instance.User = BB_UserModel.FromUser(interaction.User);
         return instance;
     }
 }
