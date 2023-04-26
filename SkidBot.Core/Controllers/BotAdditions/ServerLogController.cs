@@ -34,6 +34,7 @@ public class ServerLogController : BaseController
         _discord.UserUnbanned += Event_UserBanRemove;
 
         _discord.ChannelDestroyed += Event_ChannelDestroyed;
+        _discord.ChannelCreated += Event_ChannelCreated;
 
         _discord.MessageDeleted += Event_MessageDelete;
         // _discord.MessageUpdated += Event_MessageEdit;
@@ -104,6 +105,17 @@ public class ServerLogController : BaseController
             .WithDescription($"<#{channel.Id}> {guildChannel.Name}")
             .WithColor(Color.Red);
         await EventHandle(guildChannel.Guild.Id, (v) => v.ChannelDeleteChannel, embed);
+    }
+
+    private async Task Event_ChannelCreated(SocketChannel channel)
+    {
+        if (!(channel is SocketGuildChannel guildChannel))
+            return;
+        var embed = new EmbedBuilder()
+            .WithTitle("Channel Created")
+            .WithDescription($"<#{channel.Id}> {guildChannel.Name}")
+            .WithColor(Color.Blue);
+        await EventHandle(guildChannel.Guild.Id, (v) => v.ChannelCreateChannel, embed);
     }
     #region User Events
     private async Task Event_UserJoined(SocketGuildUser user)
