@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -35,6 +36,7 @@ public class BigBrotherController : BaseController
     }
 
     public event MessageDiffDelegate MessageChange;
+    public event UserDiffDelegate UserChange;
     private void OnMessageChange(MessageChangeType type, BB_MessageModel current, BB_MessageModel? previous)
     {
         if (MessageChange != null)
@@ -43,9 +45,20 @@ public class BigBrotherController : BaseController
         }
     }
 
-    private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
+    private void OnUserChange(UserChangeType type, BB_UserModel current, BB_UserModel? previous)
     {
         
+    }
+
+    private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
+    {
+        var data = await BBUserConfig.Get(previous.Id);
+        var currentData = BB_UserModel.FromUser(current);
+        await BBUserConfig.Set(currentData);
+        OnUserChange(
+            UserChangeType.Update,
+            currentData,
+            data);
     }
 
     private async Task _client_ChannelUpdated(SocketChannel oldChannel, SocketChannel newChannel)
