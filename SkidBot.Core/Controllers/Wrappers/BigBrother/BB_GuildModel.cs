@@ -23,9 +23,8 @@ public class BB_GuildModel
     public string SplashUrl { get; set; }
     public string DiscoverySplashId { get; set; }
     public string DiscoverySplashUrl { get; set; }
-    public bool Available { get; set; }
     public ulong? AFKChannelId { get; set; }
-    public ulong? WidgetchannelId { get; set; }
+    public ulong? WidgetChannelId { get; set; }
     public ulong? SystemChannelId { get; set; }
     public ulong? RulesChannelId { get; set; }
     public ulong? PublicUpdatesChannelId { get; set; }
@@ -48,8 +47,7 @@ public class BB_GuildModel
     public int? MaxPresences { get; set; }
     public int? MaxMembers { get; set; }
     public int? MaxVideoChannelUsers { get; set; }
-    public int? ApproximateMemberCount { get; set; }
-    public int? ApproximatePresenceCount { get; set; }
+    public int? MemberCount { get; set; }
     public int MaxBitrate { get; set; }
     public string PreferredLocale { get; set; }
     public NsfwLevel NsfwLevel { get; set; }
@@ -64,14 +62,46 @@ public class BB_GuildModel
         Name = guild.Name;
         AFKTimeout = guild.AFKTimeout;
         IsWidgetEnabled = guild.IsWidgetEnabled;
-        
+        DefaultMessageNotifications = guild.DefaultMessageNotifications;
+        MfaLevel = guild.MfaLevel;
+        VerificationLevel = guild.VerificationLevel;
+        ExplicitContentFilter = guild.ExplicitContentFilter;
+        IconId = guild.IconId;
+        SplashId = guild.SplashId;
+        SplashUrl = guild.SplashUrl;
+        DiscoverySplashId = guild.DiscoverySplashId;
+        DiscoverySplashUrl = guild.DiscoverySplashUrl;
+        AFKChannelId = guild.AFKChannel?.Id ?? 0;
+        WidgetChannelId = guild.WidgetChannel?.Id ?? 0;
+        SystemChannelId = guild.SystemChannel?.Id ?? 0;
+        RulesChannelId = guild.RulesChannel?.Id ?? 0;
+        PublicUpdatesChannelId = guild.PublicUpdatesChannel?.Id ?? 0;
+        OwnerId = guild.OwnerId;
+        ApplicationId = guild.ApplicationId;
+        VoiceRegionId = guild.VoiceRegionId;
         AudioClient = new BB_AudioClient().FromExisting(guild.AudioClient);
         EveryoneRole = new BB_Role().FromExisting(guild.EveryoneRole);
         Emotes = guild.Emotes.Select(v => new BB_GuildEmote().FromExisting(v)).ToArray();
         Stickers = guild.Stickers.Select(v => new BB_CustomSticker().FromExisting(v)).ToArray();
         Features = guild.Features;
         Roles = guild.Roles.Select(v => new BB_Role().FromExisting(v)).ToArray();
-        throw new NotImplementedException();
+        PremiumTier = guild.PremiumTier;
+        BannerId = guild.BannerId;
+        BannerUrl = guild.BannerUrl;
+        VanityURLCode = guild.VanityURLCode;
+        SystemChannelFlags = guild.SystemChannelFlags;
+        Description = guild.Description;
+        PremiumSubscriptionCount = guild.PremiumSubscriptionCount;
+        MaxPresences = guild.MaxPresences;
+        MaxMembers = guild.MaxMembers;
+        MaxVideoChannelUsers = guild.MaxVideoChannelUsers;
+        MemberCount = guild.MemberCount;
+        MaxBitrate = guild.MaxBitrate;
+        PreferredLocale = guild.PreferredLocale;
+        NsfwLevel = guild.NsfwLevel;
+        PreferredCulture = guild.PreferredCulture;
+        IsBoostProgressBarEnabled = guild.IsBoostProgressBarEnabled;
+        MaxUploadLimit = guild.MaxUploadLimit;
         return this;
     }
 }
