@@ -14,6 +14,8 @@ public class BigBrotherController : BaseController
 {
 
     public BigBrotherGenericConfigController<BB_MessageModel> BBMessageConfig;
+    public BigBrotherGenericConfigController<BB_UserModel> BBUserConfig;
+    public BigBrotherGenericConfigController<BB_ChannelModel> BBChannelConfig;
     private readonly DiscordSocketClient _client;
     public BigBrotherController(IServiceProvider services)
         : base(services)
@@ -28,6 +30,7 @@ public class BigBrotherController : BaseController
         _client.MessageUpdated += _client_MessageUpdated;
         _client.MessageDeleted += _client_MessageDeleted;
         _client.UserUpdated += _client_UserUpdated;
+        _client.ChannelUpdated += _client_ChannelUpdated;
         return Task.CompletedTask;
     }
 
@@ -45,6 +48,12 @@ public class BigBrotherController : BaseController
         
     }
 
+    private async Task _client_ChannelUpdated(SocketChannel oldChannel, SocketChannel newChannel)
+    {
+        
+    }
+    
+    #region Message
     private async Task _client_MessageReceived(SocketMessage message)
     {
         var data = BB_MessageModel.FromMessage(message);
@@ -97,4 +106,5 @@ public class BigBrotherController : BaseController
                 previous);
         }
     }
+    #endregion
 }
