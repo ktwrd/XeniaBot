@@ -219,7 +219,7 @@ public class ModerationModule : InteractionModuleBase
     private async Task<List<IMessage>> FetchRecursiveMessages(SocketTextChannel channel, int? max = null)
     {
         List<IMessage> messageList = new List<IMessage>();
-        IEnumerable<IMessage> messages = await channel.GetMessagesAsync(Math.Min(max ?? 100, 100)).FlattenAsync();
+        IEnumerable<IMessage> messages = await channel.GetMessagesAsync(Math.Min(max ?? 100, 300)).FlattenAsync();
         
         bool allowContinue = true;
         while (allowContinue)
