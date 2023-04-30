@@ -104,6 +104,7 @@ public class ServerLogController : BaseController
     {
         if (!(user is SocketGuildUser guildUser))
             return;
+        
         var changeList = new List<string>();
         if (previous.IsStreaming != current.IsStreaming)
             changeList.Add(current.IsStreaming ? "+ Streaming" : "- Streaming");
@@ -122,6 +123,17 @@ public class ServerLogController : BaseController
             .WithTitle("User Voice State changed");
         if (changeList.Count > 0)
             embed.AddField("Changes", "```\n" + string.Join("\n", changeList) + "\n```");
+        
+        var currentChannel = current.VoiceChannel;
+        var previousChannel = previous.VoiceChannel;
+        if (currentChannel != null && previousChannel == null)
+            embed.WithDescription($"Joined <#{currentChannel.Id}>");
+        else if (currentChannel == null && previousChannel != null)
+            embed.WithDescription($"Left <#{previous.VoiceChannel.Id}>");
+        else if (currentChannel != null && previousChannel != null)
+            if (currentChannel.Id != previousChannel.Id)
+                embed.WithDescription($"Switched from <#{previousChannel.Id}> to <#{currentChannel.Id}>");
+        
         await EventHandle(guildUser.Guild.Id, (v) => v.MemberVoiceChangeChannel, embed);
     }
     private async Task Event_ChannelDestroyed(SocketChannel channel)
