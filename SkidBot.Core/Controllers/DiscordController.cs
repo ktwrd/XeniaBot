@@ -219,6 +219,13 @@ namespace SkidBot.Core.Controllers
             InvokeReady();
             await _commandHandler.InitializeAsync();
             await _interactionHandler.InitializeAsync();
+            var versionString = "v0.0";
+            if (Program.VersionReallyRaw != null)
+            {
+                versionString = $"v{Program.VersionReallyRaw.Major}.{Program.VersionReallyRaw.Minor}";
+            }
+            
+            await _client.SetGameAsync($"{versionString} | skidbot.kate.pet", null);
         }
 
         private Task _client_Log(LogMessage arg)
