@@ -42,10 +42,4 @@ public static class BigBrotherHelper
         else
             return BB_ChannelType.Unknown;
     }
-
-    public static string? GetChannelName(SocketChannel channel)
-    {
-        var channelType = GetChannelType(channel);
-        
-    }
 }
