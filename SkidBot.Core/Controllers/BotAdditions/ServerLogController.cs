@@ -113,6 +113,10 @@ public class ServerLogController : BaseController
             changeList.Add(current.IsSelfMuted ? "+ Muted Self" : "- Muted Self");
         if (previous.IsSelfDeafened != current.IsSelfDeafened)
             changeList.Add(current.IsSelfDeafened ? "+ Deafened Self" : "- Deafened Self");
+        if (previous.IsDeafened != current.IsDeafened)
+            changeList.Add(current.IsDeafened ? "+ Server Deaf" : "- Server Deaf");
+        if (previous.IsMuted != current.IsMuted)
+            changeList.Add(current.IsMuted ? "+ Server Mute" : "- Server Mute");
 
         var embed = new EmbedBuilder()
             .WithTitle("User Voice State changed")
