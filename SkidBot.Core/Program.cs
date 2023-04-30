@@ -81,7 +81,7 @@ namespace SkidBot.Core
             }
         }
 
-        private static Version? VersionReallyRaw
+        internal static Version? VersionReallyRaw
         {
             get
             {
