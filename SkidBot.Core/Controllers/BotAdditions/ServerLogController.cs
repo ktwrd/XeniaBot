@@ -119,8 +119,9 @@ public class ServerLogController : BaseController
             changeList.Add(current.IsMuted ? "+ Server Mute" : "- Server Mute");
 
         var embed = new EmbedBuilder()
-            .WithTitle("User Voice State changed")
-            .AddField("Changes", "```\n" + string.Join("\n", changeList) + "\n```");
+            .WithTitle("User Voice State changed");
+        if (changeList.Count > 0)
+            embed.AddField("Changes", "```\n" + string.Join("\n", changeList) + "\n```");
         await EventHandle(guildUser.Guild.Id, (v) => v.MemberVoiceChangeChannel, embed);
     }
     private async Task Event_ChannelDestroyed(SocketChannel channel)
