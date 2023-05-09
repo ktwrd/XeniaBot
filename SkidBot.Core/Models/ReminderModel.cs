@@ -26,11 +26,14 @@ public class ReminderModel : BaseModel
         ulong guildId,
         long timestamp,
         string? note = null)
+    : base()
     {
+        ReminderId = GeneralHelper.GenerateUID();
         UserId = userId;
         ChannelId = channelId;
         GuildId = guildId;
         ReminderTimestamp = timestamp;
         Note = note ?? "";
+        HasReminded = false;
     }
 }
