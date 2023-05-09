@@ -24,41 +24,43 @@ public class ReminderConfigController : BaseConfigController<ReminderModel>
         return single;
     }
 
+    // public async Task<ReminderModel[]?> GetMany(
+    //     long beforeTs = long.MaxValue,
+    //     long afterTs = long.MinValue,
+    //     ulong? authorId = null,
+    //     ulong? guildId = null,
+    //     ulong? channelId = null,
+    //     bool? hasReminded = null)
+    // {
+    //     var filter = Builders<ReminderModel>
+    //         .Filter
+    //         .Where((m) =>
+    //             beforeTs > m.ReminderTimestamp &&
+    //             afterTs < m.ReminderTimestamp &&
+    //             m.UserId == (authorId ?? m.UserId) &&
+    //             m.GuildId == (guildId ?? m.GuildId) &&
+    //             m.ChannelId == (channelId ?? m.ChannelId) &&
+    //             m.HasReminded == (hasReminded ?? m.HasReminded));
+    //     var collection = GetCollection();
+    //     var result = await collection.FindAsync(filter);
+    //     
+    //     var final = result?.ToList().ToArray();
+    //     return final;
+    // }
+
     public async Task<ReminderModel[]?> GetMany(
-        long? beforeTs = null,
-        long? afterTs = null,
-        ulong? authorId = null,
-        ulong? guildId = null,
-        ulong? channelId = null,
-        bool? hasReminded = null)
+        long beforeTimestamp = long.MaxValue,
+        long afterTimestamp = long.MinValue,
+        bool hasReminded = false)
     {
-        Func<ReminderModel, bool> filterFunc = (m) =>
-        {
-            int count = 0;
-            int requiredCount = 0;
-
-            requiredCount += beforeTs != null ? 1 : 0;
-            requiredCount += afterTs != null ? 1 : 0;
-            requiredCount += authorId != null ? 1 : 0;
-            requiredCount += guildId != null ? 1 : 0;
-            requiredCount += channelId != null ? 1 : 0;
-            requiredCount += hasReminded != null ? 1 : 0;
-
-            if (beforeTs != null)
-                count += m.ReminderTimestamp < beforeTs ? 1 : 0;
-            if (afterTs != null)
-                count += m.ReminderTimestamp > afterTs ? 1 : 0;
-            count += m.UserId == authorId ? 1 : 0;
-            count += m.GuildId == guildId ? 1 : 0;
-            count += m.ChannelId == channelId ? 1 : 0;
-            count += m.HasReminded == hasReminded ? 1 : 0;
-            
-            return count >= requiredCount;
-        };
-
         var filter = Builders<ReminderModel>
             .Filter
-            .Where(v => filterFunc(v));
+            .Where((v) => v.ReminderTimestamp < beforeTimestamp && v.ReminderTimestamp > afterTimestamp && v.HasReminded == hasReminded);
+        return await InternalFindMany(filter);
+    }
+
+    private async Task<ReminderModel[]?> InternalFindMany(FilterDefinition<ReminderModel> filter)
+    {
         var collection = GetCollection();
         var result = await collection.FindAsync(filter);
         
