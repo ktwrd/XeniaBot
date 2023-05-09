@@ -10,6 +10,7 @@ using SkidBot.Shared;
 
 namespace SkidBot.Core.Controllers.BotAdditions;
 
+[SkidController]
 public class ReminderController : BaseController
 {
     private readonly ReminderConfigController _config;
@@ -20,6 +21,7 @@ public class ReminderController : BaseController
         _config = services.GetRequiredService<ReminderConfigController>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
     }
+
 
     public override async Task OnReady()
     {
@@ -33,7 +35,7 @@ public class ReminderController : BaseController
     private async Task CallForgottenReminders()
     {
         var notCalled = await _config.GetMany(
-            beforeTs: InitTimestamp,
+            beforeTimestamp: InitTimestamp,
             hasReminded: false) ?? Array.Empty<ReminderModel>();
 
         var taskList = new List<Task>();
@@ -52,7 +54,7 @@ public class ReminderController : BaseController
     private async Task InitTasks()
     {
         var targets = await _config.GetMany(
-            afterTs: InitTimestamp,
+            afterTimestamp: InitTimestamp,
             hasReminded: false) ?? Array.Empty<ReminderModel>();
 
         var taskList = new List<Task>();
@@ -72,6 +74,7 @@ public class ReminderController : BaseController
             SendNotification(data).Wait();
         };
         timer.Enabled = true;
+        timer.AutoReset = false;
         timer.Start();
     }
 
@@ -94,6 +97,8 @@ public class ReminderController : BaseController
     
     private async Task SendNotification(ReminderModel model)
     {
+        if (model == null)
+            return;
         var guild = _discord.GetGuild(model.GuildId);
         var channel = guild.GetTextChannel(model.ChannelId);
 
@@ -102,5 +107,8 @@ public class ReminderController : BaseController
             .WithDescription(model.Note);
 
         await channel.SendMessageAsync($"<@{model.UserId}>", embed: embed.Build());
+
+        model.HasReminded = true;
+        await _config.Set(model);
     }
 }
