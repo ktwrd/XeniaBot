@@ -103,36 +103,36 @@ public static class TimeHelper
             @"(([0-9]+)d(|ay))", 
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var dayMatch = dayRegex.Match(input);
-        if (dayMatch.Groups.Count >= 3)
+        if (dayMatch.Groups.Count >= 4)
         {
-            days = int.Parse(dayMatch.Groups[1].Value);
+            days = int.Parse(dayMatch.Groups[2].Value);
         }
         
         var hourRegex = new Regex(
             @"(([0-9]+)h(|r|our))",
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var hourMatch = hourRegex.Match(input);
-        if (hourMatch.Groups.Count >= 3)
+        if (hourMatch.Groups.Count >= 4)
         {
-            hours = int.Parse(hourMatch.Groups[1].Value);
+            hours = int.Parse(hourMatch.Groups[2].Value);
         }
         
         var minuteRegex = new Regex(
             @"(([0-9]+)m(|in|inute|inutes))",
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var minMatch = minuteRegex.Match(input);
-        if (minMatch.Groups.Count >= 3)
+        if (minMatch.Groups.Count >= 4)
         {
-            minutes = int.Parse(minMatch.Groups[1].Value);
+            minutes = int.Parse(minMatch.Groups[2].Value);
         }
         
         var secondRegex = new Regex(
             @"(([0-9]+)s(|econds))",
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var secMatch = secondRegex.Match(input);
-        if (secMatch.Groups.Count >= 3)
+        if (secMatch.Groups.Count >= 4)
         {
-            seconds = int.Parse(secMatch.Groups[1].Value);
+            seconds = int.Parse(secMatch.Groups[2].Value);
         }
 
         return new TimeSpan(days, hours, minutes, seconds);
