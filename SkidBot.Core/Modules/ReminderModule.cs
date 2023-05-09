@@ -13,15 +13,46 @@ public class ReminderModule : InteractionModuleBase
     [SlashCommand("remind", "Create a reminder")]
     public async Task CreateReminder(string when, string? note = null)
     {
-        var timeSpan = TimeHelper.ParseFromString(when);
+        TimeSpan timeSpan;
+        try
+        {
+            timeSpan = TimeHelper.ParseFromString(when);
+        }
+        catch (Exception exception)
+        {
+            await Context.Interaction.RespondAsync(string.Join("\n", new string[]
+            {
+                "Failed to parse parameter \"when\"",
+                "```",
+                exception.Message,
+                "```"
+            }));
+            await DiscordHelper.ReportError(exception, Context);
+            return;
+        }
         var timestamp = DateTimeOffset.UtcNow.Add(timeSpan).ToUnixTimeSeconds();
-        var controller = Program.Services.GetRequiredService<ReminderController>();
-        await controller.CreateReminderTask(
-            timestamp,
-            Context.User.Id,
-            Context.Channel.Id,
-            Context.Guild.Id,
-            note);
+        try
+        {
+            var controller = Program.Services.GetRequiredService<ReminderController>();
+            await controller.CreateReminderTask(
+                timestamp,
+                Context.User.Id,
+                Context.Channel.Id,
+                Context.Guild.Id,
+                note);
+        }
+        catch (Exception e)
+        {
+            await Context.Interaction.RespondAsync(string.Join("\n", new string[]
+            {
+                "Failed to create reminder",
+                "```",
+                e.ToString(),
+                "```"
+            }));
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
 
         var embed = DiscordHelper.BaseEmbed()
             .WithDescription($"Reminder will be sent <t:{timestamp}:R>")
