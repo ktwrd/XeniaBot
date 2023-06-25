@@ -16,41 +16,33 @@ namespace SkidBot.Core.Helpers
         public ulong CurrentLevelStart;
         public ulong CurrentLevelEnd;
         public ulong CurrentLevelSize;
-        public double NextLevelProgress;
+        public decimal NextLevelProgress;
     }
     public static class LevelSystemHelper
     {
         public const int XpPerLevel = 100;
+        public static ulong XpForLevel(ulong level)
+        {
+            return level * level * 100;
+        }
         public static ExperienceMetadata Generate(LevelMemberModel model)
         {
-            ulong level = 0;
-            ulong xp = model.Xp;
-            ulong targetXp = 0;  // xp for next level
-            double progress = 0; // % until next level
-
-            while (true)
+            var level = (ulong)Math.Floor(0.1 * Math.Sqrt(model.Xp));
+            var levelStart = XpForLevel(level);
+            var levelEnd = XpForLevel(level + 1);
+            var levelSize = levelEnd - levelStart;
+            var levelPerc = (model.Xp - levelStart) / (decimal)levelSize;
+            var data = new ExperienceMetadata()
             {
-                var size = XpPerLevel / 2 * (level ^ 2);
-                var floor = XpPerLevel / 2 * level;
-                targetXp = floor + size;
-
-                if (xp < targetXp)
-                {
-                    double perc = (xp - floor) / (double)size;
-                    progress = Math.Round(perc, 3);
-                    return new ExperienceMetadata()
-                    {
-                        UserLevel = level,
-                        UserXp = xp,
-                        NextLevelXp = targetXp,
-                        NextLevelProgress = progress,
-                        CurrentLevelStart = floor,
-                        CurrentLevelEnd = targetXp,
-                        CurrentLevelSize = size
-                    };
-                }
-                level += 1;
-            }
+                UserLevel = level,
+                UserXp = model.Xp,
+                NextLevelXp = XpForLevel(level + 1),
+                CurrentLevelStart = levelStart,
+                CurrentLevelEnd = levelEnd,
+                CurrentLevelSize = levelEnd - levelStart,
+                NextLevelProgress = Math.Round(levelPerc, 3)
+            };
+            return data;
         }
     }
 }
