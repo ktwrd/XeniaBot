@@ -29,9 +29,9 @@ namespace SkidBot.Core.Modules
                 },
                 Description = string.Join("\n", new string[]
                 {
-                $"**XP**: {data?.Xp ?? 0}",
-                $"**Progress**: {Math.Round(metadata.NextLevelProgress * 100, 3)}% ({metadata.UserXp - metadata.CurrentLevelStart}/{metadata.CurrentLevelEnd})",
-                $"**Level**: {metadata.UserLevel}"
+                    $"**XP**: {data?.Xp ?? 0}",
+                    $"**Progress**: {Math.Round(metadata.NextLevelProgress * 100, 3)}% ({metadata.UserXp - metadata.CurrentLevelStart}/{metadata.CurrentLevelEnd})",
+                    $"**Level**: {metadata.UserLevel}"
                 })
             };
 
