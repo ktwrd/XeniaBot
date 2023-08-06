@@ -66,7 +66,7 @@ namespace SkidBot.Core.Modules
                 ?? targetPost.Sample?.Location
                 ?? targetPost.Preview?.Location;
             embed.WithTitle("View Post")
-                 .WithUrl($"https://e926.net/posts/{targetPost.Id}")
+                 .WithUrl((allowNsfw ? $"https://e621.net" : $"https://e926.net") + $"/posts/{targetPost.Id}")
                  .WithImageUrl(url?.ToString() ?? "");
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
