@@ -1,4 +1,4 @@
-# Skid Discord Bot
+# Xenia Bot
 Another General-purpose Discord Bot for the masses.
 
 [Invite](https://discord.com/oauth2/authorize?client_id=1067393803427790929&scope=bot&permissions=415471496311)
@@ -11,7 +11,7 @@ Another General-purpose Discord Bot for the masses.
 
 There are a few things that are required to setup a development environment for Skid
 - [Privileged Gateway Intents](#privileged-gateway-intents)
-- [.NET 6.0 SDK+Runtime](#installing-net-sdk)
+- [.NET 7.0 SDK+Runtime](#installing-net-sdk)
 - [MongoDB Server (Preferably in Docker)](#setup-mongodb-server)
 - Discord Server to test (optional)
 - [First Run](#first-run)
@@ -22,13 +22,13 @@ On the Discord Developer Portal make sure that `Server Members Intent` and `Mess
 ![screenshot](https://res.kate.pet/upload/f8da69ab-1d8b-4b95-9f4c-541b8bee953f/firefox_rhTUUBcWwc.png)
 
 ### Installing .NET SDK
-If you are using Visual Studio 20XX, make sure that `.NET desktop development` is selected under the `Desktop & Mobile` section of the installer. If you're not sure, open up Visual Studio Installer and click on the `Modify` button on your installed version of Visual Studio.
+If you are using Visual Studio 2022/2019, make sure that `.NET desktop development` is selected under the `Desktop & Mobile` section of the installer. If you're not sure, open up Visual Studio Installer and click on the `Modify` button on your installed version of Visual Studio.
 
 ![screen recording](https://res.kate.pet/upload/fa204728-ccf1-4a6e-8f70-abf120eb5c49/setup_18x4FGb9x3.gif)
 
 Once you've installed the .NET SDK you can launch the Visual Studio solution.
 
-On Linux machines, install the runtime and SDK packages for .NET 6.0 package through Microsoft's Repository. See [this guide](https://learn.microsoft.com/en-us/dotnet/core/install/linux).
+On Linux machines, install the runtime and SDK packages for .NET 7.0 package through Microsoft's Repository. See [this guide](https://learn.microsoft.com/en-us/dotnet/core/install/linux).
 
 ### Setup MongoDB Server
 To setup the MongoDB server with Docker run the following command.
@@ -63,12 +63,15 @@ When you first start Skid, it will definitely not work at all. Make sure that th
 ## Environment Variables
 | Key | Type | Description |
 | --- | ---- | ----------- |
-| `SKIDBOT_WRITELOG` | boolean | Write log output to file. (default: false) |
-| `SKIDBOT_CONFIGLOCATION` | string | Config file location (default: `./config.json` ) |
-| `SKIDBOT_LOG_COLOR` | boolean | Enable colors in log output |
+| `LOG_WRITE` | boolean | Write log output to file. (default: false) |
+| `CONFIG_LOCATION` | string | Config file location (default: `./config.json` ) |
+| `LOG_COLOR` | boolean | Enable colors in log output |
 
 # Module Demos
 ## Confession Module
 ![screen recording](https://res.kate.pet/upload/03bcb777-911d-4774-9454-523b3b238267/DiscordCanary_S5Wm6jtwOd.gif)
 ## Random Animal
 ![screen recording](https://res.kate.pet/upload/fd22bbc7-2ec1-4f71-9b28-bf23c0aafdca/DiscordCanary_y05soKK3fv.gif)
+
+## Caption
+![screen recording](https://xb.redfur.cloud/tOpi9/TOTiMACa80.gif/raw)
