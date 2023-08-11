@@ -141,7 +141,7 @@ namespace XeniaBot.Core
         }
         private static async Task MainAsync(string[] args)
         {
-            CreateServiceProdiver();
+            CreateServiceProvider();
             Log.Debug("Connecting to Discord");
             _discordController = Services.GetRequiredService<DiscordController>();
             _discordController.Ready += (c) =>
@@ -182,7 +182,7 @@ namespace XeniaBot.Core
         /// <summary>
         /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
         /// </summary>
-        private static void CreateServiceProdiver()
+        private static void CreateServiceProvider()
         {
             Log.Debug("Initializing Services");
             var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
