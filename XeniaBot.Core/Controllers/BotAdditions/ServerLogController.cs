@@ -45,7 +45,7 @@ public class ServerLogController : BaseController
     }
 
     
-    private async void _bb_MessageChange_Update(MessageChangeType type, X_MessageModel current, X_MessageModel? previous)
+    private async void _bb_MessageChange_Update(MessageChangeType type, XMessageModel current, XMessageModel? previous)
     {
         if (type != MessageChangeType.Update)
             return;

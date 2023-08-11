@@ -14,15 +14,15 @@ namespace XeniaBot.Core.Controllers.Wrappers;
 public class ArchivalController : BaseController
 {
 
-    public ArchivalGenericConfigController<X_MessageModel> BBMessageConfig;
-    public ArchivalGenericConfigController<X_UserModel> BBUserConfig;
-    public ArchivalGenericConfigController<BB_ChannelModel> BBChannelConfig;
+    public ArchivalGenericConfigController<XMessageModel> BBMessageConfig;
+    public ArchivalGenericConfigController<XUserModel> BBUserConfig;
+    public ArchivalGenericConfigController<XChannelModel> BBChannelConfig;
     private readonly DiscordSocketClient _client;
     public ArchivalController(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
-        BBMessageConfig = new ArchivalGenericConfigController<X_MessageModel>("bb_store_message", services);
+        BBMessageConfig = new ArchivalGenericConfigController<XMessageModel>("bb_store_message", services);
     }
 
     public override Task InitializeAsync()
@@ -37,7 +37,7 @@ public class ArchivalController : BaseController
 
     public event MessageDiffDelegate MessageChange;
     public event UserDiffDelegate UserChange;
-    private void OnMessageChange(MessageChangeType type, X_MessageModel current, X_MessageModel? previous)
+    private void OnMessageChange(MessageChangeType type, XMessageModel current, XMessageModel? previous)
     {
         if (MessageChange != null)
         {
@@ -45,7 +45,7 @@ public class ArchivalController : BaseController
         }
     }
 
-    private void OnUserChange(UserChangeType type, X_UserModel current, X_UserModel? previous)
+    private void OnUserChange(UserChangeType type, XUserModel current, XUserModel? previous)
     {
         
     }
@@ -53,7 +53,7 @@ public class ArchivalController : BaseController
     private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
     {
         var data = await BBUserConfig.Get(previous.Id);
-        var currentData = X_UserModel.FromUser(current);
+        var currentData = XUserModel.FromUser(current);
         await BBUserConfig.Set(currentData);
         OnUserChange(
             UserChangeType.Update,
@@ -69,7 +69,7 @@ public class ArchivalController : BaseController
     #region Message
     private async Task _client_MessageReceived(SocketMessage message)
     {
-        var data = X_MessageModel.FromMessage(message);
+        var data = XMessageModel.FromMessage(message);
         if (message.Channel is SocketGuildChannel socketChannel)
             data.GuildId = socketChannel.Id;
         await BBMessageConfig.Set(data);
@@ -85,7 +85,7 @@ public class ArchivalController : BaseController
         ISocketMessageChannel channel)
     {
         // convert data to type that mongo can support
-        var data = X_MessageModel.FromMessage(newMessage);
+        var data = XMessageModel.FromMessage(newMessage);
         
         // set guild if message was actually sent in a server (and not dms)
         if (channel is SocketGuildChannel { Guild: not null } socketChannel)

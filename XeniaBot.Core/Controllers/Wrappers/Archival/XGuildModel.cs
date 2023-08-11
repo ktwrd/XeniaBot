@@ -7,7 +7,7 @@ using Discord.WebSocket;
 
 namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
-public class X_GuildModel
+public class XGuildModel
     : ArchiveBaseModel
 {
     public DateTimeOffset CreatedAt { get; set; }
@@ -31,12 +31,12 @@ public class X_GuildModel
     public ulong OwnerId { get; set; }
     public ulong? ApplicationId { get; set; }
     public string VoiceRegionId { get; set; }
-    public BB_AudioClient AudioClient { get; set; }
-    public BB_Role EveryoneRole { get; set; }
-    public BB_GuildEmote[] Emotes { get; set; }
-    public BB_CustomSticker[] Stickers { get; set; }
+    public XAudioClient AudioClient { get; set; }
+    public XRole EveryoneRole { get; set; }
+    public XGuildEmote[] Emotes { get; set; }
+    public XCustomSticker[] Stickers { get; set; }
     public GuildFeatures Features { get; set; }
-    public BB_Role[] Roles { get; set; }
+    public XRole[] Roles { get; set; }
     public PremiumTier PremiumTier { get; set; }
     public string BannerId { get; set; }
     public string BannerUrl { get; set; }
@@ -55,7 +55,7 @@ public class X_GuildModel
     public bool IsBoostProgressBarEnabled { get; set; }
     public ulong MaxUploadLimit { get; set; }
     
-    public X_GuildModel FromExisting(SocketGuild guild)
+    public XGuildModel FromExisting(SocketGuild guild)
     {
         Snowflake = guild.Id;
         CreatedAt = guild.CreatedAt;
@@ -79,12 +79,12 @@ public class X_GuildModel
         OwnerId = guild.OwnerId;
         ApplicationId = guild.ApplicationId;
         VoiceRegionId = guild.VoiceRegionId;
-        AudioClient = new BB_AudioClient().FromExisting(guild.AudioClient);
-        EveryoneRole = new BB_Role().FromExisting(guild.EveryoneRole);
-        Emotes = guild.Emotes.Select(v => new BB_GuildEmote().FromExisting(v)).ToArray();
-        Stickers = guild.Stickers.Select(v => new BB_CustomSticker().FromExisting(v)).ToArray();
+        AudioClient = new XAudioClient().FromExisting(guild.AudioClient);
+        EveryoneRole = new XRole().FromExisting(guild.EveryoneRole);
+        Emotes = guild.Emotes.Select(v => new XGuildEmote().FromExisting(v)).ToArray();
+        Stickers = guild.Stickers.Select(v => new XCustomSticker().FromExisting(v)).ToArray();
         Features = guild.Features;
-        Roles = guild.Roles.Select(v => new BB_Role().FromExisting(v)).ToArray();
+        Roles = guild.Roles.Select(v => new XRole().FromExisting(v)).ToArray();
         PremiumTier = guild.PremiumTier;
         BannerId = guild.BannerId;
         BannerUrl = guild.BannerUrl;
@@ -106,7 +106,7 @@ public class X_GuildModel
     }
 }
 
-public class BB_Role
+public class XRole
 {
     public ulong GuildId { get; set; }
     public Discord.Color Color { get; set; }
@@ -115,12 +115,12 @@ public class BB_Role
     public bool IsMentionable { get; set; }
     public string Name { get; set; }
     public string Icon { get; set; }
-    public BB_Emote Emoji { get; set; }
+    public XEmote Emoji { get; set; }
     public GuildPermissions Permissions { get; set; }
     public int Position { get; set; }
     public RoleTags Tags { get; set; }
 
-    public BB_Role FromExisting(IRole role)
+    public XRole FromExisting(IRole role)
     {
         GuildId = role.Guild.Id;
         Color = role.Color;
@@ -129,7 +129,7 @@ public class BB_Role
         IsMentionable = role.IsMentionable;
         Name = role.Name;
         Icon = role.Icon;
-        Emoji = new BB_Emote().FromExisting(role.Emoji);
+        Emoji = new XEmote().FromExisting(role.Emoji);
         Permissions = role.Permissions;
         Position = role.Position;
         Tags = role.Tags;
@@ -137,12 +137,12 @@ public class BB_Role
     }
 }
 
-public class BB_AudioClient
+public class XAudioClient
 {
     public ConnectionState ConnectionState { get; set; }
     public int Latency { get; set; }
     public int UdpLatency { get; set; }
-    public BB_AudioClient FromExisting(IAudioClient audioClient)
+    public XAudioClient FromExisting(IAudioClient audioClient)
     {
         ConnectionState = audioClient.ConnectionState;
         Latency = audioClient.Latency;
@@ -151,14 +151,14 @@ public class BB_AudioClient
     }
 }
 
-public class BB_GuildEmote : BB_Emote
+public class XGuildEmote : XEmote
 {
     public bool IsManaged { get; set; }
     public bool RequireColons { get; set; }
     public ulong[] RoleIds { get; set; }
     public ulong? CreatorId { get; set; }
 
-    public BB_GuildEmote FromExisting(GuildEmote emote)
+    public XGuildEmote FromExisting(GuildEmote emote)
     {
         base.FromExisting(emote);
         IsManaged = emote.IsManaged;
@@ -169,12 +169,12 @@ public class BB_GuildEmote : BB_Emote
     }
 }
 
-public class BB_CustomSticker : BB_Sticker
+public class XCustomSticker : XSticker
 {
     public ulong? AuthorId { get; set; }
     public ulong GuildId { get; set; }
 
-    public BB_CustomSticker FromExisting(ICustomSticker sticker)
+    public XCustomSticker FromExisting(ICustomSticker sticker)
     {
         base.FromExisting(sticker);
         AuthorId = sticker.AuthorId;
@@ -183,7 +183,7 @@ public class BB_CustomSticker : BB_Sticker
     }
 }
 
-public class BB_Sticker : BB_StickerItem
+public class XSticker : XStickerItem
 {
     public ulong Id { get; set; }
     public ulong PackId { get; set; }
@@ -195,7 +195,7 @@ public class BB_Sticker : BB_StickerItem
     public bool? IsAvailable { get; set; }
     public int? SortOrder { get; set; }
 
-    public BB_Sticker FromExisting(ISticker sticker)
+    public XSticker FromExisting(ISticker sticker)
     {
         base.FromExisting(sticker);
         Id = sticker.Id;

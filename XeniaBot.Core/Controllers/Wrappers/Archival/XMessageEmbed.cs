@@ -6,9 +6,9 @@ namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
 
 /// <summary>
-/// This can be deserialized from <see cref="IEmbed"/> with <see cref="X_MessageEmbed.FromEmbed()"/>
+/// This can be deserialized from <see cref="IEmbed"/> with <see cref="XMessageEmbed.FromEmbed()"/>
 /// </summary>
-public class X_MessageEmbed
+public class XMessageEmbed
 {
     public string Url { get; set; }
     public string Title { get; set; }
@@ -18,20 +18,20 @@ public class X_MessageEmbed
     public Discord.Color? Color { get; set; }
     public EmbedImage? Image { get; set; }
     public EmbedVideo? Video { get; set; }
-    public BB_MessageEmbedAuthor? Author { get; set; }
-    public BB_MessageEmbedFooter? Footer { get; set; }
-    public BB_MessageEmbedProvider? Provider { get; set; }
-    public BB_MessageEmbedThumbnail? Thumbnail { get; set; }
-    public BB_MessageEmbedField[] Fields { get; set; }
+    public XMessageEmbedAuthor? Author { get; set; }
+    public XMessageEmbedFooter? Footer { get; set; }
+    public XMessageEmbedProvider? Provider { get; set; }
+    public XMessageEmbedThumbnail? Thumbnail { get; set; }
+    public XMessageEmbedField[] Fields { get; set; }
 
-    public X_MessageEmbed()
+    public XMessageEmbed()
     {
         Url = "";
         Title = "";
         Description = "";
-        Fields = Array.Empty<BB_MessageEmbedField>();
+        Fields = Array.Empty<XMessageEmbedField>();
     }
-    public static X_MessageEmbed? FromEmbed(IEmbed embed)
+    public static XMessageEmbed? FromEmbed(IEmbed embed)
     {
         var opts = new JsonSerializerOptions()
         {
@@ -40,24 +40,24 @@ public class X_MessageEmbed
             IncludeFields = true
         };
         var text = JsonSerializer.Serialize(embed, opts);
-        return JsonSerializer.Deserialize<X_MessageEmbed>(text, opts);
+        return JsonSerializer.Deserialize<XMessageEmbed>(text, opts);
     }
 }
 #region Message Embed Fields
-public class BB_MessageEmbedField
+public class XMessageEmbedField
 {
     public string Name { get; set; }
     public string Value { get; set; }
     public bool Inline { get; set; }
 
-    public BB_MessageEmbedField()
+    public XMessageEmbedField()
     {
         Name = "";
         Value = "";
         Inline = false;
     }
 
-    public bool Equals(BB_MessageEmbedField? embedField)
+    public bool Equals(XMessageEmbedField? embedField)
     {
         int hashCode1 = this.GetHashCode();
         int? hashCode2 = embedField?.GetHashCode();
@@ -73,51 +73,51 @@ public class BB_MessageEmbedField
         return hashCode1 == valueOrDefault & hashCode2.HasValue;
     }
 }
-public class BB_MessageEmbedThumbnail
+public class XMessageEmbedThumbnail
 {
     public string Url { get; set; }
     public string ProxyUrl { get; set; }
     public int? Height { get; set; }
     public int? Width { get; set; }
 
-    public BB_MessageEmbedThumbnail()
+    public XMessageEmbedThumbnail()
     {
         Url = "";
         ProxyUrl = "";
     }
 }
-public class BB_MessageEmbedProvider
+public class XMessageEmbedProvider
 {
     public string Name { get; set; }
     public string Url { get; set; }
 
-    public BB_MessageEmbedProvider()
+    public XMessageEmbedProvider()
     {
         Name = "";
         Url = "";
     }
 }
-public class BB_MessageEmbedFooter
+public class XMessageEmbedFooter
 {
     public string Text { get; set; }    
     public string IconUrl { get; set; }
     public string ProxyUrl { get; set; }
 
-    public BB_MessageEmbedFooter()
+    public XMessageEmbedFooter()
     {
         Text = "";
         IconUrl = "";
         ProxyUrl = "";
     }
 }
-public class BB_MessageEmbedAuthor
+public class XMessageEmbedAuthor
 {
     public string Name { get; set; }
     public string Url { get; set; }
     public string IconUrl { get; set; }
     public string ProxyIconUrl { get; set; }
 
-    public BB_MessageEmbedAuthor()
+    public XMessageEmbedAuthor()
     {
         Name = "";
         Url = "";

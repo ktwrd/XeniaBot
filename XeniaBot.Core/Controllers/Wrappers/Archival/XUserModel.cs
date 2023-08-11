@@ -8,7 +8,7 @@ using XeniaBot.Core.Helpers;
 namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
 
-public class X_UserModel
+public class XUserModel
     : ArchiveBaseModel, IMentionable
 {
     #region ISnowflakeEntity
@@ -33,21 +33,21 @@ public class X_UserModel
     #region IPresence
     public UserStatus Status { get; set; }
     public ClientType[] ActiveClients { get; set; }
-    public BB_Activity[] Activities { get; set; }
+    public XActivity[] Activities { get; set; }
     #endregion
     #endregion
 
-    public X_UserModel()
+    public XUserModel()
     {
         ActiveClients = Array.Empty<ClientType>();
-        Activities = Array.Empty<BB_Activity>();
+        Activities = Array.Empty<XActivity>();
     }
 
-    public static X_UserModel? FromUser(IUser? user)
+    public static XUserModel? FromUser(IUser? user)
     {
         if (user == null)
             return null;
-        var instance = new X_UserModel();
+        var instance = new XUserModel();
         instance.Snowflake = user.Id;
         instance.CreatedAt = user.CreatedAt;
         instance.AvatarId = user.AvatarId;
@@ -60,12 +60,12 @@ public class X_UserModel
         instance.Mention = user.Mention;
         instance.Status = user.Status;
         instance.ActiveClients = user.ActiveClients.ToArray();
-        instance.Activities = ArchivalHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, BB_Activity[]>(user.Activities) ?? Array.Empty<BB_Activity>();
+        instance.Activities = ArchivalHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, XActivity[]>(user.Activities) ?? Array.Empty<XActivity>();
         return instance;
     }
 }
 
-public class BB_Activity : IActivity
+public class XActivity : IActivity
 {
     public string Name { get; set; }
     public ActivityType Type { get; set; }

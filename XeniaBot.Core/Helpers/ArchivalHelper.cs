@@ -19,27 +19,27 @@ public static class ArchivalHelper
         return output;
     }
 
-    public static BB_ChannelType GetChannelType<T>(T channel) where T : SocketChannel
+    public static XChannelType GetChannelType<T>(T channel) where T : SocketChannel
     {
         if (channel is SocketCategoryChannel)
-            return BB_ChannelType.Category;
+            return XChannelType.Category;
         else if (channel is SocketGroupChannel)
-            return BB_ChannelType.Group;
+            return XChannelType.Group;
         else if (channel is SocketDMChannel)
-            return BB_ChannelType.DM;
+            return XChannelType.DM;
         else if (channel is SocketForumChannel)
-            return BB_ChannelType.Forum;
+            return XChannelType.Forum;
         else if (channel is SocketNewsChannel)
-            return BB_ChannelType.News;
+            return XChannelType.News;
         else if (channel is SocketStageChannel)
-            return BB_ChannelType.Stage;
+            return XChannelType.Stage;
         else if (channel is SocketThreadChannel)
-            return BB_ChannelType.Thread;
+            return XChannelType.Thread;
         else if (channel is SocketVoiceChannel)
-            return BB_ChannelType.Voice;
+            return XChannelType.Voice;
         else if (channel is SocketTextChannel)
-            return BB_ChannelType.Text;
+            return XChannelType.Text;
         else
-            return BB_ChannelType.Unknown;
+            return XChannelType.Unknown;
     }
 }

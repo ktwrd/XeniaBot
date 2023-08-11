@@ -7,7 +7,7 @@ using XeniaBot.Core.Helpers;
 
 namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
-public enum BB_ChannelType
+public enum XChannelType
 {
     Unknown = -1,
     Category,
@@ -21,9 +21,9 @@ public enum BB_ChannelType
     Voice
 }
 
-public class BB_ChannelModel : ArchiveBaseModel
+public class XChannelModel : ArchiveBaseModel
 {
-    public BB_ChannelType Type { get; set; }
+    public XChannelType Type { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public XDmChannelModel? DMChannel { get; set; }
     public XGuildChannelModel? GuildChannel { get; set; }
@@ -62,16 +62,16 @@ public class BB_ChannelModel : ArchiveBaseModel
             GuildChannel = new XGuildChannelModel().FromExisting(guildChannel);
     }
 }
-public abstract class X_BaseChannel
+public abstract class XBaseChannel
 {
     public ulong Snowflake { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public bool IsGuildChannel { get; set; }
     public bool IsDmChannel { get; set; }
     public bool IsForumChannel { get; set; }
-    public BB_ChannelType Type { get; set; }
+    public XChannelType Type { get; set; }
     
-    public X_BaseChannel FromExisting(SocketChannel channel)
+    public XBaseChannel FromExisting(SocketChannel channel)
     {
         Snowflake = channel.Id;
         CreatedAt = channel.CreatedAt;
@@ -173,7 +173,7 @@ public class XTextChannelModel : XGuildChannelModel
         return this;
     }
 }
-public class XGroupChannelModel : X_BaseChannel
+public class XGroupChannelModel : XBaseChannel
 {
     public string Name { get; set; }
     public string RTCRegion { get; set; }
@@ -190,22 +190,22 @@ public class XGroupChannelModel : X_BaseChannel
         return this;
     }
 }
-public class XDmChannelModel : X_BaseChannel
+public class XDmChannelModel : XBaseChannel
 {
     public string Name { get; set; }
-    public X_UserModel Recipient { get; set; }
+    public XUserModel Recipient { get; set; }
     public new XDmChannelModel FromExisting(SocketDMChannel channel)
     {
         base.FromExisting(channel);
         Name = channel.Recipient.Username;
-        Recipient = X_UserModel.FromUser(channel.Recipient);
+        Recipient = XUserModel.FromUser(channel.Recipient);
         IsDmChannel = true;
         return this;
     }
 }
-public class XGuildChannelModel : X_BaseChannel
+public class XGuildChannelModel : XBaseChannel
 {
-    public X_GuildModel Guild { get; set; }
+    public XGuildModel Guild { get; set; }
     public string Name { get; set; }
     public int Position { get; set; }
     public ChannelFlags Flags { get; set; }
@@ -213,7 +213,7 @@ public class XGuildChannelModel : X_BaseChannel
     public XGuildChannelModel FromExisting(SocketGuildChannel channel)
     {
         base.FromExisting(channel);
-        Guild = new X_GuildModel().FromExisting(channel.Guild);
+        Guild = new XGuildModel().FromExisting(channel.Guild);
         Name = channel.Name;
         Position = channel.Position;
         Flags = channel.Flags;
@@ -222,15 +222,15 @@ public class XGuildChannelModel : X_BaseChannel
         return this;
     }
 }
-public class XForumChannelModel : X_BaseChannel
+public class XForumChannelModel : XBaseChannel
 {
     public string Topic { get; set; }
     public bool IsNsfw { get; set; }
     public ThreadArchiveDuration DefaultAutoArchiveDuration { get; set; }
-    public BB_ForumTag[] Tags { get; set; }
+    public XForumTag[] Tags { get; set; }
     public int ThreadCreationInterval { get; set; }
     public int DefaultSlowModeInterval { get; set; }
-    public BB_Emote DefaultReactionEmoji { get; set; }
+    public XEmote DefaultReactionEmoji { get; set; }
     public ForumSortOrder? DefaultSortOrder { get; set; }
     public ForumLayout DefaultLayout { get; set; }
 
@@ -240,16 +240,16 @@ public class XForumChannelModel : X_BaseChannel
         IsNsfw = channel.IsNsfw;
         Topic = channel.Topic;
         DefaultAutoArchiveDuration = channel.DefaultAutoArchiveDuration;
-        var tagList = new List<BB_ForumTag>();
+        var tagList = new List<XForumTag>();
         foreach (var i in channel.Tags)
         {
-            tagList.Add(new BB_ForumTag().FromForumTag(i));
+            tagList.Add(new XForumTag().FromForumTag(i));
         }
 
         Tags = tagList.ToArray();
         ThreadCreationInterval = channel.ThreadCreationInterval;
         DefaultSlowModeInterval = channel.DefaultSlowModeInterval;
-        DefaultReactionEmoji = new BB_Emote()
+        DefaultReactionEmoji = new XEmote()
         {
             Name = channel.DefaultReactionEmoji.Name
         };
@@ -259,20 +259,20 @@ public class XForumChannelModel : X_BaseChannel
         return this;
     }
 }
-public class BB_ForumTag
+public class XForumTag
 {
     public ulong Id { get; set; }
     public string Name { get; set; }
-    public BB_Emote? Emoji { get; set; }
+    public XEmote? Emoji { get; set; }
     public bool IsModerated { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
-    public BB_ForumTag FromForumTag(ForumTag tag)
+    public XForumTag FromForumTag(ForumTag tag)
     {
         Id = tag.Id;
         Name = tag.Name;
         if (tag.Emoji != null)
-            Emoji = ArchivalHelper.ForceTypeCast<IEmote, BB_Emote>(tag.Emoji);
+            Emoji = ArchivalHelper.ForceTypeCast<IEmote, XEmote>(tag.Emoji);
         IsModerated = tag.IsModerated;
         CreatedAt = tag.CreatedAt;
         return this;

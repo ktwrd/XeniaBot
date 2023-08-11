@@ -14,10 +14,10 @@ public enum UserChangeType
 }
 public delegate void MessageDiffDelegate(
     MessageChangeType type,
-    X_MessageModel current,
-    X_MessageModel? previous);
+    XMessageModel current,
+    XMessageModel? previous);
     
 public delegate void UserDiffDelegate(
     UserChangeType type,
-    X_UserModel current,
-    X_UserModel? previous);
+    XUserModel current,
+    XUserModel? previous);
