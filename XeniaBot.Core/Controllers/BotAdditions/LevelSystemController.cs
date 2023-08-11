@@ -67,7 +67,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         public async Task<(bool, ExperienceMetadata)> GrantXp(LevelMemberModel model, SocketUserMessage message)
         {
             var data = await Get(model.UserId, model.GuildId);
-            var amount = (ulong)_random.Next(1, 5);
+            var amount = (ulong)_random.Next(4, 16);
 
             // Generate previous and current metadata
             var metadataPrevious = LevelSystemHelper.Generate(data);
