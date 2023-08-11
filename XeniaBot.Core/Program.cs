@@ -44,7 +44,7 @@ namespace XeniaBot.Core
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
         /// </summary>
         public static long StartTimestamp { get; private set; }
-        public const string MongoDatabaseName = "shortcake";
+        public const string MongoDatabaseName = "xenia_discord";
 
         public static string Version
         {
