@@ -54,17 +54,32 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             var previousMessageDiff = currentTimestamp - data.LastMessageTimestamp;
             if (previousMessageDiff >= 8000)
             {
-                var (levelUp, metadata) = await GrantXp(data, message);
-                if (levelUp)
+                var result = await GrantXp(data, message);
+                if (result.DidLevelUp)
                 {
-                    await message.ReplyAsync($"Leveled up to {metadata.UserLevel}!");
+                    await message.ReplyAsync($"Leveled up to {result.Metadata.UserLevel}!");
                 }
             }
         }
 
-
-        /// <returns>Did the user "level up"</returns>
-        public async Task<(bool, ExperienceMetadata)> GrantXp(LevelMemberModel model, SocketUserMessage message)
+        public class GrantXpResult
+        {
+            /// <summary>
+            /// Did this cause the user to level up
+            /// </summary>
+            public bool DidLevelUp { get; init; }
+            /// <summary>
+            /// New XP Metadata
+            /// </summary>
+            public ExperienceMetadata Metadata { get; init; }
+        }
+        /// <summary>
+        /// Grant user 4 to 16 xp.
+        /// </summary>
+        /// <param name="model">User XP Data</param>
+        /// <param name="message">Message that triggered this event</param>
+        /// <returns>Result information. See <see cref="GrantXpResult"/></returns>
+        public async Task<GrantXpResult> GrantXp(LevelMemberModel model, SocketUserMessage message)
         {
             var data = await Get(model.UserId, model.GuildId);
             var amount = (ulong)_random.Next(4, 16);
@@ -85,7 +100,11 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             }
 
             await Set(data);
-            return (levelUp, metadata);
+            return new GrantXpResult()
+            {
+                DidLevelUp = levelUp,
+                Metadata = metadata
+            };
         }
         protected void OnUserLevelUp(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
         {
