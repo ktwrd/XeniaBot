@@ -19,8 +19,22 @@
     <PackageReference Include="Noppes.E621Client" Version="0.8.0" />
     <PackageReference Include="prometheus-net" Version="8.0.1" />
     <PackageReference Include="prometheus-net.AspNetCore" Version="8.0.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="MediaManipu.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MediaManipu.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="MediaManipu.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>MediaManipu.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>
