@@ -1,5 +1,6 @@
 ﻿using IdGen;
 using System;
+using XeniaBot.Shared;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
 using static XeniaBot.Core.Modules.WeatherModule;
+using XeniaBot.Shared;
 using WHelper = XeniaBot.Shared.Helpers.WeatherHelper;
 
 namespace XeniaBot.Core.Helpers

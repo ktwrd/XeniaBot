@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using static XeniaBot.Core.ConfigManager;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core
 {
