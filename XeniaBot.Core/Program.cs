@@ -156,6 +156,8 @@ namespace XeniaBot.Core
         }
         #endregion
 
+        public static Random Random => new Random();
+
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             var except = (Exception)e.ExceptionObject;
