@@ -130,7 +130,9 @@ namespace XeniaBot.Core
             try
             {
                 Log.Debug("Connecting to MongoDB");
-                MongoClient = new MongoClient(ConfigData.MongoDBServer);
+                var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBServer);
+                connectionSettings.AllowInsecureTls = true;
+                MongoClient = new MongoClient(connectionSettings);
                 MongoClient.StartSession();
             }
             catch (Exception ex)
