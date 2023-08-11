@@ -100,7 +100,7 @@ namespace XeniaBot.Core
         public ConfigValidationResponse Validate(string fileContent) => Validate(JsonSerializer.Deserialize<Dictionary<string, object>>(fileContent, Program.SerializerOptions) ?? new Dictionary<string, object>());
         public ConfigValidationResponse Validate(ConfigData configData) => Validate(JsonSerializer.Serialize(configData, Program.SerializerOptions) ?? "{}");
         #endregion
-        
-        public string Location => Environment.GetEnvironmentVariable("CONFIG_LOCATION") ?? Path.Combine(Directory.GetCurrentDirectory(), "config.json");
+
+        public string Location => FeatureFlags.ConfigLocation;
     }
 }

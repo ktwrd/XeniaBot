@@ -96,4 +96,15 @@ public static class FeatureFlags
             "DATA_DIR_FONTCACHE", Path.Join(
                 DataDirectory,
                 "fontcache"));
+    
+    /// <summary>
+    /// Key: CONFIG_LOCATION
+    /// Default: ./data/config.json
+    ///
+    /// File location where the config is stored.
+    /// </summary>
+    public static string ConfigLocation =>
+        ParseString(
+            "CONFIG_LOCATION", Path.Join(
+                DataDirectory, "config.json"));
 }
