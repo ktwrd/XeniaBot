@@ -57,7 +57,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 var result = await GrantXp(data, message);
                 if (result.DidLevelUp)
                 {
-                    await message.ReplyAsync($"Leveled up to {result.Metadata.UserLevel}!");
+                    await message.ReplyAsync($"You've advanced to *level {result.Metadata.UserLevel}*!");
                 }
             }
         }
