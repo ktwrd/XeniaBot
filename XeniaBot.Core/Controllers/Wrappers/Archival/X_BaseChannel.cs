@@ -5,7 +5,7 @@ using Discord;
 using Discord.WebSocket;
 using XeniaBot.Core.Helpers;
 
-namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
 public enum BB_ChannelType
 {
@@ -21,48 +21,48 @@ public enum BB_ChannelType
     Voice
 }
 
-public class BB_ChannelModel : BigBrotherBaseModel
+public class BB_ChannelModel : ArchiveBaseModel
 {
     public BB_ChannelType Type { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
-    public BB_DMChannelModel? DMChannel { get; set; }
-    public BB_GuildChannelModel? GuildChannel { get; set; }
-    public BB_ForumChannelModel? ForumChannel { get; set; }
-    public BB_GroupChannelModel? GroupChannel { get; set; }
-    public BB_TextChannelModel? TextChannel { get; set; }
-    public BB_TextChannelModel? NewsChannel { get; set; }
-    public BB_ThreadChannelModel? ThreadChannel { get; set; }
-    public BB_VoiceChannelModel? VoiceChannel { get; set; }
-    public BB_StageChannelModel? StageChannel { get; set; }
+    public XDmChannelModel? DMChannel { get; set; }
+    public XGuildChannelModel? GuildChannel { get; set; }
+    public XForumChannelModel? ForumChannel { get; set; }
+    public XGroupChannelModel? GroupChannel { get; set; }
+    public XTextChannelModel? TextChannel { get; set; }
+    public XTextChannelModel? NewsChannel { get; set; }
+    public XThreadChannelModel? ThreadChannel { get; set; }
+    public XVoiceChannelModel? VoiceChannel { get; set; }
+    public XStageChannelModel? StageChannel { get; set; }
     public void Generate(SocketChannel channel)
     {
-        Type = BigBrotherHelper.GetChannelType(channel);
+        Type = ArchivalHelper.GetChannelType(channel);
         Snowflake = channel.Id;
         CreatedAt = channel.CreatedAt;
         if (channel is SocketDMChannel dmChannel)
-            DMChannel = new BB_DMChannelModel().FromExisting(dmChannel);
+            DMChannel = new XDmChannelModel().FromExisting(dmChannel);
         if (channel is SocketForumChannel forumChannel)
-            ForumChannel = new BB_ForumChannelModel().FromExisting(forumChannel);
+            ForumChannel = new XForumChannelModel().FromExisting(forumChannel);
         if (channel is SocketGroupChannel groupChannel)
-            GroupChannel = new BB_GroupChannelModel().FromExisting(groupChannel);
+            GroupChannel = new XGroupChannelModel().FromExisting(groupChannel);
 
         if (channel is SocketStageChannel stageChannel)
-            StageChannel = new BB_StageChannelModel().FromExisting(stageChannel);
+            StageChannel = new XStageChannelModel().FromExisting(stageChannel);
         if (channel is SocketVoiceChannel voiceChannel)
-            VoiceChannel = new BB_VoiceChannelModel().FromExisting(voiceChannel);
+            VoiceChannel = new XVoiceChannelModel().FromExisting(voiceChannel);
         if (channel is SocketNewsChannel newsChannel)
-            NewsChannel = new BB_TextChannelModel().FromExisting(newsChannel);
+            NewsChannel = new XTextChannelModel().FromExisting(newsChannel);
         if (channel is SocketThreadChannel threadChannel)
-            ThreadChannel = new BB_ThreadChannelModel().FromExisting(threadChannel);
+            ThreadChannel = new XThreadChannelModel().FromExisting(threadChannel);
         if (channel is SocketTextChannel textChannel)
-            TextChannel = new BB_TextChannelModel().FromExisting(textChannel);
+            TextChannel = new XTextChannelModel().FromExisting(textChannel);
 
         
         if (channel is SocketGuildChannel guildChannel)
-            GuildChannel = new BB_GuildChannelModel().FromExisting(guildChannel);
+            GuildChannel = new XGuildChannelModel().FromExisting(guildChannel);
     }
 }
-public abstract class BB_BaseChannel
+public abstract class X_BaseChannel
 {
     public ulong Snowflake { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
@@ -71,22 +71,22 @@ public abstract class BB_BaseChannel
     public bool IsForumChannel { get; set; }
     public BB_ChannelType Type { get; set; }
     
-    public BB_BaseChannel FromExisting(SocketChannel channel)
+    public X_BaseChannel FromExisting(SocketChannel channel)
     {
         Snowflake = channel.Id;
         CreatedAt = channel.CreatedAt;
-        Type = BigBrotherHelper.GetChannelType(channel);
+        Type = ArchivalHelper.GetChannelType(channel);
         return this;
     }
 }
 
-public class BB_StageChannelModel : BB_VoiceChannelModel
+public class XStageChannelModel : XVoiceChannelModel
 {
     public StagePrivacyLevel? PrivacyLevel { get; set; }
     public bool? IsDiscoverableDisabled { get; set; }
     public bool IsLive { get; set; }
     public ulong[] SpeakerIds { get; set; }
-    public new BB_StageChannelModel FromExisting(SocketStageChannel channel)
+    public new XStageChannelModel FromExisting(SocketStageChannel channel)
     {
         base.FromExisting(channel);
         PrivacyLevel = channel.PrivacyLevel;
@@ -96,13 +96,13 @@ public class BB_StageChannelModel : BB_VoiceChannelModel
         return this;
     }
 }
-public class BB_VoiceChannelModel : BB_TextChannelModel
+public class XVoiceChannelModel : XTextChannelModel
 {
     public int Bitrate { get; set; }
     public int? UserLimit { get; set; }
     public string RTCRegion { get; set; }
     public ulong[] ConnectedUserIds { get; set; }
-    public new BB_VoiceChannelModel FromExisting(SocketVoiceChannel channel)
+    public new XVoiceChannelModel FromExisting(SocketVoiceChannel channel)
     {
         base.FromExisting(channel);
         Bitrate = channel.Bitrate;
@@ -112,7 +112,7 @@ public class BB_VoiceChannelModel : BB_TextChannelModel
         return this;
     }
 }
-public class BB_ThreadChannelModel : BB_TextChannelModel
+public class XThreadChannelModel : XTextChannelModel
 {
     public ThreadType Type { get; set; }
     public ulong OwnerId { get; set; }
@@ -130,7 +130,7 @@ public class BB_ThreadChannelModel : BB_TextChannelModel
     public DateTimeOffset CreatedAt { get; set; }
     public ulong[] UserIds { get; set; }
 
-    public BB_ThreadChannelModel FromExisting(SocketThreadChannel channel)
+    public XThreadChannelModel FromExisting(SocketThreadChannel channel)
     {
         base.FromExisting(channel);
         Type = channel.Type;
@@ -151,7 +151,7 @@ public class BB_ThreadChannelModel : BB_TextChannelModel
         return this;
     }
 }
-public class BB_TextChannelModel : BB_GuildChannelModel
+public class XTextChannelModel : XGuildChannelModel
 {
     public string Topic { get; set; }
     public int SlowModeInterval { get; set; }
@@ -160,7 +160,7 @@ public class BB_TextChannelModel : BB_GuildChannelModel
     public ThreadArchiveDuration DefaultArchiveDuration { get; set; }
     public string Mention { get; set; }
     public ulong[] ThreadIds { get; set; }
-    public new BB_TextChannelModel FromExisting(SocketTextChannel channel)
+    public new XTextChannelModel FromExisting(SocketTextChannel channel)
     {
         base.FromExisting(channel);
         Topic = channel.Topic;
@@ -173,14 +173,14 @@ public class BB_TextChannelModel : BB_GuildChannelModel
         return this;
     }
 }
-public class BB_GroupChannelModel : BB_BaseChannel
+public class XGroupChannelModel : X_BaseChannel
 {
     public string Name { get; set; }
     public string RTCRegion { get; set; }
     public ulong[] UserIds { get; set; }
     public ulong[] RecipientIds { get; set; }
 
-    public BB_GroupChannelModel FromExisting(SocketGroupChannel channel)
+    public XGroupChannelModel FromExisting(SocketGroupChannel channel)
     {
         base.FromExisting(channel);
         Name = channel.Name;
@@ -190,30 +190,30 @@ public class BB_GroupChannelModel : BB_BaseChannel
         return this;
     }
 }
-public class BB_DMChannelModel : BB_BaseChannel
+public class XDmChannelModel : X_BaseChannel
 {
     public string Name { get; set; }
-    public BB_UserModel Recipient { get; set; }
-    public new BB_DMChannelModel FromExisting(SocketDMChannel channel)
+    public X_UserModel Recipient { get; set; }
+    public new XDmChannelModel FromExisting(SocketDMChannel channel)
     {
         base.FromExisting(channel);
         Name = channel.Recipient.Username;
-        Recipient = BB_UserModel.FromUser(channel.Recipient);
+        Recipient = X_UserModel.FromUser(channel.Recipient);
         IsDmChannel = true;
         return this;
     }
 }
-public class BB_GuildChannelModel : BB_BaseChannel
+public class XGuildChannelModel : X_BaseChannel
 {
-    public BB_GuildModel Guild { get; set; }
+    public X_GuildModel Guild { get; set; }
     public string Name { get; set; }
     public int Position { get; set; }
     public ChannelFlags Flags { get; set; }
     public Overwrite[] PermissionOverwrite { get; set; }
-    public BB_GuildChannelModel FromExisting(SocketGuildChannel channel)
+    public XGuildChannelModel FromExisting(SocketGuildChannel channel)
     {
         base.FromExisting(channel);
-        Guild = new BB_GuildModel().FromExisting(channel.Guild);
+        Guild = new X_GuildModel().FromExisting(channel.Guild);
         Name = channel.Name;
         Position = channel.Position;
         Flags = channel.Flags;
@@ -222,7 +222,7 @@ public class BB_GuildChannelModel : BB_BaseChannel
         return this;
     }
 }
-public class BB_ForumChannelModel : BB_BaseChannel
+public class XForumChannelModel : X_BaseChannel
 {
     public string Topic { get; set; }
     public bool IsNsfw { get; set; }
@@ -234,7 +234,7 @@ public class BB_ForumChannelModel : BB_BaseChannel
     public ForumSortOrder? DefaultSortOrder { get; set; }
     public ForumLayout DefaultLayout { get; set; }
 
-    public BB_ForumChannelModel FromExisting(SocketForumChannel channel)
+    public XForumChannelModel FromExisting(SocketForumChannel channel)
     {
         base.FromExisting(channel);
         IsNsfw = channel.IsNsfw;
@@ -272,7 +272,7 @@ public class BB_ForumTag
         Id = tag.Id;
         Name = tag.Name;
         if (tag.Emoji != null)
-            Emoji = BigBrotherHelper.ForceTypeCast<IEmote, BB_Emote>(tag.Emoji);
+            Emoji = ArchivalHelper.ForceTypeCast<IEmote, BB_Emote>(tag.Emoji);
         IsModerated = tag.IsModerated;
         CreatedAt = tag.CreatedAt;
         return this;

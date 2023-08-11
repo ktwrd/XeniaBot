@@ -5,7 +5,7 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.Wrappers;
-using XeniaBot.Core.Controllers.Wrappers.BigBrother;
+using XeniaBot.Core.Controllers.Wrappers.Archival;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Core.Models;
 using XeniaBot.Shared;
@@ -15,15 +15,15 @@ namespace XeniaBot.Core.Controllers.BotAdditions;
 [BotController]
 public class ServerLogController : BaseController
 {
-    private ServerLogConfigController _config;
-    private DiscordSocketClient _discord;
-    private BigBrotherController _bb;
+    private readonly ServerLogConfigController _config;
+    private readonly DiscordSocketClient _discord;
+    private readonly ArchivalController _bb;
     public ServerLogController(IServiceProvider services)
         : base(services)
     {
         _config = services.GetRequiredService<ServerLogConfigController>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
-        _bb = services.GetRequiredService<BigBrotherController>();
+        _bb = services.GetRequiredService<ArchivalController>();
     }
 
     public override Task InitializeAsync()
@@ -45,7 +45,7 @@ public class ServerLogController : BaseController
     }
 
     
-    private async void _bb_MessageChange_Update(MessageChangeType type, BB_MessageModel current, BB_MessageModel? previous)
+    private async void _bb_MessageChange_Update(MessageChangeType type, X_MessageModel current, X_MessageModel? previous)
     {
         if (type != MessageChangeType.Update)
             return;

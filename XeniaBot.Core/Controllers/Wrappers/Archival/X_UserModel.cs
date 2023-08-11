@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 using Discord;
 using XeniaBot.Core.Helpers;
 
-namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
 
-public class BB_UserModel
-    : BigBrotherBaseModel, IMentionable
+public class X_UserModel
+    : ArchiveBaseModel, IMentionable
 {
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
@@ -37,17 +37,17 @@ public class BB_UserModel
     #endregion
     #endregion
 
-    public BB_UserModel()
+    public X_UserModel()
     {
         ActiveClients = Array.Empty<ClientType>();
         Activities = Array.Empty<BB_Activity>();
     }
 
-    public static BB_UserModel? FromUser(IUser? user)
+    public static X_UserModel? FromUser(IUser? user)
     {
         if (user == null)
             return null;
-        var instance = new BB_UserModel();
+        var instance = new X_UserModel();
         instance.Snowflake = user.Id;
         instance.CreatedAt = user.CreatedAt;
         instance.AvatarId = user.AvatarId;
@@ -60,7 +60,7 @@ public class BB_UserModel
         instance.Mention = user.Mention;
         instance.Status = user.Status;
         instance.ActiveClients = user.ActiveClients.ToArray();
-        instance.Activities = BigBrotherHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, BB_Activity[]>(user.Activities) ?? Array.Empty<BB_Activity>();
+        instance.Activities = ArchivalHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, BB_Activity[]>(user.Activities) ?? Array.Empty<BB_Activity>();
         return instance;
     }
 }

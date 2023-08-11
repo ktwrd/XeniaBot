@@ -4,17 +4,17 @@ using System.Linq;
 using Discord;
 using XeniaBot.Core.Helpers;
 
-namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
 
-public class BB_MessageModel : BigBrotherBaseModel
+public class X_MessageModel : ArchiveBaseModel
 {
     #region IMessage
     public string Content { get; set; }
     public string ContentClean { get; set; }
     public DateTimeOffset Timestamp { get; set; }
     public DateTimeOffset? EditedTimestamp { get; set; }
-    public BB_MessageEmbed[] Embeds { get; set; }
+    public X_MessageEmbed[] Embeds { get; set; }
     public BB_MessageTag[] Tags { get; set; }
     public MessageSource Source { get; set; }
     public bool IsTTS { get; set; }
@@ -46,30 +46,30 @@ public class BB_MessageModel : BigBrotherBaseModel
     public bool IsDeleted { get; set; }
     public DateTimeOffset DeletedTimestamp { get; set; }
 
-    public BB_MessageModel()
+    public X_MessageModel()
     {
         Content = "";
         ContentClean = "";
-        Embeds = Array.Empty<BB_MessageEmbed>();
+        Embeds = Array.Empty<X_MessageEmbed>();
         Tags = Array.Empty<BB_MessageTag>();
         IsDeleted = false;
         DeletedTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(0);
     }
 
-    public BB_MessageModel? Clone()
+    public X_MessageModel? Clone()
     {
-        return BigBrotherHelper.ForceTypeCast<BB_MessageModel, BB_MessageModel>(this);
+        return ArchivalHelper.ForceTypeCast<X_MessageModel, X_MessageModel>(this);
     }
 
-    public static BB_MessageModel FromMessage(IMessage message)
+    public static X_MessageModel FromMessage(IMessage message)
     {
-        var instance = new BB_MessageModel();
+        var instance = new X_MessageModel();
         instance.Content = message.Content;
         instance.ContentClean = message.CleanContent;
         instance.Timestamp = message.Timestamp;
         instance.EditedTimestamp = message.EditedTimestamp;
-        instance.Embeds = message.Embeds.Select(v => BigBrotherHelper.ForceTypeCast<IEmbed, BB_MessageEmbed>(v)).ToArray();
-        instance.Tags = message.Tags.Select(v => BigBrotherHelper.ForceTypeCast<ITag, BB_MessageTag>(v)).ToArray();
+        instance.Embeds = message.Embeds.Select(v => ArchivalHelper.ForceTypeCast<IEmbed, X_MessageEmbed>(v)).ToArray();
+        instance.Tags = message.Tags.Select(v => ArchivalHelper.ForceTypeCast<ITag, BB_MessageTag>(v)).ToArray();
         instance.Source = message.Source;
         instance.IsTTS = message.IsTTS;
         instance.Pinned = message.IsPinned;
@@ -78,20 +78,20 @@ public class BB_MessageModel : BigBrotherBaseModel
         instance.MentionedChannelIds = message.MentionedChannelIds.ToArray();
         instance.MentionedRoleIds = message.MentionedRoleIds.ToArray();
         instance.MentionedUserIds = message.MentionedUserIds.ToArray();
-        instance.Activity = BigBrotherHelper.ForceTypeCast<MessageActivity, BB_MessageActivity>(message.Activity);
-        instance.Application = BigBrotherHelper.ForceTypeCast<MessageApplication, BB_MessageApplication>(message.Application);
+        instance.Activity = ArchivalHelper.ForceTypeCast<MessageActivity, BB_MessageActivity>(message.Activity);
+        instance.Application = ArchivalHelper.ForceTypeCast<MessageApplication, BB_MessageApplication>(message.Application);
         instance.Reference = BB_MessageReference.FromMessageReference(message.Reference);
         instance.Components = message.Components
-                .Select(v => BigBrotherHelper.ForceTypeCast<IMessageComponent, BB_MessageComponent>(v))
+                .Select(v => ArchivalHelper.ForceTypeCast<IMessageComponent, BB_MessageComponent>(v))
                 .Where(v => v != null)
                 .Cast<BB_MessageComponent>()
                 .ToArray();
         instance.Stickers = message.Stickers
-                .Select(v => BigBrotherHelper.ForceTypeCast<IStickerItem, BB_StickerItem>(v))
+                .Select(v => ArchivalHelper.ForceTypeCast<IStickerItem, BB_StickerItem>(v))
                 .Where(v => v != null)
                 .ToArray();
         instance.Flags = message.Flags;
-        instance.Interaction = BigBrotherHelper.ForceTypeCast<IMessageInteraction, BB_MessageInteraction>(message.Interaction);
+        instance.Interaction = ArchivalHelper.ForceTypeCast<IMessageInteraction, BB_MessageInteraction>(message.Interaction);
         instance.CreatedAt = message.CreatedAt;
         instance.Snowflake = message.Id;
         instance.AuthorId = message.Author.Id;
@@ -143,7 +143,7 @@ public class BB_MessageInteraction
     public ulong Id { get; set; }
     public InteractionType Type { get; set; }
     public string Name { get; set; }
-    public BB_UserModel User { get; set; }
+    public X_UserModel User { get; set; }
 
     public static BB_MessageInteraction FromInteraction(IMessageInteraction interaction)
     {
@@ -151,7 +151,7 @@ public class BB_MessageInteraction
         instance.Id = interaction.Id;
         instance.Type = interaction.Type;
         instance.Name = interaction.Name;
-        instance.User = BB_UserModel.FromUser(interaction.User);
+        instance.User = X_UserModel.FromUser(interaction.User);
         return instance;
     }
 }

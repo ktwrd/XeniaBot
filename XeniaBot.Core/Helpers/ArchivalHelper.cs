@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
 using Discord.WebSocket;
-using XeniaBot.Core.Controllers.Wrappers.BigBrother;
+using XeniaBot.Core.Controllers.Wrappers.Archival;
 
 namespace XeniaBot.Core.Helpers;
 
-public static class BigBrotherHelper
+public static class ArchivalHelper
 {
     public static TH? ForceTypeCast<T, TH>(T input)
     {

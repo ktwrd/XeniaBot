@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
-public class BigBrotherGenericConfigController<T> : BaseConfigController<T> where T : BigBrotherBaseModel
+public class ArchivalGenericConfigController<T> : BaseConfigController<T> where T : ArchiveBaseModel
 {
-    public BigBrotherGenericConfigController(string collectionName, IServiceProvider services)
+    public ArchivalGenericConfigController(string collectionName, IServiceProvider services)
         : base(collectionName, services)
     {
     }

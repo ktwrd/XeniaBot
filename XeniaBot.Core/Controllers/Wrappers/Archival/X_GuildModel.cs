@@ -5,10 +5,10 @@ using Discord;
 using Discord.Audio;
 using Discord.WebSocket;
 
-namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
-public class BB_GuildModel
-    : BigBrotherBaseModel
+public class X_GuildModel
+    : ArchiveBaseModel
 {
     public DateTimeOffset CreatedAt { get; set; }
     public string Name { get; set; }
@@ -55,7 +55,7 @@ public class BB_GuildModel
     public bool IsBoostProgressBarEnabled { get; set; }
     public ulong MaxUploadLimit { get; set; }
     
-    public BB_GuildModel FromExisting(SocketGuild guild)
+    public X_GuildModel FromExisting(SocketGuild guild)
     {
         Snowflake = guild.Id;
         CreatedAt = guild.CreatedAt;

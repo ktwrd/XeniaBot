@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Core.Models;
 
-namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
-public class BigBrotherBaseModel : BaseModel
+public class ArchiveBaseModel : BaseModel
 {
     public ulong Snowflake;
 }

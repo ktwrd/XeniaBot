@@ -2,13 +2,13 @@
 using System.Text.Json;
 using Discord;
 
-namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
 
 /// <summary>
-/// This can be deserialized from <see cref="IEmbed"/> with <see cref="BB_MessageEmbed.FromEmbed()"/>
+/// This can be deserialized from <see cref="IEmbed"/> with <see cref="X_MessageEmbed.FromEmbed()"/>
 /// </summary>
-public class BB_MessageEmbed
+public class X_MessageEmbed
 {
     public string Url { get; set; }
     public string Title { get; set; }
@@ -24,14 +24,14 @@ public class BB_MessageEmbed
     public BB_MessageEmbedThumbnail? Thumbnail { get; set; }
     public BB_MessageEmbedField[] Fields { get; set; }
 
-    public BB_MessageEmbed()
+    public X_MessageEmbed()
     {
         Url = "";
         Title = "";
         Description = "";
         Fields = Array.Empty<BB_MessageEmbedField>();
     }
-    public static BB_MessageEmbed? FromEmbed(IEmbed embed)
+    public static X_MessageEmbed? FromEmbed(IEmbed embed)
     {
         var opts = new JsonSerializerOptions()
         {
@@ -40,7 +40,7 @@ public class BB_MessageEmbed
             IncludeFields = true
         };
         var text = JsonSerializer.Serialize(embed, opts);
-        return JsonSerializer.Deserialize<BB_MessageEmbed>(text, opts);
+        return JsonSerializer.Deserialize<X_MessageEmbed>(text, opts);
     }
 }
 #region Message Embed Fields

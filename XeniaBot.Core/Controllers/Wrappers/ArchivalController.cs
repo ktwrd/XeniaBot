@@ -5,24 +5,24 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using XeniaBot.Core.Controllers.Wrappers.BigBrother;
+using XeniaBot.Core.Controllers.Wrappers.Archival;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.Wrappers;
 
 [BotController]
-public class BigBrotherController : BaseController
+public class ArchivalController : BaseController
 {
 
-    public BigBrotherGenericConfigController<BB_MessageModel> BBMessageConfig;
-    public BigBrotherGenericConfigController<BB_UserModel> BBUserConfig;
-    public BigBrotherGenericConfigController<BB_ChannelModel> BBChannelConfig;
+    public ArchivalGenericConfigController<X_MessageModel> BBMessageConfig;
+    public ArchivalGenericConfigController<X_UserModel> BBUserConfig;
+    public ArchivalGenericConfigController<BB_ChannelModel> BBChannelConfig;
     private readonly DiscordSocketClient _client;
-    public BigBrotherController(IServiceProvider services)
+    public ArchivalController(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
-        BBMessageConfig = new BigBrotherGenericConfigController<BB_MessageModel>("bb_store_message", services);
+        BBMessageConfig = new ArchivalGenericConfigController<X_MessageModel>("bb_store_message", services);
     }
 
     public override Task InitializeAsync()
@@ -37,7 +37,7 @@ public class BigBrotherController : BaseController
 
     public event MessageDiffDelegate MessageChange;
     public event UserDiffDelegate UserChange;
-    private void OnMessageChange(MessageChangeType type, BB_MessageModel current, BB_MessageModel? previous)
+    private void OnMessageChange(MessageChangeType type, X_MessageModel current, X_MessageModel? previous)
     {
         if (MessageChange != null)
         {
@@ -45,7 +45,7 @@ public class BigBrotherController : BaseController
         }
     }
 
-    private void OnUserChange(UserChangeType type, BB_UserModel current, BB_UserModel? previous)
+    private void OnUserChange(UserChangeType type, X_UserModel current, X_UserModel? previous)
     {
         
     }
@@ -53,7 +53,7 @@ public class BigBrotherController : BaseController
     private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
     {
         var data = await BBUserConfig.Get(previous.Id);
-        var currentData = BB_UserModel.FromUser(current);
+        var currentData = X_UserModel.FromUser(current);
         await BBUserConfig.Set(currentData);
         OnUserChange(
             UserChangeType.Update,
@@ -69,7 +69,7 @@ public class BigBrotherController : BaseController
     #region Message
     private async Task _client_MessageReceived(SocketMessage message)
     {
-        var data = BB_MessageModel.FromMessage(message);
+        var data = X_MessageModel.FromMessage(message);
         if (message.Channel is SocketGuildChannel socketChannel)
             data.GuildId = socketChannel.Id;
         await BBMessageConfig.Set(data);
@@ -85,7 +85,7 @@ public class BigBrotherController : BaseController
         ISocketMessageChannel channel)
     {
         // convert data to type that mongo can support
-        var data = BB_MessageModel.FromMessage(newMessage);
+        var data = X_MessageModel.FromMessage(newMessage);
         
         // set guild if message was actually sent in a server (and not dms)
         if (channel is SocketGuildChannel { Guild: not null } socketChannel)

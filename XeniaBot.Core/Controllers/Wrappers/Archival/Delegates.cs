@@ -1,4 +1,4 @@
-﻿namespace XeniaBot.Core.Controllers.Wrappers.BigBrother;
+﻿namespace XeniaBot.Core.Controllers.Wrappers.Archival;
 
 public enum MessageChangeType
 {
@@ -14,10 +14,10 @@ public enum UserChangeType
 }
 public delegate void MessageDiffDelegate(
     MessageChangeType type,
-    BB_MessageModel current,
-    BB_MessageModel? previous);
+    X_MessageModel current,
+    X_MessageModel? previous);
     
 public delegate void UserDiffDelegate(
     UserChangeType type,
-    BB_UserModel current,
-    BB_UserModel? previous);
+    X_UserModel current,
+    X_UserModel? previous);
