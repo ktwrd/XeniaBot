@@ -9,7 +9,7 @@ Another General-purpose Discord Bot for the masses.
 
 ## Setup Development Environment
 
-There are a few things that are required to setup a development environment for Skid
+There are a few things that are required to setup a development environment for Xenia
 - [Privileged Gateway Intents](#privileged-gateway-intents)
 - [.NET 7.0 SDK+Runtime](#installing-net-sdk)
 - [MongoDB Server (Preferably in Docker)](#setup-mongodb-server)
@@ -34,7 +34,7 @@ On Linux machines, install the runtime and SDK packages for .NET 7.0 package thr
 To setup the MongoDB server with Docker run the following command.
 
 ```
-docker run -p 27020:27017 --name mongodb-skid -d -e MONGO_INITDB_ROOT_USERNAME=user -e MONGO_INITDB_ROOT_PASSWORD=password mongo
+docker run -p 27020:27017 --name mongodb-xenia-discord -d -e MONGO_INITDB_ROOT_USERNAME=user -e MONGO_INITDB_ROOT_PASSWORD=password mongo
 ```
 
 It will set set the username and password to match the following connection URL
@@ -46,7 +46,7 @@ This should be good enough for local testing.
 
 ### First Run
 
-When you first start Skid, it will definitely not work at all. Make sure that the following items are set in `config.json` which is usually located at `SkidBot.Core/bin/Debug/config.json` relative to the solution directory.
+When you first start Xenia, it will definitely not work at all. Make sure that the following items are set in `config.json` which is usually located at `XeniaBot.Core/bin/Debug/config.json` relative to the solution directory.
 
 ## Config Description
 | Key | Required | Default Value | Description |
