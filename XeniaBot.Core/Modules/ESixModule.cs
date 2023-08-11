@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace XeniaBot.Core.Modules
 {
-    [Group("esix", "e926 Intergration")]
+    [Group("esix", "e926 Integration")]
     public class ESixModule : InteractionModuleBase
     {
         [SlashCommand("query", "Query for posts. Fetches the first one")]
