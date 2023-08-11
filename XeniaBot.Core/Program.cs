@@ -30,7 +30,7 @@ namespace XeniaBot.Core
         public static MongoClient MongoClient = null;
         private static DiscordController _discordController;
         /// <summary>
-        /// Created after <see cref="DiscordMain"/> is called in <see cref="MainAsync(string[])"/>
+        /// Created after <see cref="CreateServiceProvider"/> is called in <see cref="MainAsync(string[])"/>
         /// </summary>
         public static ServiceProvider Services = null;
         public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
