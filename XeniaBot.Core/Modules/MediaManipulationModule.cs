@@ -101,7 +101,8 @@ public partial class MediaManipulationModule : InteractionModuleBase
             var final = Image.Arrayjoin(imgList, across: 1)
                 .Mutate((i) =>
                 {
-                    i.Set("page-height", pageHeight + textHeight);
+                    if (nPages > 1)
+                        i.Set("page-height", pageHeight + textHeight);
                 });
             Log.Debug($"Complete");
             if (isAnimated)

@@ -11,13 +11,20 @@ public static class NetVipsHelper
     /// <returns>Page count for image. Will be 1 to 1000</returns>
     public static int GetNPages(Image image)
     {
-        var a = image.GetTypeOf("n-pages");
-        var b = image.Get("n-pages");
-        if (b != null)
+        try
         {
-            var c = (int)b;
-            if (c is > 1 and < 10000)
-                return c;
+            var a = image.GetTypeOf("n-pages");
+            var b = image.Get("n-pages");
+            if (b != null)
+            {
+                var c = (int)b;
+                if (c is > 1 and < 10000)
+                    return c;
+            }
+        }
+        catch
+        {
+            return 1;
         }
         return 1;
     }
