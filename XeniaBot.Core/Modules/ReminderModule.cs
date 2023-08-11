@@ -1,0 +1,62 @@
+﻿using System;
+using System.Threading.Tasks;
+using Discord;
+using Discord.Interactions;
+using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Helpers;
+
+namespace XeniaBot.Core.Modules;
+
+public class ReminderModule : InteractionModuleBase
+{
+    [SlashCommand("remind", "Create a reminder")]
+    public async Task CreateReminder(string when, string? note = null)
+    {
+        TimeSpan timeSpan;
+        try
+        {
+            timeSpan = TimeHelper.ParseFromString(when);
+        }
+        catch (Exception exception)
+        {
+            await Context.Interaction.RespondAsync(string.Join("\n", new string[]
+            {
+                "Failed to parse parameter \"when\"",
+                "```",
+                exception.Message,
+                "```"
+            }));
+            await DiscordHelper.ReportError(exception, Context);
+            return;
+        }
+        var timestamp = DateTimeOffset.UtcNow.Add(timeSpan).ToUnixTimeSeconds();
+        try
+        {
+            var controller = Program.Services.GetRequiredService<ReminderController>();
+            await controller.CreateReminderTask(
+                timestamp,
+                Context.User.Id,
+                Context.Channel.Id,
+                Context.Guild.Id,
+                note);
+        }
+        catch (Exception e)
+        {
+            await Context.Interaction.RespondAsync(string.Join("\n", new string[]
+            {
+                "Failed to create reminder",
+                "```",
+                e.ToString(),
+                "```"
+            }));
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        var embed = DiscordHelper.BaseEmbed()
+            .WithDescription($"Reminder will be sent <t:{timestamp}:R>")
+            .WithColor(Color.Green);
+        await Context.Interaction.RespondAsync(embed: embed.Build());
+    }
+}

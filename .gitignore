@@ -397,8 +397,8 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 Data
-SkidBot.Core/Properties/launchSettings.json
+XeniaBot.Core/Properties/launchSettings.json
 .vscode
 mongoData
 config.json
-.idea/.idea.SkidBot/.idea/.name
+.idea/
