@@ -20,6 +20,17 @@ public partial class AuthentikAdminModule
         return response.StatusCode == HttpStatusCode.NoContent;
     }
 
+    public async Task<bool> RemoveFromGroup(int userId, string groupUuid)
+    {
+        var response = await PostAsync(
+            $"core/groups/{groupUuid}/remove_user/?pk={userId}", JsonContent.Create(
+                new AuthentikGroupUserModifyRequest()
+                {
+                    UserId = userId
+                }, options: Program.SerializerOptions));
+        return response.StatusCode == HttpStatusCode.NoContent;
+    }
+
 }
 
 public class AuthentikGroupUserModifyRequest
