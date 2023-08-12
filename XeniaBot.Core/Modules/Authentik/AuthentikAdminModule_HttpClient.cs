@@ -57,6 +57,21 @@ public partial class AuthentikAdminModule
 
         return param;
     }
+    public async Task<string?> SafelyGetGroupId(string param)
+    {
+        var integerRegex = new Regex(@"^[0-9]+$");
+        if (!integerRegex.IsMatch(param))
+        {
+            var searchResponse = await GetGroups(param);
+            if (searchResponse.Results.Length < 1)
+            {
+                return null;
+            }
+            return searchResponse.Results[0].Uuid;
+        }
+
+        return param;
+    }
     private HttpRequestMessage GetBaseSend(string url, HttpMethod method, HttpContent? content)
     {
         InitHttpClient();
