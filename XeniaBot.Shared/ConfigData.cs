@@ -40,6 +40,10 @@ public class ConfigData
 
     public ulong Invite_ClientId = 0;
     public ulong Invite_Permissions = 415471496311;
+
+    public string AuthentikToken = "";
+    public string AuthentikUrl = "";
+    public bool   AuthentikEnable = false;
 }
 public class GoogleCloudKey
 {

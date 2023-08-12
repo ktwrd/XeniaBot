@@ -63,7 +63,7 @@ namespace XeniaBot.Core
             var context = new SocketCommandContext(_client, message);
             if (Program.ConfigData.DeveloperMode)
             {
-                if (context.Guild.Id != Program.ConfigData.DeveloperMode_Server)
+                if (context.Guild?.Id != Program.ConfigData.DeveloperMode_Server)
                     return;
             }
 
