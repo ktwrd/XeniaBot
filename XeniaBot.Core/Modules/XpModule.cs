@@ -142,5 +142,42 @@ namespace XeniaBot.Core.Modules
                 await DiscordHelper.ReportError(e, Context);
             }
         }
+
+        [SlashCommand("enable", "Enable level up messages")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task Enable()
+        {
+            await DeferAsync();
+            try
+            {
+                var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+                var model = await controller.Get(Context.Guild.Id) ??
+                            new LevelSystemGuildConfigModel()
+                            {
+                                GuildId = Context.Guild.Id
+                            };
+
+                model.ShowLeveUpMessage = true;
+                await controller.Set(model);
+                await FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithTitle("Xp System - Show Level Up Message")
+                        .WithDescription($"Enabled")
+                        .WithColor(Color.Green)
+                        .WithCurrentTimestamp()
+                        .Build());
+            }
+            catch (Exception e)
+            {
+                await FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithTitle("Xp System - Show Level Up Message")
+                        .WithDescription($"Failed to update data. `{e.Message}`")
+                        .WithColor(Color.Red)
+                        .WithCurrentTimestamp()
+                        .Build());
+                await DiscordHelper.ReportError(e, Context);
+            }
+        }
     }
 }
