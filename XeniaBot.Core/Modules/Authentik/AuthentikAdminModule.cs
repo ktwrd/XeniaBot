@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
@@ -13,7 +14,6 @@ namespace XeniaBot.Core.Modules;
 
 
 [Group("auth", "Authentik Administration")]
-[RequireOwner]
 public partial class AuthentikAdminModule : InteractionModuleBase
 {
     [SlashCommand("usercreate", "Create a user")]
@@ -203,16 +203,19 @@ public partial class AuthentikAdminModule : InteractionModuleBase
             return;
         }
 
-        var descLines = new List<string>();
+        var descLines = new List<string>()
+        {
+            $"`| id   | username`"
+        };
         try
         {
             var data = await GetUsers();
             if (data == null)
                 throw new Exception("Data is null");
 
-            foreach (var item in data.Results)
+            foreach (var item in data.Results.OrderBy(v => v.Id))
             {
-                descLines.Add($"`{item.Id,4} {item.Username}`");
+                descLines.Add($"`| {item.Id,-4} | {item.Username}`");
             }
         }
         catch (Exception e)
