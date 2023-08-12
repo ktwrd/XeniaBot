@@ -61,4 +61,35 @@ public partial class AuthentikAdminModule : InteractionModuleBase
             }));
         await FollowupAsync(embed: embed.Build(), ephemeral:true);
     }
+
+    [SlashCommand("userpassreset", "Create a password reset link for a user")]
+    [RequireOwner]
+    public async Task Cmd_CreateResetLink(string userId)
+    {
+        await Context.Interaction.DeferAsync();
+        var embed = new EmbedBuilder().WithTitle("Authentik - Password Reset Link").WithCurrentTimestamp();
+        if (!Program.ConfigData.AuthentikEnable)
+        {
+            embed.WithDescription("Disabled");
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+        
+        string? targetUserId = userId;
+        var integerRegex = new Regex(@"^[0-9]+$");
+        if (!integerRegex.IsMatch(targetUserId))
+        {
+            try
+            {
+                targetUserId = await SafelyGetUserId(targetUserId);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+                embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true);
+                await DiscordHelper.ReportError(e, Context);
+                return;
+            }
+        }
 }
