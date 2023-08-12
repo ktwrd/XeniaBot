@@ -189,4 +189,42 @@ public partial class AuthentikAdminModule : InteractionModuleBase
             embed.WithDescription("Failed to delete user ;w;").WithColor(Color.Red);
         }
     }
+
+    [SlashCommand("userlist", "List all users")]
+    [RequireOwner]
+    public async Task Cmd_ListUsers()
+    {
+        await Context.Interaction.DeferAsync();
+        var embed = new EmbedBuilder().WithTitle("Authentik - List Users").WithCurrentTimestamp();
+        if (!Program.ConfigData.AuthentikEnable)
+        {
+            embed.WithDescription("Disabled");
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+
+        var descLines = new List<string>();
+        try
+        {
+            var data = await GetUsers();
+            if (data == null)
+                throw new Exception("Data is null");
+
+            foreach (var item in data.Results)
+            {
+                descLines.Add($"`{item.Id,4} {item.Username}`");
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        embed.WithDescription(string.Join("\n", descLines)).WithColor(Color.Blue);
+        await FollowupAsync(embed: embed.Build(), ephemeral: true);
+    }
 }
