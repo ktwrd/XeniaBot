@@ -21,11 +21,13 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         private IMongoDatabase _db;
         private DiscordSocketClient _client;
         private Random _random;
+        private LevelSystemGuildConfigController _guildConfig;
         public LevelSystemController(IServiceProvider services)
             : base(services)
         {
             _db = services.GetRequiredService<IMongoDatabase>();
             _client = services.GetRequiredService<DiscordSocketClient>();
+            _guildConfig = services.GetRequiredService<LevelSystemGuildConfigController>();
             _random = new Random();
             _client.MessageReceived += _client_MessageReceived;
         }
@@ -54,10 +56,32 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             var previousMessageDiff = currentTimestamp - data.LastMessageTimestamp;
             if (previousMessageDiff >= 8000)
             {
-                var result = await GrantXp(data, message);
-                if (result.DidLevelUp)
+                try
                 {
-                    await message.ReplyAsync($"You've advanced to *level {result.Metadata.UserLevel}*!");
+                    var result = await GrantXp(data, message);
+                    var guildConfig = await _guildConfig.Get(context.Guild.Id);
+                    var targetChannel = message.Channel;
+                    if (guildConfig != null)
+                    {
+                        if (guildConfig.LevelUpChannel != null)
+                        {
+                            var tc = context.Guild.GetTextChannel((ulong)guildConfig.LevelUpChannel);
+                            if (tc != null)
+                                targetChannel = tc;
+                        }
+
+                        if (!guildConfig.ShowLeveUpMessage)
+                            targetChannel = null;
+                    }
+                    if (result.DidLevelUp && targetChannel != null)
+                    {
+                        await targetChannel.SendMessageAsync(
+                            $"<@{message.Author.Id}> You've advanced to *level {result.Metadata.UserLevel}*!");
+                    }
+                }
+                catch (Exception e)
+                {
+                    await DiscordHelper.ReportError(e, context);
                 }
             }
         }
