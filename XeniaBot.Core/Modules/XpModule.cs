@@ -62,9 +62,9 @@ namespace XeniaBot.Core.Modules
             var length = Math.Min(5, sorted.Length);
             string[] rankText = new string[]
             {
-                ":1st_place_medal:",
-                ":2nd_place_medal:",
-                ":3rd_place_medal:",
+                ":first_place:",
+                ":second_place:",
+                ":third_place:",
                 ":four:",
                 ":five:"
             };
