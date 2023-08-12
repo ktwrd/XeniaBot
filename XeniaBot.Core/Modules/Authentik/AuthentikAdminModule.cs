@@ -92,4 +92,38 @@ public partial class AuthentikAdminModule : InteractionModuleBase
                 return;
             }
         }
+
+        if (targetUserId == null)
+        {
+            embed.WithDescription($"No users found with the username or ID of `{targetUserId,-1}`")
+                .WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            return;
+        }
+        
+        try
+        {
+            var link = await CreatePasswordResetLink(targetUserId);
+            if (link == null)
+            {
+                embed.WithDescription($"Failed to get reset link. It's null...")
+                    .WithColor(Color.Orange);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true);
+                return;
+            }
+
+            embed.WithDescription($"[Reset Link]({link})")
+                .WithColor(Color.Blue);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            return;
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+    }
 }
