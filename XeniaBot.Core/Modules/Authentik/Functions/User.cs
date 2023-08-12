@@ -39,6 +39,11 @@ public partial class AuthentikAdminModule
         return data;
     }
 
+    public async Task<bool> DeleteUser(string id)
+    {
+        var response = await DeleteAsync($"core/users/{id}/");
+        return response.StatusCode == HttpStatusCode.NoContent;
+    }
 }
 
 public class AuthentikPaginationResponse<T>
