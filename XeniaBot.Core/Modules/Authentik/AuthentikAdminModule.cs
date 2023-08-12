@@ -287,4 +287,59 @@ public partial class AuthentikAdminModule : InteractionModuleBase
 
         await FollowupAsync(embed: embed.Build(), ephemeral: true);
     }
+
+    [SlashCommand("removefromgroup", "Remove a user from a group")]
+    [RequireOwner]
+    public async Task Cmd_RemoveUserFromGroup(string user, string group)
+    {
+        await Context.Interaction.DeferAsync();
+        var embed = new EmbedBuilder().WithTitle("Authentik - Remove from Group").WithCurrentTimestamp();
+        if (!Program.ConfigData.AuthentikEnable)
+        {
+            embed.WithDescription("Disabled");
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+        string? targetUser = user;
+        targetUser = await SafelyGetUserId(targetUser);
+        if (targetUser == null)
+        {
+            embed.WithColor(Color.Red).WithDescription($"User `{user,-1}` not found.");
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            return;
+        }
+        
+        string? targetGroup = group;
+        targetGroup = await SafelyGetGroupId(targetGroup);
+        if (targetGroup == null)
+        {
+            embed.WithColor(Color.Red).WithDescription($"Group `{group}` not found.");
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            return;
+        }
+
+        bool success = true;
+        try
+        {
+            success = await RemoveFromGroup(int.Parse(targetUser), targetGroup);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        if (success)
+        {
+            embed.WithDescription($"Removed user from group!").WithColor(Color.Green);
+        }
+        else
+        {
+            embed.WithDescription($"Failed to remove user from group").WithColor(Color.Orange);
+        }
+        await FollowupAsync(embed: embed.Build(), ephemeral: true);
+    }
 }
