@@ -126,4 +126,67 @@ public partial class AuthentikAdminModule : InteractionModuleBase
             return;
         }
     }
+
+    [SlashCommand("userdelete", "Delete a user")]
+    [RequireOwner]
+    public async Task Cmd_DeleteUser(string userId)
+    {
+        await Context.Interaction.DeferAsync();
+        var embed = new EmbedBuilder().WithTitle("Authentik - Delete User").WithCurrentTimestamp();
+        if (!Program.ConfigData.AuthentikEnable)
+        {
+            embed.WithDescription("Disabled");
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+        
+        string? targetUserId = userId;
+        var integerRegex = new Regex(@"^[0-9]+$");
+        if (!integerRegex.IsMatch(targetUserId))
+        {
+            try
+            {
+                targetUserId = await SafelyGetUserId(targetUserId);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+                embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true);
+                await DiscordHelper.ReportError(e, Context);
+                return;
+            }
+        }
+
+        if (targetUserId == null)
+        {
+            embed.WithDescription($"No users found with the username or ID of `{targetUserId,-1}`")
+                .WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            return;
+        }
+
+        bool success = true;
+        try
+        {
+            success = await DeleteUser(targetUserId);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        if (success)
+        {
+            embed.WithDescription("Account deleted successfully").WithColor(Color.Green);
+        }
+        else
+        {
+            embed.WithDescription("Failed to delete user ;w;").WithColor(Color.Red);
+        }
+    }
 }
