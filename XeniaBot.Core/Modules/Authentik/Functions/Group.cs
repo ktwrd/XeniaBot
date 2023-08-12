@@ -31,6 +31,17 @@ public partial class AuthentikAdminModule
         return response.StatusCode == HttpStatusCode.NoContent;
     }
 
+    public async Task<AuthentikPaginationResponse<AuthentikGroupResponse>?> GetGroups(string groupName)
+    {
+        var response = await GetAsync($"core/groups/?name={WebUtility.UrlEncode(groupName)}");
+        if (response.StatusCode != HttpStatusCode.OK)
+            return null;
+
+        var stringContent = response.Content.ReadAsStringAsync().Result;
+        var data = JsonSerializer.Deserialize<AuthentikPaginationResponse<AuthentikGroupResponse>?>(
+            stringContent, Program.SerializerOptions);
+        return data;
+    }
 }
 
 public class AuthentikGroupUserModifyRequest
