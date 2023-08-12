@@ -28,6 +28,17 @@ public partial class AuthentikAdminModule
         return data;
     }
 
+    public async Task<AuthentikUserResponse?> GetUser(string id)
+    {
+        var response = await GetAsync($"core/users/{id}/");
+        if (response.StatusCode != HttpStatusCode.OK)
+            return null;
+
+        var stringContent = response.Content.ReadAsStringAsync().Result;
+        var data = JsonSerializer.Deserialize<AuthentikUserResponse>(stringContent, Program.SerializerOptions);
+        return data;
+    }
+
 }
 
 public class AuthentikPaginationResponse<T>
