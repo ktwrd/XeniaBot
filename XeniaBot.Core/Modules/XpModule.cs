@@ -104,5 +104,43 @@ namespace XeniaBot.Core.Modules
                 return;
             }
         }
+
+        [SlashCommand("setchannel", "Set Log Channel")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task SetLogChannel(
+            [ChannelTypes(ChannelType.Text)] ITextChannel logChannel)
+        {
+            await DeferAsync();
+            try
+            {
+                var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+                var model = await controller.Get(Context.Guild.Id) ??
+                            new LevelSystemGuildConfigModel()
+                            {
+                                GuildId = Context.Guild.Id
+                            };
+
+                model.LevelUpChannel = logChannel.Id;
+                await controller.Set(model);
+                await FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithTitle("Xp System - Set Log Channel")
+                        .WithDescription($"Log Channel updated to <#{model.LevelUpChannel}>")
+                        .WithColor(Color.Green)
+                        .WithCurrentTimestamp()
+                        .Build());
+            }
+            catch (Exception e)
+            {
+                await FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithTitle("Xp System - Set Log Channel")
+                        .WithDescription($"Failed to update channel. `{e.Message}`")
+                        .WithColor(Color.Red)
+                        .WithCurrentTimestamp()
+                        .Build());
+                await DiscordHelper.ReportError(e, Context);
+            }
+        }
     }
 }
