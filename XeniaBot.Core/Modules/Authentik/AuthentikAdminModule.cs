@@ -231,6 +231,74 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         await FollowupAsync(embed: embed.Build(), ephemeral: true);
     }
 
+    [SlashCommand("userinfo", "List all users")]
+    [RequireOwner]
+    public async Task Cmd_UserInfo(string user)
+    {
+        await Context.Interaction.DeferAsync();
+        var embed = new EmbedBuilder().WithTitle("Authentik - User Info").WithCurrentTimestamp();
+        if (!Program.ConfigData.AuthentikEnable)
+        {
+            embed.WithDescription("Disabled");
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+        
+        string? targetUserId = user;
+        var integerRegex = new Regex(@"^[0-9]+$");
+        if (!integerRegex.IsMatch(targetUserId))
+        {
+            try
+            {
+                targetUserId = await SafelyGetUserId(targetUserId);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+                embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true);
+                await DiscordHelper.ReportError(e, Context);
+                return;
+            }
+        }
+
+        if (targetUserId == null)
+        {
+            embed.WithDescription($"No users found with the username or ID of `{targetUserId,-1}`")
+                .WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            return;
+        }
+
+        try
+        {
+            var userData = await GetUser(targetUserId);
+            if (userData == null)
+                throw new Exception("User Data is null");
+            embed.WithDescription(string.Join("\n", new string[]
+            {
+                $"Id:           {userData.Id}",
+                $"Username:     {userData.Username}",
+                $"DisplayName:  {userData.DisplayName}",
+                $"IsActive:     {userData.IsActive}",
+                $"LastLogin:    {userData.LastLogin}",
+                $"Email:        {userData.Email}",
+                $"Groups:       " + string.Join(", ", userData.Groups.OrderBy(v => v))
+            }.Select(v => $"`{v,-1}`")));
+            embed.WithColor(Color.Blue);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        await FollowupAsync(embed: embed.Build(), ephemeral: true);
+    }
+
     [SlashCommand("addtogroup", "Add a user to a group")]
     [RequireOwner]
     public async Task Cmd_AddUserToGroup(string user, string group)
