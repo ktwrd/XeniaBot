@@ -230,4 +230,61 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         embed.WithDescription(string.Join("\n", descLines)).WithColor(Color.Blue);
         await FollowupAsync(embed: embed.Build(), ephemeral: true);
     }
+
+    [SlashCommand("addtogroup", "Add a user to a group")]
+    [RequireOwner]
+    public async Task Cmd_AddUserToGroup(string user, string group)
+    {
+        await Context.Interaction.DeferAsync();
+        var embed = new EmbedBuilder().WithTitle("Authentik - Add to Group").WithCurrentTimestamp();
+        if (!Program.ConfigData.AuthentikEnable)
+        {
+            embed.WithDescription("Disabled");
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+        
+        string? targetUser = user;
+        targetUser = await SafelyGetUserId(targetUser);
+        if (targetUser == null)
+        {
+            embed.WithDescription($"User `{user,-1}` not found").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            return;
+        }
+        
+        string? targetGroup = group;
+        targetGroup = await SafelyGetGroupId(targetGroup);
+        if (targetGroup == null)
+        {
+            embed.WithDescription($"Group `{group,-1}` not found.").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+        
+        bool success = true;
+        try
+        {
+            success = await AddToGroup(int.Parse(targetUser), targetGroup);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            embed.WithDescription($"{e.Message}").AddField("Exception", $"```\n{e}\n```").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        if (success)
+        {
+            embed.WithDescription($"Added user to group").WithColor(Color.Green);
+        }
+        else
+        {
+            embed.WithDescription($"Failed to add user to group (might be in it already)").WithColor(Color.Orange);
+        }
+
+        await FollowupAsync(embed: embed.Build(), ephemeral: true);
+    }
 }
