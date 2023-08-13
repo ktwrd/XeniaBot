@@ -5,13 +5,15 @@ using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Core.Models;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Helpers;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
 {

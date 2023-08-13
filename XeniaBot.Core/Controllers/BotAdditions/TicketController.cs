@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Bindings;
 using XeniaBot.Core.Exceptions;
-using XeniaBot.Core.Models;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
@@ -17,6 +16,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
 {

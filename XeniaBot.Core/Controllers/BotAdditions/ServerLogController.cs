@@ -5,9 +5,10 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.Wrappers;
-using XeniaBot.Core.Controllers.Wrappers.Archival;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Core.Models;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models;
+using XeniaBot.Data.Models.Archival;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;

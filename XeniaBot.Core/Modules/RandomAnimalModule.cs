@@ -15,7 +15,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using XeniaBot.Core.Models;
+using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules

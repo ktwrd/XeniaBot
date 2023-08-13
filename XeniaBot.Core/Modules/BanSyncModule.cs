@@ -3,12 +3,13 @@ using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.BotAdditions;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Modules
 {
@@ -46,7 +47,7 @@ namespace XeniaBot.Core.Modules
                 var data = await controller.Get(Context.Guild.Id);
                 if (data == null)
                 {
-                    data = new Models.ConfigBanSyncModel()
+                    data = new ConfigBanSyncModel()
                     {
                         GuildId = Context.Guild.Id,
                         LogChannel = logChannel.Id,
@@ -95,7 +96,7 @@ namespace XeniaBot.Core.Modules
                 var data = await controller.Get(guildId);
                 if (data == null)
                 {
-                    data = new Models.ConfigBanSyncModel()
+                    data = new ConfigBanSyncModel()
                     {
                         GuildId = guildId
                     };
@@ -190,7 +191,7 @@ namespace XeniaBot.Core.Modules
                 await DiscordHelper.ReportError(ex, Context);
                 return;
             }
-            if (response.State == Models.BanSyncGuildState.PendingRequest)
+            if (response.State == BanSyncGuildState.PendingRequest)
             {
                 embed.Color = Color.Green;
                 embed.Description = "Your guild is under review for Ban Sync to be enabled.";
@@ -199,7 +200,7 @@ namespace XeniaBot.Core.Modules
             }
 
             embed.Description = $"Failed to request BanSync for this guild.\n`{response.State}`";
-            if (response.State == Models.BanSyncGuildState.Blacklisted || response.State == Models.BanSyncGuildState.RequestDenied)
+            if (response.State == BanSyncGuildState.Blacklisted || response.State == BanSyncGuildState.RequestDenied)
             {
                 embed.AddField("Reason", $"```\n{response.Reason}\n```", true);
             }

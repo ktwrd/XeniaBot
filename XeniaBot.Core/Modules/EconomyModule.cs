@@ -5,7 +5,8 @@ using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.BotAdditions;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Core.Models;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Modules;
 

@@ -5,7 +5,8 @@ using System.Timers;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Core.Models;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;

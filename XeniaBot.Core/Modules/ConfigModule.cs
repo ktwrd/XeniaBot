@@ -2,12 +2,12 @@
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.BotAdditions;
-using XeniaBot.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Modules
 {

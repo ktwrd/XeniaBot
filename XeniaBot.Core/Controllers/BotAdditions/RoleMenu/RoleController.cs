@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Models;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models;
 using ReactionMessage = Discord.Cacheable<Discord.IUserMessage, ulong>;
 using ReactionChannel = Discord.Cacheable<Discord.IMessageChannel, ulong>;
 

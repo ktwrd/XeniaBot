@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using MongoDB.Driver;
-using XeniaBot.Core.Models;
+using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;

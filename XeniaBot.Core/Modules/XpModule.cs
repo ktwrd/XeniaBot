@@ -8,7 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Core.Models;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Helpers;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Modules
 {
@@ -19,7 +21,7 @@ namespace XeniaBot.Core.Modules
         public async Task Profile()
         {
             var controller = Program.Services.GetRequiredService<LevelSystemController>();
-            var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new Models.LevelMemberModel();
+            var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
             var metadata = LevelSystemHelper.Generate(data);
 
             var embed = new EmbedBuilder()
