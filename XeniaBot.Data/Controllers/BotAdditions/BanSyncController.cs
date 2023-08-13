@@ -12,7 +12,7 @@ using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 
-namespace XeniaBot.Core.Controllers.BotAdditions
+namespace XeniaBot.Data.Controllers.BotAdditions
 {
     [BotController]
     public class BanSyncController : BaseController
@@ -20,16 +20,25 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
         private readonly BanSyncConfigController _config;
+        private readonly ConfigData _configData;
+        private readonly BanSyncInfoConfigController _infoConfig;
+        private readonly ProgramDetails _details;
         public BanSyncController(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
             _config = services.GetRequiredService<BanSyncConfigController>();
+            _configData = services.GetRequiredService<ConfigData>();
+            _infoConfig = services.GetRequiredService<BanSyncInfoConfigController>();
+            _details = services.GetRequiredService<ProgramDetails>();
 
-            _client.UserJoined += _client_UserJoined;
-            _client.UserUnbanned += _client_UserUnbanned;
-            _client.UserBanned += _client_UserBanned;
+            if (_details.Platform != XeniaPlatform.WebPanel)
+            {
+                _client.UserJoined += _client_UserJoined;
+                _client.UserUnbanned += _client_UserUnbanned;
+                _client.UserBanned += _client_UserBanned;
+            }
         }
 
         public override Task InitializeAsync() => Task.CompletedTask;
@@ -56,7 +65,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Reason = banInfo?.Reason ?? "null",
             };
-            await SetInfo(info);
+            await _infoConfig.SetInfo(info);
             await NotifyBan(info);
         }
 
@@ -104,7 +113,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             if ((config?.Enable ?? false) == false)
                 return;
 
-            await RemoveInfo(user.Id, guild.Id);
+            await _infoConfig.RemoveInfo(user.Id, guild.Id);
         }
 
         private async Task _client_UserJoined(SocketGuildUser arg)
@@ -122,7 +131,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 return;
 
             // Check if this user has been banned before, if not then ignore
-            var userInfo = (await GetInfoEnumerable(arg.Id)).ToArray();
+            var userInfo = (await _infoConfig.GetInfoEnumerable(arg.Id)).ToArray();
             if (!userInfo.Any())
                 return;
 
@@ -211,8 +220,8 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         protected async Task SetGuildState_Notify(ConfigBanSyncModel model)
         {
             var guild = _client.GetGuild(model.GuildId);
-            var logGuild = _client.GetGuild(Program.ConfigData.BanSync_AdminServer);
-            var logChannel = logGuild.GetTextChannel(Program.ConfigData.BanSync_GlobalLogChannel);
+            var logGuild = _client.GetGuild(_configData.BanSync_AdminServer);
+            var logChannel = logGuild.GetTextChannel(_configData.BanSync_GlobalLogChannel);
 
             await logChannel.SendMessageAsync(embed: new EmbedBuilder()
             {
@@ -253,8 +262,8 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         protected async Task RequestGuildEnable_SendNotification(ConfigBanSyncModel model)
         {
             var guild = _client.GetGuild(model.GuildId);
-            var logGuild = _client.GetGuild(Program.ConfigData.BanSync_AdminServer);
-            var logRequestChannel = logGuild.GetTextChannel(Program.ConfigData.BanSync_RequestChannel);
+            var logGuild = _client.GetGuild(_configData.BanSync_AdminServer);
+            var logRequestChannel = logGuild.GetTextChannel(_configData.BanSync_RequestChannel);
             // Fetch first text channel to create invite for
             var firstTextChannel = guild.Channels.OfType<ITextChannel>().FirstOrDefault();
 
@@ -278,113 +287,5 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 })
             }.Build());
         }
-
-        #region Mongo Helpers
-        public const string MongoInfoCollectionName = "banSyncInfo";
-        protected IMongoCollection<T>? GetInfoCollection<T>()
-        {
-            return Program.GetMongoDatabase()?.GetCollection<T>(MongoInfoCollectionName);
-        }
-        protected IMongoCollection<BanSyncInfoModel>? GetInfoCollection()
-            => GetInfoCollection<BanSyncInfoModel>();
-        protected async Task<IEnumerable<T>> BaseInfoFind<T>(FilterDefinition<T> data)
-        {
-            var collection = GetInfoCollection<T>();
-            var result = await collection.FindAsync(data);
-
-            return result.ToEnumerable();
-        }
-        protected async Task<bool> BaseInfoAny<T>(FilterDefinition<T> data)
-        {
-            var collection = GetInfoCollection<T>();
-            var result = await collection.FindAsync(data);
-
-            return result.Any();
-        }
-        protected async Task<T?> BaseInfoFirstOrDefault<T>(FilterDefinition<T> data)
-        {
-            var collection = GetInfoCollection<T>();
-            var result = await collection.FindAsync(data);
-
-            return result.FirstOrDefault();
-        }
-        #endregion
-
-        #region Get/Set
-        #region Get
-        public async Task<IEnumerable<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId)
-        {
-            var filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Where(v => v.UserId == userId && v.GuildId == guildId);
-
-            return await BaseInfoFind(filter);
-        }
-        public async Task<IEnumerable<BanSyncInfoModel>> GetInfoEnumerable(BanSyncInfoModel data)
-            => await GetInfoEnumerable(data.UserId, data.GuildId);
-        public async Task<IEnumerable<BanSyncInfoModel>> GetInfoEnumerable(ulong userId)
-        {
-            var filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Eq("UserId", userId);
-
-            return await BaseInfoFind(filter);
-        }
-        public async Task<BanSyncInfoModel?> GetInfo(ulong userId, ulong guildId)
-        {
-            var filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Where(v => v.UserId == userId && v.GuildId == guildId);
-
-            return await BaseInfoFirstOrDefault(filter);
-        }
-        public async Task<BanSyncInfoModel?> GetInfo(BanSyncInfoModel data)
-            => await GetInfo(data.UserId, data.GuildId);
-        #endregion
-
-        public async Task SetInfo(BanSyncInfoModel data)
-        {
-            var collection = GetInfoCollection();
-            var filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Where(v => v.UserId == data.UserId && v.GuildId == data.GuildId);
-            if (await InfoExists(data))
-            {
-                await collection.ReplaceOneAsync(filter, data);
-            }
-            else
-            {
-                await collection.InsertOneAsync(data);
-            }
-        }
-        public async Task RemoveInfo(ulong userId, ulong guildId)
-        {
-            var collection = GetInfoCollection();
-            var filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Where(v => v.UserId == userId && v.GuildId == guildId);
-
-            await collection.DeleteManyAsync(filter);
-        }
-        #endregion
-
-        #region Info Exists
-        public async Task<bool> InfoExists(ulong userId, ulong guildId)
-        {
-            var filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Where(v => v.UserId == userId && v.GuildId == guildId);
-            return await BaseInfoAny(filter);
-        }
-        public async Task<bool> InfoExists(ulong userId)
-        {
-            var filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Eq("UserId", userId);
-            return await BaseInfoAny(filter);
-        }
-        public async Task<bool> InfoExists(BanSyncInfoModel data)
-            => await InfoExists(data.UserId, data.GuildId);
-        #endregion
     }
 }
