@@ -15,11 +15,13 @@ namespace XeniaBot.Data.Controllers
     public class PrometheusController : BaseController
     {
         private ConfigData _configData;
+        private ProgramDetails _details;
         protected Prometheus.KestrelMetricServer? Server { get; private set; }
         public PrometheusController(IServiceProvider services)
             : base(services)
         {
             _configData = services.GetRequiredService<ConfigData>();
+            _details = services.GetRequiredService<ProgramDetails>();
             Server = new Prometheus.KestrelMetricServer(
             hostname: _configData.Prometheus_Hostname,
                 port: _configData.Prometheus_Port,
@@ -34,6 +36,8 @@ namespace XeniaBot.Data.Controllers
         }
         private void OnServerStart()
         {
+            if (_details.Platform == XeniaPlatform.WebPanel)
+                return;
             string address = _configData.Prometheus_Hostname;
             if (address == "+")
                 address = "0.0.0.0";

@@ -21,8 +21,8 @@ namespace XeniaBot.Data.Controllers
         private readonly IServiceProvider _services;
         private readonly DiscordSocketClient _client;
         private readonly ConfigData _configData;
-        private readonly CommandHandler _commandHandler;
-        private readonly InteractionHandler _interactionHandler;
+        private readonly CommandHandler? _commandHandler;
+        private readonly InteractionHandler? _interactionHandler;
         private readonly PrometheusController _prom;
         private readonly ProgramDetails _details;
         public DiscordController(IServiceProvider services)
@@ -32,8 +32,16 @@ namespace XeniaBot.Data.Controllers
             _configData = services.GetRequiredService<ConfigData>();
             _client = services.GetRequiredService<DiscordSocketClient>();
 
-            _commandHandler = services.GetRequiredService<CommandHandler>();
-            _interactionHandler = services.GetRequiredService<InteractionHandler>();
+            if (_details.Platform == XeniaPlatform.Bot)
+            {
+                _commandHandler = services.GetRequiredService<CommandHandler>();
+                _interactionHandler = services.GetRequiredService<InteractionHandler>();
+            }
+            else
+            {
+                _commandHandler = null;
+                _interactionHandler = null;
+            }
 
             _prom = services.GetRequiredService<PrometheusController>();
 
@@ -220,15 +228,20 @@ namespace XeniaBot.Data.Controllers
         private async Task _client_Ready()
         {
             InvokeReady();
-            await _commandHandler.InitializeAsync();
-            await _interactionHandler.InitializeAsync();
+            if (_commandHandler != null)
+                await _commandHandler.InitializeAsync();
+            if (_interactionHandler != null)
+                await _interactionHandler.InitializeAsync();
             var versionString = "v0.0";
             if (_details.VersionRaw != null)
             {
                 versionString = $"v{_details.VersionRaw.Major}.{_details.VersionRaw.Minor}";
             }
-            
-            await _client.SetGameAsync($"{versionString} | xenia.kate.pet", null);
+
+            if (_details.Platform == XeniaPlatform.Bot)
+            {
+                await _client.SetGameAsync($"{versionString} | xenia.kate.pet", null);
+            }
         }
 
         private Task _client_Log(LogMessage arg)
