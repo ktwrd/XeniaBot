@@ -26,7 +26,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             var result = await collection.FindAsync(GetFilter(guildId));
             return result.Any();
         }
-        public async Task<ConfigBanSyncModel> Get(ulong guildId)
+        public async Task<ConfigBanSyncModel?> Get(ulong guildId)
         {
             var collection = GetCollection();
             var result = await collection.FindAsync(GetFilter(guildId));
