@@ -5,6 +5,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
+[BotController]
 public class CounterConfigController : BaseConfigController<CounterGuildModel>
 {
     public Dictionary<ulong, ulong> CachedItems { get; set; }
