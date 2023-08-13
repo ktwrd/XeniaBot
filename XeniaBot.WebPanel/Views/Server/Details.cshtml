@@ -7,13 +7,20 @@
 }
 
 <div class="jumbotron">
+    <div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark">
+        <img class="me-3 rounded-circle" src="@Model.Guild.IconUrl" alt="" width="48" height="48">
+        <div class="lh-1">
+            <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
+            <small>@Model.Guild.MemberCount members</small>
+        </div>
+    </div>
     @if (@Model.Message != null)
     {
         <div class="alert alert-@Model.MessageType" role="alert">
             @Model.Message
         </div>
     }
-    <div class="d-flex flex-row">
+    <div class="d-flex flex-wrap" style="margin: 0 -1rem">
         <div class="card m-3">
             <div class="card-header" id="bansync">Ban Sync</div>
             <div class="card-body">
