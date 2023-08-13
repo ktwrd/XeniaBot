@@ -5,14 +5,14 @@
 }
 <style>
     .serverListIcon {
-        width: calc((100%/3) * 2);
-        height: 100%;
+        width:  4rem;
+        height:  4rem;
         border-bottom-left-radius: .25rem;
         border-top-left-radius: .25rem;
     }
 </style>
 <div class="jumbotron">
-    <div class="d-flex flex-row">
+    <div class="d-flex flex-wrap">
         @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
         {
             <div class="card mb-3 m-3" style="max-width: 540px;">
