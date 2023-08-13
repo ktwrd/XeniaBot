@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace XeniaBot.Core.Modules;
 
@@ -16,7 +17,7 @@ public partial class AuthentikAdminModule
             "page_size=9999999"
         };
         if (username != null)
-            p.Add($"username={WebUtility.UrlEncode(username)}");
+            p.Add($"username={HttpUtility.UrlEncode(username)}");
         url += "?" + string.Join("&", p);
         var response = await GetAsync(url);
         var stringContent = response.Content.ReadAsStringAsync().Result;

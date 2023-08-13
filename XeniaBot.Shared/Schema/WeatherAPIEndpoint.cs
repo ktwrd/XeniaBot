@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace XeniaBot.Shared.Schema
 {
@@ -20,7 +21,7 @@ namespace XeniaBot.Shared.Schema
             200
         };
         public static string BaseUrl => "http://api.weatherapi.com";
-        private static string encode(string value) => WebUtility.UrlEncode(value);
+        private static string encode(string value) => HttpUtility.UrlEncode(value);
         private static string encodeBool(bool value) => value ? "yes" : "no";
         public static string Current(string key, string location, bool airQuality)
         => $"{BaseUrl}/v1/current.json?key={encode(key)}&q={encode(location)}&aqi=" + (airQuality ? "yes" : "no");

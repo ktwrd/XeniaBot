@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace XeniaBot.Core.Modules;
 
@@ -33,7 +34,7 @@ public partial class AuthentikAdminModule
 
     public async Task<AuthentikPaginationResponse<AuthentikGroupResponse>?> GetGroups(string groupName)
     {
-        var response = await GetAsync($"core/groups/?name={WebUtility.UrlEncode(groupName)}");
+        var response = await GetAsync($"core/groups/?name={HttpUtility.UrlEncode(groupName)}");
         if (response.StatusCode != HttpStatusCode.OK)
             return null;
 

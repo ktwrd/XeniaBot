@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Web;
 using Discord;
 using Discord.Interactions;
 
@@ -62,7 +63,7 @@ public class DistroWatchModule : InteractionModuleBase
                 $"Based on: `{string.Join(", ", item.BasedOn)}`",
                 $"Latest version: `{item.LatestVersion}`",
                 $"Status: `{item.Status}`",
-                $"https://distrowatch.com/table.php?distribution={WebUtility.UrlEncode(item.Name)}"
+                $"https://distrowatch.com/table.php?distribution={HttpUtility.UrlEncode(item.Name)}"
             }))
             .WithColor(Color.Blue)
             .WithCurrentTimestamp();
