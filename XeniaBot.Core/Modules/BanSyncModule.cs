@@ -21,7 +21,8 @@ namespace XeniaBot.Core.Modules
         public async Task UserDetails(IUser user)
         {
             var controller = Program.Services.GetRequiredService<BanSyncController>();
-            var data = await controller.GetInfoEnumerable(user.Id);
+            var infoController = Program.Services.GetRequiredService<BanSyncInfoConfigController>();
+            var data = await infoController.GetInfoEnumerable(user.Id);
 
             if (data.Count() < 1)
             {

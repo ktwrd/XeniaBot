@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Modules
@@ -21,12 +22,12 @@ namespace XeniaBot.Core.Modules
         public async Task SetChannel(
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
-            CounterController controller = Program.Services.GetRequiredService<CounterController>();
-            CounterGuildModel data = await controller.Get(Context.Guild);
+            var counterConfig = Program.Services.GetRequiredService<CounterConfigController>();
+            CounterGuildModel data = await counterConfig.Get(Context.Guild);
             if (data == null)
             {
                 data = new CounterGuildModel(targetChannel, Context.Guild);
-                controller.Set(data);
+                counterConfig.Set(data);
             }
             else if (data != null && targetChannel.Id == data.ChannelId)
             {
@@ -35,7 +36,7 @@ namespace XeniaBot.Core.Modules
             }
 
             data.ChannelId = targetChannel.Id;
-            controller.Set(data);
+            counterConfig.Set(data);
 
             var guild = await Context.Client.GetGuildAsync(Context.Guild.Id);
             var targetTextChannel = await guild.GetTextChannelAsync(targetChannel.Id);
@@ -50,8 +51,8 @@ namespace XeniaBot.Core.Modules
         public async Task DeleteChannel(
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
-            CounterController controller = Program.Services.GetRequiredService<CounterController>();
-            CounterGuildModel data = controller.Get(targetChannel);
+            var counterConfig = Program.Services.GetRequiredService<CounterConfigController>();
+            CounterGuildModel data = counterConfig.Get(targetChannel);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync($"Channel not found in database.");
@@ -60,7 +61,7 @@ namespace XeniaBot.Core.Modules
 
             try
             {
-                await controller.Delete(targetChannel);
+                await counterConfig.Delete(targetChannel);
             }
             catch (Exception ex)
             {
@@ -75,8 +76,8 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Delete()
         {
-            var controller = Program.Services.GetRequiredService<CounterController>();
-            CounterGuildModel data = await controller.Get(Context.Guild);
+            var counterConfig = Program.Services.GetRequiredService<CounterConfigController>();
+            CounterGuildModel data = await counterConfig.Get(Context.Guild);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync("Server not found in database");
@@ -85,7 +86,7 @@ namespace XeniaBot.Core.Modules
 
             try
             {
-                await controller.Delete(Context.Guild);
+                await counterConfig.Delete(Context.Guild);
             }
             catch (Exception ex)
             {
@@ -100,7 +101,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("info", "Information about the counter module for this guild")]
         public async Task Info()
         {
-            var controller = Program.Services.GetRequiredService<CounterController>();
+            var controller = Program.Services.GetRequiredService<CounterConfigController>();
             var data = await controller.Get(Context.Guild);
             if (data == null)
             {
