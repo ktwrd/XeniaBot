@@ -20,6 +20,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
+using XeniaBot.Data.Controllers.BotAdditions;
 
 namespace XeniaBot.Core
 {
@@ -214,6 +215,7 @@ namespace XeniaBot.Core
                 .AddSingleton<InteractionHandler>();
 
             AttributeHelper.InjectControllerAttributes(typeof(Program).Assembly, services);
+            AttributeHelper.InjectControllerAttributes(typeof(ServerLogConfigController).Assembly, services);
             ServiceClassExtendsBaseController = new List<Type>();
 
             foreach (var item in services)
