@@ -402,3 +402,4 @@ XeniaBot.Core/Properties/launchSettings.json
 mongoData
 config.json
 .idea/
+XeniaBot.WebPanel/Properties/launchSettings.json

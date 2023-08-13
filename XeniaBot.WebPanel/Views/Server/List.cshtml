@@ -1,0 +1,42 @@
+﻿@model ServerListViewModel
+@{
+    ViewBag.Title = "Servers";
+    Layout = "_Layout";
+}
+<style>
+    .serverListIcon {
+        width: calc((100%/3) * 2);
+        height: 100%;
+        border-bottom-left-radius: .25rem;
+        border-top-left-radius: .25rem;
+    }
+</style>
+<div class="jumbotron">
+    <div class="d-flex flex-row">
+        @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
+        {
+            <div class="card mb-3 m-3" style="max-width: 540px;">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="@item.Guild.IconUrl" class="card-img-top serverListIcon"/>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            @if (@item.Guild.OwnerId == @item.GuildUser.Id)
+                            {
+                                <i class="bi bi-star-fill" style="color: gold"></i>
+                            }
+                            else if (@item.GuildUser.GuildPermissions.Administrator)
+                            {
+                                <i class="bi bi-star-fill" style="color: var(--bs-secondary);"></i>
+                            }
+                            <a asp-area="" asp-route-id="@item.Guild.Id" asp-controller="Server" asp-action="Index">@item.Guild.Name</a>
+                            @*<p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                            <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>*@
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
