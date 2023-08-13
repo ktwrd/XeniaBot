@@ -1,15 +1,15 @@
 ﻿using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Prometheus;
-using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Data.Helpers;
 
-namespace XeniaBot.Core.Controllers
+namespace XeniaBot.Data.Controllers
 {
     [BotController]
     public class PrometheusController : BaseController

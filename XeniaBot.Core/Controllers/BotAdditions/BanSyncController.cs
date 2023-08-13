@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 

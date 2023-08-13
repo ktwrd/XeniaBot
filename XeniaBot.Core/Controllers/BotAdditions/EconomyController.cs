@@ -1,6 +1,7 @@
 ﻿using System;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Data.Controllers;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;

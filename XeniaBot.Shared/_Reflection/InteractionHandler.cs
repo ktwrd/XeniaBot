@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core
+namespace XeniaBot.Data
 {
     public class InteractionHandler
     {

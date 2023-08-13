@@ -18,6 +18,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using XeniaBot.Data;
+using XeniaBot.Data.Controllers;
 
 namespace XeniaBot.Core
 {
@@ -192,7 +194,14 @@ namespace XeniaBot.Core
             var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
             var services = new ServiceCollection();
 
+            var details = new ProgramDetails()
+            {
+                StartTimestamp = StartTimestamp,
+                VersionRaw = VersionReallyRaw
+            };
+
             services.AddSingleton(IdGenerator)
+                .AddSingleton(details)
                 .AddSingleton(ConfigManager)
                 .AddSingleton(ConfigData)
                 .AddSingleton(dsc)

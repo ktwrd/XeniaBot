@@ -6,9 +6,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using XeniaBot.Core;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Core
+namespace XeniaBot.Data
 {
     public class ConfigManager
     {
@@ -19,7 +21,7 @@ namespace XeniaBot.Core
             if (File.Exists(Location))
             {
                 var content = File.ReadAllText(Location);
-                config = JsonSerializer.Deserialize<ConfigData>(content, Program.SerializerOptions);
+                config = JsonSerializer.Deserialize<ConfigData>(content, XeniaHelper.SerializerOptions);
                 var validationResponse = Validate(content);
                 if (validationResponse.Failure)
                 {
@@ -31,7 +33,7 @@ namespace XeniaBot.Core
                 {
                     Log.Error($"Failed to parse config");
                     Log.Error(content);
-                    Program.Quit(1);
+                    Environment.Exit(1);
 
                     // This is only here to make VS2022 shut up
                     return new ConfigData();
@@ -47,7 +49,7 @@ namespace XeniaBot.Core
         }
         public void Write(ConfigData configData)
         {
-            var content = JsonSerializer.Serialize(configData, Program.SerializerOptions);
+            var content = JsonSerializer.Serialize(configData, XeniaHelper.SerializerOptions);
             File.WriteAllText(Location, content);
         }
         #endregion
@@ -65,8 +67,8 @@ namespace XeniaBot.Core
         public ConfigValidationResponse Validate(Dictionary<string, object> configDict)
         {
             Dictionary<string, object> defaultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(
-                JsonSerializer.Serialize(new ConfigData(), Program.SerializerOptions),
-                Program.SerializerOptions) ?? new Dictionary<string, object>();
+                JsonSerializer.Serialize(new ConfigData(), XeniaHelper.SerializerOptions),
+                XeniaHelper.SerializerOptions) ?? new Dictionary<string, object>();
 
             var unchangedNoIgnore = new List<string>();
             var missing = new List<string>();
@@ -97,8 +99,8 @@ namespace XeniaBot.Core
                 MissingKeys = missing.ToArray()
             };
         }
-        public ConfigValidationResponse Validate(string fileContent) => Validate(JsonSerializer.Deserialize<Dictionary<string, object>>(fileContent, Program.SerializerOptions) ?? new Dictionary<string, object>());
-        public ConfigValidationResponse Validate(ConfigData configData) => Validate(JsonSerializer.Serialize(configData, Program.SerializerOptions) ?? "{}");
+        public ConfigValidationResponse Validate(string fileContent) => Validate(JsonSerializer.Deserialize<Dictionary<string, object>>(fileContent, XeniaHelper.SerializerOptions) ?? new Dictionary<string, object>());
+        public ConfigValidationResponse Validate(ConfigData configData) => Validate(JsonSerializer.Serialize(configData, XeniaHelper.SerializerOptions) ?? "{}");
         #endregion
 
         public string Location => FeatureFlags.ConfigLocation;

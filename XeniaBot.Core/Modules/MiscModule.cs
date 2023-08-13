@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Flurl.Util;
 using System.Text.Json;
 using XeniaBot.Core.Controllers;
+using XeniaBot.Data.Controllers;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules

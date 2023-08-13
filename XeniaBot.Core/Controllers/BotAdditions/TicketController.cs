@@ -16,6 +16,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Controllers.BotAdditions

@@ -2,8 +2,6 @@
 using Discord.WebSocket;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
-using XeniaBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +11,10 @@ using System.Threading.Tasks;
 using System.Timers;
 using XeniaBot.Shared;
 using Prometheus;
+using XeniaBot.Data.Helpers;
+using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Core.Controllers
+namespace XeniaBot.Data.Controllers
 {
     public class DiscordController
     {
@@ -24,8 +24,11 @@ namespace XeniaBot.Core.Controllers
         private readonly CommandHandler _commandHandler;
         private readonly InteractionHandler _interactionHandler;
         private readonly PrometheusController _prom;
+        private readonly ProgramDetails _details;
         public DiscordController(IServiceProvider services)
         {
+            _details = services.GetRequiredService<ProgramDetails>();
+            
             _configData = services.GetRequiredService<ConfigData>();
             _client = services.GetRequiredService<DiscordSocketClient>();
 
@@ -167,7 +170,7 @@ namespace XeniaBot.Core.Controllers
                     }).Set(guild.Users.Count);
                 }));
             }
-            await SGeneralHelper.TaskWhenAll(taskList);
+            await XeniaHelper.TaskWhenAll(taskList);
             _promCount_GuildCount.Set(_client.Guilds.Count);
         }
         #endregion
@@ -220,9 +223,9 @@ namespace XeniaBot.Core.Controllers
             await _commandHandler.InitializeAsync();
             await _interactionHandler.InitializeAsync();
             var versionString = "v0.0";
-            if (Program.VersionReallyRaw != null)
+            if (_details.VersionRaw != null)
             {
-                versionString = $"v{Program.VersionReallyRaw.Major}.{Program.VersionReallyRaw.Minor}";
+                versionString = $"v{_details.VersionRaw.Major}.{_details.VersionRaw.Minor}";
             }
             
             await _client.SetGameAsync($"{versionString} | xenia.kate.pet", null);

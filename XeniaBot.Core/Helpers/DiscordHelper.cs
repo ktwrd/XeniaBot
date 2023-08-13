@@ -8,7 +8,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using static XeniaBot.Core.ConfigManager;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 

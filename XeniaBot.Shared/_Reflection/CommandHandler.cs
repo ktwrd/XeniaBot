@@ -8,10 +8,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using static XeniaBot.Core.ConfigManager;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Core
+namespace XeniaBot.Data
 {
     public class CommandHandler
     {
@@ -19,9 +19,11 @@ namespace XeniaBot.Core
         private readonly CommandService _commands;
         private readonly DiscordSocketClient _client;
         private readonly IServiceProvider _services;
+        private readonly ConfigData _configData;
 
         public CommandHandler(IServiceProvider services)
         {
+            _configData = services.GetRequiredService<ConfigData>();
             // juice up the fields with these services
             // since we passed the services in, we can use GetRequiredService to pass them into the fields set earlier
             _commands = services.GetRequiredService<CommandService>();
@@ -61,20 +63,20 @@ namespace XeniaBot.Core
             var argPos = 0;
 
             var context = new SocketCommandContext(_client, message);
-            if (Program.ConfigData.DeveloperMode)
+            if (_configData.DeveloperMode)
             {
-                if (context.Guild?.Id != Program.ConfigData.DeveloperMode_Server)
+                if (context.Guild?.Id != _configData.DeveloperMode_Server)
                     return;
             }
 
-            if (Program.ConfigData.UserWhitelistEnable)
+            if (_configData.UserWhitelistEnable)
             {
-                if (!Program.ConfigData.UserWhitelist.Contains(context.User.Id))
+                if (!_configData.UserWhitelist.Contains(context.User.Id))
                     return;
             }
 
             // determine if the message has a valid prefix, and adjust argPos based on prefix
-            if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasStringPrefix(Program.GetGuildPrefix(context.Guild.Id), ref argPos)))
+            if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasStringPrefix(XeniaHelper.GetGuildPrefix(context.Guild.Id, _configData), ref argPos)))
             {
                 return;
             }
