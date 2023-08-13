@@ -197,7 +197,8 @@ namespace XeniaBot.Core
             var details = new ProgramDetails()
             {
                 StartTimestamp = StartTimestamp,
-                VersionRaw = VersionReallyRaw
+                VersionRaw = VersionReallyRaw,
+                Platform = XeniaPlatform.Bot
             };
 
             services.AddSingleton(IdGenerator)

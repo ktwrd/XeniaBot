@@ -2,8 +2,14 @@
 
 namespace XeniaBot.Shared;
 
+public enum XeniaPlatform
+{
+    WebPanel,
+    Bot,
+}
 public class ProgramDetails
 {
+    public XeniaPlatform Platform { get; init; }
     /// <summary>
     /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
     /// </summary>
