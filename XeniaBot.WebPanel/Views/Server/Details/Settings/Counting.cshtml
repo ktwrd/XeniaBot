@@ -12,30 +12,5 @@
            Id = "counter_settings_channelid",
            DisplayName = "Channel"
        })
-        
-    @*<div class="input-group mb-3">
-        <span class="input-group-text" id="counter_settings_channelid">Channel</span>
-        <select class="form-select" name="ChannelId" id="counter_settings_channelid" form="counter_settings">
-            @if (@Model.CounterConfig.ChannelId == 0)
-            {
-                <option value="" selected>None</option>
-            }
-            else
-            {
-                <option value="">None</option>
-            }
-            @foreach (var channel in @Model.Guild.TextChannels)
-            {
-                @if (@channel.Id == @Model.CounterConfig.ChannelId)
-                {
-                    <option value="@channel.Id" selected>@channel.Name</option>
-                }
-                else
-                {
-                    <option value="@channel.Id">@channel.Name</option>
-                }
-            }
-        </select>
-    </div>*@
     <input class="btn btn-success" type="submit" value="Save"/>
 </form>
