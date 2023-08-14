@@ -31,6 +31,12 @@ public partial class ServerController
         {
             GuildId = guild.Id
         };
+
+        var logConfig = Program.Services.GetRequiredService<ServerLogConfigController>();
+        data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
+        {
+            ServerId = guild.Id
+        };
         
         return data;
     }
@@ -56,5 +62,43 @@ public partial class ServerController
             return false;
 
         return true;
+    }
+
+
+    public IActionResult? ParseChannelId(ulong guildId, string? channel, out ulong outChannel)
+    {
+        outChannel = 0;
+        ulong? channelId = null;
+        try
+        {
+            if (channel == null)
+                throw new Exception("Provided ChannelId is null");
+            channelId = ulong.Parse(channel);
+        }
+        catch (Exception e)
+        {
+            return RedirectToAction("Index", new
+            {
+                Id = guildId,
+                MessageType = "danger",
+                Message = $"Failed to parse ChannelId.<br/><pre><code>{e.Message}</code></pre>"
+            });
+        }
+
+        if (channelId == null)
+        {
+            return RedirectToAction("Index", new
+            {
+                Id = guildId,
+                MessageType = "danger",
+                Message = $"Failed to parse ChannelId.<br/><pre><code>ChannelId is null</code></pre>"
+            });
+        }
+        else
+        {
+            outChannel = (ulong)channelId;
+            return null;
+        }
+
     }
 }

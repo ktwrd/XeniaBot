@@ -1,0 +1,25 @@
+﻿@model XeniaBot.WebPanel.Models.ChannelSelectModel
+@using Discord.WebSocket
+<span class="input-group-text" id="@Model.Id" style="width: 12rem;">@Model.DisplayName</span>
+<select class="form-select" name="@Model.Name" id="@Model.Id" form="@Model.ParentFormId">
+    @if ((Model.SelectedChannelId ?? 0) == 0)
+    {
+        <option value="" selected>None</option>
+    }
+    else
+    {
+        <option value="">None</option>
+    }
+    @foreach (var channel in Model.Channels)
+    {
+        @if (@channel.Id == Model.SelectedChannelId)
+        {
+            <option value="@channel.Id" selected>@channel.Name</option>
+        }
+        else
+        {
+            <option value="@channel.Id">@channel.Name</option>
+        }
+    }
+</select>
+

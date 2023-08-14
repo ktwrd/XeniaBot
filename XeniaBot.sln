@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Shared", "XeniaBot
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.ItemTemplates", "XeniaBot.ItemTemplates\XeniaBot.ItemTemplates.csproj", "{720DFB5C-78C3-424C-BB9F-7C99888F0599}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Data", "XeniaBot.Data\XeniaBot.Data.csproj", "{DA272C17-4D64-4601-9954-4B4EEB08D351}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Data", "XeniaBot.Data\XeniaBot.Data.csproj", "{DA272C17-4D64-4601-9954-4B4EEB08D351}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.WebPanel", "XeniaBot.WebPanel\XeniaBot.WebPanel.csproj", "{FD058453-C4F3-4733-896A-957E80B49149}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.WebPanel", "XeniaBot.WebPanel\XeniaBot.WebPanel.csproj", "{FD058453-C4F3-4733-896A-957E80B49149}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

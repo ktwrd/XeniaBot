@@ -136,22 +136,9 @@ public partial class ServerController
         if (guild == null)
             return View("NotFound", "Guild not found");
 
-        ulong? channelId = null;
-        try
-        {
-            channelId = ulong.Parse(logChannel);
-            if (channelId == null)
-                throw new Exception("ChannelId is null");
-        }
-        catch (Exception e)
-        {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to parse ChannelId.<br/><pre><code>{e.Message}</code></pre>"
-            });
-        }
+        var channelIdRes = ParseChannelId(id, logChannel, out var channelId);
+        if (channelIdRes != null)
+            return channelIdRes;
         
         var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
         var configData = await controller.Get(guild.Id) ?? new ConfigBanSyncModel()

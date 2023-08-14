@@ -1,0 +1,25 @@
+﻿@using Discord.WebSocket
+<span class="input-group-text" id="@Id">@DisplayName</span>
+<select class="form-select" name="@Name" id="@Id" form="@ParentFormId">
+    @if ((SelectedChannelId ?? 0) == 0)
+    {
+        <option value="" selected>None</option>
+    }
+    else
+    {
+        <option value="">None</option>
+    }
+    @foreach (var channel in Channels)
+    {
+        @if (@channel.Id == SelectedChannelId)
+        {
+            <option value="@channel.Id" selected>@channel.Name</option>
+        }
+        else
+        {
+            <option value="@channel.Id">@channel.Name</option>
+        }
+    }
+</select>
+
+@code {}

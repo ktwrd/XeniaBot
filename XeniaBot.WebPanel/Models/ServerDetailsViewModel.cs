@@ -14,4 +14,5 @@ public class ServerDetailsViewModel
     public CounterGuildModel CounterConfig { get; set; }
     public ConfigBanSyncModel BanSyncConfig { get; set; }
     public LevelSystemGuildConfigModel XpConfig { get; set; }
+    public ServerLogModel LogConfig { get; set; }
 }
