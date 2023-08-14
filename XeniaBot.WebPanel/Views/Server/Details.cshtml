@@ -39,6 +39,27 @@
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade show active" id="nav-details" role="tabpanel" aria-labelledby="nav-details-tab">
                 <h5>Use the tabs above to change your server settings.</h5>
+                
+                <div class="row d-flex flex-row">
+                    <div class="m-1 col-auto">
+                        <div class="card">
+                            <div class="card-header card-header-sm">
+                                <i class="bi bi-question-circle" style="color: var(--dark)"></i>
+                                Who can access this dashboard?
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group m-1">
+                                    @foreach (var user in @Model.UsersWhoCanAccess)
+                                    {
+                                        <li class="list-group-item">
+                                            <img src="@user.GetAvatarUrl()" height="32" width="32" class="rounded-circle mx-2"/> @user.Username
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="tab-pane fade" id="nav-mod" role="tabpanel" aria-labelledby="nav-mod-tab">
                 @{ await Html.RenderPartialAsync("Details/Moderation"); }

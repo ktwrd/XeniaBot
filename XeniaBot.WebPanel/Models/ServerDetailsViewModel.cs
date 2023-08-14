@@ -7,6 +7,7 @@ public class ServerDetailsViewModel
 {
     public SocketGuildUser User { get; set; }
     public SocketGuild Guild { get; set; }
+    public IEnumerable<SocketGuildUser> UsersWhoCanAccess { get; set; }
     
     public string? MessageType { get; set; }
     public string? Message { get; set; }

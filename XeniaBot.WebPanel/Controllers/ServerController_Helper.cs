@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Discord.WebSocket;
+using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Helpers;
@@ -37,10 +38,19 @@ public partial class ServerController
         {
             ServerId = guild.Id
         };
+
+        var membersWhoCanAccess = new List<SocketGuildUser>();
+        foreach (var item in guild.Users)
+        {
+            if (CanAccess(guild.Id, item.Id) && !item.IsBot)
+                membersWhoCanAccess.Add(item);
+        }
+        data.UsersWhoCanAccess = membersWhoCanAccess;
         
         return data;
     }
-    public bool CanAccess(ulong id)
+
+    public bool CanAccess(ulong guildId)
     {
         bool isAuth = User?.Identity?.IsAuthenticated ?? false;
         if (!isAuth)
@@ -50,11 +60,16 @@ public partial class ServerController
         {
             return false;
         }
-        var user = _discord.GetUser((ulong)userId);
+
+        return CanAccess(guildId, (ulong)userId);
+    }
+    public bool CanAccess(ulong guildId, ulong userId)
+    {
+        var user = _discord.GetUser(userId);
         if (user == null)
             return false;
 
-        var guild = _discord.GetGuild(id);
+        var guild = _discord.GetGuild(guildId);
         var guildUser = guild.GetUser(user.Id);
         if (guildUser == null)
             return false;
