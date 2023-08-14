@@ -8,10 +8,10 @@ namespace XeniaBot.Data.Models;
 public enum ServerLogEvent
 {
     Fallback,
-    Join,
-    Leave,
-    Ban,
-    Kick,
+    MemberJoin,
+    MemberLeave,
+    MemberBan,
+    MemberKick,
     MessageEdit,
     MessageDelete,
     ChannelDelete,
@@ -38,10 +38,10 @@ public class ServerLogModel : BaseModel
     {
         var dict = new Dictionary<ServerLogEvent, ulong?>()
         {
-            {ServerLogEvent.Join, MemberJoinChannel},
-            {ServerLogEvent.Leave, MemberLeaveChannel},
-            {ServerLogEvent.Ban, MemberBanChannel},
-            {ServerLogEvent.Kick, MemberKickChannel},
+            {ServerLogEvent.MemberJoin, MemberJoinChannel},
+            {ServerLogEvent.MemberLeave, MemberLeaveChannel},
+            {ServerLogEvent.MemberBan, MemberBanChannel},
+            {ServerLogEvent.MemberKick, MemberKickChannel},
             {ServerLogEvent.MessageEdit, MessageEditChannel},
             {ServerLogEvent.MessageDelete, MessageDeleteChannel},
             {ServerLogEvent.ChannelCreate, ChannelCreateChannel},
@@ -61,16 +61,16 @@ public class ServerLogModel : BaseModel
             case ServerLogEvent.Fallback:
                 DefaultLogChannel = channelId ?? 0;
                 break;
-            case ServerLogEvent.Join:
+            case ServerLogEvent.MemberJoin:
                 MemberJoinChannel = channelId;
                 break;
-            case ServerLogEvent.Leave:
+            case ServerLogEvent.MemberLeave:
                 MemberLeaveChannel = channelId;
                 break;
-            case ServerLogEvent.Ban:
+            case ServerLogEvent.MemberBan:
                 MemberBanChannel = channelId;
                 break;
-            case ServerLogEvent.Kick:
+            case ServerLogEvent.MemberKick:
                 MemberKickChannel = channelId;
                 break;
             case ServerLogEvent.MessageEdit:
