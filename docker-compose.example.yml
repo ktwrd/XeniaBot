@@ -1,0 +1,36 @@
+version: '3.1'
+
+# 27025
+#      MongoDB
+# 8080
+#      Dashboard
+# 8662
+#      Prometheus Exporter
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ./mongoData:/data/db
+    ports:
+      - "27025:27017"
+  bot:
+    image: ktwrd/xenia-discord:latest
+    restart: always
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8772:8771"
+    depends_on:
+      - mongo
+  dashboard:
+    image: ktwrd/xenia-discord-dash:latest
+    restart: always
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8080:80"
