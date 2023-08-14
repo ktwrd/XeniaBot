@@ -2,7 +2,18 @@
 @model ServerDetailsViewModel
 
 <form id="counter_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_Counting" asp-route-id="@Model.Guild.Id">
-    <div class="input-group mb-3">
+    
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+       {
+           Channels = StrippedChannel.FromGuild(@Model.Guild),
+           SelectedChannelId = @Model.CounterConfig.ChannelId,
+           ParentFormId = "counter_settings",
+           Name = "ChannelId",
+           Id = "counter_settings_channelid",
+           DisplayName = "Channel"
+       })
+        
+    @*<div class="input-group mb-3">
         <span class="input-group-text" id="counter_settings_channelid">Channel</span>
         <select class="form-select" name="ChannelId" id="counter_settings_channelid" form="counter_settings">
             @if (@Model.CounterConfig.ChannelId == 0)
@@ -25,6 +36,6 @@
                 }
             }
         </select>
-    </div>
+    </div>*@
     <input class="btn btn-success" type="submit" value="Save"/>
 </form>

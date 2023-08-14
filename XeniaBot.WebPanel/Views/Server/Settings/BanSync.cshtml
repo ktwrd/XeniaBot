@@ -27,29 +27,14 @@
     }
 </form>
 <form id="bansync_settings_channel" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_BanSync" asp-route-id="@Model.Guild.Id">
-    <div class="input-group mb-3">
-        <span class="input-group-text" id="bansync_settings_channel_select">Channel</span>
-        <select class="form-select" name="ChannelId" form="bansync_settings_channel" id="bansync_settings_channel_select">
-            @if (@Model.BanSyncConfig.LogChannel == 0)
-            {
-                <option value="" selected>None</option>
-            }
-            else
-            {
-                <option value="">None</option>
-            }
-            @foreach (var channel in @Model.Guild.TextChannels)
-            {
-                @if (@channel.Id == @Model.BanSyncConfig.LogChannel)
-                {
-                    <option value="@channel.Id" selected>@channel.Name</option>
-                }
-                else
-                {
-                    <option value="@channel.Id">@channel.Name</option>
-                }
-            }
-        </select>
-    </div>
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+    {
+       Channels = StrippedChannel.FromGuild(@Model.Guild),
+       SelectedChannelId = @Model.BanSyncConfig.LogChannel,
+       ParentFormId = "bansync_settings_channel",
+       Id = "bansync_settings_channel_select",
+       Name = "ChannelId",
+       DisplayName = "Channel"
+    })
     <input class="btn btn-success" type="submit" value="Save"/>
 </form>

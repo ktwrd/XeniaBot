@@ -4,31 +4,17 @@
 <!DOCTYPE html>
 
 <form id="xp_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_Xp" asp-route-id="@Model.Guild.Id">
-    <div class="input-group mb-3">
-        <span class="input-group-text" for="xp_settings_channel">Notification Channel</span>
-        <select class="form-select" name="channelId" id="xp_settings_channel" form="xp_settings">
-            @if (@Model.XpConfig.LevelUpChannel == 0)
-            {
-                <option value="" selected>None</option>
-            }
-            else
-            {
-                <option value="">None</option>
-            }
-            @foreach (var channel in @Model.Guild.TextChannels)
-            {
-                @if (@channel.Id == @Model.XpConfig.LevelUpChannel)
-                {
-                    <option value="@channel.Id" selected>@channel.Name</option>
-                }
-                else
-                {
-                    <option value="@channel.Id">@channel.Name</option>
-                }
-            }
-        </select>
-    </div>
-    <div class="form-check">
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+   {
+       Channels = StrippedChannel.FromGuild(@Model.Guild),
+       SelectedChannelId = @Model.XpConfig.LevelUpChannel,
+       ParentFormId = "xp_settings",
+       Name = "channelId",
+       Id = "xp_settings_channel",
+       DisplayName = "Notification Channel"
+   })
+
+    <div class="form-check mb-3">
         <input class="form-check-input" type="checkbox" value="true" id="xp_settings_show" name="show" checked="@Model.XpConfig.ShowLeveUpMessage"/>
         <label class="form-check-label" for="xp_settings_show">
             Show Level Up Message

@@ -1,0 +1,24 @@
+﻿@model ServerDetailsViewModel
+
+<div class="d-flex flex-row">
+    <div class="col col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm" id="counting">
+                Counting
+            </div>
+            <div class="card-body">
+                @{ await Html.RenderPartialAsync("Settings/Counting"); }
+            </div>
+        </div>
+    </div>
+    <div class="col col-auto">
+    <div class="card">
+        <div class="card-header card-header-sm" id="xp">
+            Level System
+        </div>
+        <div class="card-body">
+            @{ await Html.RenderPartialAsync("Settings/LevelSystem"); }
+        </div>
+    </div>
+    </div>
+</div>
