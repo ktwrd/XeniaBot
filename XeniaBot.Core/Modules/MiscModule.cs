@@ -43,6 +43,29 @@ namespace XeniaBot.Core.Modules
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
 
+        [SlashCommand("dashboard", "Fetch Dashboard information")]
+        public async Task Dashboard()
+        {
+            if (Program.ConfigData.HasDashboard)
+            {
+                await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
+                    .WithTitle("Xenia Dashboard")
+                    .WithDescription($"The dashboard is publicly accessible at {Program.ConfigData.DashboardLocation}")
+                    .WithColor(Color.Blue)
+                    .WithCurrentTimestamp()
+                    .Build());
+            }
+            else
+            {
+                await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
+                    .WithTitle("Xenia Dashboard")
+                    .WithDescription($"Unfortunately, the dashboard has not been setup yet. Please wait for the Xenia Dashboard to become publicly available.\n\nTo be the first to know, [join our discord server](https://r.kate.pet/discord)!")
+                    .WithColor(Color.Red)
+                    .WithCurrentTimestamp()
+                    .Build());
+            }
+        }
+
         [SlashCommand("metricreload", "Reload Prometheus Metrics")]
         [RequireOwner]
         public async Task ReloadMetrics()
