@@ -6,6 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+        
+        <AssemblyVersion>0.1.*</AssemblyVersion>
+        <Deterministic>false</Deterministic>
     </PropertyGroup>
 
     <ItemGroup>

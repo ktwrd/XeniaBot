@@ -93,6 +93,19 @@ public static class Program
 
         await Task.Delay(-1);
     }
+
+    public static Version? Version => typeof(Program).Assembly.GetName().Version;
+    public static string VersionFull => $"v{Version?.Major}.{Version?.Minor} ({VersionDate})";
+    public static DateTime VersionDate
+    {
+        get
+        {
+            DateTime buildDate = new DateTime(2000, 1, 1)
+                .AddDays(Version?.Build ?? 0)
+                .AddSeconds((Version?.Revision ?? 0) * 2);
+            return buildDate;
+        }
+    }
     #region Service Provider
     /// <summary>
     /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
