@@ -93,7 +93,7 @@ namespace XeniaBot.Core.Modules
         {
             var config = Program.Services.GetRequiredService<ConfigData>();
             var inviteLink =
-                $"https://discord.com/oauth2/authorize?client_id={config.Invite_ClientId}&scope=bot&permissions={config.Invite_Permissions}";
+                $"https://discord.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions={config.Invite_Permissions}";
             await Context.Interaction.RespondAsync(embed: DiscordHelper.BaseEmbed()
                 .WithUrl(inviteLink)
                 .WithTitle("Invite Xenia")
