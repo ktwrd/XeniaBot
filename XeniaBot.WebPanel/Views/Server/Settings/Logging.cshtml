@@ -12,14 +12,7 @@
     <div class="input-group mb-3">
         @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
            {
-               Channels = @Model.Guild.Channels.Select((v) =>
-               {
-                   return new StrippedChannel()
-                   {
-                       Id = v.Id,
-                       Name = v.Name
-                   };
-               }),
+               Channels = StrippedChannel.FromGuild(@Model.Guild),
                SelectedChannelId = @Model.LogConfig.DefaultLogChannel,
                ParentFormId = "log_settings",
                Name = "DefaultLogChannel",
