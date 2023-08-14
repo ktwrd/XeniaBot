@@ -14,7 +14,8 @@ public class ConfigData
         "Prefix",
         "GeneratorId",
         "OAuth_ClientId",
-        "OAuth_ClientSecret"
+        "OAuth_ClientSecret",
+        "Invite_ClientId"
     };
     
     /// <summary>
