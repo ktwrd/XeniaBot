@@ -132,6 +132,15 @@ public class ConfigData
     public bool   AuthentikEnable = false;
 
     /// <summary>
+    /// Is there a dashboard setup for the bot
+    /// </summary>
+    public bool HasDashboard = false;
+    /// <summary>
+    /// Url for this bot's dashboard.
+    /// </summary>
+    public string DashboardLocation = "";
+    
+    /// <summary>
     /// Client ID for OAuth Web Panel
     /// </summary>
     public string OAuth_ClientId = "";
