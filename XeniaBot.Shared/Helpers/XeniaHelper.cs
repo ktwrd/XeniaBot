@@ -16,6 +16,25 @@ public static class XeniaHelper
         WriteIndented = true
     };
 
+    /// <summary>
+    /// Converts "PascalCase" to "Pascal Case"
+    /// </summary>
+    /// <param name="input">String to format</param>
+    /// <returns>Formatted result</returns>
+    public static string FormatPascalCase(string input)
+    {
+        string result = "";
+        for (int i = 0; i < input.Length; i++)
+        {
+            char c = input[i];
+            string cs = input[i].ToString();
+            if (cs.ToUpper() == cs && i != 0)
+                result += $" {c}";
+            else
+                result += c;
+        }
+        return result;
+    }
     public static string GetGuildPrefix(ulong guildId, ConfigData data)
     {
         return data.Prefix;
