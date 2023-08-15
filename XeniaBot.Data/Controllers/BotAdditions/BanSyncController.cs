@@ -175,7 +175,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
         public enum BanSyncGuildKind
         {
             TooYoung,
-            NotEnougMembers,
+            NotEnoughMembers,
             Blacklisted,
             Valid
         }
@@ -185,8 +185,8 @@ namespace XeniaBot.Data.Controllers.BotAdditions
 
             if (guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
                 return BanSyncGuildKind.TooYoung;
-            else if (guild.MemberCount < 50)
-                return BanSyncGuildKind.NotEnougMembers;
+            else if (guild.MemberCount < 35)
+                return BanSyncGuildKind.NotEnoughMembers;
             else
                 return BanSyncGuildKind.Valid;
         }
@@ -210,13 +210,21 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                     throw new Exception("Reason parameter is required");
 
                 config.Reason = reason;
+                config.Enable = false;
             }
 
-            await SetGuildState_Notify(config);
+            if (state == BanSyncGuildState.Active)
+            {
+                config.Enable = true;
+            }
 
             await _config.Set(config);
+            
+            await SetGuildState_Notify(config);
+
             return config;
         }
+        
         protected async Task SetGuildState_Notify(ConfigBanSyncModel model)
         {
             var guild = _client.GetGuild(model.GuildId);

@@ -15,9 +15,11 @@ namespace XeniaBot.Data.Controllers.BotAdditions
     [BotController]
     public class BanSyncConfigController : BaseConfigController<ConfigBanSyncModel>
     {
+        private readonly BanSyncStateHistoryConfigController _stateHistory;
         public BanSyncConfigController(IServiceProvider services)
             : base("banSyncGuildConfig", services)
         {
+            _stateHistory = services.GetRequiredService<BanSyncStateHistoryConfigController>();
         }
 
         public async Task<bool> Exists(ulong guildId)
@@ -46,6 +48,16 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             {
                 await collection.InsertOneAsync(data);
             }
+            
+            
+            var stateHistoryItem = new BanSyncStateHistoryItemModel()
+            {
+                GuildId = data.GuildId,
+                Enable = data.Enable,
+                State = data.State,
+                Reason = data.Reason
+            };
+            await _stateHistory.Add(stateHistoryItem);
         }
         protected FilterDefinition<ConfigBanSyncModel> GetFilter(ulong guildId)
         {
