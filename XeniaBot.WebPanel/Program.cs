@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
@@ -5,6 +6,7 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.IdentityModel.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using XeniaBot.Data;
 using XeniaBot.Data.Controllers;

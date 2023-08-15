@@ -1,4 +1,9 @@
-﻿namespace XeniaBot.WebPanel.Helpers;
+﻿using Discord.WebSocket;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models;
+using XeniaBot.WebPanel.Models;
+
+namespace XeniaBot.WebPanel.Helpers;
 
 public static class AspHelper
 {
@@ -18,5 +23,70 @@ public static class AspHelper
         }
 
         return target;
+    }
+
+    public static bool IsCurrentUserAdmin(HttpContext context)
+    {
+        var userId = GetUserId(context) ?? 0;
+        return Program.ConfigData.UserWhitelist.Contains(userId);
+    }
+
+    public static bool CanAccess(ulong guildId, ulong userId)
+    {
+        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        
+        var user = discord.GetUser(userId);
+        if (user == null)
+            return false;
+
+        var guild = discord.GetGuild(guildId);
+        var guildUser = guild.GetUser(user.Id);
+        if (guildUser == null)
+            return false;
+        if (!guildUser.GuildPermissions.ManageGuild)
+            return false;
+
+        return true;
+    }
+    public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
+    {
+        
+        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var guild = discord.GetGuild(serverId);
+        data.Guild = guild;
+
+        var counterController = Program.Services.GetRequiredService<CounterConfigController>();
+        data.CounterConfig = await counterController.Get(guild) ?? new CounterGuildModel()
+        {
+            GuildId = serverId
+        };
+
+        var banSyncConfig = Program.Services.GetRequiredService<BanSyncConfigController>();
+        data.BanSyncConfig = await banSyncConfig.Get(guild.Id) ?? new ConfigBanSyncModel()
+        {
+            GuildId = guild.Id
+        };
+
+        var xpConfig = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+        data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
+        {
+            GuildId = guild.Id
+        };
+
+        var logConfig = Program.Services.GetRequiredService<ServerLogConfigController>();
+        data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
+        {
+            ServerId = guild.Id
+        };
+
+        var membersWhoCanAccess = new List<SocketGuildUser>();
+        foreach (var item in guild.Users)
+        {
+            if (CanAccess(guild.Id, item.Id) && !item.IsBot)
+                membersWhoCanAccess.Add(item);
+        }
+        data.UsersWhoCanAccess = membersWhoCanAccess;
+        
+        return data;
     }
 }

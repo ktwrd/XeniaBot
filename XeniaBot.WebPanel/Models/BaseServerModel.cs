@@ -3,15 +3,10 @@ using XeniaBot.Data.Models;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class ServerDetailsViewModel : IBaseServerModel
+public interface IBaseServerModel
 {
-    public SocketGuildUser User { get; set; }
     public SocketGuild Guild { get; set; }
     public IEnumerable<SocketGuildUser> UsersWhoCanAccess { get; set; }
-    
-    public string? MessageType { get; set; }
-    public string? Message { get; set; }
-    
     public CounterGuildModel CounterConfig { get; set; }
     public ConfigBanSyncModel BanSyncConfig { get; set; }
     public LevelSystemGuildConfigModel XpConfig { get; set; }

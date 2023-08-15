@@ -1,0 +1,81 @@
+﻿@using kate.shared.Helpers
+@using XeniaBot.Data.Models
+@using XeniaBot.Shared.Helpers
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model AdminServerModel
+
+@{
+    ViewData["Title"] = @Model.Guild.Name + " (Admin)";
+}
+
+<div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark">
+    <img class="me-3 rounded-circle mr-3" src="@Model.Guild.IconUrl" alt="" width="48" height="48">
+    <div class="lh-1">
+        <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
+        <small>@Model.Guild.MemberCount members</small>
+    </div>
+</div>
+
+@if (@Model.Message != null)
+{
+    <div class="alert alert-@Model.MessageType" role="alert">
+        @Model.Message
+    </div>
+}
+
+<div class="row d-flex flex-row mt-3">
+    <div class="col-auto mr-1">
+        <div class="card">
+            <div class="card-header">
+                Details
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Created At</th>
+                        <td>@Model.Guild.CreatedAt</td>
+                    </tr>
+                    <tr>
+                        <th>Member Count</th>
+                        <td>@Model.Guild.MemberCount</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr/>
+
+<h3 id="settings">Settings</h3>
+<div class="row d-flex flex-row">
+    <div class="mr-1 mb-1 col-auto">
+        <div class="card">
+            <div class="card-header">
+                Ban Sync
+            </div>
+            <div class="card-body">
+                <form id="setting_bansync" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_BanSyncState" asp-route-id="@Model.Guild.Id">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text"  for="setting_bansync_state" style="width: 6rem">State</label>
+                        </div>
+                        <select class="custom-select" name="State" id="setting_bansync_state" form="setting_bansync">
+                            @foreach (var item in GeneralHelper.GetEnumList<BanSyncGuildState>())
+                            {
+                                <option value="@item">@item</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="setting_bansync_reason" style="width: 6rem">Reason</label>
+                        </div>
+                        <input type="text" class="form-control" name="Reason" id="setting_bansync_reason" form="setting_bansync"/>
+                    </div>
+                    <input class="btn btn-primary-outline" type="submit" value="Submit"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
