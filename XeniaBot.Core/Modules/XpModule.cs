@@ -145,7 +145,7 @@ namespace XeniaBot.Core.Modules
             }
         }
 
-        [SlashCommand("enable", "Enable level up messages")]
+        [SlashCommand("enable", "Enable xp system")]
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task Enable()
         {
@@ -159,7 +159,7 @@ namespace XeniaBot.Core.Modules
                                 GuildId = Context.Guild.Id
                             };
 
-                model.ShowLeveUpMessage = true;
+                model.Enable = true;
                 await controller.Set(model);
                 await FollowupAsync(
                     embed: new EmbedBuilder()
@@ -182,7 +182,7 @@ namespace XeniaBot.Core.Modules
             }
         }
 
-        [SlashCommand("disable", "Disable level up messages")]
+        [SlashCommand("disable", "Disable xp system")]
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task Disable()
         {
@@ -196,7 +196,7 @@ namespace XeniaBot.Core.Modules
                                 GuildId = Context.Guild.Id
                             };
 
-                model.ShowLeveUpMessage = false;
+                model.Enable = false;
                 await controller.Set(model);
                 await FollowupAsync(
                     embed: new EmbedBuilder()
