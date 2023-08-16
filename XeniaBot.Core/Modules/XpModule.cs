@@ -200,8 +200,8 @@ namespace XeniaBot.Core.Modules
                 await controller.Set(model);
                 await FollowupAsync(
                     embed: new EmbedBuilder()
-                        .WithTitle("Xp System - Show Level Up Message")
-                        .WithDescription($"Enabled")
+                        .WithTitle("Xp System")
+                        .WithDescription($"Now Disabled")
                         .WithColor(Color.Green)
                         .WithCurrentTimestamp()
                         .Build());
