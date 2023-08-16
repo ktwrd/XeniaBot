@@ -16,4 +16,5 @@ public class ServerDetailsViewModel : IBaseServerModel
     public ConfigBanSyncModel BanSyncConfig { get; set; }
     public LevelSystemGuildConfigModel XpConfig { get; set; }
     public ServerLogModel LogConfig { get; set; }
+    public IEnumerable<BanSyncStateHistoryItemModel> BanSyncStateHistory { get; set; }
 }

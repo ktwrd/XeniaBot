@@ -67,6 +67,9 @@ public static class AspHelper
             GuildId = guild.Id
         };
 
+        var banSyncStateHistory = Program.Services.GetRequiredService<BanSyncStateHistoryConfigController>();
+        data.BanSyncStateHistory = await banSyncStateHistory.GetMany(guild.Id) ?? Array.Empty<BanSyncStateHistoryItemModel>();
+
         var xpConfig = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
         data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
         {
@@ -88,5 +91,13 @@ public static class AspHelper
         data.UsersWhoCanAccess = membersWhoCanAccess;
         
         return data;
+    }
+
+    public static DateTime DateTimeFromTimestamp(long timestamp)
+    {
+        // Unix timestamp is seconds past epoch
+        DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        dateTime = dateTime.AddMilliseconds( timestamp ).ToLocalTime();
+        return dateTime;
     }
 }

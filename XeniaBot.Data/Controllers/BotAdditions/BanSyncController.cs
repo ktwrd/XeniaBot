@@ -217,6 +217,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             {
                 config.Enable = true;
             }
+            config.State = state;
 
             await _config.Set(config);
             

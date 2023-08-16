@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Controllers;
@@ -108,7 +109,7 @@ public partial class ServerController
                     {
                         Id = id,
                         MessageType = "danger",
-                        Message = $"Unable to request Ban Sync: Failed to request.<br/><pre><code>{ex.Message}</code></pre>"
+                        Message = $"Unable to request Ban Sync: Failed to request. {ex.Message}"
                     });
                 }
                 break;
