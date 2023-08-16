@@ -242,7 +242,8 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                     $"State: {model.State}",
                     $"Reason: {model.Reason}",
                     "```"
-                })
+                }),
+                Url = _configData.HasDashboard ? $"{_configData.DashboardLocation}/Admin/Server/{guild.Id}#settings" : ""
             }.WithCurrentTimestamp().Build());
         }
         public async Task<ConfigBanSyncModel> RequestGuildEnable(ulong guildId)
@@ -293,7 +294,8 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                     $"Member Count: {guild.MemberCount}",
                     $"Invite: {inviteUrl}",
                     "```"
-                })
+                }),
+                Url = _configData.HasDashboard ? $"{_configData.DashboardLocation}/Admin/Server/{guild.Id}#settings" : ""
             }.Build());
         }
     }
