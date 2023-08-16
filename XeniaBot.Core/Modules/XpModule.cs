@@ -164,7 +164,7 @@ namespace XeniaBot.Core.Modules
                 await FollowupAsync(
                     embed: new EmbedBuilder()
                         .WithTitle("Xp System - Show Level Up Message")
-                        .WithDescription($"Enabled")
+                        .WithDescription($"Enabled. All messages from now on will count towards your total XP")
                         .WithColor(Color.Green)
                         .WithCurrentTimestamp()
                         .Build());
