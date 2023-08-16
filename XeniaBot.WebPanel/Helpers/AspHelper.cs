@@ -67,6 +67,9 @@ public static class AspHelper
             GuildId = guild.Id
         };
 
+        var banSyncStateHistory = Program.Services.GetRequiredService<BanSyncStateHistoryConfigController>();
+        data.BanSyncStateHistory = await banSyncStateHistory.GetMany(guild.Id) ?? Array.Empty<BanSyncStateHistoryItemModel>();
+
         var xpConfig = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
         data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
         {
