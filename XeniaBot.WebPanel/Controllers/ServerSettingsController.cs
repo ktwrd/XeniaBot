@@ -96,6 +96,7 @@ public partial class ServerController
             {
                 ServerId = guild.Id
             };
+            currentConfig.SetChannel(ServerLogEvent.Fallback, data.DefaultLogChannel);
             currentConfig.SetChannel(ServerLogEvent.MemberJoin, data.MemberJoinChannel);
             currentConfig.SetChannel(ServerLogEvent.MemberLeave, data.MemberLeaveChannel);
             currentConfig.SetChannel(ServerLogEvent.MemberBan, data.MemberBanChannel);
