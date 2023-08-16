@@ -7,7 +7,7 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
         
-        <AssemblyVersion>0.1.*</AssemblyVersion>
+        <AssemblyVersion>0.2.*</AssemblyVersion>
         <Deterministic>false</Deterministic>
     </PropertyGroup>
 
