@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -39,14 +40,15 @@ public partial class AdminController
         }
         catch (Exception e)
         {
-            return RedirectToAction("Index", new
+            Log.Error(e);
+            return RedirectToAction("ServerInfo", new
             {
                 Id = id,
                 MessageType = "danger",
-                Message = $"Failed to set BanSync state<br/><pre><code>{e.Message}</code></pre>"
+                Message = $"Failed to set BanSync state. {e.Message}"
             });
         }
-        return RedirectToAction("Index", new
+        return RedirectToAction("ServerInfo", new
         {
             Id = id,
             MessageType = "success",
