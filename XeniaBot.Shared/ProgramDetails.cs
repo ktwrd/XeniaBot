@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace XeniaBot.Shared;
 
@@ -27,7 +28,19 @@ public class ProgramDetails
             return result;
         }
     }
-    public string VersionFull => $"{Version} ({VersionDate})";
+    public string VersionFull
+    {
+        get
+        {
+            var sb = new StringBuilder();
+            if (Debug)
+                sb.Append($"{Version}-DEBUG");
+            else
+                sb.Append(Version);
+            sb.Append($" ({VersionDate})");
+            return sb.ToString();
+        }
+    }
     public DateTime VersionDate
     {
         get
