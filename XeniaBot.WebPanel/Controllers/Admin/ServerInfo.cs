@@ -9,13 +9,15 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpGet("~/Admin/Server/{id}")]
-    public async Task<IActionResult> ServerInfo(ulong id)
+    public async Task<IActionResult> ServerInfo(ulong id, string? message, string? messageType)
     {
         if (!CanAccess())
             return View("NotAuthorized");
 
         var model = new AdminServerModel();
         await AspHelper.FillServerModel(id, model);
+        model.Message = message;
+        model.MessageType = messageType;
         
         return View("ServerInfo", model);
     }
@@ -31,7 +33,9 @@ public partial class AdminController
         await AspHelper.FillServerModel(id, model);
         try
         {
-            await controller.SetGuildState(id, state, reason);
+            var res = await controller.SetGuildState(id, state, reason);
+            if (res == null)
+                throw new Exception("Server Config not found");
         }
         catch (Exception e)
         {
