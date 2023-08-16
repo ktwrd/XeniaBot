@@ -92,4 +92,12 @@ public static class AspHelper
         
         return data;
     }
+
+    public static DateTime DateTimeFromTimestamp(long timestamp)
+    {
+        // Unix timestamp is seconds past epoch
+        DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        dateTime = dateTime.AddMilliseconds( timestamp ).ToLocalTime();
+        return dateTime;
+    }
 }
