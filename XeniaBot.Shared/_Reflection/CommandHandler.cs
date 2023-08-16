@@ -40,7 +40,11 @@ namespace XeniaBot.Data
         public async Task InitializeAsync()
         {
             // register modules that are public and inherit ModuleBase<T>.
-            var modinfo = await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            var modinfo = Array.Empty<ModuleInfo>();
+            foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                modinfo = modinfo.Concat(_commands.AddModulesAsync(item, _services).Result).ToArray();
+            }
             Log.Debug($"Loaded {modinfo.Count()} modules");
         }
 

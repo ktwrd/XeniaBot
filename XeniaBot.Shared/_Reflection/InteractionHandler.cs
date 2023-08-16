@@ -24,7 +24,11 @@ namespace XeniaBot.Data
         }
         public async Task InitializeAsync()
         {
-            var mods = _interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), _services).Result;
+            var mods = Array.Empty<ModuleInfo>();
+            foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                mods = mods.Concat(_interactionService.AddModulesAsync(item, _services).Result).ToArray();
+            }
             await _interactionService.RegisterCommandsGloballyAsync();
 
             var lines = new List<string>();

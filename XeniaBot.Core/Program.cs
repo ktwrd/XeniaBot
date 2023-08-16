@@ -214,14 +214,15 @@ false
                 .AddSingleton(ConfigData)
                 .AddSingleton(dsc)
                 .AddSingleton(GetMongoDatabase())
+                .AddSingleton<PrometheusController>()
                 .AddSingleton<DiscordController>()
                 .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<InteractionHandler>();
 
+            AttributeHelper.InjectControllerAttributes(typeof(CounterConfigController).Assembly, services);
             AttributeHelper.InjectControllerAttributes(typeof(Program).Assembly, services);
-            AttributeHelper.InjectControllerAttributes(typeof(ServerLogConfigController).Assembly, services);
             ServiceClassExtendsBaseController = new List<Type>();
 
             foreach (var item in services)

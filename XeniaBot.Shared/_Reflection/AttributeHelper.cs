@@ -13,6 +13,9 @@ namespace XeniaBot.Shared
             var classes = GetTypesWithAttribute<BotControllerAttribute>(assembly);
             foreach (var item in classes)
             {
+                var descriptor = new ServiceDescriptor(item, item, ServiceLifetime.Singleton);
+                if (services.Contains(descriptor))
+                    continue;
                 services.AddSingleton(item);
                 Console.WriteLine($"Injected {item}");
             }

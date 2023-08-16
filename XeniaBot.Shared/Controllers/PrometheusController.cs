@@ -34,9 +34,13 @@ namespace XeniaBot.Data.Controllers
         {
             ReloadMetrics?.Invoke();
         }
+        /// <summary>
+        /// Invoked when we want to start the server.
+        /// Ignored when <see cref="ProgramDetails.Platform"/> is <see cref="XeniaPlatform.WebPanel"/> or <see cref="ConfigData.Prometheus_Enable"/> is `false`.
+        /// </summary>
         private void OnServerStart()
         {
-            if (_details.Platform == XeniaPlatform.WebPanel)
+            if (_details.Platform == XeniaPlatform.WebPanel || !_configData.Prometheus_Enable)
                 return;
             string address = _configData.Prometheus_Hostname;
             if (address == "+")
@@ -45,13 +49,19 @@ namespace XeniaBot.Data.Controllers
             ServerStart?.Invoke();
         }
 
+        /// <summary>
+        /// Initialize Prometheus.
+        ///
+        /// Ignored when <see cref="ProgramDetails.Platform"/> is <see cref="XeniaPlatform.WebPanel"/> or <see cref="ConfigData.Prometheus_Enable"/> is `false`.
+        /// </summary>
         public override Task InitializeAsync()
         {
-            if (!_configData.Prometheus_Enable)
+            if (!_configData.Prometheus_Enable || _details.Platform == XeniaPlatform.WebPanel)
             {
                 Log.Note("Prometheus Metrics is disabled");
                 return Task.CompletedTask;
             }
+            Log.Debug($"Starting server");
             Server?.Start();
             OnServerStart();
             return base.InitializeAsync();
