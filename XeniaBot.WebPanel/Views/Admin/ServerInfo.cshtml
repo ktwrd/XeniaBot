@@ -92,4 +92,53 @@
             </div>
         </div>
     </div>
+    <div class="mr-1 mb-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                BanSync State History
+            </div>
+            <div class="card-body">
+                @if (@Model.BanSyncStateHistory.Count() < 1)
+                {
+                    <i>No records</i>
+                }
+                else
+                {
+                    <table class="table table-responsive" id="banSyncStateHistory">
+                        <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <td>Enable</td>
+                            <td>State</td>
+                            <td>Reason</td>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in @Model.BanSyncStateHistory.OrderBy(v => v.Timestamp))
+                        {
+                            <tr>
+                                <th>@(AspHelper.DateTimeFromTimestamp(@item.Timestamp).ToString())</th>
+                                <td>@item.Enable</td>
+                                <td>@item.State</td>
+                                <td><code>@item.Reason</code></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts
+{
+    <script type="text/javascript">
+    $(document).ready(function () {
+      $('#banSyncStateHistory').DataTable({
+        "searching": true
+      });
+      $('.dataTables_length').addClass('bs-select');
+    });
+    </script>
+}
