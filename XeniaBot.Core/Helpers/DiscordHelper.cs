@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Helpers
 {
@@ -170,8 +171,9 @@ namespace XeniaBot.Core.Helpers
                 context.Channel,
                 null);
         }
-        public static async Task ReportError(Exception response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage? message)
+        public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IMessageChannel? channel, IUserMessage? message)
         {
+            Log.Error($"Failed to process. User: {user?.Id}, Guild: {guild?.Id}, Channel: {channel?.Id}.\n{response}");
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
             var stack = Environment.StackTrace;
             var embed = new EmbedBuilder()
@@ -180,9 +182,9 @@ namespace XeniaBot.Core.Helpers
                 Description = "Uncaught Exception. Full exception is attached\n" + string.Join("\n", new string[]
                 {
                     "```",
-                    $"Author: {user.Username}#{user.Discriminator} ({user.Id})",
-                    $"Guild: {guild.Name} ({guild.Id})",
-                    $"Channel: {channel.Name} ({channel.Id})",
+                    $"Author: {user?.Username}#{user?.Discriminator} ({user?.Id})",
+                    $"Guild: {guild?.Name} ({guild?.Id})",
+                    $"Channel: {channel?.Name} ({channel?.Id})",
                     "```"
                 }),
                 Color = Color.Red
