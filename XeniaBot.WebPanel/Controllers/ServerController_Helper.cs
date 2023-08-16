@@ -96,7 +96,7 @@ public partial class ServerController
             {
                 Id = guildId,
                 MessageType = "danger",
-                Message = $"Failed to parse ChannelId.<br/><pre><code>{e.Message}</code></pre>"
+                Message = $"Failed to parse ChannelId. {e.Message}"
             });
         }
 
@@ -106,7 +106,7 @@ public partial class ServerController
             {
                 Id = guildId,
                 MessageType = "danger",
-                Message = $"Failed to parse ChannelId.<br/><pre><code>ChannelId is null</code></pre>"
+                Message = $"Failed to parse ChannelId. ChannelId is null"
             });
         }
         else

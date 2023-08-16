@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Controllers;
@@ -42,7 +43,7 @@ public partial class ServerController
             {
                 Id = id,
                 MessageType = "danger",
-                Message = $"Failed to parse ChannelId.<br/><pre><code>{e.Message}</code></pre>"
+                Message = $"Failed to save Counting settings. {e.Message}"
             });
         }
 
@@ -109,11 +110,12 @@ public partial class ServerController
         }
         catch (Exception e)
         {
+            Log.Error($"Failed to save logging settings. \n{e}");
             return RedirectToAction("Index", new
             {
                 Id = id,
                 MessageType = "danger",
-                Message = $"Failed to save logging settings.<br/><pre><code>{e.Message}</code></pre>"
+                Message = $"Failed to save logging settings. {e.Message}"
             });
         }
         
@@ -148,7 +150,7 @@ public partial class ServerController
             {
                 Id = id,
                 MessageType = "danger",
-                Message = $"Failed to parse ChannelId.<br/><pre><code>{e.Message}</code></pre>"
+                Message = $"Failed to save Level System settings. {e.Message}"
             });
         }
 
@@ -173,11 +175,12 @@ public partial class ServerController
         }
         catch (Exception e)
         {
+            Log.Error($"Failed to save level system config\n{e}");
             return RedirectToAction("Index", new
             {
                 Id = id,
                 MessageType = "danger",
-                Message = $"Failed to save Level System Config. <br/><pre><code>{e.Message}</code></pre>"
+                Message = $"Failed to save Level System Config. {e.Message}"
             });
         }
     }

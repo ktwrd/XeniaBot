@@ -49,7 +49,7 @@ public partial class ServerController
             {
                 Id = id,
                 MessageType = "danger",
-                Message = $"Unable to request Ban Sync: Failed to get log channel.<br/><pre><code>{ex.Message}</code></pre>"
+                Message = $"Unable to request Ban Sync: Failed to get log channel. {ex.Message}"
             });
         }
         
