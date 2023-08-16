@@ -53,6 +53,10 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                     GuildId = context.Guild.Id
                 };
             await Set(data);
+            var guildConfig = await _guildConfig.Get(context.Guild.Id)
+                ?? new LevelSystemGuildConfigModel();
+            if (!guildConfig.Enable)
+                return;
 
             var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var previousMessageDiff = currentTimestamp - data.LastMessageTimestamp;
@@ -61,7 +65,6 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 try
                 {
                     var result = await GrantXp(data, message);
-                    var guildConfig = await _guildConfig.Get(context.Guild.Id);
                     var targetChannel = message.Channel;
                     if (guildConfig != null)
                     {
