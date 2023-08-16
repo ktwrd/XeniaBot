@@ -218,5 +218,38 @@ namespace XeniaBot.Core.Modules
                 await DiscordHelper.ReportError(e, Context);
             }
         }
+
+        [SlashCommand("silence", "Disable or enable level-up notifications.")]
+        public async Task Silence(bool value)
+        {
+            await DeferAsync();
+            var embed = new EmbedBuilder()
+                .WithTitle("Xp System - \"Level Up\" Message Visibility")
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp();
+            try
+            {
+                var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+                var model = await controller.Get(Context.Guild.Id) ??
+                            new LevelSystemGuildConfigModel()
+                            {
+                                GuildId = Context.Guild.Id
+                            };
+
+                model.ShowLeveUpMessage = value;
+                await controller.Set(model);
+                await FollowupAsync(
+                    embed: embed.WithDescription(value ? "Level Up notifications *will now be shown*" : "Level Up Notifications *will be hidden*").Build());
+            }
+            catch (Exception e)
+            {
+                await FollowupAsync(
+                    embed: embed
+                        .WithDescription($"Failed to update data. `{e.Message}`")
+                        .WithColor(Color.Red)
+                        .Build());
+                await DiscordHelper.ReportError(e, Context);
+            }
+        }
     }
 }
