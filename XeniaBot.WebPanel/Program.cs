@@ -42,6 +42,16 @@ public static class Program
     {
         return MongoClient.GetDatabase(MongoDatabaseName);
     }
+    public static ProgramDetails Details => new ProgramDetails()
+    {
+        VersionRaw = typeof(Program).Assembly.GetName()?.Version,
+        Debug = 
+#if DEBUG
+true
+#else
+false
+#endif
+    };
     public static void Main(string[] args)
     {
         /*var fo = File.Open("log.txt", FileMode.OpenOrCreate);

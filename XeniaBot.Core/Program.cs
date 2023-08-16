@@ -199,7 +199,13 @@ namespace XeniaBot.Core
             {
                 StartTimestamp = StartTimestamp,
                 VersionRaw = VersionReallyRaw,
-                Platform = XeniaPlatform.Bot
+                Platform = XeniaPlatform.Bot,
+                Debug = 
+#if DEBUG
+                    true
+#else
+false
+#endif
             };
 
             services.AddSingleton(IdGenerator)

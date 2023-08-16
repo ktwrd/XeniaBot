@@ -14,6 +14,7 @@ public class ProgramDetails
     /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
     /// </summary>
     public long StartTimestamp { get; init; }
+    public bool Debug { get; init; }
     public string Version
     {
         get
@@ -21,9 +22,8 @@ public class ProgramDetails
             string result = "";
             var targetAppend = VersionRawString;
             result += targetAppend ?? "null_version";
-#if DEBUG
-            result += "-DEBUG";
-#endif
+            if (Debug)
+                result += "-DEBUG";
             return result;
         }
     }
