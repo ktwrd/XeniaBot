@@ -69,6 +69,14 @@ public class BanSyncStateHistoryConfigController : BaseConfigController<BanSyncS
     {
         var collection = GetCollection();
         var result = await collection.FindAsync(filter);
-        return result.ToEnumerable();
+        return await result.ToListAsync();
+    }
+
+    public Task<IEnumerable<BanSyncStateHistoryItemModel>?> GetMany(ulong guildId)
+    {
+        var filter = Builders<BanSyncStateHistoryItemModel>
+            .Filter
+            .Where(v => v.GuildId == guildId);
+        return GetMany(filter);
     }
 }
