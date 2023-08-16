@@ -17,6 +17,10 @@ public class ConfigData
         "OAuth_ClientSecret",
         "Invite_ClientId",
         "DiscordBotList_Token",
+        "AuthentikToken",
+        "AuthentikUrl",
+        "AuthentikEnable",
+        "HasDashboard"
     };
     
     /// <summary>
