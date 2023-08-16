@@ -128,7 +128,7 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/Xp")]
-    public async Task<IActionResult> SaveSettings_Xp(ulong id, string channelId, bool show)
+    public async Task<IActionResult> SaveSettings_Xp(ulong id, string channelId, bool show, bool enable)
     {
         if (!CanAccess(id))
             return View("NotAuthorized");
@@ -161,10 +161,12 @@ public partial class ServerController
             {
                 GuildId = guild.Id,
                 LevelUpChannel = targetChannelId,
-                ShowLeveUpMessage = show
+                ShowLeveUpMessage = show,
+                Enable = enable
             };
             data.LevelUpChannel = targetChannelId;
             data.ShowLeveUpMessage = show;
+            data.Enable = enable;
             await controller.Set(data);
             return RedirectToAction("Index", new
             {
