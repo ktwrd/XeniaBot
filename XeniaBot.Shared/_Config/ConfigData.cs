@@ -15,7 +15,8 @@ public class ConfigData
         "GeneratorId",
         "OAuth_ClientId",
         "OAuth_ClientSecret",
-        "Invite_ClientId"
+        "Invite_ClientId",
+        "DiscordBotList_Token",
     };
     
     /// <summary>
@@ -148,6 +149,11 @@ public class ConfigData
     /// Client Secret for OAuth Web Panel
     /// </summary>
     public string OAuth_ClientSecret = "";
+
+    /// <summary>
+    /// API Token for discordbotlist.com
+    /// </summary>
+    public string DiscordBotList_Token = "";
 }
 public class GoogleCloudKey
 {

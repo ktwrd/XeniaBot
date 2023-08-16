@@ -77,6 +77,7 @@ When you first start Xenia, it will definitely not work at all. Make sure that t
 | `AuthentikEnable`          | ❌                 | `false`       | Enable `/auth` commands. |
 | `HasDashboard`             | ❌                 | `false`       | Should the bot say that there is a dashboard in the `/dashboard` command |
 | `DashboardLocation`        | ✔️                  | `""`          | Dashboard Url that is used in the `/dashboard` command |
+| `DiscordBotList_Token`     | ❌                 | `""`          | Token to use when sending available commands to DiscordBotList.com |
 | `OAuth_ClientId`           | ✔️ (Dashboard Only) | `""`          | Discord OAuth Client Id |
 | `OAuth_ClientSecret`       | ✔️ (Dashboard Only) | `""`          | Discord OAuth Client Secret |
 
