@@ -12,13 +12,23 @@
         </div>
     </div>
     <div class="m-1 col-auto">
-    <div class="card">
-        <div class="card-header card-header-sm" id="xp">
-            Level System
-        </div>
-        <div class="card-body">
-            @{ await Html.RenderPartialAsync("Details/Settings/LevelSystem"); }
+        <div class="card">
+            <div class="card-header card-header-sm" id="xp">
+                Level System
+            </div>
+            <div class="card-body">
+                @{ await Html.RenderPartialAsync("Details/Settings/LevelSystem"); }
+            </div>
         </div>
     </div>
+    <div class="m-1 col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm" id="xp">
+                Confession
+            </div>
+            <div class="card-body">
+                @{ await Html.RenderPartialAsync("Details/Settings/Confession"); }
+            </div>
+        </div>
     </div>
 </div>
