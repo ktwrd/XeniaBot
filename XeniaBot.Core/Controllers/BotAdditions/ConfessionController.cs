@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using XeniaBot.Data.Controllers;
+using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
@@ -19,11 +20,13 @@ namespace XeniaBot.Core.Controllers.BotAdditions
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
+        private readonly ConfessionConfigController _config;
         public ConfessionController(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
+            _config = services.GetRequiredService<ConfessionConfigController>();
         }
 
         public override Task InitializeAsync()
@@ -41,7 +44,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             }
             string content = arg.Data.Components.First(x => x.CustomId == "confession_text").Value;
 
-            var data = await GetGuild(arg.GuildId ?? 0);
+            var data = await _config.GetGuild(arg.GuildId ?? 0);
             var guild = _client.GetGuild(data.GuildId);
             var channel = guild.GetTextChannel(data.ChannelId);
             await channel.SendMessageAsync(embed: GenerateConfessionEmbed(content).Build());
@@ -63,32 +66,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         }
         internal async Task InitializeModal(ulong guildId, ulong channelId, ulong modalChannelId)
         {
-            var data = await GetGuild(guildId);
-            if (data == null)
-            {
-                data = new ConfessionGuildModel()
-                {
-                    GuildId = guildId,
-                    ChannelId = channelId,
-                    ModalChannelId = modalChannelId
-                };
-                await Set(data);
-            }
-
-            var confessionEmbed = new EmbedBuilder()
-            {
-                Title = "Confessions",
-                Description = $"Add anonymous confession to <#{channelId}>"
-            };
-
-            var guild = _client.GetGuild(guildId);
-            var channel = guild.GetTextChannel(modalChannelId);
-            var components = new ComponentBuilder()
-                .WithButton("Confess", "confessioncontroller_confess_button", ButtonStyle.Primary);
-
-            var message = await channel.SendMessageAsync(embed: confessionEmbed.Build(), components: components.Build());
-            data.ModalMessageId = message.Id;
-            await Set(data);
+            await _config.InitializeModal(guildId, channelId, modalChannelId);
         }
         private ModalBuilder GetModal()
         {
@@ -108,55 +86,5 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 Color = new Color(255, 255, 255)
             };
         }
-        #region MongoDB Boilerplate
-        public const string MongoCollectionName = "confesionGuildModel";
-        protected static IMongoCollection<T>? GetCollection<T>()
-        {
-            return Program.GetMongoDatabase()?.GetCollection<T>(MongoCollectionName);
-        }
-        protected static IMongoCollection<ConfessionGuildModel>? GetCollection()
-            => GetCollection<ConfessionGuildModel>();
-        internal async Task<ConfessionGuildModel?> GetGuild(ulong guildId)
-        {
-            var collection = GetCollection();
-            var filter = Builders<ConfessionGuildModel>
-                .Filter
-                .Eq("GuildId", guildId);
-
-            var results = await collection.FindAsync(filter);
-
-            return results.FirstOrDefault();
-        }
-        internal async Task Set(ConfessionGuildModel model)
-        {
-            var collection = GetCollection();
-            var filter = Builders<ConfessionGuildModel>
-                .Filter
-                .Eq("GuildId", model.GuildId);
-
-            var existingItems = await collection.FindAsync(filter);
-            if (existingItems != null && existingItems.Any())
-                await collection.FindOneAndReplaceAsync(filter, model);
-            else
-                await collection.InsertOneAsync(model);
-        }
-        internal async Task Delete(ConfessionGuildModel model)
-        {
-            var guild = _client.GetGuild(model.GuildId);
-            if (guild == null)
-                throw new Exception($"Guild {model.GuildId} not found");
-            var channel = guild.GetTextChannel(model.ModalChannelId);
-            if (channel == null)
-                throw new Exception($"Channel {model.ModalChannelId} not found");
-            await channel.DeleteMessageAsync(model.ModalMessageId);
-
-            var collection = GetCollection();
-            var filter = Builders<ConfessionGuildModel>
-                .Filter
-                .Eq("GuildId", model.GuildId);
-
-            await collection?.DeleteManyAsync(filter);
-        }
-        #endregion
     }
 }

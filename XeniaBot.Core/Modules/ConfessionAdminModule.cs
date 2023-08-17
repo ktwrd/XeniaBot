@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Data.Controllers.BotAdditions;
 
 namespace XeniaBot.Core.Modules
 {
@@ -18,7 +19,7 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Purge()
         {
-            var controller = Program.Services.GetRequiredService<ConfessionController>();
+            var controller = Program.Services.GetRequiredService<ConfessionConfigController>();
             var item = await controller.GetGuild(Context.Guild.Id);
             if (item == null)
             {
@@ -53,10 +54,11 @@ namespace XeniaBot.Core.Modules
             }
 
             var controller = Program.Services.GetRequiredService<ConfessionController>();
-            var item = await controller.GetGuild(Context.Guild.Id);
+            var config = Program.Services.GetRequiredService<ConfessionConfigController>();
+            var item = await config.GetGuild(Context.Guild.Id);
             if (item != null)
             {
-                await controller.Delete(item);
+                await config.Delete(item);
             }
             await controller.InitializeModal(
                 Context.Guild.Id,
