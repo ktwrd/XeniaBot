@@ -39,4 +39,12 @@ public class HomeController : Controller
                 RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
             });
     }
+
+    public IActionResult Vote()
+    {
+        return View("Vote", new DiscordModel()
+        {
+            Client = Program.Services.GetRequiredService<DiscordSocketClient>()
+        });
+    }
 }

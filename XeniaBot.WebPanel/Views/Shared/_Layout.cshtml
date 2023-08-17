@@ -30,11 +30,14 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Vote">Vote</a>
+                    </li>
                     
                     @if (User?.Identity?.IsAuthenticated ?? false)
                     {
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Server" asp-action="List">Servers</a>
+                        <li class="nav-item" style="padding-top: 0; padding-bottom: 0; margin-top: 0.5rem; margin-bottom: 0.5rem; border-left: 1px solid var(--gray)">
+                            <a class="nav-link text-dark" style="padding-top: 0; padding-bottom:  0;" asp-area="" asp-controller="Server" asp-action="List">Servers</a>
                         </li>
                     }
                     @if (AspHelper.IsCurrentUserAdmin(@Context))
