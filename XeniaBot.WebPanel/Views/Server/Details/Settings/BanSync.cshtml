@@ -26,15 +26,42 @@
             break;
     }
 </form>
+@if (@Model.BanSyncConfig.State != BanSyncGuildState.Active)
+{
+    <ul class="list-group mb-3">
+        <li class="list-group-item">
+            @if (@Model.Guild.MemberCount < 35)
+            {
+                <i class="bi bi-x-circle" style="color: var(--red);"></i>
+            }
+            else
+            {
+                <i class="bi bi-check-circle" style="color: var(--green);"></i>
+            }
+            At least 35 members
+        </li>
+        <li class="list-group-item">
+            @if (@Model.Guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
+            {
+                <i class="bi bi-x-circle" style="color: var(--red);"></i>
+            }
+            else
+            {
+                <i class="bi bi-check-circle" style="color: var(--green);"></i>
+            }
+            Guild Older than 6 months
+        </li>
+    </ul>
+}
 <form id="bansync_settings_channel" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_BanSync" asp-route-id="@Model.Guild.Id">
     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-    {
-       Channels = StrippedChannel.FromGuild(@Model.Guild),
-       SelectedChannelId = @Model.BanSyncConfig.LogChannel,
-       ParentFormId = "bansync_settings_channel",
-       Id = "bansync_settings_channel_select",
-       Name = "logChannel",
-       DisplayName = "Channel"
-    })
+           {
+               Channels = StrippedChannel.FromGuild(@Model.Guild),
+               SelectedChannelId = @Model.BanSyncConfig.LogChannel,
+               ParentFormId = "bansync_settings_channel",
+               Id = "bansync_settings_channel_select",
+               Name = "logChannel",
+               DisplayName = "Channel"
+           })
     <input class="btn btn-success" type="submit" value="Save"/>
 </form>
