@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using System.Timers;
 using XeniaBot.Shared;
 using Prometheus;
-using XeniaBot.Data.Helpers;
 using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Controllers
