@@ -12,6 +12,8 @@ using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Controllers;
+
 public static class Program
 {
     

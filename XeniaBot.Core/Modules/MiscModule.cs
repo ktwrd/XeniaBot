@@ -14,6 +14,7 @@ using System.Text.Json;
 using XeniaBot.Core.Controllers;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Modules
 {

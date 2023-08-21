@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using Discord.Rest;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data
+namespace XeniaBot.Shared
 {
     public class InteractionHandler
     {

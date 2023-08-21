@@ -20,6 +20,17 @@ namespace XeniaBot.Shared
                 Console.WriteLine($"Injected {item}");
             }
         }
+
+        public static void InjectControllerAttributes(string name, IServiceCollection services)
+        {
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var item in loadedAssemblies)
+            {
+                var nameSplit = item.FullName?.Split(',')[0];
+                if (name == nameSplit)
+                    InjectControllerAttributes(item, services);
+            }
+        }
         public static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly)
         {
             foreach(Type type in assembly.GetTypes()) {

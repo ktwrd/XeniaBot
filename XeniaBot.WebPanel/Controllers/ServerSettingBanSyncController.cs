@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
-using XeniaBot.Shared;
+using XeniaBot.Data;
 using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Controllers;

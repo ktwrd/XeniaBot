@@ -18,6 +18,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
 {

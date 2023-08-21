@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Controllers;
 
-namespace XeniaBot.Core
+namespace XeniaBot.Shared
 {
     public class ConfigValidationResponse
     {

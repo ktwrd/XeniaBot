@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Data.Helpers;
+using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Data.Controllers
+namespace XeniaBot.Shared.Controllers
 {
     [BotController]
     public class PrometheusController : BaseController

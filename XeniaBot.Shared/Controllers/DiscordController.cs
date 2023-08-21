@@ -14,7 +14,7 @@ using Prometheus;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Data.Controllers
+namespace XeniaBot.Shared.Controllers
 {
     public class DiscordController
     {

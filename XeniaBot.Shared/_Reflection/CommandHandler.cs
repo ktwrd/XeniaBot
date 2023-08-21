@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Data
+namespace XeniaBot.Shared
 {
     public class CommandHandler
     {
