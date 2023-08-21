@@ -31,7 +31,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
             _sysconfig = services.GetRequiredService<ConfigData>();
             if (_sysconfig == null)
             {
-                Log.Error("Service \"ConfigManager.Config\" is null!!!");
+                Log.Error("Service \"ConfigController.Config\" is null!!!");
                 Program.Quit();
                 return;
             }
