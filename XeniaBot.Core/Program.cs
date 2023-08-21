@@ -28,7 +28,7 @@ namespace XeniaBot.Core
     public static class Program
     {
         #region Fields
-        public static ConfigManager ConfigManager = null;
+        public static ConfigController ConfigController = null;
         public static ConfigData ConfigData = null;
         public static HttpClient HttpClient = null;
         public static MongoClient MongoClient = null;
@@ -124,8 +124,8 @@ namespace XeniaBot.Core
         }
         private static void MainInit()
         {
-            ConfigManager = new ConfigManager();
-            ConfigData = ConfigManager.Read();
+            ConfigController = new ConfigController();
+            ConfigData = ConfigController.Read();
             IdGenerator = SnowflakeHelper.Create(ConfigData.GeneratorId);
             HttpClient = new HttpClient();
         }
@@ -182,8 +182,8 @@ namespace XeniaBot.Core
         }
         private static void BeforeQuit()
         {
-            if (ConfigManager != null && ConfigData != null)
-                ConfigManager.Write(ConfigData);
+            if (ConfigController != null && ConfigData != null)
+                ConfigController.Write(ConfigData);
         }
 
         #region Services
@@ -211,7 +211,7 @@ false
 
             services.AddSingleton(IdGenerator)
                 .AddSingleton(details)
-                .AddSingleton(ConfigManager)
+                .AddSingleton(ConfigController)
                 .AddSingleton(ConfigData)
                 .AddSingleton(dsc)
                 .AddSingleton(GetMongoDatabase());
