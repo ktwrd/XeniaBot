@@ -171,29 +171,29 @@ namespace XeniaBot.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static System.Drawing.Bitmap img_1984 {
+        internal static byte[] img_1984 {
             get {
                 object obj = ResourceManager.GetObject("img_1984", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ((byte[])(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static System.Drawing.Bitmap img_1984cover {
+        internal static byte[] img_1984cover {
             get {
                 object obj = ResourceManager.GetObject("img_1984cover", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ((byte[])(obj));
             }
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static System.Drawing.Bitmap img_1984originaldate {
+        internal static byte[] img_1984originaldate {
             get {
                 object obj = ResourceManager.GetObject("img_1984originaldate", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
@@ -201,12 +201,12 @@ namespace XeniaBot.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static System.Drawing.Bitmap img_yskysn {
+        internal static byte[] img_yskysn {
             get {
                 object obj = ResourceManager.GetObject("img_yskysn", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ((byte[])(obj));
             }
         }
     }
