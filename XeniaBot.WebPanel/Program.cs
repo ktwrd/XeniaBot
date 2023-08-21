@@ -13,6 +13,7 @@ using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Helpers;
 
 public static class Program
 {
@@ -141,11 +142,12 @@ false
             .AddSingleton(ConfigController)
             .AddSingleton(ConfigData)
             .AddSingleton(dsc)
-            .AddSingleton(GetMongoDatabase());
+            .AddSingleton(GetMongoDatabase())
+            .AddSingleton<DiscordController>();
 
-        AttributeHelper.InjectControllerAttributes("Xenia.Shared", services);
-        AttributeHelper.InjectControllerAttributes("Xenia.Data", services);
-        AttributeHelper.InjectControllerAttributes("Xenia.Core", services);
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, services);
+        AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, services);
+        AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", services);
         _serviceClassExtendsBaseController = new List<Type>();
 
         foreach (var item in services)

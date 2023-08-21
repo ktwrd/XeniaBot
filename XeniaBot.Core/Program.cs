@@ -215,13 +215,15 @@ false
                 .AddSingleton(ConfigData)
                 .AddSingleton(dsc)
                 .AddSingleton(GetMongoDatabase());
-            AttributeHelper.InjectControllerAttributes("Xenia.Shared", services);
-            services.AddSingleton<CommandService>()
+            services
+                .AddSingleton<DiscordController>()
+                .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<InteractionHandler>();
-            AttributeHelper.InjectControllerAttributes("Xenia.Data", services);
-            AttributeHelper.InjectControllerAttributes("Xenia.Core", services);
+            AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
+            AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, services);
+            AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
             ServiceClassExtendsBaseController = new List<Type>();
 
             foreach (var item in services)

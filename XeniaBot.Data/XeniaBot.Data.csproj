@@ -4,6 +4,8 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <AssemblyName>XeniaBot.Data</AssemblyName>
+        <RootNamespace>XeniaBot.Data</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
