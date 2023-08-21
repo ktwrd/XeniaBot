@@ -18,7 +18,7 @@ public static class Program
 {
     
     #region Fields
-    public static ConfigManager ConfigManager = null;
+    public static ConfigController ConfigController = null;
     public static ConfigData ConfigData = null;
     public static HttpClient HttpClient = null;
     public static MongoClient MongoClient = null;
@@ -71,8 +71,8 @@ false
 
     public static void MainInit()
     {
-        ConfigManager = new ConfigManager();
-        ConfigData = ConfigManager.Read();
+        ConfigController = new ConfigController();
+        ConfigData = ConfigController.Read();
         HttpClient = new HttpClient();
     }
 
@@ -138,15 +138,14 @@ false
         };
 
         services.AddSingleton(details)
-            .AddSingleton(ConfigManager)
+            .AddSingleton(ConfigController)
             .AddSingleton(ConfigData)
             .AddSingleton(dsc)
-            .AddSingleton(GetMongoDatabase())
-            .AddSingleton<DiscordController>()
-            .AddSingleton<PrometheusController>();
+            .AddSingleton(GetMongoDatabase());
 
-        AttributeHelper.InjectControllerAttributes(typeof(Program).Assembly, services);
-        AttributeHelper.InjectControllerAttributes(typeof(ServerLogConfigController).Assembly, services);
+        AttributeHelper.InjectControllerAttributes("Xenia.Shared", services);
+        AttributeHelper.InjectControllerAttributes("Xenia.Data", services);
+        AttributeHelper.InjectControllerAttributes("Xenia.Core", services);
         _serviceClassExtendsBaseController = new List<Type>();
 
         foreach (var item in services)

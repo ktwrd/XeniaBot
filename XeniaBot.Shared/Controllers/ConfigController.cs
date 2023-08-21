@@ -2,19 +2,23 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using XeniaBot.Core;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Data
+namespace XeniaBot.Shared.Controllers;
+
+public class ConfigController
 {
-    public class ConfigManager
+    public ConfigController()
     {
-        #region Read/Write
+    }
+
+    public ConfigController(IServiceProvider services)
+        : this()
+    {
+    }
+    #region Read/Write
         public ConfigData Read()
         {
             var config = new ConfigData();
@@ -55,15 +59,7 @@ namespace XeniaBot.Data
         #endregion
 
         #region Config Validation
-        public static readonly string[] IgnoredValidationKeys = new string[]
-        {
-            "DeveloperMode",
-            "DeveloperMode_Server",
-            "UserWhitelistEnable",
-            "UserWhitelist",
-            "Prefix",
-            "GeneratorId"
-        };
+        public static string[] IgnoredValidationKeys => ConfigData.IgnoredValidationKeys;
         public ConfigValidationResponse Validate(Dictionary<string, object> configDict)
         {
             Dictionary<string, object> defaultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(
@@ -104,5 +100,4 @@ namespace XeniaBot.Data
         #endregion
 
         public string Location => FeatureFlags.ConfigLocation;
-    }
 }

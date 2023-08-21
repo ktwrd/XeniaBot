@@ -18,7 +18,7 @@ namespace XeniaBot.Shared
         /// </summary>
         public string[] UnchangedKeysNoIgnore = Array.Empty<string>();
         /// <summary>
-        /// Array of keys which are missing from the provided config in <see cref="Validate(Config)"/>
+        /// Array of keys which are missing from the provided config in <see cref="ConfigController.Validate(Config)"/>
         /// </summary>
         public string[] MissingKeys = Array.Empty<string>();
         public bool Failure => UnchangedKeys.Length > 0 && MissingKeys.Length > 0;
