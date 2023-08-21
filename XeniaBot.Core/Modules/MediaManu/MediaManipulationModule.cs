@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using NetVips;
+using NetVips.Extensions;
 using XeniaBot.Core.Helpers;
 using Image = NetVips.Image;
 using Log = XeniaBot.Shared.Log;
@@ -104,6 +105,202 @@ public partial class MediaManipulationModule : InteractionModuleBase
                     if (nPages > 1)
                         i.Set("page-height", pageHeight + textHeight);
                 });
+            Log.Debug($"Complete");
+            if (isAnimated)
+            {
+                using var gifStream = new MemoryStream(final.GifsaveBuffer(dither: 1, bitdepth: 8, interlace: true));
+                await FollowupWithFileAsync(gifStream, $"{Context.Interaction.Id}.gif");
+            }
+            else
+            {
+                using var pngStream = new MemoryStream(final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true));
+                await FollowupWithFileAsync(pngStream, $"{Context.Interaction.Id}.png");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex);
+            embed.WithDescription($"Failed to run task.\n```\n{ex.Message}\n```").WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build());
+            await DiscordHelper.ReportError(ex, Context);
+            return;
+        }
+    }
+
+    public async Task<Image> Watermark(Image source,
+        Image watermark,
+        int gravity,
+        bool isGif,
+        bool resize = false,
+        float yscale = 0f,
+        bool append = false,
+        bool alpha = false,
+        bool flip = false,
+        bool mc = false)
+    {
+        int width = source.Width;
+        int pageHeight = source.PageHeight;
+        int nPages = NetVipsHelper.GetNPages(source);
+
+        if (flip)
+        {
+            watermark = watermark.Flip(Enums.Direction.Horizontal);
+        }
+
+        if (resize && append)
+        {
+            watermark = watermark.Resize((double)width / (double)watermark.Width);
+        }
+        else if (resize && yscale > 0)
+        {
+            watermark = watermark.Resize((double)width / (double)watermark.Width, vscale: (double)(pageHeight * yscale) / (double)watermark.Height);
+        } else if (resize)
+        {
+            watermark = watermark.Resize((double)pageHeight / (double)watermark.Height);
+        }
+
+        int x = 0;
+        int y = 0;
+        switch (gravity)
+        {
+            case 1:
+                break;
+            case 2:
+                x = (width / 2) - (watermark.Width / 2);
+                break;
+            case 3:
+                x = width - watermark.Width;
+                break;
+            case 5:
+                x = (width / 2) - (watermark.Width / 2);
+                y = (pageHeight / 2) - (watermark.Height / 2);
+                break;
+            case 6:
+                x = width - watermark.Width;
+                y = (pageHeight / 2) - (watermark.Height / 2);
+                break;
+            case 8:
+                x = (width / 2) - (watermark.Width / 2);
+                y = pageHeight - watermark.Height;
+                break;
+            case 9:
+                x = width - watermark.Width;
+                y = pageHeight - watermark.Height;
+                break;
+        }
+
+        var img = new Image[nPages];
+        int addedHeight = 0;
+        Image? contentAlpha = null;
+        Image? frameAlpha = null;
+        Image? bg = null;
+        Image? frame = null;
+        for (int i = 0; i < nPages; i++)
+        {
+            var imgFrame = isGif ? source.Crop(0, i * pageHeight, width, pageHeight) : source;
+            if (append)
+            {
+                var appended = imgFrame.Join(watermark, direction: Enums.Direction.Vertical, expand: true);
+                addedHeight = watermark.Height;
+                img[i] = imgFrame;
+            }
+            else if (mc)
+            {
+                var padded = imgFrame.Embed(0, 0, width, pageHeight + 15, background: WhiteRGBA);
+                var composited = padded.Composite2(
+                    watermark, Enums.BlendMode.Over, x: width - 190, y: padded.Height - 22);
+                addedHeight = 15;
+                img[i] = composited;
+            }
+            else
+            {
+                Image? composited = null;
+                if (alpha)
+                {
+                    if (i == 0)
+                    {
+                        contentAlpha = watermark.ExtractBand(0).Embed(
+                            x, y, width, pageHeight, extend: Enums.Extend.White);
+                        frameAlpha = watermark.ExtractBand(1).Embed(
+                            x, y, width, pageHeight, extend: Enums.Extend.Black);
+                        bg = frameAlpha.NewFromImage(
+                            new double[]
+                            {
+                                0, 0, 0
+                            }).Copy(interpretation: Enums.Interpretation.Srgb);
+                        frame = bg.Bandjoin(frameAlpha);
+                    }
+
+                    var content = imgFrame.ExtractBand(0, n: 3).Bandjoin(contentAlpha & imgFrame.ExtractBand(3));
+                    composited = content.Composite2(frame, Enums.BlendMode.Over, x: x, y: y);
+                }
+                else
+                {
+                    composited = imgFrame.Composite2(watermark, Enums.BlendMode.Over, x: x, y: y);
+                }
+
+                img[i] = composited;
+            }
+        }
+        
+        
+        var final = Image.Arrayjoin(img, across: 1)
+            .Mutate((i) =>
+            {
+                if (nPages > 1)
+                    i.Set("page-height", pageHeight + addedHeight);
+            });
+        return final;
+    }
+
+    [SlashCommand("speechbubble", "Add a speech bubble to an image or a gif.")]
+    public async Task SpeechBubble(IAttachment attachment, bool flip = false, bool alpha = false)
+    {
+        await Context.Interaction.DeferAsync();
+        
+        var embed = new EmbedBuilder()
+            .WithTitle("Speech Bubble")
+            .WithCurrentTimestamp();
+        byte[] dataBytes = Array.Empty<byte>();
+        string fileType = "";
+        try
+        {
+            (dataBytes, fileType) = await MediaManipulationHelper.GetUrlBytes(attachment);
+            if (fileType.Length < 1)
+                throw new Exception("Invalid attachment type");
+            if (dataBytes.Length < 1)
+                throw new Exception("Empty data");
+        }
+        catch (Exception ex)
+        {
+            embed.WithDescription($"Failed to get attachment\n```\n{ex.Message}\n```")
+                 .WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build());
+            return;
+        }
+
+        try
+        {
+            var originalData = new MemoryStream(dataBytes);
+
+            await AttemptFontExtract();
+
+            var opts = new VOption();
+            opts.Add("access", 1);
+            bool isAnimated = MediaManipulationHelper.IsAnimatedType(fileType);
+            if (isAnimated)
+            {
+                opts.Add("n", -1);
+            }
+
+            var sourceImage = NetVipsHelper.Normalize(Image.NewFromStream(originalData, kwargs: opts));
+            var watermark = NetVipsHelper.Normalize(alpha
+                ? Image.NewFromBuffer(MediaManipu.img_speech)
+                : Image.NewFromBuffer(MediaManipu.img_speechbubble));
+            var final = await Watermark(
+                sourceImage, watermark, 2, isAnimated, resize: true, yscale: 0.2f, alpha: alpha, flip: flip);
+            
+            
             Log.Debug($"Complete");
             if (isAnimated)
             {
