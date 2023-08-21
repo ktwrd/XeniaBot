@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Controllers;
 using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared
@@ -20,6 +21,7 @@ namespace XeniaBot.Shared
         private readonly DiscordSocketClient _client;
         private readonly IServiceProvider _services;
         private readonly ConfigData _configData;
+        private readonly GuildPrefixConfigController _prefixConfig;
 
         public CommandHandler(IServiceProvider services)
         {
@@ -28,6 +30,7 @@ namespace XeniaBot.Shared
             // since we passed the services in, we can use GetRequiredService to pass them into the fields set earlier
             _commands = services.GetRequiredService<CommandService>();
             _client = services.GetRequiredService<DiscordSocketClient>();
+            _prefixConfig = services.GetRequiredService<GuildPrefixConfigController>();
             _services = services;
 
             // take action when we execute a command
@@ -37,7 +40,7 @@ namespace XeniaBot.Shared
             _client.MessageReceived += MessageReceivedAsync;
         }
 
-        public async Task InitializeAsync()
+        public Task InitializeAsync()
         {
             // register modules that are public and inherit ModuleBase<T>.
             var modinfo = Array.Empty<ModuleInfo>();
@@ -46,10 +49,11 @@ namespace XeniaBot.Shared
                 modinfo = modinfo.Concat(_commands.AddModulesAsync(item, _services).Result).ToArray();
             }
             Log.Debug($"Loaded {modinfo.Count()} modules");
+            return Task.CompletedTask;
         }
 
         // this class is where the magic starts, and takes actions upon receiving messages
-        public async Task MessageReceivedAsync(SocketMessage rawMessage)
+        private async Task MessageReceivedAsync(SocketMessage rawMessage)
         {
             // ensures we don't process system/other bot messages
             if (!(rawMessage is SocketUserMessage message))
@@ -80,7 +84,8 @@ namespace XeniaBot.Shared
             }
 
             // determine if the message has a valid prefix, and adjust argPos based on prefix
-            if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasStringPrefix(XeniaHelper.GetGuildPrefix(context.Guild.Id, _configData), ref argPos)))
+            var guildPrefix = await GetGuildPrefix(context.Guild?.Id);
+            if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasStringPrefix(guildPrefix, ref argPos)))
             {
                 return;
             }
@@ -89,7 +94,12 @@ namespace XeniaBot.Shared
             await _commands.ExecuteAsync(context, argPos, _services);
         }
 
-        public async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, Discord.Commands.IResult result)
+        private Task<string> GetGuildPrefix(ulong? guildId)
+        {
+            return _prefixConfig.GetPrefix(guildId);
+        }
+
+        private async Task CommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, Discord.Commands.IResult result)
         {
             // if a command isn't found, log that info to console and exit this method
             if (!command.IsSpecified)
