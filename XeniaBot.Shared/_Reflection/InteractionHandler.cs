@@ -42,7 +42,7 @@ namespace XeniaBot.Shared
                 var blacklist = new Dictionary<string, string[]>()
                 {
                     {
-                        "auth", new string[]
+                        "bansync", new string[]
                         {
                             "enableguild", "setguildstate"
                         }
