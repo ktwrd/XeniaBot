@@ -13,8 +13,10 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
     }
 
     public delegate void ModelSetDelegate(T? current, T? previous, bool isNewEntry);
+    public delegate void ModelAddDelegate(T? data);
 
     public event ModelSetDelegate OnModelSet;
+    public event ModelAddDelegate OnModelAdd;
     
     public async Task<T?> Get(ulong snowflake)
     {
@@ -55,5 +57,11 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
 
         OnModelSet?.Invoke(model, first, first == null);
     }
+    public async Task Add(T model)
+    {
+        model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var collection = GetCollection();
+        await collection.InsertOneAsync(model);
+        OnModelAdd?.Invoke(model);
     }
 }
