@@ -43,26 +43,8 @@ public partial class ServerController : BaseXeniaController
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
-        data.MessageType = messageType;
-        data.Message = message;
-
-        if (data.MessageType != null)
-        {
-            var valid = new string[]
-            {
-                "primary",
-                "secondary",
-                "success",
-                "danger",
-                "warning",
-                "info"
-            };
-            if (!valid.Contains(data.MessageType))
-                data.MessageType = "primary";
-        }
-
-        if (data.MessageType == null)
-            data.MessageType = "primary";
+        
+        await PopulateModel(data);
         
         return View("Details", data);
     }
