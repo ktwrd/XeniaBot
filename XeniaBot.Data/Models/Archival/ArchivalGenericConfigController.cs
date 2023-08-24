@@ -27,6 +27,17 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
         return result.FirstOrDefault();
     }
 
+    public async Task<T?> GetLatest(ulong snowflake)
+    {
+        var collection = GetCollection();
+        var filter = Builders<T>
+            .Filter
+            .Eq("Snowflake", snowflake);
+        
+        var result = await collection.FindAsync(filter);
+        var sorted = result.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
+        return sorted.FirstOrDefault();
+    }
     public async Task Set(T model)
     {
         var collection = GetCollection();
