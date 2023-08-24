@@ -11,7 +11,28 @@
         border-top-left-radius: .25rem;
     }
 </style>
-<div class="d-flex flex-wrap">
+<div class="btn-group" role="group" aria-label="Server List STyle">
+    @if (@Model.ListStyle == ServerListStyle.Grid)
+    {
+        <a class="btn btn-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
+    }
+    else
+    {
+        <a class="btn btn-outline-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
+    }
+    
+    @if (@Model.ListStyle == ServerListStyle.List || @Model.ListStyle == ServerListStyle.Default)
+    {
+        <a class="btn btn-primary" href="/Server/List?style=0" alt="List"><i class="bi bi-view-list"></i></a>
+    }
+    else
+    {
+        <a class="btn btn-outline-primary" href="/Server/List?style=0" alt="List"><i class="bi bi-view-list"></i></a>
+    }
+</div>
+@if (@Model.ListStyle == ServerListStyle.Grid)
+{
+    <div class="d-flex flex-wrap">
     @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
     {
         <div class="card mb-3 m-3" style="max-width: 540px;">
@@ -35,4 +56,38 @@
             </div>
         </div>
     }
-</div>
+    </div>
+} else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Members</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
+            {
+                <tr>
+                    <td><img src="@item.Guild.IconUrl" class="card-img-top serverListIcon"/></td>
+                    <td>
+                        @if (@item.Guild.OwnerId == @item.GuildUser.Id)
+                        {
+                            <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
+                        }
+                        else if (@item.GuildUser.GuildPermissions.Administrator)
+                        {
+                            <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Server Administrator"></i>
+                        }
+                        @item.Guild.Name
+                    </td>
+                    <td>@item.Guild.MemberCount</td>
+                    <td><a class="btn btn-secondary" asp-area="" asp-route-id="@item.Guild.Id" asp-controller="Server" asp-action="Index"><i class="bi bi-speedometer"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

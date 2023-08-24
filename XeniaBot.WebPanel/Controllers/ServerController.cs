@@ -68,7 +68,7 @@ public partial class ServerController : Controller
     
     [HttpGet("~/Server/")]
     [HttpGet("~/Server/List")]
-    public async Task<IActionResult> List()
+    public async Task<IActionResult> List(ServerListStyle style = ServerListStyle.Default)
     {
         bool isAuth = User?.Identity?.IsAuthenticated ?? false;
         if (!isAuth)
@@ -101,6 +101,7 @@ public partial class ServerController : Controller
         }
 
         data.Items = dataItems.ToArray();
+        data.ListStyle = style;
         return View("List", data);
     }
 }

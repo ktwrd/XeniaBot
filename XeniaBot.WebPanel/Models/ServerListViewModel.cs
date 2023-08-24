@@ -8,10 +8,11 @@ public class ServerListViewModel
     public ulong? UserId { get; set; }
     public string? UserAvatar { get; set; }
     public ServerListViewModelItem[] Items { get; set; }
-
+    public ServerListStyle ListStyle { get; set; }
     public ServerListViewModel()
     {
         Items = Array.Empty<ServerListViewModelItem>();
+        ListStyle = ServerListStyle.Default;
     }
 }
 
