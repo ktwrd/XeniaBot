@@ -5,6 +5,7 @@ using System.Web;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using XeniaBot.Data;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Extensions;
@@ -13,15 +14,16 @@ using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public partial class ServerController : Controller
+[Controller]
+public partial class ServerController : BaseXeniaController
 {
     private readonly ILogger<ServerController> _logger;
     private readonly DiscordSocketClient _discord;
 
     public ServerController(ILogger<ServerController> logger)
+        : base()
     {
         _logger = logger;
-        _discord = Program.Services.GetRequiredService<DiscordSocketClient>();
     }
 
     [HttpGet("~/Server/{id}")]

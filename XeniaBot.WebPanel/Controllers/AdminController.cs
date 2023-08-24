@@ -6,18 +6,19 @@ using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public partial class AdminController : Controller
+[Controller]
+public partial class AdminController : BaseXeniaController
 {
-    private readonly IServiceProvider services;
+    private readonly IServiceProvider _services;
     private readonly DiscordSocketClient _client;
     private readonly ConfigData _config;
     public AdminController()
         : base()
     {
-        services = Program.Services;
+        _services = Program.Services;
 
-        _client = services.GetRequiredService<DiscordSocketClient>();
-        _config = services.GetRequiredService<ConfigData>();
+        _client = _services.GetRequiredService<DiscordSocketClient>();
+        _config = _services.GetRequiredService<ConfigData>();
     }
     
     public bool CanAccess()
