@@ -1,0 +1,23 @@
+﻿@using XeniaBot.WebPanel.Models
+@model FormSelectViewModel
+
+@if (@Model.Label != null)
+{
+    <label for="@Model.Id">@Model.Label</label>
+}
+<select class="custom-select"
+        form="@Model.ParentFormId"
+        name="@Model.Name"
+        id="@Model.Id">
+    @foreach (var pair in @Model.Data)
+    {
+        @if (@Model.Selected?.ToString() == pair.Item1.ToString())
+        {
+            <option value="@pair.Item1" selected>@pair.Item2</option>
+        }
+        else
+        {
+            <option value="@pair.Item1">@pair.Item2</option>
+        }
+    }
+</select>
