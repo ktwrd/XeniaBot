@@ -2,7 +2,7 @@
 
 namespace XeniaBot.WebPanel.Models;
 
-public class AdminIndexModel
+public class AdminIndexModel : BaseViewModel
 {
     public IEnumerable<SocketGuild> Guilds { get; set; }
 }

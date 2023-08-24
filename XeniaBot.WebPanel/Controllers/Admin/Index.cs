@@ -6,12 +6,15 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpGet("~/Admin")]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         if (!CanAccess())
             return View("NotAuthorized");
-        var model = new AdminIndexModel();
-        model.Guilds = _client.Guilds;
+        var model = new AdminIndexModel
+        {
+            Guilds = _client.Guilds
+        };
+        await PopulateModel(model);
         return View(model);
     }
 }
