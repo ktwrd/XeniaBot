@@ -5,6 +5,7 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.Shared;
 
