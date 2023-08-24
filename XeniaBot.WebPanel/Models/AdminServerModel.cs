@@ -3,7 +3,7 @@ using XeniaBot.Data.Models;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class AdminServerModel : IBaseServerModel
+public class AdminServerModel : BaseViewModel, IBaseServerModel
 {
     public SocketGuild Guild { get; set; }
     public IEnumerable<SocketGuildUser> UsersWhoCanAccess { get; set; }

@@ -19,7 +19,7 @@ public partial class AdminController
         await AspHelper.FillServerModel(id, model);
         model.Message = message;
         model.MessageType = messageType;
-        
+        await PopulateModel(model);
         return View("ServerInfo", model);
     }
 
@@ -32,6 +32,7 @@ public partial class AdminController
         var controller = Program.Services.GetRequiredService<BanSyncController>();
         var model = new AdminServerModel();
         await AspHelper.FillServerModel(id, model);
+        await PopulateModel(model);
         try
         {
             var res = await controller.SetGuildState(id, state, reason);
