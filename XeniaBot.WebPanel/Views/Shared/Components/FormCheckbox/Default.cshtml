@@ -1,0 +1,11 @@
+﻿@using XeniaBot.WebPanel.Models
+@model FormCheckboxViewModel
+
+
+<div class=@(Model.Margin ? "form-check mb-3" : "form-check")>
+    <input class="form-check-input" type="checkbox" value="true" id="@Model.Id" name="@Model.Name" checked="@Model.State" form="@Model.ParentFormId"/>
+    <label class="form-check-label" for="@Model.Id">
+        @Model.Label
+    </label>
+</div>
+

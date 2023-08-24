@@ -46,4 +46,8 @@
       <AdditionalFiles Include="Views\Server\Details\Settings\Logging.cshtml" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Pages\Components\" />
+    </ItemGroup>
+
 </Project>
