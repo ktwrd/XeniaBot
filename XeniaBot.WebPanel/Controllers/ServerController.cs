@@ -86,6 +86,7 @@ public partial class ServerController : BaseXeniaController
 
         data.Items = dataItems.ToArray();
         data.ListStyle = style;
+        await PopulateModel(data);
         return View("List", data);
     }
 }
