@@ -32,7 +32,7 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
         var collection = GetCollection();
         var filter = Builders<T>
             .Filter
-            .Eq("Snowflake", model.Snowflake);
+            .Where(v => v.Snowflake == model.Snowflake && v.ModifiedAtTimestamp == model.ModifiedAtTimestamp);
 
         var findResult = await collection.FindAsync(filter);
         var first = findResult.FirstOrDefault();
@@ -42,9 +42,7 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
         }
         await collection.InsertOneAsync(model);
 
-        if (OnModelSet != null)
-        {
-            OnModelSet?.Invoke(model, first, first == null);
-        }
+        OnModelSet?.Invoke(model, first, first == null);
+    }
     }
 }

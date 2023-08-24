@@ -11,4 +11,10 @@ namespace XeniaBot.Data.Models.Archival;
 public class ArchiveBaseModel : BaseModel
 {
     public ulong Snowflake;
+    public long ModifiedAtTimestamp;
+
+    public ArchiveBaseModel()
+    {
+        ModifiedAtTimestamp = 0;
+    }
 }
