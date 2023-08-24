@@ -54,7 +54,7 @@ public class ArchivalController : BaseController
     {
         var data = await BBUserConfig.GetLatest(previous.Id);
         var currentData = XUserModel.FromUser(current);
-        await BBUserConfig.Set(currentData);
+        await BBUserConfig.Add(currentData);
         OnUserChange(
             UserChangeType.Update,
             currentData,
@@ -72,7 +72,7 @@ public class ArchivalController : BaseController
         var data = XMessageModel.FromMessage(message);
         if (message.Channel is SocketGuildChannel socketChannel)
             data.GuildId = socketChannel.Id;
-        await BBMessageConfig.Set(data);
+        await BBMessageConfig.Add(data);
         OnMessageChange(
             MessageChangeType.Create, 
             data, 
@@ -94,7 +94,7 @@ public class ArchivalController : BaseController
         var previous = await BBMessageConfig.GetLatest(data.Snowflake);
         
         // save in db
-        await BBMessageConfig.Set(data);
+        await BBMessageConfig.Add(data);
         
         // emit event for other controllers.
         OnMessageChange(
@@ -112,7 +112,7 @@ public class ArchivalController : BaseController
             var previous = data.Clone();
             data.IsDeleted = true;
             data.DeletedTimestamp = DateTimeOffset.UtcNow;
-            await BBMessageConfig.Set(data);
+            await BBMessageConfig.Add(data);
             OnMessageChange(
                 MessageChangeType.Delete,
                 data,
