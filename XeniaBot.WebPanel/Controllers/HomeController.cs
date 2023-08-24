@@ -2,9 +2,11 @@
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using XeniaBot.Data;
 using XeniaBot.WebPanel.Extensions;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
+using Log = XeniaBot.Shared.Log;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -52,5 +54,33 @@ public class HomeController : BaseXeniaController
     {
         var data = await PopulateModel();
         return View("Preferences", data);
+    }
+
+    [AuthRequired(ShowLoginButton = true)]
+    [HttpPost("~/Preferences/Save")]
+    public async Task<IActionResult> PreferencesSave(ListViewStyle listViewStyle, bool enableProfileTracking)
+    {
+        try
+        {
+            var userId = (ulong)GetCurrentUserId();
+            var data = await _userConfig.GetOrDefault(userId);
+            data.ListViewStyle = listViewStyle;
+            data.EnableProfileTracking = enableProfileTracking;
+            await _userConfig.Add(data);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            return RedirectToAction("Preferences", new
+            {
+                MessageType = "danger",
+                Message = $"Failed to save preferences. {e.Message}"
+            });
+        }
+        return RedirectToAction("Preferences", new
+        {
+            MessageType = "success",
+            Message = $"Preferences Saved"
+        });
     }
 }
