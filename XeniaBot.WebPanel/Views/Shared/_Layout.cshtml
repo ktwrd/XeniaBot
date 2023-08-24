@@ -66,6 +66,15 @@
 </header>
 <div class="container">
     <main role="main" class="pb-3">
+        @if (@Model != null)
+        {
+            if (@Model.Message != null)
+            {
+                <div class="alert alert-@Model.MessageType mt-3" role="alert">
+                    @Model.Message
+                </div>
+            }
+        }
         @RenderBody()
     </main>
 </div>
