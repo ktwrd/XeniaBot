@@ -27,9 +27,9 @@ public class BaseXeniaController : Controller
         userConfig ??= new UserConfigModel();
         model.UserConfig = userConfig;
         
-        if (Request.Query.TryGetValue("am", out var alertMessage))
+        if (Request.Query.TryGetValue("Message", out var alertMessage))
             model.Message = alertMessage.ToString();
-        if (Request.Query.TryGetValue("at", out var alertType))
+        if (Request.Query.TryGetValue("MessageType", out var alertType))
             if (AspHelper.ValidMessageTypes.Contains(alertType.ToString()))
                 model.MessageType = alertType.ToString();
     }
