@@ -78,42 +78,4 @@ public partial class ServerController
 
         return true;
     }
-
-
-    public IActionResult? ParseChannelId(ulong guildId, string? channel, out ulong outChannel)
-    {
-        outChannel = 0;
-        ulong? channelId = null;
-        try
-        {
-            if (channel == null)
-                throw new Exception("Provided ChannelId is null");
-            channelId = ulong.Parse(channel);
-        }
-        catch (Exception e)
-        {
-            return RedirectToAction("Index", new
-            {
-                Id = guildId,
-                MessageType = "danger",
-                Message = $"Failed to parse ChannelId. {e.Message}"
-            });
-        }
-
-        if (channelId == null)
-        {
-            return RedirectToAction("Index", new
-            {
-                Id = guildId,
-                MessageType = "danger",
-                Message = $"Failed to parse ChannelId. ChannelId is null"
-            });
-        }
-        else
-        {
-            outChannel = (ulong)channelId;
-            return null;
-        }
-
-    }
 }

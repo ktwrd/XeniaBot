@@ -133,17 +133,25 @@ public partial class ServerController
         if (guild == null)
             return View("NotFound", "Guild not found");
 
-        var channelIdRes = ParseChannelId(id, logChannel, out var channelId);
-        if (channelIdRes != null)
-            return channelIdRes;
+        var channelIdResult = ParseChannelId(logChannel);
+        if (channelIdResult.ErrorContent != null)
+        {
+            return RedirectToAction("Index", new
+            {
+                Id = id,
+                MessageType = "danger",
+                Message = $"Failed to parse Log Channel Id. {channelIdResult.ErrorContent}"
+            });
+        }
+        var channelId = (ulong)channelIdResult.ChannelId;
         
         var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
         var configData = await controller.Get(guild.Id) ?? new ConfigBanSyncModel()
         {
             GuildId = guild.Id,
-            LogChannel = (ulong)channelId
+            LogChannel = channelId
         };
-        configData.LogChannel = (ulong)channelId;
+        configData.LogChannel = channelId;
         await controller.Set(configData);
 
         return RedirectToAction("Index", new
@@ -163,13 +171,29 @@ public partial class ServerController
         if (guild == null)
             return View("NotFound", "Guild not found");
         
-        var channelIdRes_modal = ParseChannelId(id, modalChannelId, out var modalId);
-        if (channelIdRes_modal != null)
-            return channelIdRes_modal;
+        var modalChannelIdRes = ParseChannelId(modalChannelId);
+        if (modalChannelIdRes.ErrorContent != null)
+        {
+            return RedirectToAction("Index", new
+            {
+                Id = id,
+                MessageType = "danger",
+                Message = $"Failed to parse ChannelId for Modal. {modalChannelIdRes.ErrorContent}"
+            });
+        }
+        var modalId = (ulong)modalChannelIdRes.ChannelId;
         
-        var channelIdRes_msg = ParseChannelId(id, modalChannelId, out var msgId);
-        if (channelIdRes_msg != null)
-            return channelIdRes_msg;
+        var msgChannelIdRes = ParseChannelId(messageChannelId);
+        if (msgChannelIdRes.ErrorContent != null)
+        {
+            return RedirectToAction("Index", new
+            {
+                Id = id,
+                MessageType = "danger",
+                Message = $"Failed to parse ChannelId for Messages. {msgChannelIdRes.ErrorContent}"
+            });
+        }
+        var msgId = (ulong)msgChannelIdRes.ChannelId;
 
         try
         {
