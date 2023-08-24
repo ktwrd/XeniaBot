@@ -17,10 +17,12 @@ public class ArchivalController : BaseController
     public ArchivalGenericConfigController<XMessageModel> BBMessageConfig;
     public ArchivalGenericConfigController<XUserModel> BBUserConfig;
     public ArchivalGenericConfigController<XChannelModel> BBChannelConfig;
+    private readonly UserConfigController _userConfig;
     private readonly DiscordSocketClient _client;
     public ArchivalController(IServiceProvider services)
         : base(services)
     {
+        _userConfig = services.GetRequiredService<UserConfigController>();
         _client = services.GetRequiredService<DiscordSocketClient>();
         BBMessageConfig = new ArchivalGenericConfigController<XMessageModel>("bb_store_message", services);
     }
@@ -52,6 +54,9 @@ public class ArchivalController : BaseController
 
     private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
     {
+        var userConfig = await _userConfig.GetOrDefault(previous.Id);
+        if (!userConfig.EnableProfileTracking)
+            return;
         var data = await BBUserConfig.GetLatest(previous.Id);
         var currentData = XUserModel.FromUser(current);
         await BBUserConfig.Add(currentData);
