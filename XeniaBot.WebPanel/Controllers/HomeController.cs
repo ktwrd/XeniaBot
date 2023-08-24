@@ -43,9 +43,6 @@ public class HomeController : BaseXeniaController
     [HttpGet("~/Vote")]
     public async Task<IActionResult> Vote()
     {
-        return View("Vote", new DiscordModel()
-        {
-            Client = Program.Services.GetRequiredService<DiscordSocketClient>()
-        });
+        return View("Vote", await PopulateModel());
     }
 }
