@@ -260,7 +260,7 @@ public class ServerLogController : BaseController
         var socketChannel = channel.Value as SocketGuildChannel;
         if (socketChannel?.Guild == null)
             return;
-        var funkyMessage = await _bb.BBMessageConfig.Get(message.Id);
+        var funkyMessage = await _bb.BBMessageConfig.GetLatest(message.Id);
         
         string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
         long timestamp = 
@@ -283,6 +283,7 @@ public class ServerLogController : BaseController
         IMessageChannel channel)
     {
         var previousContent = previousMessage.Value?.Content ?? "";
+        var storedData = await _bb.BBMessageConfig.GetLatest(currentMessage.Id);
         if (previousContent == currentMessage.Content)
             return;
         var socketChannel = channel as SocketGuildChannel;

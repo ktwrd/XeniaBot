@@ -52,7 +52,7 @@ public class ArchivalController : BaseController
 
     private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
     {
-        var data = await BBUserConfig.Get(previous.Id);
+        var data = await BBUserConfig.GetLatest(previous.Id);
         var currentData = XUserModel.FromUser(current);
         await BBUserConfig.Set(currentData);
         OnUserChange(
@@ -91,7 +91,7 @@ public class ArchivalController : BaseController
         if (channel is SocketGuildChannel { Guild: not null } socketChannel)
             data.GuildId = socketChannel.Guild.Id;
         // fetch previous message for event emit
-        var previous = await BBMessageConfig.Get(data.Snowflake);
+        var previous = await BBMessageConfig.GetLatest(data.Snowflake);
         
         // save in db
         await BBMessageConfig.Set(data);
@@ -106,7 +106,7 @@ public class ArchivalController : BaseController
     private async Task _client_MessageDeleted(Cacheable<IMessage, ulong> message,
         Cacheable<IMessageChannel, ulong> channel)
     {
-        var data = await BBMessageConfig.Get(message.Id);
+        var data = await BBMessageConfig.GetLatest(message.Id);
         if (data != null)
         {
             var previous = data.Clone();
