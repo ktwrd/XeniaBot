@@ -31,7 +31,7 @@ public static class AspHelper
         return Program.ConfigData.UserWhitelist.Contains(userId);
     }
 
-    public static bool CanAccess(ulong guildId, ulong userId)
+    public static bool CanAccessGuild(ulong guildId, ulong userId)
     {
         var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
         
@@ -94,7 +94,7 @@ public static class AspHelper
         var membersWhoCanAccess = new List<SocketGuildUser>();
         foreach (var item in guild.Users)
         {
-            if (CanAccess(guild.Id, item.Id) && !item.IsBot)
+            if (CanAccessGuild(guild.Id, item.Id) && !item.IsBot)
                 membersWhoCanAccess.Add(item);
         }
         data.UsersWhoCanAccess = membersWhoCanAccess;
