@@ -8,15 +8,14 @@ using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public class HomeController : Controller
+[Controller]
+public class HomeController : BaseXeniaController
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly DiscordSocketClient _discord;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger) : base()
     {
         _logger = logger;
-        _discord = Program.Services.GetRequiredService<DiscordSocketClient>();
     }
 
     [HttpGet("~/")]
@@ -25,6 +24,7 @@ public class HomeController : Controller
         return View();
     }
 
+    [HttpGet("~/Privacy")]
     public IActionResult Privacy()
     {
         return View();
@@ -40,7 +40,8 @@ public class HomeController : Controller
             });
     }
 
-    public IActionResult Vote()
+    [HttpGet("~/Vote")]
+    public async Task<IActionResult> Vote()
     {
         return View("Vote", new DiscordModel()
         {
