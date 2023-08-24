@@ -40,6 +40,7 @@ public class UserConfigController : BaseConfigController<UserConfigModel>
     public async Task Add(UserConfigModel model)
     {
         model._id = default;
+        model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);
     }
