@@ -48,6 +48,15 @@ public static class AspHelper
 
         return true;
     }
+    public static string[] ValidMessageTypes = new string[]
+    {
+        "primary",
+        "secondary",
+        "success",
+        "danger",
+        "warning",
+        "info"
+    };
     public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
     {
         
