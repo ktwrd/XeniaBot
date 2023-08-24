@@ -39,6 +39,7 @@ public class UserConfigController : BaseConfigController<UserConfigModel>
 
     public async Task Add(UserConfigModel model)
     {
+        model._id = default;
         var collection = GetCollection();
         await collection.InsertOneAsync(model);
     }

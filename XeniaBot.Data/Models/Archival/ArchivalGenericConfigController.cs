@@ -74,6 +74,7 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
     /// <param name="model">Model to add to the collection</param>
     public async Task Add(T model)
     {
+        model._id = default;
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);

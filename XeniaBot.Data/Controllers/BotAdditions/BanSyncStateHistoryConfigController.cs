@@ -14,6 +14,7 @@ public class BanSyncStateHistoryConfigController : BaseConfigController<BanSyncS
 
     public async Task Add(BanSyncStateHistoryItemModel model)
     {
+        model._id = default;
         model.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);
