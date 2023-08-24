@@ -45,4 +45,12 @@ public class HomeController : BaseXeniaController
     {
         return View("Vote", await PopulateModel());
     }
+
+    [AuthRequired(ShowLoginButton = true)]
+    [HttpGet("~/Preferences")]
+    public async Task<IActionResult> Preferences()
+    {
+        var data = await PopulateModel();
+        return View("Preferences", data);
+    }
 }
