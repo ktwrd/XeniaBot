@@ -14,7 +14,7 @@
     }
 </style>
 <div class="btn-group mb-2" role="group" aria-label="Server List Style">
-    @if (@Model.ListStyle == ListViewStyle.List)
+    @if (@Model.UserConfig.ListViewStyle == ListViewStyle.List)
     {
         <a class="btn btn-primary" href="/Server/List?style=0" alt="List"><i class="bi bi-view-list"></i></a>
     }
@@ -23,7 +23,7 @@
         <a class="btn btn-outline-primary" href="/Server/List?style=0" alt="List"><i class="bi bi-view-list"></i></a>
     }
     
-    @if (@Model.ListStyle == ListViewStyle.Grid)
+    @if (@Model.UserConfig.ListViewStyle == ListViewStyle.Grid)
     {
         <a class="btn btn-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
     }
@@ -32,7 +32,7 @@
         <a class="btn btn-outline-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
     }
 </div>
-@if (@Model.ListStyle == ListViewStyle.Grid)
+@if (@Model.UserConfig.ListViewStyle == ListViewStyle.Grid)
 {
     <div class="d-flex flex-wrap">
     @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
