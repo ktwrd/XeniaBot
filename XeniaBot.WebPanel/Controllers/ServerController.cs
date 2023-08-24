@@ -18,7 +18,6 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController : BaseXeniaController
 {
     private readonly ILogger<ServerController> _logger;
-    private readonly DiscordSocketClient _discord;
 
     public ServerController(ILogger<ServerController> logger)
         : base()
