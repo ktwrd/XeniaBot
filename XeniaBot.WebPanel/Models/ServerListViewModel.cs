@@ -1,9 +1,10 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using XeniaBot.Data;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class ServerListViewModel
+public class ServerListViewModel : BaseViewModel
 {
     public ulong? UserId { get; set; }
     public string? UserAvatar { get; set; }
@@ -12,7 +13,7 @@ public class ServerListViewModel
     public ServerListViewModel()
     {
         Items = Array.Empty<ServerListViewModelItem>();
-        ListStyle = ServerListStyle.Default;
+        ListStyle = ListViewStyle.List;
     }
 }
 
