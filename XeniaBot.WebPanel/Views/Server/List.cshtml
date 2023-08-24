@@ -1,4 +1,6 @@
-﻿@model ServerListViewModel
+﻿@using XeniaBot.Data
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model ServerListViewModel
 @{
     ViewBag.Title = "Servers";
     Layout = "_Layout";
@@ -14,20 +16,20 @@
 <div class="btn-group mb-2" role="group" aria-label="Server List Style">
     @if (@Model.ListStyle == ListViewStyle.List)
     {
-        <a class="btn btn-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
-    }
-    else
-    {
-        <a class="btn btn-outline-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
-    }
-    
-    @if (@Model.ListStyle == ListViewStyle.Grid)
-    {
         <a class="btn btn-primary" href="/Server/List?style=0" alt="List"><i class="bi bi-view-list"></i></a>
     }
     else
     {
         <a class="btn btn-outline-primary" href="/Server/List?style=0" alt="List"><i class="bi bi-view-list"></i></a>
+    }
+    
+    @if (@Model.ListStyle == ListViewStyle.Grid)
+    {
+        <a class="btn btn-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
+    }
+    else
+    {
+        <a class="btn btn-outline-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
     }
 </div>
 @if (@Model.ListStyle == ListViewStyle.Grid)
