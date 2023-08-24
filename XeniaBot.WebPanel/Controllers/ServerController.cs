@@ -52,7 +52,7 @@ public partial class ServerController : BaseXeniaController
     
     [HttpGet("~/Server/")]
     [HttpGet("~/Server/List")]
-    public async Task<IActionResult> List(ServerListStyle style = ServerListStyle.Default)
+    public async Task<IActionResult> List(ListViewStyle style = ListViewStyle.List)
     {
         bool isAuth = User?.Identity?.IsAuthenticated ?? false;
         if (!isAuth)
