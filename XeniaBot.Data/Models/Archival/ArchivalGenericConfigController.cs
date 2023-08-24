@@ -29,6 +29,11 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
         return result.FirstOrDefault();
     }
 
+    /// <summary>
+    /// Get latest (Selected by <see cref="ArchiveBaseModel.ModifiedAtTimestamp"/>) by a snowflake.
+    /// </summary>
+    /// <param name="snowflake">Snowflake of item to fetch</param>
+    /// <returns>Latest item matching snowflake.</returns>
     public async Task<T?> GetLatest(ulong snowflake)
     {
         var collection = GetCollection();
@@ -40,6 +45,11 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
         var sorted = result.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
         return sorted.FirstOrDefault();
     }
+
+    /// <summary>
+    /// Forcefully replace an item with matching <see cref="ArchiveBaseModel.ModifiedAtTimestamp"/> and <see cref="ArchiveBaseModel.Snowflake"/>.
+    /// </summary>
+    /// <param name="model">Model to replace existing entries with.</param>
     public async Task Set(T model)
     {
         var collection = GetCollection();
@@ -57,6 +67,11 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
 
         OnModelSet?.Invoke(model, first, first == null);
     }
+
+    /// <summary>
+    /// Add an item to the collection. Will set <see cref="ArchiveBaseModel.ModifiedAtTimestamp"/> to the current Epoch MS Timestamp.
+    /// </summary>
+    /// <param name="model">Model to add to the collection</param>
     public async Task Add(T model)
     {
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
