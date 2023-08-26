@@ -66,18 +66,18 @@
 </header>
 <div class="container">
     <main role="main" class="pb-3">
-        @if (@Model.GetType().IsAssignableFrom(typeof(BaseViewModel)))
-        {
             @if (@Model != null)
             {
-                if (@Model.Message != null)
+                if (typeof(BaseViewModel).IsAssignableFrom(@Model.GetType()) || @Model.GetType() == typeof(BaseViewModel))
                 {
-                    <div class="alert alert-@Model.MessageType mt-3" role="alert">
-                        @Model.Message
-                    </div>
+                    if (@Model.Message != null)
+                    {
+                        <div class="alert alert-@Model.MessageType mt-3" role="alert">
+                            @Model.Message
+                        </div>
+                    }
                 }
             }
-        }
         @RenderBody()
     </main>
 </div>
