@@ -9,15 +9,8 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public partial class ServerController
 {
-
-    public class ServerSettingsCountingModel
-    {
-        [Required]
-        [MaxLength(140)]
-        public string ChannelId { get; set; }
-    }
     [HttpPost("~/Server/{id}/Settings/Counting")]
-    public async Task<IActionResult> SaveSettings_Counting(ulong id, ServerSettingsCountingModel data)
+    public async Task<IActionResult> SaveSettings_Counting(ulong id, string? inputChannelId)
     {
         if (!CanAccess(id))
             return View("NotAuthorized");
@@ -33,12 +26,13 @@ public partial class ServerController
         ulong? channelId = null;
         try
         {
-            channelId = ulong.Parse(data.ChannelId);
+            channelId = ulong.Parse(inputChannelId ?? "0");
             if (channelId == null)
                 throw new Exception("ChannelId is null");
         }
         catch (Exception e)
         {
+            Log.Error(e);
             return RedirectToAction("Index", new
             {
                 Id = id,
