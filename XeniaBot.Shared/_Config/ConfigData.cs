@@ -20,7 +20,9 @@ public class ConfigData
         "AuthentikToken",
         "AuthentikUrl",
         "AuthentikEnable",
-        "HasDashboard"
+        "HasDashboard",
+        "Health_Enable",
+        "Health_Port"
     };
     
     /// <summary>
@@ -158,6 +160,9 @@ public class ConfigData
     /// API Token for discordbotlist.com
     /// </summary>
     public string DiscordBotList_Token = "";
+
+    public bool Health_Enable = false;
+    public int Health_Port = 4829;
 }
 public class GoogleCloudKey
 {

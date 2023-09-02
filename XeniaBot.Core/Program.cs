@@ -155,6 +155,10 @@ namespace XeniaBot.Core
                 RunServicesReadyFunc();
             };
             await _discordController.Run();
+            if (ConfigData.Health_Enable)
+            {
+                new HealthServer().Run(ConfigData.Health_Port);
+            }
 
             await Task.Delay(-1);
         }

@@ -85,6 +85,8 @@ Once you've done that, create the `GCSKey_Translate` key in your `config.json` a
 | `DiscordBotList_Token`     | ❌                 | `""`          | Token to use when sending available commands to DiscordBotList.com |
 | `OAuth_ClientId`           | ✔️ (Dashboard Only) | `""`          | Discord OAuth Client Id |
 | `OAuth_ClientSecret`       | ✔️ (Dashboard Only) | `""`          | Discord OAuth Client Secret |
+| `Health_Enable`            | ❌ (Bot Only)      | `false`       | Enable Health API |
+| `Health_Port`              | ❌ (Bot Only)      | `4829`        | Port to listen the Health API Web Server | 
 
 # Environment Variables
 | Key | Type | Description |
