@@ -13,39 +13,9 @@ public partial class ServerController
     {
         var data = new ServerDetailsViewModel();
         var guild = _discord.GetGuild(serverId);
-        data.Guild = guild;
-
-        var counterController = Program.Services.GetRequiredService<CounterConfigController>();
-        data.CounterConfig = await counterController.Get(guild) ?? new CounterGuildModel()
-        {
-            GuildId = serverId
-        };
-
-        var banSyncConfig = Program.Services.GetRequiredService<BanSyncConfigController>();
-        data.BanSyncConfig = await banSyncConfig.Get(guild.Id) ?? new ConfigBanSyncModel()
-        {
-            GuildId = guild.Id
-        };
-
-        var xpConfig = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
-        data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
-        {
-            GuildId = guild.Id
-        };
-
-        var logConfig = Program.Services.GetRequiredService<ServerLogConfigController>();
-        data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
-        {
-            ServerId = guild.Id
-        };
-
-        var membersWhoCanAccess = new List<SocketGuildUser>();
-        foreach (var item in guild.Users)
-        {
-            if (CanAccess(guild.Id, item.Id) && !item.IsBot)
-                membersWhoCanAccess.Add(item);
-        }
-        data.UsersWhoCanAccess = membersWhoCanAccess;
+        data.User = guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
+        
+        await AspHelper.FillServerModel(serverId, data);
         
         return data;
     }
