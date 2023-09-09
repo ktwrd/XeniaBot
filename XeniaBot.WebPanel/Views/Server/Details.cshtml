@@ -17,11 +17,12 @@
 <div class="card mt-2">
     <div class="card-header p-0 border-0">
         <nav>
-          <div class="nav nav-tabs pt-2 px-2" id="server-details-nav-tab" role="tablist">
-            <a class="nav-item nav-link active" id="nav-details-tab" data-toggle="tab" href="#nav-details" role="tab" aria-controls="nav-details" aria-selected="true">Details</a>
-            <a class="nav-item nav-link" id="nav-mod-tab" data-toggle="tab" href="#nav-mod" role="tab" aria-controls="nav-mod" aria-selected="false">Moderation</a>
-            <a class="nav-item nav-link" id="nav-fun-tab" data-toggle="tab" href="#nav-fun" role="tab" aria-controls="nav-fun" aria-selected="false">Fun</a>
-          </div>
+            <div class="nav nav-tabs pt-2 px-2" id="server-details-nav-tab" role="tablist">
+                <a class="nav-item nav-link active" id="nav-details-tab" data-toggle="tab" href="#nav-details" role="tab" aria-controls="nav-details" aria-selected="true">Details</a>
+                <a class="nav-item nav-link" id="nav-mod-tab" data-toggle="tab" href="#nav-mod" role="tab" aria-controls="nav-mod" aria-selected="false">Moderation</a>
+                <a class="nav-item nav-link" id="nav-fun-tab" data-toggle="tab" href="#nav-fun" role="tab" aria-controls="nav-fun" aria-selected="false">Fun</a>
+                <a class="nav-item nav-link" id="nav-greeter-tab" data-toggle="tab" href="#nav-greeter" role="tab" aria-controls="nav-greeter" aria-selected="false">Greeter</a>
+            </div>
         </nav>
     </div>
     <div class="card-body">
@@ -55,6 +56,9 @@
             </div>
             <div class="tab-pane fade" id="nav-fun" role="tabpanel" aria-labelledby="nav-fun-tab">
                 @{ await Html.RenderPartialAsync("Details/Fun"); }
+            </div>
+            <div class="tab-pane fade" id="nav-greeter" role="tabpanel" aria-labelledby="nav-greeter-tab">
+                @{ await Html.RenderPartialAsync("Details/Settings/Greeter"); }
             </div>
         </div>
     </div>

@@ -181,4 +181,10 @@ public partial class ServerController
             });
         }
     }
+
+    [HttpPost("~/Server/{id}/Settings/Greeter")]
+    public async Task<IActionResult> SaveSettings_Greeter()
+    {
+        throw new NotImplementedException();
+    }
 }
