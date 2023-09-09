@@ -98,6 +98,13 @@ public static class AspHelper
                 membersWhoCanAccess.Add(item);
         }
         data.UsersWhoCanAccess = membersWhoCanAccess;
+
+        var greeterConfig = Program.Services.GetRequiredService<GuildGreeterConfigController>();
+        data.GreeterConfig = await greeterConfig.GetLatest(guild.Id)
+            ?? new GuildGreeterConfigModel()
+            {
+                GuildId = guild.Id
+            };
         
         return data;
     }

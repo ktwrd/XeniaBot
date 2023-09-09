@@ -13,4 +13,5 @@ public class AdminServerModel : BaseViewModel, IBaseServerModel
     public LevelSystemGuildConfigModel XpConfig { get; set; }
     public ServerLogModel LogConfig { get; set; }
     public IEnumerable<BanSyncStateHistoryItemModel> BanSyncStateHistory { get; set; }
+    public GuildGreeterConfigModel GreeterConfig { get; set; }
 }
