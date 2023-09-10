@@ -135,7 +135,7 @@ function stringReplace(content, itemType)
             let c = content
             for (let pair of Object.entries(replaceMap))
             {
-                c = c.replaceAll(`{${c[0]}}`, c[1])
+                c = c.replaceAll(`{${pair[0]}}`, pair[1])
             }
             return c;
         default:
