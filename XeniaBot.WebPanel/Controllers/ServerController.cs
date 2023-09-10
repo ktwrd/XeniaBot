@@ -44,6 +44,10 @@ public partial class ServerController : BaseXeniaController
         data.User = guildUser;
         
         await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
         
         return View("Details", data);
     }
