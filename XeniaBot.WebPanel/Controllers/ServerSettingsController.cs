@@ -33,12 +33,9 @@ public partial class ServerController
         catch (Exception e)
         {
             Log.Error(e);
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to save Counting settings. {e.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Counting settings. {e.Message}");
         }
 
         var controller = Program.Services.GetRequiredService<CounterConfigController>();
@@ -50,12 +47,9 @@ public partial class ServerController
         counterData.ChannelId = (ulong)channelId;
         await controller.Set(counterData);
 
-        return RedirectToAction("Index", new
-        {
-            Id = id,
-            MessageType = "success",
-            Message = "Successfully set counting settings"
-        });
+        return await Index(id,
+            messageType: "success",
+            message: $"Counting settings saved");
     }
 
     public class SettingLogSystemData
@@ -106,20 +100,14 @@ public partial class ServerController
         catch (Exception e)
         {
             Log.Error($"Failed to save logging settings. \n{e}");
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to save logging settings. {e.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Logging settings. {e.Message}");
         }
         
-        return RedirectToAction("Index", new
-        {
-            Id = id,
-            MessageType = "success",
-            Message = $"Logging Settings Saved"
-        });
+        return await Index(id,
+            messageType: "success",
+            message: $"Logging settings saved");
     }
 
     [HttpPost("~/Server/{id}/Settings/Xp")]
@@ -141,12 +129,9 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to save Level System settings. {e.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Level System settings. {e.Message}");
         }
 
         try
@@ -163,22 +148,16 @@ public partial class ServerController
             data.ShowLeveUpMessage = show;
             data.Enable = enable;
             await controller.Set(data);
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "success",
-                Message = $"Level System Settings Saved"
-            });
+            return await Index(id,
+                messageType: "success",
+                message: $"Level System Settings Saved");
         }
         catch (Exception e)
         {
             Log.Error($"Failed to save level system config\n{e}");
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to save Level System Config. {e.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Level System settings. {e.Message}");
         }
     }
 
@@ -214,12 +193,9 @@ public partial class ServerController
             }
             catch (Exception e)
             {
-                return RedirectToAction("Index", new
-                {
-                    Id = id,
-                    MessageType = "danger",
-                    Message = $"Failed to save Greeter settings. {e.Message}"
-                });
+                return await Index(id,
+                    messageType: "danger",
+                    message: $"Failed to save Greeter settings. {e.Message}");
             }
         }
         
@@ -247,22 +223,16 @@ public partial class ServerController
                 data.ChannelId = targetChannelId;
             await controller.Add(data);
         
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "success",
-                Message = $"Greeter Settings Saved"
-            });
+            return await Index(id,
+                messageType: "success",
+                message: $"Greeter settings saved");
         }
         catch (Exception e)
         {
             Log.Error($"Failed to save greeter settings\n{e}");
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to save Greeter Settings. {e.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Greeter settings. {e.Message}");
         }
     }
 }

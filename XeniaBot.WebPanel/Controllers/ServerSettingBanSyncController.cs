@@ -30,12 +30,9 @@ public partial class ServerController
 
         if (configData.LogChannel == 0)
         {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "warning",
-                Message = "Unable to request Ban Sync: Log Channel not set."
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Unable to request Ban Sync: Log Channel not set.");
         }
 
         try
@@ -45,17 +42,17 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Unable to request Ban Sync: Failed to get log channel. {ex.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Unable to request Ban Sync: Failed to get log channel: {ex.Message}");
         }
         
         switch (configData.State)
         {
             case BanSyncGuildState.PendingRequest:
+                return await Index(id,
+                    messageType: "danger",
+                    message: "Ban Sync access has already been requested");
                 return RedirectToAction("Index", new
                 {
                     Id = id,
@@ -64,13 +61,13 @@ public partial class ServerController
                 });
                 break;
             case BanSyncGuildState.RequestDenied:
-                return RedirectToAction("Index", new
-                {
-                    Id = id,
-                    MessageType = "danger",
-                    Message = "Ban Sync access has already been requested and denied."
-                });
+                return await Index(id,
+                    messageType: "danger",
+                    message: "Ban Sync access has already been requested and denied.");
             case BanSyncGuildState.Blacklisted:
+                return await Index(id,
+                    messageType: "danger",
+                    message: $"Your server has been blacklisted");
                 return RedirectToAction("Index", new
                 {
                     Id = id,
@@ -79,12 +76,9 @@ public partial class ServerController
                 });
                 break;
             case BanSyncGuildState.Active:
-                return RedirectToAction("Index", new
-                {
-                    Id = id,
-                    MessageType = "danger",
-                    Message = "Your server already has Ban Sync enabled"
-                });
+                return await Index(id,
+                    messageType: "danger",
+                    message: $"Your server already has Ban Sync enabled");
                 break;
             case BanSyncGuildState.Unknown:
                 // Request ban sync
@@ -95,31 +89,21 @@ public partial class ServerController
                         throw new Exception($"Failed to get BanSyncController");
 
                     var res = await dcon.RequestGuildEnable(guild.Id);
-                    return RedirectToAction(
-                        "Index", new
-                        {
-                            Id = id,
-                            MessageType = "success",
-                            Message = "Ban Sync: Your server is pending approval"
-                        });
+                    return await Index(id,
+                        messageType: "success",
+                        message: $"Ban Sync: Your server is pending approval");
                 }
                 catch (Exception ex)
                 {
-                    return RedirectToAction("Index", new
-                    {
-                        Id = id,
-                        MessageType = "danger",
-                        Message = $"Unable to request Ban Sync: Failed to request. {ex.Message}"
-                    });
+                    return await Index(id,
+                        messageType: "danger",
+                        message: $"Unable to request Ban Sync: Failed to request. {ex.Message}");
                 }
                 break;
         }
-        return RedirectToAction("Index", new
-        {
-            Id = id,
-            MessageType = "warning",
-            Message = $"Ban Sync Fail: Unhandled state {configData.State}"
-        });
+        return await Index(id,
+            messageType: "warning",
+            message: $"Ban Sync Fail: Unhandled state {configData.State}");
     }
     [HttpPost("~/Server/{id}/Settings/BanSync")]
     public async Task<IActionResult> SaveSettings_BanSync(
@@ -136,12 +120,9 @@ public partial class ServerController
         var channelIdResult = ParseChannelId(logChannel);
         if (channelIdResult.ErrorContent != null)
         {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to parse Log Channel Id. {channelIdResult.ErrorContent}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to parse Ban Sync Log Channel Id. {channelIdResult.ErrorContent}");
         }
         var channelId = (ulong)channelIdResult.ChannelId;
         
@@ -154,12 +135,9 @@ public partial class ServerController
         configData.LogChannel = channelId;
         await controller.Set(configData);
 
-        return RedirectToAction("Index", new
-        {
-            Id = id,
-            MessageType = "success",
-            Message = "Successfully set Ban Sync log channel"
-        });
+        return await Index(id,
+            messageType: "success",
+            message: $"Successfully saved Ban Sync Log channel");
     }
     [HttpPost("~/Server/{id}/Settings/Confession")]
     public async Task<IActionResult> SaveSettings_Confession(ulong id, string? modalChannelId, string? messageChannelId)
@@ -174,6 +152,9 @@ public partial class ServerController
         var modalChannelIdRes = ParseChannelId(modalChannelId);
         if (modalChannelIdRes.ErrorContent != null)
         {
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to parse ChannelId for confession modal. {modalChannelIdRes.ErrorContent}");
             return RedirectToAction("Index", new
             {
                 Id = id,
@@ -186,12 +167,9 @@ public partial class ServerController
         var msgChannelIdRes = ParseChannelId(messageChannelId);
         if (msgChannelIdRes.ErrorContent != null)
         {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to parse ChannelId for Messages. {msgChannelIdRes.ErrorContent}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to parse ChannelId for messages. {msgChannelIdRes.ErrorContent}");
         }
         var msgId = (ulong)msgChannelIdRes.ChannelId;
 
@@ -219,19 +197,13 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to save confession settings: {ex.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save confession settings. {ex.Message}");
         }
-        return RedirectToAction("Index", new
-        {
-            Id = id,
-            MessageType = "success",
-            Message = "Successfully set Ban Sync log channel"
-        });
+        return await Index(id,
+            messageType: "success",
+            message: $"Successfully saved Ban Sync Log channel");
     }
 
     [HttpGet("~/Server/{id}/Settings/Confession/Purge")]
@@ -253,21 +225,15 @@ public partial class ServerController
                    GuildId = id
                 };
             await controller.Delete(data);
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "success",
-                Message = "Successfully purged confession messages"
-            });
+            return await Index(id,
+                messageType: "success",
+                message: $"Successfully purged confession messages");
         }
         catch (Exception ex)
         {
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to purge confession messages: {ex.Message}"
-            });
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to purge confession messages. {ex.Message}");
         }
     }
 }
