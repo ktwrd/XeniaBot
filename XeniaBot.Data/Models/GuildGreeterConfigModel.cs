@@ -23,7 +23,7 @@ public class GuildGreeterConfigModel : BaseModel
 
     [BsonIgnore]
     [JsonIgnore]
-    public string T_Color_Hex
+    public string? T_Color_Hex
     {
         get
         {
@@ -36,10 +36,11 @@ public class GuildGreeterConfigModel : BaseModel
         }
         set
         {
+            string v = value ?? "#000000";
             int offset = 0;
-            if (value.StartsWith("#"))
+            if (v.StartsWith("#"))
                 offset = 1;
-            uint val = uint.Parse(value.Substring(offset));
+            uint val = uint.Parse(v.Substring(offset), NumberStyles.HexNumber);
             T_Color = val;
         }
     }
