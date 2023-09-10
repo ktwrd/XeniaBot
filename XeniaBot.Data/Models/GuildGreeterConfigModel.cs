@@ -66,13 +66,10 @@ public class GuildGreeterConfigModel : BaseModel
 
         string InjectDict(string i)
         {
-            string m = i;
-            if (i.Length > 0 && i != null)
+            string m = i ?? "";
+            foreach (var pair in replaceDict)
             {
-                foreach (var pair in replaceDict)
-                {
-                    m = i.Replace("{" + pair.Key + "}", pair.Value.ToString());
-                }
+                m = m.Replace("{" + pair.Key + "}", pair.Value.ToString());
             }
 
             return m;
