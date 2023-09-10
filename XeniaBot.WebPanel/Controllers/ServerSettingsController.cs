@@ -183,8 +183,86 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/Greeter")]
-    public async Task<IActionResult> SaveSettings_Greeter()
+    public async Task<IActionResult> SaveSettings_Greeter(
+        ulong id,
+        bool inputMentionUser,
+        string? inputChannelId,
+        string? inputTitle,
+        string? inputDescription,
+        string? inputImgUrl,
+        string? inputThumbUrl,
+        string? inputFooterText,
+        string? inputFooterImgUrl,
+        string? inputAuthorText,
+        string? inputAuthorImgUrl,
+        string? inputColor)
     {
-        throw new NotImplementedException();
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+
+        
+        ulong targetChannelId = 0;
+        if (inputChannelId == null || inputChannelId?.Length < 1)
+            targetChannelId = 0;
+        else
+        {
+            try
+            {
+                targetChannelId = ulong.Parse(inputChannelId);
+                if (targetChannelId == null)
+                    throw new Exception("ChannelId is null");
+            }
+            catch (Exception e)
+            {
+                return RedirectToAction("Index", new
+                {
+                    Id = id,
+                    MessageType = "danger",
+                    Message = $"Failed to save Greeter settings. {e.Message}"
+                });
+            }
+        }
+        
+        try
+        {
+            var controller = Program.Services.GetRequiredService<GuildGreeterConfigController>();
+            var data = await controller.GetLatest(id)
+                ?? new GuildGreeterConfigModel()
+                {
+                    GuildId = id
+                };
+            data.T_Title = inputTitle;
+            data.T_Description = inputDescription;
+            data.T_ImageUrl = inputImgUrl;
+            data.T_ThumbnailUrl = inputThumbUrl;
+            data.T_FooterText = inputFooterText;
+            data.T_FooterImgUrl = inputFooterImgUrl;
+            data.T_AuthorName = inputAuthorText;
+            data.T_AuthorIconUrl = inputAuthorImgUrl;
+            data.T_Color_Hex = inputColor;
+            data.MentionNewUser = inputMentionUser;
+            if (targetChannelId == 0)
+                data.ChannelId = null;
+            else
+                data.ChannelId = targetChannelId;
+            await controller.Add(data);
+        
+            return RedirectToAction("Index", new
+            {
+                Id = id,
+                MessageType = "success",
+                Message = $"Greeter Settings Saved"
+            });
+        }
+        catch (Exception e)
+        {
+            Log.Error($"Failed to save greeter settings\n{e}");
+            return RedirectToAction("Index", new
+            {
+                Id = id,
+                MessageType = "danger",
+                Message = $"Failed to save Greeter Settings. {e.Message}"
+            });
+        }
     }
 }
