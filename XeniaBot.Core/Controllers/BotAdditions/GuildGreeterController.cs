@@ -35,6 +35,13 @@ public class GuildGreeterController : BaseController
         if (channel == null)
             return;
         var embed = config.GetEmbed(user);
-        await channel.SendMessageAsync(embed: embed.Build());
+        if (config.MentionNewUser)
+        {
+            await channel.SendMessageAsync($"<@{user.Id}>", embed: embed.Build());
+        }
+        else
+        {
+            await channel.SendMessageAsync(embed: embed.Build());
+        }
     }
 }

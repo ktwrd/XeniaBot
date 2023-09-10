@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Diagnostics;
+using System.Globalization;
+using System.Text.Json.Serialization;
 using Discord;
 using Discord.WebSocket;
 using MongoDB.Bson.Serialization.Attributes;
@@ -11,7 +13,8 @@ public class GuildGreeterConfigModel : BaseModel
     public static string CollectionName => "guildGreeterConfig";
     
     public ulong GuildId { get; set; }
-    public ulong ChannelId { get; set; }
+    public ulong? ChannelId { get; set; }
+    public bool MentionNewUser { get; set; }
     
     
     public string? T_Title { get; set; }
@@ -99,11 +102,11 @@ public class GuildGreeterConfigModel : BaseModel
         return embed;
     }
     
-    public bool Enable { get; set; }
     public long ModifiedAtTimestamp { get; set; }
 
     public GuildGreeterConfigModel()
     {
+        MentionNewUser = true;
         T_Description = "Welcome {mention}";
     }
 }
