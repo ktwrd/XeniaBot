@@ -8,4 +8,5 @@ public class ChannelSelectModel
     public string Name { get; set; }
     public string Id { get; set; }
     public string DisplayName { get; set; }
+    public IEnumerable<StrippedCategory> Categories { get; set; }
 }

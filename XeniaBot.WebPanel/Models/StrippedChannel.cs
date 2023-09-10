@@ -6,6 +6,7 @@ public class StrippedChannel
 {
     public ulong Id { get; set; }
     public string Name { get; set; }
+    public int Position { get; set; }
 
     public static IEnumerable<StrippedChannel> FromGuild(SocketGuild guild)
     {
@@ -14,7 +15,8 @@ public class StrippedChannel
             return new StrippedChannel()
             {
                 Id = v.Id,
-                Name = v.Name
+                Name = v.Name,
+                Position = v.Position
             };
         });
     }

@@ -13,16 +13,46 @@
         {
             <option value="">None</option>
         }
-        @foreach (var channel in Model.Channels)
+        <hr/>
+        @foreach (var channel in Model.Channels.OrderBy(v => v.Position))
         {
-            @if (@channel.Id == Model.SelectedChannelId)
+            bool contains = false;
+            foreach (var category in Model.Categories)
             {
-                <option value="@channel.Id" selected>@channel.Name</option>
+                if (category.ChannelIds.Contains(channel.Id))
+                    contains = true;
             }
-            else
+            if (contains == false)
             {
-                <option value="@channel.Id">@channel.Name</option>
+                @if (@channel.Id == Model.SelectedChannelId)
+                {
+                    <option value="@channel.Id" selected>@channel.Name</option>
+                }
+                else
+                {
+                    <option value="@channel.Id">@channel.Name</option>
+                }
             }
+        }
+        <hr/>
+        @foreach (var category in Model.Categories.OrderBy(v => v.Position))
+        {
+            <optgroup label="@category.Name">
+                @foreach (var channel in Model.Channels.OrderBy(v => v.Position))
+                {
+                    if (category.ChannelIds.Contains(channel.Id))
+                    {
+                        @if (@channel.Id == Model.SelectedChannelId)
+                        {
+                            <option value="@channel.Id" selected>@channel.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@channel.Id">@channel.Name</option>
+                        }
+                    }
+                }
+            </optgroup>
         }
     </select>
 </div>
