@@ -29,8 +29,11 @@ public class GuildGreeterController : BaseController
             return;
         if (config.GuildId != user.Guild.Id)
             return;
-
-        var channel = user.Guild.GetTextChannel(config.ChannelId);
+        if (config.ChannelId == null || config.ChannelId == 0)
+            return;
+        var channel = user.Guild.GetTextChannel(config.ChannelId ?? 0);
+        if (channel == null)
+            return;
         var embed = config.GetEmbed(user);
         await channel.SendMessageAsync(embed: embed.Build());
     }
