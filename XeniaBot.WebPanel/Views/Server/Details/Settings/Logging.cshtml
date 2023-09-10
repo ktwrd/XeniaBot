@@ -13,6 +13,7 @@
         @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
            {
                Channels = StrippedChannel.FromGuild(@Model.Guild),
+               Categories = StrippedCategory.FromGuild(@Model.Guild),
                SelectedChannelId = @Model.LogConfig.DefaultLogChannel,
                ParentFormId = "log_settings",
                Name = "DefaultLogChannel",
@@ -35,6 +36,7 @@
                            Name = v.Name
                        };
                    }),
+                   Categories = StrippedCategory.FromGuild(@Model.Guild),
                    SelectedChannelId = @Model.LogConfig.GetChannel(item),
                    ParentFormId = "log_settings",
                    Name = $"{item}Channel",

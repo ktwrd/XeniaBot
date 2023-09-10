@@ -57,6 +57,7 @@
     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
            {
                Channels = StrippedChannel.FromGuild(@Model.Guild),
+               Categories = StrippedCategory.FromGuild(@Model.Guild),
                SelectedChannelId = @Model.BanSyncConfig.LogChannel,
                ParentFormId = "bansync_settings_channel",
                Id = "bansync_settings_channel_select",

@@ -5,6 +5,7 @@
     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
        {
            Channels = StrippedChannel.FromGuild(@Model.Guild),
+           Categories = StrippedCategory.FromGuild(@Model.Guild),
            SelectedChannelId = @Model.CounterConfig.ChannelId,
            ParentFormId = "confession_settings",
            Name = "MessageChannelId",
@@ -14,6 +15,7 @@
     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
        {
            Channels = StrippedChannel.FromGuild(@Model.Guild),
+           Categories = StrippedCategory.FromGuild(@Model.Guild),
            SelectedChannelId = @Model.CounterConfig.ChannelId,
            ParentFormId = "confession_settings",
            Name = "ModalChannelId",
