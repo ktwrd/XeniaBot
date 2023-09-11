@@ -19,12 +19,11 @@ namespace XeniaBot.Core.Modules;
 public partial class AuthentikAdminModule : InteractionModuleBase
 {
     [SlashCommand("usercreate", "Create a user")]
+    [RequireUserWhitelist]
     public async Task Cmd_CreateUser(string username)
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Create User").WithCurrentTimestamp();
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            return;
         try
         {
             if (!Program.ConfigData.AuthentikEnable)
@@ -61,12 +60,11 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userpassreset", "Create a password reset link for a user")]
+    [RequireUserWhitelist]
     public async Task Cmd_CreateResetLink(string userId)
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Password Reset Link").WithCurrentTimestamp();
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            return;
         try
         {
             if (!Program.ConfigData.AuthentikEnable)
@@ -102,12 +100,11 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userdelete", "Delete a user")]
+    [RequireUserWhitelist]
     public async Task Cmd_DeleteUser(string userId)
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Delete User").WithCurrentTimestamp();
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            return;
         try
         {
             if (!Program.ConfigData.AuthentikEnable)
@@ -144,12 +141,11 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userlist", "List all users")]
+    [RequireUserWhitelist]
     public async Task Cmd_ListUsers()
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - List Users").WithCurrentTimestamp();
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            return;
         try
         {
             if (!Program.ConfigData.AuthentikEnable)
@@ -184,12 +180,11 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userinfo", "List all users")]
+    [RequireUserWhitelist]
     public async Task Cmd_UserInfo(string user)
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - User Info").WithCurrentTimestamp();
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            return;
         try
         {
             if (!Program.ConfigData.AuthentikEnable)
@@ -234,13 +229,12 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("addtogroup", "Add a user to a group")]
+    [RequireUserWhitelist]
     public async Task Cmd_AddUserToGroup(string user, string group)
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Add to Group").WithCurrentTimestamp();
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            return;
-        
+
         try
         {
             if (!Program.ConfigData.AuthentikEnable)
@@ -285,12 +279,11 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("removefromgroup", "Remove a user from a group")]
+    [RequireUserWhitelist]
     public async Task Cmd_RemoveUserFromGroup(string user, string group)
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Remove from Group").WithCurrentTimestamp();
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            return;
 
         try
         {
