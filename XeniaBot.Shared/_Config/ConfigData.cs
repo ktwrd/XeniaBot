@@ -22,7 +22,8 @@ public class ConfigData
         "AuthentikEnable",
         "HasDashboard",
         "Health_Enable",
-        "Health_Port"
+        "Health_Port",
+        "BackpackTFApiKey"
     };
     
     /// <summary>
