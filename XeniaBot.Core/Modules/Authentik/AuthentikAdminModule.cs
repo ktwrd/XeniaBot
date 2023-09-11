@@ -130,6 +130,8 @@ public partial class AuthentikAdminModule : InteractionModuleBase
             {
                 embed.WithDescription("Failed to delete user ;w;").WithColor(Color.Red);
             }
+
+            await FollowupAsync(embed: embed.Build(), ephemeral: true);
         }
         catch (Exception e)
         {
