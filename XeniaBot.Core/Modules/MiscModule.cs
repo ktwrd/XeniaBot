@@ -68,9 +68,10 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("metricreload", "Reload Prometheus Metrics")]
-        [RequireOwner]
         public async Task ReloadMetrics()
         {
+            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+                return;
             var config = Program.Services.GetRequiredService<ConfigData>();
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Reload Prometheus Metrics");
@@ -128,9 +129,10 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("fetch_config", "Fetch data from config file")]
-        [RequireOwner]
         public async Task FetchConfig()
         {
+            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+                return;
             var config = Program.Services.GetRequiredService<ConfigData>();
             var fileContent = JsonSerializer.Serialize(config, Program.SerializerOptions);
             await Context.Interaction.RespondWithFileAsync(
