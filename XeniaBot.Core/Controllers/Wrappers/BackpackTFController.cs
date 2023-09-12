@@ -215,4 +215,22 @@ public class BackpackCurrencyPrice
     public long LastUpdateTimestamp { get; set; }
     [JsonPropertyName("value_high")]
     public decimal ValueHighpoint { get; set; }
+
+    public override string ToString()
+    {
+        switch (Currency)
+        {
+            case "usd":
+                return $"US${Math.Round(Value, 2)}";
+                break;
+            case "metal":
+                return $"{Math.Round(Value, 2)}ref";
+                break;
+            case "key":
+                return Math.Round(Value, 2) + (Value > 1 ? " keys" : " key");
+                break;
+            default:
+                throw new NotImplementedException($"Currency {Currency} not implemented");
+        }
+    }
 }
