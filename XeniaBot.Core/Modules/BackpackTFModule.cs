@@ -20,11 +20,12 @@ public class BackpackTFModule : InteractionModuleBase
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder()
-            .WithTitle("Backpack.tf - Currencies")
+            .WithAuthor("Backpack.tf - Currencies", "https://xb.redfur.cloud/tOpi9/JAhuLohI59.png/raw")
+            .WithColor(new Discord.Color(91, 105, 129))
             .WithCurrentTimestamp();
-        var controller = Program.Services.GetRequiredService<BackpackTFController>();
         try
         {
+            var controller = Program.Services.GetRequiredService<BackpackTFController>();
             var data = await controller.GetCurrenciesAsync();
             if (data == null)
             {
@@ -49,11 +50,10 @@ public class BackpackTFModule : InteractionModuleBase
                             $"{Math.Round(refinedCost, 2)}ref",
                             $"{Math.Round(keyCost, 2)}key",
                             $"US${Math.Round(dollarCost, 2)}"
-                        }.Select(v => v.PadRight(8, ' '))) + "`"
+                        }.Select(v => v.PadRight(8, ' '))) + "`",
+                        $"Last updated: <t:{item.Price.LastUpdateTimestamp}:R>"
                     }));
             }
-
-            embed.WithFooter($"Last Updated: {controller.CostLastUpdatedAt}");
 
             await Context.Interaction.FollowupAsync(embed: embed.Build());
         }
