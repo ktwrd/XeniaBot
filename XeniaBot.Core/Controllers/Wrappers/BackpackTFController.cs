@@ -43,7 +43,7 @@ public class BackpackTFController : BaseController
         var stringContent = response.Content.ReadAsStringAsync().Result;
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var res = ParseResponse<BackpackCurrencyResponse>(stringContent).Currencies.Select(v => v.Value);
+            var res = ParseResponse<BackpackCurrencyResponse>(stringContent).Currencies.Select(v => v.Value).ToList();
             if (res != null)
                 FormatCurrencies(res);
             return res;
@@ -222,13 +222,10 @@ public class BackpackCurrencyPrice
         {
             case "usd":
                 return $"US${Math.Round(Value, 2)}";
-                break;
             case "metal":
                 return $"{Math.Round(Value, 2)}ref";
-                break;
             case "keys":
                 return Math.Round(Value, 2) + (Value > 1 ? " keys" : " key");
-                break;
             default:
                 throw new NotImplementedException($"Currency {Currency} not implemented");
         }
