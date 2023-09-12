@@ -39,10 +39,11 @@ public class BackpackTFModule : InteractionModuleBase
                 decimal refinedCost = controller.GetRefinedCost(item.Price);
                 decimal keyCost = controller.GetKeyCost(item.Price);
                 decimal dollarCost = controller.GetDollarCost(item.Price);
+
                 embed.AddField(item.Name, string.Join("\n",
                     new string[]
                     {
-                        $"{Math.Round(item.Price.Value, item.Round)} {item.Price.Currency}",
+                        item.Price.ToString(),
                         "Calculated: `" + string.Join(" / ", new string[]
                         {
                             $"{Math.Round(refinedCost, 2)}ref",
@@ -58,6 +59,7 @@ public class BackpackTFModule : InteractionModuleBase
         }
         catch (Exception ex)
         {
+            embed.Fields.Clear();
             embed.WithDescription($"Failed to get currency data! `{ex.Message}`")
                 .WithColor(Color.Red);
             
