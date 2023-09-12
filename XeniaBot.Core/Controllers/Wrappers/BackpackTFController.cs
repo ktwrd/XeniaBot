@@ -52,7 +52,7 @@ public class BackpackTFController : BaseController
         return null;
     }
     public decimal RefinedPerKey { get; private set; }
-    public decimal DollerPerRefined { get; private set; }
+    public decimal DollarPerRefined { get; private set; }
     public DateTimeOffset CostLastUpdatedAt { get; private set; }
     public const decimal DollarPerKey = 2.5m;
     public void FormatCurrencies(IEnumerable<BackpackCurrencyItem> currencyItems)
@@ -71,7 +71,7 @@ public class BackpackTFController : BaseController
             {
                 if (item.Price.Currency == "usd")
                 {
-                    DollerPerRefined = item.Price.Value;
+                    DollarPerRefined = item.Price.Value;
                 }
             }
         }
@@ -85,7 +85,7 @@ public class BackpackTFController : BaseController
     /// <returns>USD that the refined specified is worth.</returns>
     public decimal CalcRefinedToDollar(decimal refined)
     {
-        return DollerPerRefined * refined;
+        return DollarPerRefined * refined;
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public class BackpackTFController : BaseController
     /// </summary>
     public decimal CalcDollarToRefined(decimal dollar)
     {
-        return dollar / DollerPerRefined;
+        return dollar / DollarPerRefined;
     }
 
     public decimal CalcDollarToKey(decimal dollar)
