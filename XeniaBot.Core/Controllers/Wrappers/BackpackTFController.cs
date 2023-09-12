@@ -85,7 +85,7 @@ public class BackpackTFController : BaseController
     /// <returns>USD that the refined specified is worth.</returns>
     public decimal CalcRefinedToDollar(decimal refined)
     {
-        return (refined / RefinedPerKey) * DollarPerKey;
+        return DollerPerRefined * refined;
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public class BackpackTFController : BaseController
     /// </summary>
     public decimal CalcDollarToRefined(decimal dollar)
     {
-        return (dollar / DollarPerKey) * RefinedPerKey;
+        return dollar / DollerPerRefined;
     }
 
     public decimal CalcDollarToKey(decimal dollar)
