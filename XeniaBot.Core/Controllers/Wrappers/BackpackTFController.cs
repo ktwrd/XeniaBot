@@ -226,7 +226,7 @@ public class BackpackCurrencyPrice
             case "metal":
                 return $"{Math.Round(Value, 2)}ref";
                 break;
-            case "key":
+            case "keys":
                 return Math.Round(Value, 2) + (Value > 1 ? " keys" : " key");
                 break;
             default:
