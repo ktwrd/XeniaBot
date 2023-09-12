@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -41,7 +42,8 @@ public class BackpackTFModule : InteractionModuleBase
                 embed.AddField(item.Name, string.Join("\n",
                     new string[]
                     {
-                        "`" + string.Join(" / ", new string[]
+                        $"{Math.Round(item.Price.Value, item.Round)} {item.Price.Currency}",
+                        "Calculated: `" + string.Join(" / ", new string[]
                         {
                             $"{Math.Round(refinedCost, 2)}ref",
                             $"{Math.Round(keyCost, 2)}key",
