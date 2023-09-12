@@ -29,9 +29,9 @@ public class BackpackTFController : BaseController
     public T ParseResponse<T>(string content)
     {
         var obj = JObject.Parse(content);
-        var c = obj["response"];
-        var ct = c?.ToString();
-        return (T)JsonSerializer.Deserialize(ct, typeof(T), Program.SerializerOptions);
+        var item = obj["response"];
+        var itemStr = item?.ToString();
+        return (T)JsonSerializer.Deserialize(itemStr, typeof(T), Program.SerializerOptions);
     }
 
     public async Task<IEnumerable<BackpackCurrencyItem>?> GetCurrenciesAsync()
