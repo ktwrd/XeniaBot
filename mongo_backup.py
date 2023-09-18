@@ -63,9 +63,10 @@ class MongoBackup:
 if __name__ == '__main__':
     instance = MongoBackup()
     instance.from_env()
+    print('[*] Starting backup on %s in %s' % (instance.db_name, instance.mongo_url))
     try:
         instance.run_backup()
-        print('[*] Successfully performed backup')
+        print('[*] Successfully performed backup on %s' % instance.db_name)
     except Exception as e:
         print('[-] An unexpected error has occurred')
         print('[-] '+ str(e) )
