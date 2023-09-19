@@ -19,13 +19,13 @@ public class ServerLogController : BaseController
 {
     private readonly ServerLogConfigController _config;
     private readonly DiscordSocketClient _discord;
-    private readonly DiscordCacheController _bb;
+    private readonly DiscordCacheController _discordCache;
     public ServerLogController(IServiceProvider services)
         : base(services)
     {
         _config = services.GetRequiredService<ServerLogConfigController>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
-        _bb = services.GetRequiredService<DiscordCacheController>();
+        _discordCache = services.GetRequiredService<DiscordCacheController>();
     }
 
     public override Task InitializeAsync()
@@ -41,13 +41,13 @@ public class ServerLogController : BaseController
 
         _discord.MessageDeleted += Event_MessageDelete;
         // _discord.MessageUpdated += Event_MessageEdit;
-        _bb.MessageChange += _bb_MessageChange_Update;
+        _discordCache.MessageChange += DiscordCacheMessageChangeUpdate;
 
         return Task.CompletedTask;
     }
 
     
-    private async void _bb_MessageChange_Update(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
+    private async void DiscordCacheMessageChangeUpdate(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
         if (type != MessageChangeType.Update)
             return;
@@ -261,7 +261,7 @@ public class ServerLogController : BaseController
         var socketChannel = channel.Value as SocketGuildChannel;
         if (socketChannel?.Guild == null)
             return;
-        var funkyMessage = await _bb.BBMessageConfig.GetLatest(message.Id);
+        var funkyMessage = await _discordCache.BBMessageConfig.GetLatest(message.Id);
         
         string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
         long timestamp = 
@@ -284,7 +284,7 @@ public class ServerLogController : BaseController
         IMessageChannel channel)
     {
         var previousContent = previousMessage.Value?.Content ?? "";
-        var storedData = await _bb.BBMessageConfig.GetLatest(currentMessage.Id);
+        var storedData = await _discordCache.BBMessageConfig.GetLatest(currentMessage.Id);
         if (previousContent == currentMessage.Content)
             return;
         var socketChannel = channel as SocketGuildChannel;
