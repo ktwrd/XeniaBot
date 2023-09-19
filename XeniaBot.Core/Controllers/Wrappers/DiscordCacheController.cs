@@ -7,25 +7,27 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models.Archival;
+using XeniaBot.DiscordCache.Controllers;
+using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.Wrappers;
 
 [BotController]
-public class ArchivalController : BaseController
+public class DiscordCacheController : BaseController
 {
 
-    public ArchivalGenericConfigController<XMessageModel> BBMessageConfig;
-    public ArchivalGenericConfigController<XUserModel> BBUserConfig;
-    public ArchivalGenericConfigController<XChannelModel> BBChannelConfig;
+    public DiscordCacheGenericConfigController<CacheMessageModel> BBMessageConfig;
+    public DiscordCacheGenericConfigController<CacheUserModel> BBUserConfig;
+    public DiscordCacheGenericConfigController<CacheChannelModel> BBChannelConfig;
     private readonly UserConfigController _userConfig;
     private readonly DiscordSocketClient _client;
-    public ArchivalController(IServiceProvider services)
+    public DiscordCacheController(IServiceProvider services)
         : base(services)
     {
         _userConfig = services.GetRequiredService<UserConfigController>();
         _client = services.GetRequiredService<DiscordSocketClient>();
-        BBMessageConfig = new ArchivalGenericConfigController<XMessageModel>("bb_store_message", services);
+        BBMessageConfig = new DiscordCacheGenericConfigController<CacheMessageModel>("bb_store_message", services);
     }
 
     public override Task InitializeAsync()
@@ -40,7 +42,7 @@ public class ArchivalController : BaseController
 
     public event MessageDiffDelegate MessageChange;
     public event UserDiffDelegate UserChange;
-    private void OnMessageChange(MessageChangeType type, XMessageModel current, XMessageModel? previous)
+    private void OnMessageChange(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
         if (MessageChange != null)
         {
@@ -48,7 +50,7 @@ public class ArchivalController : BaseController
         }
     }
 
-    private void OnUserChange(UserChangeType type, XUserModel current, XUserModel? previous)
+    private void OnUserChange(UserChangeType type, CacheUserModel current, CacheUserModel? previous)
     {
         
     }
@@ -59,7 +61,7 @@ public class ArchivalController : BaseController
         if (!userConfig.EnableProfileTracking)
             return;
         var data = await BBUserConfig.GetLatest(previous.Id);
-        var currentData = XUserModel.FromUser(current);
+        var currentData = CacheUserModel.FromUser(current);
         await BBUserConfig.Add(currentData);
         OnUserChange(
             UserChangeType.Update,
@@ -75,7 +77,7 @@ public class ArchivalController : BaseController
     #region Message
     private async Task _client_MessageReceived(SocketMessage message)
     {
-        var data = XMessageModel.FromMessage(message);
+        var data = CacheMessageModel.FromMessage(message);
         if (message.Channel is SocketGuildChannel socketChannel)
             data.GuildId = socketChannel.Id;
         await BBMessageConfig.Add(data);
@@ -91,7 +93,7 @@ public class ArchivalController : BaseController
         ISocketMessageChannel channel)
     {
         // convert data to type that mongo can support
-        var data = XMessageModel.FromMessage(newMessage);
+        var data = CacheMessageModel.FromMessage(newMessage);
         
         // set guild if message was actually sent in a server (and not dms)
         if (channel is SocketGuildChannel { Guild: not null } socketChannel)

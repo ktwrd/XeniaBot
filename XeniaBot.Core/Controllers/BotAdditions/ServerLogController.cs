@@ -9,6 +9,7 @@ using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Models.Archival;
+using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
@@ -18,13 +19,13 @@ public class ServerLogController : BaseController
 {
     private readonly ServerLogConfigController _config;
     private readonly DiscordSocketClient _discord;
-    private readonly ArchivalController _bb;
+    private readonly DiscordCacheController _bb;
     public ServerLogController(IServiceProvider services)
         : base(services)
     {
         _config = services.GetRequiredService<ServerLogConfigController>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
-        _bb = services.GetRequiredService<ArchivalController>();
+        _bb = services.GetRequiredService<DiscordCacheController>();
     }
 
     public override Task InitializeAsync()
@@ -46,7 +47,7 @@ public class ServerLogController : BaseController
     }
 
     
-    private async void _bb_MessageChange_Update(MessageChangeType type, XMessageModel current, XMessageModel? previous)
+    private async void _bb_MessageChange_Update(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
         if (type != MessageChangeType.Update)
             return;

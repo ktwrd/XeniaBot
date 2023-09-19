@@ -1,4 +1,6 @@
-﻿namespace XeniaBot.Data.Models.Archival;
+﻿using XeniaBot.DiscordCache.Models;
+
+namespace XeniaBot.Data.Models.Archival;
 
 public enum MessageChangeType
 {
@@ -14,10 +16,10 @@ public enum UserChangeType
 }
 public delegate void MessageDiffDelegate(
     MessageChangeType type,
-    XMessageModel current,
-    XMessageModel? previous);
+    CacheMessageModel current,
+    CacheMessageModel? previous);
     
 public delegate void UserDiffDelegate(
     UserChangeType type,
-    XUserModel current,
-    XUserModel? previous);
+    CacheUserModel current,
+    CacheUserModel? previous);

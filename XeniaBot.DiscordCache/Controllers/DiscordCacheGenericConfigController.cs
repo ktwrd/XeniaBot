@@ -1,13 +1,12 @@
-﻿using System;
-using System.Threading.Tasks;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
+using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Models.Archival;
+namespace XeniaBot.DiscordCache.Controllers;
 
-public class ArchivalGenericConfigController<T> : BaseConfigController<T> where T : ArchiveBaseModel
+public class DiscordCacheGenericConfigController<T> : BaseConfigController<T> where T : DiscordCacheBaseModel
 {
-    public ArchivalGenericConfigController(string collectionName, IServiceProvider services)
+    public DiscordCacheGenericConfigController(string collectionName, IServiceProvider services)
         : base(collectionName, services)
     {
     }
@@ -30,7 +29,7 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
     }
 
     /// <summary>
-    /// Get latest (Selected by <see cref="ArchiveBaseModel.ModifiedAtTimestamp"/>) by a snowflake.
+    /// Get latest (Selected by <see cref="DiscordCacheBaseModel.ModifiedAtTimestamp"/>) by a snowflake.
     /// </summary>
     /// <param name="snowflake">Snowflake of item to fetch</param>
     /// <returns>Latest item matching snowflake.</returns>
@@ -47,7 +46,7 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
     }
 
     /// <summary>
-    /// Forcefully replace an item with matching <see cref="ArchiveBaseModel.ModifiedAtTimestamp"/> and <see cref="ArchiveBaseModel.Snowflake"/>.
+    /// Forcefully replace an item with matching <see cref="DiscordCacheBaseModel.ModifiedAtTimestamp"/> and <see cref="DiscordCacheBaseModel.Snowflake"/>.
     /// </summary>
     /// <param name="model">Model to replace existing entries with.</param>
     public async Task Set(T model)
@@ -69,7 +68,7 @@ public class ArchivalGenericConfigController<T> : BaseConfigController<T> where 
     }
 
     /// <summary>
-    /// Add an item to the collection. Will set <see cref="ArchiveBaseModel.ModifiedAtTimestamp"/> to the current Epoch MS Timestamp.
+    /// Add an item to the collection. Will set <see cref="DiscordCacheBaseModel.ModifiedAtTimestamp"/> to the current Epoch MS Timestamp.
     /// </summary>
     /// <param name="model">Model to add to the collection</param>
     public async Task Add(T model)

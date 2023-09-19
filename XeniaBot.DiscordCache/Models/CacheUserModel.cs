@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using CacheeniaBot.DiscordCache.Helpers;
 using Discord;
-using XeniaBot.Data.Helpers;
 
-namespace XeniaBot.Data.Models.Archival;
+namespace XeniaBot.DiscordCache.Models;
 
-
-public class XUserModel
-    : ArchiveBaseModel, IMentionable
+public class CacheUserModel
+    : DiscordCacheBaseModel, IMentionable
 {
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
@@ -33,21 +28,21 @@ public class XUserModel
     #region IPresence
     public UserStatus Status { get; set; }
     public ClientType[] ActiveClients { get; set; }
-    public XActivity[] Activities { get; set; }
+    public CacheUserActivity[] Activities { get; set; }
     #endregion
     #endregion
 
-    public XUserModel()
+    public CacheUserModel()
     {
         ActiveClients = Array.Empty<ClientType>();
-        Activities = Array.Empty<XActivity>();
+        Activities = Array.Empty<CacheUserActivity>();
     }
 
-    public static XUserModel? FromUser(IUser? user)
+    public static CacheUserModel? FromUser(IUser? user)
     {
         if (user == null)
             return null;
-        var instance = new XUserModel();
+        var instance = new CacheUserModel();
         instance.Snowflake = user.Id;
         instance.CreatedAt = user.CreatedAt;
         instance.AvatarId = user.AvatarId;
@@ -60,15 +55,7 @@ public class XUserModel
         instance.Mention = user.Mention;
         instance.Status = user.Status;
         instance.ActiveClients = user.ActiveClients.ToArray();
-        instance.Activities = ArchivalHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, XActivity[]>(user.Activities) ?? Array.Empty<XActivity>();
+        instance.Activities = DiscordCacheHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, CacheUserActivity[]>(user.Activities) ?? Array.Empty<CacheUserActivity>();
         return instance;
     }
-}
-
-public class XActivity : IActivity
-{
-    public string Name { get; set; }
-    public ActivityType Type { get; set; }
-    public ActivityProperties Flags { get; set; }
-    public string Details { get; set; }
 }
