@@ -31,4 +31,9 @@ public class CacheRole
         Tags = role.Tags;
         return this;
     }
+
+    public static CacheRole FromRole(IRole role)
+    {
+        return new CacheRole().FromExisting(role);
+    }
 }
