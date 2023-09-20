@@ -38,24 +38,27 @@ public class CacheUserModel
         Activities = Array.Empty<CacheUserActivity>();
     }
 
+    public new CacheUserModel FromExisting(IUser? user)
+    {
+        this.Snowflake = user.Id;
+        this.CreatedAt = user.CreatedAt;
+        this.AvatarId = user.AvatarId;
+        this.Discriminator = user.Discriminator;
+        this.DiscriminatorValue = user.DiscriminatorValue;
+        this.IsBot = user.IsBot;
+        this.IsWebhook = user.IsWebhook;
+        this.Username = user.Username;
+        this.PublicFlags = user.PublicFlags;
+        this.Mention = user.Mention;
+        this.Status = user.Status;
+        this.ActiveClients = user.ActiveClients.ToArray();
+        this.Activities = DiscordCacheHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, CacheUserActivity[]>(user.Activities) ?? Array.Empty<CacheUserActivity>();
+        return this;
+    }
     public static CacheUserModel? FromUser(IUser? user)
     {
         if (user == null)
             return null;
-        var instance = new CacheUserModel();
-        instance.Snowflake = user.Id;
-        instance.CreatedAt = user.CreatedAt;
-        instance.AvatarId = user.AvatarId;
-        instance.Discriminator = user.Discriminator;
-        instance.DiscriminatorValue = user.DiscriminatorValue;
-        instance.IsBot = user.IsBot;
-        instance.IsWebhook = user.IsWebhook;
-        instance.Username = user.Username;
-        instance.PublicFlags = user.PublicFlags;
-        instance.Mention = user.Mention;
-        instance.Status = user.Status;
-        instance.ActiveClients = user.ActiveClients.ToArray();
-        instance.Activities = DiscordCacheHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, CacheUserActivity[]>(user.Activities) ?? Array.Empty<CacheUserActivity>();
-        return instance;
+        return new CacheUserModel().FromExisting(user);
     }
 }
