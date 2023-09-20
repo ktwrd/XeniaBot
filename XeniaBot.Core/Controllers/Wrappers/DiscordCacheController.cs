@@ -52,7 +52,10 @@ public class DiscordCacheController : BaseController
 
     private void OnUserChange(UserChangeType type, CacheUserModel current, CacheUserModel? previous)
     {
-        
+        if (UserChange != null)
+        {
+            UserChange?.Invoke(type, current, previous);
+        }
     }
 
     private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
