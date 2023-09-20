@@ -23,3 +23,7 @@ public delegate void UserDiffDelegate(
     UserChangeType type,
     CacheUserModel current,
     CacheUserModel? previous);
+public delegate void GuildMemberDiffDelegate(
+    UserChangeType type,
+    CacheGuildMemberModel current,
+    CacheGuildMemberModel? previous);

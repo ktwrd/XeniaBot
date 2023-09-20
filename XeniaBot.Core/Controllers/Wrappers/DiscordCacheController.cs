@@ -20,6 +20,7 @@ public class DiscordCacheController : BaseController
     public DiscordCacheGenericConfigController<CacheMessageModel> CacheMessageConfig;
     public DiscordCacheGenericConfigController<CacheUserModel> CacheUserConfig;
     public DiscordCacheGenericConfigController<CacheChannelModel> CacheChannelConfig;
+    public DiscordCacheGenericConfigController<CacheGuildMemberModel> CacheGuildMemberConfig;
     private readonly UserConfigController _userConfig;
     private readonly DiscordSocketClient _client;
     public DiscordCacheController(IServiceProvider services)
@@ -37,12 +38,14 @@ public class DiscordCacheController : BaseController
         _client.MessageUpdated += _client_MessageUpdated;
         _client.MessageDeleted += _client_MessageDeleted;
         _client.UserUpdated += _client_UserUpdated;
+        _client.GuildMemberUpdated += _client_GuildMemberUpdated;
         _client.ChannelUpdated += _client_ChannelUpdated;
         return Task.CompletedTask;
     }
 
     public event MessageDiffDelegate MessageChange;
     public event UserDiffDelegate UserChange;
+    public event GuildMemberDiffDelegate GuildMemberChange;
     private void OnMessageChange(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
         if (MessageChange != null)
@@ -59,6 +62,16 @@ public class DiscordCacheController : BaseController
         }
     }
 
+    private void OnGuildMemberChange(UserChangeType type,
+        CacheGuildMemberModel current,
+        CacheGuildMemberModel? previous)
+    {
+        if (GuildMemberChange != null)
+        {
+            GuildMemberChange?.Invoke(type, current, previous);
+        }
+    }
+
     private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
     {
         var userConfig = await _userConfig.GetOrDefault(previous.Id);
@@ -70,6 +83,23 @@ public class DiscordCacheController : BaseController
         OnUserChange(
             UserChangeType.Update,
             currentData,
+            data);
+    }
+
+    /// <summary>
+    /// Invoked when <see cref="DiscordSocketClient.GuildMemberUpdated"/> is fired.
+    /// </summary>
+    /// <param name="oldMember">Previous member state</param>
+    /// <param name="newMember">Current member state</param>
+    private async Task _client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> oldMember,
+        SocketGuildUser newMember)
+    {
+        var data = await CacheGuildMemberConfig.GetLatest(oldMember.Id);
+        var currentData = CacheGuildMemberModel.FromGuildMember(newMember);
+        await CacheGuildMemberConfig.Add(currentData);
+        OnGuildMemberChange(
+            UserChangeType.Update,
+            currentData, 
             data);
     }
 
