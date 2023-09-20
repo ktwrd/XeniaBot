@@ -28,6 +28,7 @@ public class DiscordCacheController : BaseController
         _userConfig = services.GetRequiredService<UserConfigController>();
         _client = services.GetRequiredService<DiscordSocketClient>();
         CacheMessageConfig = new DiscordCacheGenericConfigController<CacheMessageModel>("bb_store_message", services);
+        CacheUserConfig = new DiscordCacheGenericConfigController<CacheUserModel>("cache_store_user", services);
     }
 
     public override Task InitializeAsync()
