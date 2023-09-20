@@ -4,7 +4,8 @@ using Discord;
 namespace XeniaBot.DiscordCache.Models;
 
 public class CacheUserModel
-    : DiscordCacheBaseModel, IMentionable
+    : DiscordCacheBaseModel,
+        IMentionable
 {
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
