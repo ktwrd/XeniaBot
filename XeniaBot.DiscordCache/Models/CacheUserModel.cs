@@ -19,6 +19,7 @@ public class CacheUserModel
     public bool IsBot { get; set; }
     public bool IsWebhook { get; set; }
     public string Username { get; set; }
+    public string GlobalName { get; set; }
     
     public UserProperties? PublicFlags { get; set; }
     
