@@ -261,7 +261,7 @@ public class ServerLogController : BaseController
         var socketChannel = channel.Value as SocketGuildChannel;
         if (socketChannel?.Guild == null)
             return;
-        var funkyMessage = await _discordCache.BBMessageConfig.GetLatest(message.Id);
+        var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(message.Id);
         
         string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
         long timestamp = 
@@ -284,7 +284,7 @@ public class ServerLogController : BaseController
         IMessageChannel channel)
     {
         var previousContent = previousMessage.Value?.Content ?? "";
-        var storedData = await _discordCache.BBMessageConfig.GetLatest(currentMessage.Id);
+        var storedData = await _discordCache.CacheMessageConfig.GetLatest(currentMessage.Id);
         if (previousContent == currentMessage.Content)
             return;
         var socketChannel = channel as SocketGuildChannel;

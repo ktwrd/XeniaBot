@@ -17,9 +17,9 @@ namespace XeniaBot.Core.Controllers.Wrappers;
 public class DiscordCacheController : BaseController
 {
 
-    public DiscordCacheGenericConfigController<CacheMessageModel> BBMessageConfig;
-    public DiscordCacheGenericConfigController<CacheUserModel> BBUserConfig;
-    public DiscordCacheGenericConfigController<CacheChannelModel> BBChannelConfig;
+    public DiscordCacheGenericConfigController<CacheMessageModel> CacheMessageConfig;
+    public DiscordCacheGenericConfigController<CacheUserModel> CacheUserConfig;
+    public DiscordCacheGenericConfigController<CacheChannelModel> CacheChannelConfig;
     private readonly UserConfigController _userConfig;
     private readonly DiscordSocketClient _client;
     public DiscordCacheController(IServiceProvider services)
@@ -27,7 +27,7 @@ public class DiscordCacheController : BaseController
     {
         _userConfig = services.GetRequiredService<UserConfigController>();
         _client = services.GetRequiredService<DiscordSocketClient>();
-        BBMessageConfig = new DiscordCacheGenericConfigController<CacheMessageModel>("bb_store_message", services);
+        CacheMessageConfig = new DiscordCacheGenericConfigController<CacheMessageModel>("bb_store_message", services);
     }
 
     public override Task InitializeAsync()
@@ -60,9 +60,9 @@ public class DiscordCacheController : BaseController
         var userConfig = await _userConfig.GetOrDefault(previous.Id);
         if (!userConfig.EnableProfileTracking)
             return;
-        var data = await BBUserConfig.GetLatest(previous.Id);
+        var data = await CacheUserConfig.GetLatest(previous.Id);
         var currentData = CacheUserModel.FromUser(current);
-        await BBUserConfig.Add(currentData);
+        await CacheUserConfig.Add(currentData);
         OnUserChange(
             UserChangeType.Update,
             currentData,
@@ -80,7 +80,7 @@ public class DiscordCacheController : BaseController
         var data = CacheMessageModel.FromMessage(message);
         if (message.Channel is SocketGuildChannel socketChannel)
             data.GuildId = socketChannel.Id;
-        await BBMessageConfig.Add(data);
+        await CacheMessageConfig.Add(data);
         OnMessageChange(
             MessageChangeType.Create, 
             data, 
@@ -99,10 +99,10 @@ public class DiscordCacheController : BaseController
         if (channel is SocketGuildChannel { Guild: not null } socketChannel)
             data.GuildId = socketChannel.Guild.Id;
         // fetch previous message for event emit
-        var previous = await BBMessageConfig.GetLatest(data.Snowflake);
+        var previous = await CacheMessageConfig.GetLatest(data.Snowflake);
         
         // save in db
-        await BBMessageConfig.Add(data);
+        await CacheMessageConfig.Add(data);
         
         // emit event for other controllers.
         OnMessageChange(
@@ -114,13 +114,13 @@ public class DiscordCacheController : BaseController
     private async Task _client_MessageDeleted(Cacheable<IMessage, ulong> message,
         Cacheable<IMessageChannel, ulong> channel)
     {
-        var data = await BBMessageConfig.GetLatest(message.Id);
+        var data = await CacheMessageConfig.GetLatest(message.Id);
         if (data != null)
         {
             var previous = data.Clone();
             data.IsDeleted = true;
             data.DeletedTimestamp = DateTimeOffset.UtcNow;
-            await BBMessageConfig.Add(data);
+            await CacheMessageConfig.Add(data);
             OnMessageChange(
                 MessageChangeType.Delete,
                 data,
