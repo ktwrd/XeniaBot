@@ -112,6 +112,67 @@ public class ServerChannelLogController : BaseController
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
+
+        int currentBitrate = 0;
+        int previousBitrate = 0;
+        int? currentUserLimit = null;
+        int? previousUserLimit = null;
+        VideoQualityMode currentQuality = VideoQualityMode.Auto;
+        VideoQualityMode previousQuality = VideoQualityMode.Auto;
+        string currentRegion = "";
+        string previousRegion = "";
+
+        if (current is CacheVoiceChannelModel currentVoice)
+        {
+            currentBitrate = currentVoice.Bitrate;
+            currentUserLimit = currentVoice.UserLimit;
+            currentQuality = currentVoice.VideoQualityMode;
+            currentRegion = currentVoice.RTCRegion;
+        }
+        if (previous is CacheVoiceChannelModel prevVoice)
+        {
+            previousBitrate = prevVoice.Bitrate;
+            previousUserLimit = prevVoice.UserLimit;
+            previousQuality = prevVoice.VideoQualityMode;
+            previousRegion = prevVoice.RTCRegion;
+        }
+
+        if (currentBitrate != previousBitrate)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel Bitrate changed")
+                .WithDescription($"<#{current.Snowflake}>. to `{currentBitrate}` from `{previousBitrate}`")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
+        if (currentUserLimit != previousUserLimit)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel User Limit changed")
+                .WithDescription($"<#{current.Snowflake}>. to `{currentUserLimit}` from `{previousUserLimit}`")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
+        if (currentQuality != previousQuality)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel Video Quality changed")
+                .WithDescription($"<#{current.Snowflake}>. to `{currentQuality}` from `{previousQuality}`")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
+        if (currentRegion != previousRegion)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel Region changed")
+                .WithDescription($"<#{current.Snowflake}>. to `{currentRegion}` from `{previousRegion}`")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
     }
     
     private async Task _discord_ChannelDestroyed(SocketChannel channel)
