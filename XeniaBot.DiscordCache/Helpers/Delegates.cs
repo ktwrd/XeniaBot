@@ -9,10 +9,11 @@ public enum MessageChangeType
     Update
 }
 
-public enum UserChangeType
+public enum CacheChangeType
 {
     Update,
-    Delete
+    Delete,
+    Create
 }
 public delegate void MessageDiffDelegate(
     MessageChangeType type,
@@ -20,10 +21,14 @@ public delegate void MessageDiffDelegate(
     CacheMessageModel? previous);
     
 public delegate void UserDiffDelegate(
-    UserChangeType type,
+    CacheChangeType type,
     CacheUserModel current,
     CacheUserModel? previous);
 public delegate void GuildMemberDiffDelegate(
-    UserChangeType type,
+    CacheChangeType type,
     CacheGuildMemberModel current,
     CacheGuildMemberModel? previous);
+public delegate void GuildDiffDelegate(
+    CacheChangeType type,
+    CacheGuildModel current,
+    CacheGuildModel? previous);
