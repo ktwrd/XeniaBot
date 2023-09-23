@@ -101,4 +101,9 @@ public class CacheGuildModel
         MaxUploadLimit = guild.MaxUploadLimit;
         return this;
     }
+
+    public static CacheGuildModel FromGuild(SocketGuild guild)
+    {
+        return new CacheGuildModel().FromExisting(guild);
+    }
 }
