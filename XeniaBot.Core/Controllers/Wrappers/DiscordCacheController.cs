@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using XeniaBot.DiscordCache.Helpers;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,9 +20,13 @@ public class DiscordCacheController : BaseController
 
     public DiscordCacheGenericConfigController<CacheMessageModel> CacheMessageConfig;
     public DiscordCacheGenericConfigController<CacheUserModel> CacheUserConfig;
-    public DiscordCacheGenericConfigController<CacheChannelModel> CacheChannelConfig;
     public DiscordCacheGenericConfigController<CacheGuildMemberModel> CacheGuildMemberConfig;
     public DiscordCacheGenericConfigController<CacheGuildModel> CacheGuildConfig;
+
+    public DiscordCacheGenericConfigController<CacheForumChannelModel> CacheForumChannelConfig;
+    public DiscordCacheGenericConfigController<CacheVoiceChannelModel> CacheVoiceChannelConfig;
+    public DiscordCacheGenericConfigController<CacheStageChannelModel> CacheStageChannelConfig;
+    public DiscordCacheGenericConfigController<CacheTextChannelModel> CacheTextChannelConfig;
     private readonly UserConfigController _userConfig;
     private readonly DiscordSocketClient _client;
     public DiscordCacheController(IServiceProvider services)
@@ -31,12 +36,19 @@ public class DiscordCacheController : BaseController
         _client = services.GetRequiredService<DiscordSocketClient>();
         CacheMessageConfig = new DiscordCacheGenericConfigController<CacheMessageModel>("bb_store_message", services);
         CacheUserConfig = new DiscordCacheGenericConfigController<CacheUserModel>("cache_store_user", services);
-        CacheChannelConfig =
-            new DiscordCacheGenericConfigController<CacheChannelModel>("cache_store_channel", services);
         CacheGuildMemberConfig =
             new DiscordCacheGenericConfigController<CacheGuildMemberModel>("cache_store_guild_member", services);
         CacheGuildConfig = new DiscordCacheGenericConfigController<CacheGuildModel>("cache_store_guild", services);
-
+        
+        
+        CacheForumChannelConfig =
+            new DiscordCacheGenericConfigController<CacheForumChannelModel>("cache_store_channel_forum", services);
+        CacheVoiceChannelConfig =
+            new DiscordCacheGenericConfigController<CacheVoiceChannelModel>("cache_store_channel_voice", services);
+        CacheStageChannelConfig =
+            new DiscordCacheGenericConfigController<CacheStageChannelModel>("cache_store_channel_stage", services);
+        CacheTextChannelConfig =
+            new DiscordCacheGenericConfigController<CacheTextChannelModel>("cache_store_channel_text", services);
     }
 
     public override Task InitializeAsync()
@@ -50,8 +62,9 @@ public class DiscordCacheController : BaseController
         _client.GuildUpdated += _client_GuildUpdated;
         _client.JoinedGuild += _client_GuildJoined;
         _client.GuildMemberUpdated += _client_GuildMemberUpdated;
-        
+
         _client.ChannelUpdated += _client_ChannelUpdated;
+        _client.ChannelCreated += _client_ChannelCreated;
         return Task.CompletedTask;
     }
 
@@ -59,6 +72,7 @@ public class DiscordCacheController : BaseController
     public event UserDiffDelegate UserChange;
     public event GuildMemberDiffDelegate GuildMemberChange;
     public event GuildDiffDelegate GuildChange;
+    public event ChannelDiffDelegate ChannelChange;
     private void OnMessageChange(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
         if (MessageChange != null)
@@ -93,6 +107,14 @@ public class DiscordCacheController : BaseController
         {
             GuildChange?.Invoke(type, current, previous);
         }
+    }
+
+    private void OnChannelChange(CacheChangeType type,
+        CacheGuildChannelModel current,
+        CacheGuildChannelModel? previous)
+    {
+        if (ChannelChange != null)
+            ChannelChange?.Invoke(type, current, previous);
     }
 
     private async Task _client_UserUpdated(SocketUser previous, SocketUser current)
@@ -150,7 +172,78 @@ public class DiscordCacheController : BaseController
 
     private async Task _client_ChannelUpdated(SocketChannel oldChannel, SocketChannel newChannel)
     {
+        if (!(newChannel is SocketGuildChannel guildChannel))
+            return;
+
+        var channelType = DiscordCacheHelper.GetChannelType(guildChannel);
+        switch (channelType)
+        {
+            case CacheChannelType.Forum:
+                if (newChannel is SocketForumChannel forumChannel)
+                {
+                    var forumData = await CacheForumChannelConfig.GetLatest(forumChannel.Id);
+                    var forumCurrentData = new CacheForumChannelModel().FromExisting(forumChannel);
+                    await CacheForumChannelConfig.Add(forumCurrentData);
+                    OnChannelChange(CacheChangeType.Update, forumCurrentData, forumData);
+                }
+                break;
+            case CacheChannelType.Voice:
+                if (newChannel is SocketVoiceChannel voiceChannel)
+                {
+                    var voiceData = await CacheVoiceChannelConfig.GetLatest(voiceChannel.Id);
+                    var voiceCurrentData = new CacheVoiceChannelModel().FromExisting(voiceChannel);
+                    await CacheVoiceChannelConfig.Add(voiceCurrentData);
+                    OnChannelChange(CacheChangeType.Update, voiceCurrentData, voiceData);
+                }
+                break;
+            case CacheChannelType.Text:
+                if (newChannel is SocketTextChannel textChannel)
+                {
+                    var textData = await CacheTextChannelConfig.GetLatest(textChannel.Id);
+                    var textCurrentData = new CacheTextChannelModel().FromExisting(textChannel);
+                    await CacheTextChannelConfig.Add(textCurrentData);
+                    OnChannelChange(CacheChangeType.Update, textCurrentData, textData);
+                }
+                break;
+        }
+    }
+
+    private async Task _client_ChannelCreated(SocketChannel channel)
+    {
+        if (!(channel is SocketGuildChannel guildChannel))
+            return;
         
+        var channelType = DiscordCacheHelper.GetChannelType(guildChannel);
+        switch (channelType)
+        {
+            case CacheChannelType.Forum:
+                if (guildChannel is SocketForumChannel forumChannel)
+                {
+                    var forumData = await CacheForumChannelConfig.GetLatest(forumChannel.Id);
+                    var forumCurrentData = new CacheForumChannelModel().FromExisting(forumChannel);
+                    await CacheForumChannelConfig.Add(forumCurrentData);
+                    OnChannelChange(CacheChangeType.Create, forumCurrentData, forumData);
+                }
+                break;
+            case CacheChannelType.Voice:
+                if (guildChannel is SocketVoiceChannel voiceChannel)
+                {
+                    var voiceData = await CacheVoiceChannelConfig.GetLatest(voiceChannel.Id);
+                    var voiceCurrentData = new CacheVoiceChannelModel().FromExisting(voiceChannel);
+                    await CacheVoiceChannelConfig.Add(voiceCurrentData);
+                    OnChannelChange(CacheChangeType.Create, voiceCurrentData, voiceData);
+                }
+                break;
+            case CacheChannelType.Text:
+                if (guildChannel is SocketTextChannel textChannel)
+                {
+                    var textData = await CacheTextChannelConfig.GetLatest(textChannel.Id);
+                    var textCurrentData = new CacheTextChannelModel().FromExisting(textChannel);
+                    await CacheTextChannelConfig.Add(textCurrentData);
+                    OnChannelChange(CacheChangeType.Create, textCurrentData, textData);
+                }
+                break;
+        }
     }
     
     #region Message

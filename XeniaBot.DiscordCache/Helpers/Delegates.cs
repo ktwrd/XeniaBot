@@ -32,3 +32,7 @@ public delegate void GuildDiffDelegate(
     CacheChangeType type,
     CacheGuildModel current,
     CacheGuildModel? previous);
+public delegate void ChannelDiffDelegate(
+    CacheChangeType type,
+    CacheGuildChannelModel current,
+    CacheGuildChannelModel? previous);
