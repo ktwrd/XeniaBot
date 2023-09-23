@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using XeniaBot.DiscordCache.Models;
 
-namespace CacheeniaBot.DiscordCache.Helpers;
+namespace XeniaBot.DiscordCache.Helpers;
 
 public static class DiscordCacheHelper
 {

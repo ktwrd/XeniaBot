@@ -1,4 +1,4 @@
-﻿using CacheeniaBot.DiscordCache.Helpers;
+﻿using XeniaBot.DiscordCache.Helpers;
 using Discord.WebSocket;
 
 namespace XeniaBot.DiscordCache.Models;
