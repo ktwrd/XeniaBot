@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json.Serialization;
 using Discord;
 using Discord.WebSocket;
@@ -8,9 +7,9 @@ using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;
 
-public class GuildGreeterConfigModel : BaseModel
+public class GuildByeGreeterConfigModel : BaseModel
 {
-    public static string CollectionName => "guildGreeterConfig";
+    public static string CollectionName => "guildByeGreeterConfig";
     
     public ulong GuildId { get; set; }
     public ulong? ChannelId { get; set; }
@@ -54,7 +53,6 @@ public class GuildGreeterConfigModel : BaseModel
     public string? T_FooterUrl { get; set; }
     public string? T_FooterImgUrl { get; set; }
 
-    
     public EmbedBuilder GetEmbed(SocketUser user, SocketGuild guild)
     {
         var embed = new EmbedBuilder();
@@ -109,7 +107,7 @@ public class GuildGreeterConfigModel : BaseModel
     
     public long ModifiedAtTimestamp { get; set; }
 
-    public GuildGreeterConfigModel()
+    public GuildByeGreeterConfigModel()
     {
         MentionNewUser = true;
         T_Description = "Welcome {mention}";
