@@ -4,9 +4,8 @@ using XeniaBot.Shared.Models;
 
 namespace XeniaBot.DiscordCache.Models;
 
-public abstract class CacheBaseChannel
+public abstract class CacheBaseChannel : DiscordCacheBaseModel
 {
-    public ulong Snowflake { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public bool IsGuildChannel { get; set; }
     public bool IsDmChannel { get; set; }

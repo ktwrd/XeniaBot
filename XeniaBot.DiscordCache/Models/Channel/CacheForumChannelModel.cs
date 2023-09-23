@@ -3,7 +3,7 @@ using Discord.WebSocket;
 
 namespace XeniaBot.DiscordCache.Models;
 
-public class CacheForumChannelModel : CacheBaseChannel
+public class CacheForumChannelModel : CacheGuildChannelModel
 {
     public string Topic { get; set; }
     public bool IsNsfw { get; set; }
