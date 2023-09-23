@@ -6,6 +6,8 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.Wrappers;
 using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models.Archival;
+using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
@@ -31,9 +33,22 @@ public class ServerChannelLogController : BaseController
     {
         _discord.ChannelDestroyed += _discord_ChannelDestroyed;
         _discord.ChannelCreated += _discord_ChannelCreated;
+        _discordCache.ChannelChange += _discordCache_ChannelChange;
         _discord.UserVoiceStateUpdated += _discord_UserVoiceStateUpdated;
 
         return Task.CompletedTask;
+    }
+
+    private async void _discordCache_ChannelChange(CacheChangeType changeType, CacheGuildChannelModel current, CacheGuildChannelModel? previous)
+    {
+        if (current.Name != previous?.Name)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel Name Changed")
+                .WithDescription($"<#{current.Snowflake}> changed to `{current.Name}` from `{previous.Name}`")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
     }
     
     private async Task _discord_ChannelDestroyed(SocketChannel channel)
