@@ -41,11 +41,74 @@ public class ServerChannelLogController : BaseController
 
     private async void _discordCache_ChannelChange(CacheChangeType changeType, CacheGuildChannelModel current, CacheGuildChannelModel? previous)
     {
+        if (changeType != CacheChangeType.Update)
+            return;
         if (current.Name != previous?.Name)
         {
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel Name Changed")
                 .WithDescription($"<#{current.Snowflake}> changed to `{current.Name}` from `{previous.Name}`")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
+        if (current.Position != previous?.Position)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel Position changed")
+                .WithDescription($"<#{current.Snowflake}> changed to `{current.Position}` from `{previous?.Position}`")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
+        bool previousNsfw = false;
+        bool currentNsfw = false;
+        string previousTopic = "";
+        string currentTopic = "";
+        ulong? previousCategory = null;
+        ulong? currentCategory = null;
+        
+        if (current is CacheTextChannelModel currentText)
+        {
+            currentNsfw = currentText.IsNsfw;
+            currentTopic = currentText.Topic;
+            currentCategory = currentText.CategoryId;
+        }
+        if (previous is CacheTextChannelModel previousText)
+        {
+            previousNsfw = previousText.IsNsfw;
+            previousTopic = previousText.Topic;
+            previousCategory = previousText.CategoryId;
+        }
+        
+        
+        if (currentNsfw != previousNsfw)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel NSFW State changed")
+                .WithDescription($"<#{current.Snowflake}> set to `{currentNsfw}` from `{previousNsfw}`")
+                .AddField("Previous", previousTopic)
+                .AddField("Current", currentTopic)
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
+        if (currentTopic != previousTopic)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel Topic changed")
+                .WithDescription($"<#{current.Snowflake}>")
+                .AddField("Previous", previousTopic)
+                .AddField("Current", currentTopic)
+                .WithCurrentTimestamp()
+                .WithColor(Color.Blue));
+        }
+
+        if (currentCategory != previousCategory)
+        {
+            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+                .WithTitle("Channel Category changed")
+                .WithDescription($"<#{current.Snowflake}>. Moved to <#{currentCategory}> from <#{previousCategory}>")
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
