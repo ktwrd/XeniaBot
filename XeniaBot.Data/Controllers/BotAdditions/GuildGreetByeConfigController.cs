@@ -4,6 +4,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
+[BotController]
 public class GuildGreetByeConfigController : BaseConfigController<GuildByeGreeterConfigModel>
 {
     public GuildGreetByeConfigController(IServiceProvider services)
