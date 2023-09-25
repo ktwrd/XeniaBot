@@ -34,7 +34,7 @@ public class BackpackTFController : BaseController
         return (T)JsonSerializer.Deserialize(itemStr, typeof(T), Program.SerializerOptions);
     }
 
-    public async Task<IEnumerable<BackpackCurrencyItem>?> GetCurrenciesAsync()
+    public async Task<ICollection<BackpackCurrencyItem>?> GetCurrenciesAsync()
     {
         var url = $"https://backpack.tf/api/IGetCurrencies/v1?key={_apiKey}";
         if (_apiKey?.Length < 1)
@@ -55,7 +55,7 @@ public class BackpackTFController : BaseController
     public decimal DollarPerRefined { get; private set; }
     public DateTimeOffset CostLastUpdatedAt { get; private set; }
     public const decimal DollarPerKey = 2.5m;
-    public void FormatCurrencies(IEnumerable<BackpackCurrencyItem> currencyItems)
+    public void FormatCurrencies(ICollection<BackpackCurrencyItem> currencyItems)
     {
         foreach (var item in currencyItems)
         {
