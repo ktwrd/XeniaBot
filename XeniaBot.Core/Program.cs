@@ -187,8 +187,7 @@ namespace XeniaBot.Core
         }
         private static void BeforeQuit()
         {
-            if (ConfigController != null && ConfigData != null)
-                ConfigController.Write(ConfigData);
+            ConfigController?.Write(ConfigData);
         }
 
         #region Services
