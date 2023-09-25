@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using DiffPlex.DiffBuilder;
+using DiffPlex.DiffBuilder.Model;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.Wrappers;
+using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.DiscordCache.Models;
@@ -67,18 +71,22 @@ public class ServerChannelLogController : BaseController
         string currentTopic = "";
         ulong? previousCategory = null;
         ulong? currentCategory = null;
+        Overwrite[] currentOverwrite = Array.Empty<Overwrite>();
+        Overwrite[] previousOverwrite = Array.Empty<Overwrite>();
         
         if (current is CacheTextChannelModel currentText)
         {
             currentNsfw = currentText.IsNsfw;
             currentTopic = currentText.Topic;
             currentCategory = currentText.CategoryId;
+            currentOverwrite = currentText.PermissionOverwrite;
         }
         if (previous is CacheTextChannelModel previousText)
         {
             previousNsfw = previousText.IsNsfw;
             previousTopic = previousText.Topic;
             previousCategory = previousText.CategoryId;
+            previousOverwrite = previousText.PermissionOverwrite;
         }
         
         
