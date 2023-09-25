@@ -217,6 +217,7 @@ false
             // Add base services
             services.AddSingleton(IdGenerator)
                 .AddSingleton(details)
+                .AddSingleton<CronDaemon>()
                 .AddSingleton(ConfigController)
                 .AddSingleton(ConfigData)
                 .AddSingleton(dsc);
