@@ -22,6 +22,7 @@ using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared.Controllers;
+using CronNET;
 
 namespace XeniaBot.Core
 {
@@ -196,10 +197,10 @@ namespace XeniaBot.Core
         /// </summary>
         private static void CreateServiceProvider()
         {
+            // Initialize required stuff
             Log.Debug("Initializing Services");
             var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
             var services = new ServiceCollection();
-
             var details = new ProgramDetails()
             {
                 StartTimestamp = StartTimestamp,
@@ -213,23 +214,37 @@ false
 #endif
             };
 
+            // Add base services
             services.AddSingleton(IdGenerator)
                 .AddSingleton(details)
                 .AddSingleton(ConfigController)
                 .AddSingleton(ConfigData)
-                .AddSingleton(dsc)
-                .AddSingleton(GetMongoDatabase());
+                .AddSingleton(dsc);
+            
+            // Check if MongoDB was fetch successfully, otherwise abort.
+            var mongoDb = GetMongoDatabase();
+            if (mongoDb == null)
+            {
+                Log.Error("FATAL ERROR!!! GetMongoDatabase() resulted in null");
+                Environment.Exit(1);
+            }
+            
+            // Add all custom services
             services
+                .AddSingleton(mongoDb)
                 .AddSingleton<DiscordController>()
                 .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<InteractionHandler>();
+            
+            // Inject controllers from other projects.
             AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
             AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, services);
             AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
-            ServiceClassExtendsBaseController = new List<Type>();
 
+            // Get all custom controllers and build service provider.
+            ServiceClassExtendsBaseController = new List<Type>();
             foreach (var item in services)
             {
                 if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !ServiceClassExtendsBaseController.Contains(item.ServiceType))
@@ -237,9 +252,9 @@ false
                     ServiceClassExtendsBaseController.Add(item.ServiceType);
                 }
             }
-
-            var built = services.BuildServiceProvider();
-            Services = built;
+            Services = services.BuildServiceProvider();
+            
+            // Invoke event to tell controllers that init is complete
             RunServicesInitFunc();
         }
         /// <summary>
