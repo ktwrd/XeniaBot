@@ -312,9 +312,5 @@ false
         #endregion
         
         public static IdGenerator IdGenerator;
-        public static string GetGuildPrefix(ulong id)
-        {
-            return ConfigData.Prefix;
-        }
     }
 }
