@@ -245,12 +245,12 @@ false
             AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
 
             // Get all custom controllers and build service provider.
-            ServiceClassExtendsBaseController = new List<Type>();
+            _serviceClassExtendsBaseController = new List<Type>();
             foreach (var item in services)
             {
-                if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !ServiceClassExtendsBaseController.Contains(item.ServiceType))
+                if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !_serviceClassExtendsBaseController.Contains(item.ServiceType))
                 {
-                    ServiceClassExtendsBaseController.Add(item.ServiceType);
+                    _serviceClassExtendsBaseController.Add(item.ServiceType);
                 }
             }
             Services = services.BuildServiceProvider();
@@ -261,7 +261,7 @@ false
         /// <summary>
         /// Used to generate a list of all types that extend <see cref="BaseController"/> in <see cref="Services"/> before it's built.
         /// </summary>
-        private static List<Type> ServiceClassExtendsBaseController = new List<Type>();
+        private static List<Type> _serviceClassExtendsBaseController = new List<Type>();
         /// <summary>
         /// Run the InitializeAsync function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
         /// </summary>
@@ -291,7 +291,7 @@ false
         private static void BaseServiceFunc(Func<BaseController, Task> func)
         {
             var taskList = new List<Task>();
-            foreach (var service in ServiceClassExtendsBaseController)
+            foreach (var service in _serviceClassExtendsBaseController)
             {
                 var svc = Services.GetServices(service);
                 foreach (var item in svc)
