@@ -27,12 +27,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ktwrd/xenia-discord:latest
+          tags: ktwrd/xenia-discord:latest-dev
           file: Dockerfile
       -
         name: Build and push
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ktwrd/xenia-discord-dash:latest
+          tags: ktwrd/xenia-discord-dash:latest-dev
           file: WebPanel.Dockerfile
