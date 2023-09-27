@@ -167,6 +167,24 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             var first = result.FirstOrDefault();
             return first;
         }
+        
+        public async Task<ICollection<LevelMemberModel>?> GetAllUsersCombined()
+        {
+            var filter = Builders<LevelMemberModel>
+                .Filter.Empty;
+            var result = await InternalFind(filter);
+            var data = new Dictionary<ulong, LevelMemberModel>();
+            foreach (var item in result.ToEnumerable())
+            {
+                data.TryAdd(item.UserId, new LevelMemberModel()
+                {
+                    UserId = item.UserId
+                });
+                data[item.UserId].Xp += item.Xp;
+            }
+
+            return data.Select(v => v.Value).ToList();
+        }
 
         public async Task<LevelMemberModel[]?> GetGuild(ulong guildId)
         {
