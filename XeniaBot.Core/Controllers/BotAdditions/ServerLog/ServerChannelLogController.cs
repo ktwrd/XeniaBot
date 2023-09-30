@@ -209,14 +209,15 @@ public class ServerChannelLogController : BaseController
         SocketVoiceState previous,
         SocketVoiceState current)
     {
+        // Ignore non-guild users
         if (!(user is SocketGuildUser guildUser))
             return;
         
         var changeList = new List<string>();
         if (previous.IsStreaming != current.IsStreaming)
-            changeList.Add(current.IsStreaming ? "+ Streaming" : "- Streaming");
+            changeList.Add(current.IsStreaming ? "+ Started Streaming" : "- Stopped Streaming");
         if (previous.IsVideoing != current.IsVideoing)
-            changeList.Add(current.IsVideoing ? "+ Camera" : "- Camera");
+            changeList.Add(current.IsVideoing ? "+ Camera Enabled" : "- Camera Disabled");
         if (previous.IsSelfMuted != current.IsSelfMuted)
             changeList.Add(current.IsSelfMuted ? "+ Muted Self" : "- Muted Self");
         if (previous.IsSelfDeafened != current.IsSelfDeafened)
@@ -233,13 +234,14 @@ public class ServerChannelLogController : BaseController
         
         var currentChannel = current.VoiceChannel;
         var previousChannel = previous.VoiceChannel;
+        embed.WithDescription($"<@{user.Id}>");
         if (currentChannel != null && previousChannel == null)
-            embed.WithDescription($"Joined <#{currentChannel.Id}>");
+            embed.Description += $" Joined <#{currentChannel.Id}>";
         else if (currentChannel == null && previousChannel != null)
-            embed.WithDescription($"Left <#{previous.VoiceChannel.Id}>");
+            embed.Description += $"Left <#{{previous.VoiceChannel.Id}}>";
         else if (currentChannel != null && previousChannel != null)
             if (currentChannel.Id != previousChannel.Id)
-                embed.WithDescription($"Switched from <#{previousChannel.Id}> to <#{currentChannel.Id}>");
+                embed.Description += $"Switched from <#{previousChannel.Id}> to <#{currentChannel.Id}>";
         
         await _serverLog.EventHandle(guildUser.Guild.Id, (v) => v.MemberVoiceChangeChannel, embed);
     }
