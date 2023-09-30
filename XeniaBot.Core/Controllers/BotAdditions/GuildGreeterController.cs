@@ -57,7 +57,7 @@ public class GuildGreeterController : BaseController
             return;
         if ((config?.ChannelId ?? 0) == 0)
             return;
-        var channel = guild.GetTextChannel(config.ChannelId ?? 0);
+        var channel = guild.GetTextChannel(config?.ChannelId ?? 0);
         if (channel == null)
             return;
         var embed = config.GetEmbed(user, guild);
