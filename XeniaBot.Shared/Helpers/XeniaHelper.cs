@@ -67,7 +67,7 @@ public static class XeniaHelper
         return lines.ToArray();
     }
 
-    public static async Task TaskWhenAll(IEnumerable<Task> tasks, bool startAll = true)
+    public static async Task TaskWhenAll(ICollection<Task> tasks, bool startAll = true)
     {
         if (startAll)
         {

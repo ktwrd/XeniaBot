@@ -36,7 +36,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             var results = await InternalFetch(filter);
             return results.FirstOrDefault();
         }
-        public async Task<IEnumerable<RoleMessageConfigModel>?> GetAll(
+        public async Task<ICollection<RoleMessageConfigModel>?> GetAll(
             bool all = false,
             ulong? messageId = null,
             ulong? guildId = null)
@@ -65,7 +65,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             }
 
             var results = await InternalFetch(filter);
-            return results.ToEnumerable();
+            return results.ToList();
         }
 
         public async Task Set(RoleMessageConfigModel model)

@@ -51,10 +51,17 @@ public class ConfigController
             Write(config);
             return config;
         }
-        public void Write(ConfigData configData)
+        public void Write(ConfigData? configData)
         {
-            var content = JsonSerializer.Serialize(configData, XeniaHelper.SerializerOptions);
-            File.WriteAllText(Location, content);
+            if (configData == null)
+            {
+                Log.Error($"Parameter \"configData\" is null.");
+            }
+            else
+            {
+                var content = JsonSerializer.Serialize(configData, XeniaHelper.SerializerOptions);
+                File.WriteAllText(Location, content);                
+            }
         }
         #endregion
 

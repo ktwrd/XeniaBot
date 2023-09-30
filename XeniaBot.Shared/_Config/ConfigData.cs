@@ -22,7 +22,8 @@ public class ConfigData
         "AuthentikEnable",
         "HasDashboard",
         "Health_Enable",
-        "Health_Port"
+        "Health_Port",
+        "BackpackTFApiKey"
     };
     
     /// <summary>
@@ -163,6 +164,11 @@ public class ConfigData
 
     public bool Health_Enable = false;
     public int Health_Port = 4829;
+
+    /// <summary>
+    /// API Key for Backpack.tf
+    /// </summary>
+    public string? BackpackTFApiKey = null;
 }
 public class GoogleCloudKey
 {

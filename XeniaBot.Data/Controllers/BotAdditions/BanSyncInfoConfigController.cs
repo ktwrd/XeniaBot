@@ -19,12 +19,12 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
 {
     public BanSyncInfoConfigController(IServiceProvider services) : base("banSyncInfo", services)
     {}
-    protected async Task<IEnumerable<BanSyncInfoModel>> BaseInfoFind(FilterDefinition<BanSyncInfoModel> data)
+    protected async Task<ICollection<BanSyncInfoModel>> BaseInfoFind(FilterDefinition<BanSyncInfoModel> data)
     {
         var collection = GetCollection();
         var result = await collection.FindAsync(data);
 
-        return result.ToEnumerable();
+        return result.ToList();
     }
     protected async Task<bool> BaseInfoAny(FilterDefinition<BanSyncInfoModel> data)
     {
@@ -42,7 +42,7 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
     }
         #region Get/Set
         #region Get
-        public async Task<IEnumerable<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId)
+        public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId)
         {
             var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
                 .Filter
@@ -50,9 +50,9 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
 
             return await BaseInfoFind(filter);
         }
-        public async Task<IEnumerable<BanSyncInfoModel>> GetInfoEnumerable(BanSyncInfoModel data)
+        public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(BanSyncInfoModel data)
             => await GetInfoEnumerable(data.UserId, data.GuildId);
-        public async Task<IEnumerable<BanSyncInfoModel>> GetInfoEnumerable(ulong userId)
+        public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId)
         {
             var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
                 .Filter

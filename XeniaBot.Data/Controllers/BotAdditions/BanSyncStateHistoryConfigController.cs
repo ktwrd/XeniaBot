@@ -30,7 +30,7 @@ public class BanSyncStateHistoryConfigController : BaseConfigController<BanSyncS
         return result?.FirstOrDefault();
     }
 
-    public Task<IEnumerable<BanSyncStateHistoryItemModel>?> GetAfter(ulong guildId, long timestamp)
+    public Task<ICollection<BanSyncStateHistoryItemModel>?> GetAfter(ulong guildId, long timestamp)
     {
         var filter = Builders<BanSyncStateHistoryItemModel>
             .Filter
@@ -38,7 +38,7 @@ public class BanSyncStateHistoryConfigController : BaseConfigController<BanSyncS
         return GetMany(filter);
     }
 
-    public Task<IEnumerable<BanSyncStateHistoryItemModel>?> GetBefore(ulong guildId, long timestamp)
+    public Task<ICollection<BanSyncStateHistoryItemModel>?> GetBefore(ulong guildId, long timestamp)
     {
         var filter = Builders<BanSyncStateHistoryItemModel>
             .Filter
@@ -66,14 +66,14 @@ public class BanSyncStateHistoryConfigController : BaseConfigController<BanSyncS
         return ordered?.FirstOrDefault();
     }
     
-    public async Task<IEnumerable<BanSyncStateHistoryItemModel>?> GetMany(FilterDefinition<BanSyncStateHistoryItemModel> filter)
+    public async Task<ICollection<BanSyncStateHistoryItemModel>?> GetMany(FilterDefinition<BanSyncStateHistoryItemModel> filter)
     {
         var collection = GetCollection();
         var result = await collection.FindAsync(filter);
         return await result.ToListAsync();
     }
 
-    public Task<IEnumerable<BanSyncStateHistoryItemModel>?> GetMany(ulong guildId)
+    public Task<ICollection<BanSyncStateHistoryItemModel>?> GetMany(ulong guildId)
     {
         var filter = Builders<BanSyncStateHistoryItemModel>
             .Filter

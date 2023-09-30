@@ -54,7 +54,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
         /// <param name="name"></param>
         /// <param name="group"></param>
         /// <returns>IEnumerable of role configs</returns>
-        public async Task<IEnumerable<RoleConfigModel>?> GetAll(
+        public async Task<ICollection<RoleConfigModel>?> GetAll(
             bool all = false,
             ulong? guildId = null,
             ulong? roleId = null,
@@ -99,12 +99,12 @@ namespace XeniaBot.Data.Controllers.BotAdditions
 
 
             var results = await InternalFetch(filter);
-            return results.ToEnumerable();
+            return results.ToList();
         }
 
-        public async Task<IEnumerable<RoleConfigModel>?> GetAll()
+        public async Task<ICollection<RoleConfigModel>?> GetAll()
             => await GetAll(true);
-        public async Task<IEnumerable<RoleConfigModel>?> GetAll(RoleConfigModel model)
+        public async Task<ICollection<RoleConfigModel>?> GetAll(RoleConfigModel model)
             => await GetAll(
                 false,
                 model.GuildId,

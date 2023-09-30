@@ -403,3 +403,5 @@ mongoData
 config.json
 .idea/
 XeniaBot.WebPanel/Properties/launchSettings.json
+test_backup.ps1
+run_backup.ps1

@@ -54,17 +54,18 @@ public class GuildGreeterConfigModel : BaseModel
     public string? T_FooterUrl { get; set; }
     public string? T_FooterImgUrl { get; set; }
 
-    public EmbedBuilder GetEmbed(SocketGuildUser user)
+    
+    public EmbedBuilder GetEmbed(SocketUser user, SocketGuild guild)
     {
         var embed = new EmbedBuilder();
 
         var replaceDict = new Dictionary<string, object>()
         {
             {"userId", user.Id},
-            {"guildId", user.Guild.Id},
+            {"guildId", guild.Id},
             {"username", user.Username},
             {"mention", $"<@{user.Id}>"},
-            {"guildName", user.Guild.Name}
+            {"guildName", guild.Name}
         };
 
         string InjectDict(string i)
@@ -100,6 +101,10 @@ public class GuildGreeterConfigModel : BaseModel
         }
         
         return embed;
+    }
+    public EmbedBuilder GetEmbed(SocketGuildUser user)
+    {
+        return GetEmbed(user, user.Guild);
     }
     
     public long ModifiedAtTimestamp { get; set; }

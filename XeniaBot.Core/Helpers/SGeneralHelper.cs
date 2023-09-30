@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
@@ -35,7 +36,7 @@ public static class SGeneralHelper
         return lines.ToArray();
     }
 
-    public static async Task TaskWhenAll(IEnumerable<Task> tasks, bool startAll = true)
+    public static async Task TaskWhenAll(ICollection<Task> tasks, bool startAll = true)
     {
         if (startAll)
         {

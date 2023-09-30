@@ -22,6 +22,7 @@ using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared.Controllers;
+using CronNET;
 
 namespace XeniaBot.Core
 {
@@ -186,8 +187,7 @@ namespace XeniaBot.Core
         }
         private static void BeforeQuit()
         {
-            if (ConfigController != null && ConfigData != null)
-                ConfigController.Write(ConfigData);
+            ConfigController?.Write(ConfigData);
         }
 
         #region Services
@@ -196,10 +196,10 @@ namespace XeniaBot.Core
         /// </summary>
         private static void CreateServiceProvider()
         {
+            // Initialize required stuff
             Log.Debug("Initializing Services");
             var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
             var services = new ServiceCollection();
-
             var details = new ProgramDetails()
             {
                 StartTimestamp = StartTimestamp,
@@ -213,39 +213,54 @@ false
 #endif
             };
 
+            // Add base services
             services.AddSingleton(IdGenerator)
                 .AddSingleton(details)
+                .AddSingleton<CronDaemon>()
                 .AddSingleton(ConfigController)
                 .AddSingleton(ConfigData)
-                .AddSingleton(dsc)
-                .AddSingleton(GetMongoDatabase());
+                .AddSingleton(dsc);
+            
+            // Check if MongoDB was fetch successfully, otherwise abort.
+            var mongoDb = GetMongoDatabase();
+            if (mongoDb == null)
+            {
+                Log.Error("FATAL ERROR!!! GetMongoDatabase() resulted in null");
+                Environment.Exit(1);
+            }
+            
+            // Add all custom services
             services
+                .AddSingleton(mongoDb)
                 .AddSingleton<DiscordController>()
                 .AddSingleton<CommandService>()
                 .AddSingleton<InteractionService>()
                 .AddSingleton<CommandHandler>()
                 .AddSingleton<InteractionHandler>();
+            
+            // Inject controllers from other projects.
             AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
             AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, services);
             AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
-            ServiceClassExtendsBaseController = new List<Type>();
 
+            // Get all custom controllers and build service provider.
+            _serviceClassExtendsBaseController = new List<Type>();
             foreach (var item in services)
             {
-                if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !ServiceClassExtendsBaseController.Contains(item.ServiceType))
+                if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !_serviceClassExtendsBaseController.Contains(item.ServiceType))
                 {
-                    ServiceClassExtendsBaseController.Add(item.ServiceType);
+                    _serviceClassExtendsBaseController.Add(item.ServiceType);
                 }
             }
-
-            var built = services.BuildServiceProvider();
-            Services = built;
+            Services = services.BuildServiceProvider();
+            
+            // Invoke event to tell controllers that init is complete
             RunServicesInitFunc();
         }
         /// <summary>
         /// Used to generate a list of all types that extend <see cref="BaseController"/> in <see cref="Services"/> before it's built.
         /// </summary>
-        private static List<Type> ServiceClassExtendsBaseController = new List<Type>();
+        private static List<Type> _serviceClassExtendsBaseController = new List<Type>();
         /// <summary>
         /// Run the InitializeAsync function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
         /// </summary>
@@ -275,7 +290,7 @@ false
         private static void BaseServiceFunc(Func<BaseController, Task> func)
         {
             var taskList = new List<Task>();
-            foreach (var service in ServiceClassExtendsBaseController)
+            foreach (var service in _serviceClassExtendsBaseController)
             {
                 var svc = Services.GetServices(service);
                 foreach (var item in svc)
@@ -296,9 +311,5 @@ false
         #endregion
         
         public static IdGenerator IdGenerator;
-        public static string GetGuildPrefix(ulong id)
-        {
-            return ConfigData.Prefix;
-        }
     }
 }

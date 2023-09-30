@@ -15,7 +15,7 @@ namespace XeniaBot.Core.Modules;
 public partial class MediaManipulationModule : InteractionModuleBase
 {
     [SlashCommand("caption", "Add a caption to a piece of media")]
-    public async Task Caption(string caption, IAttachment attachment)
+    public async Task Caption(string caption, IAttachment attachment, bool saveAsGif = false)
     {
         await Context.Interaction.DeferAsync();
         
@@ -106,7 +106,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
                         i.Set("page-height", pageHeight + textHeight);
                 });
             Log.Debug($"Complete");
-            if (isAnimated)
+            if (isAnimated || saveAsGif)
             {
                 using var gifStream = new MemoryStream(final.GifsaveBuffer(dither: 1, bitdepth: 8, interlace: true));
                 await FollowupWithFileAsync(gifStream, $"{Context.Interaction.Id}.gif");
@@ -254,7 +254,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
     }
 
     [SlashCommand("speechbubble", "Add a speech bubble to an image or a gif.")]
-    public async Task SpeechBubble(IAttachment attachment, bool flip = false, bool alpha = false)
+    public async Task SpeechBubble(IAttachment attachment, bool flip = false, bool alpha = false, bool saveAsGif = false)
     {
         await Context.Interaction.DeferAsync();
         
@@ -302,7 +302,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
             
             
             Log.Debug($"Complete");
-            if (isAnimated)
+            if (isAnimated || saveAsGif)
             {
                 using var gifStream = new MemoryStream(final.GifsaveBuffer(dither: 1, bitdepth: 8, interlace: true));
                 await FollowupWithFileAsync(gifStream, $"{Context.Interaction.Id}.gif");

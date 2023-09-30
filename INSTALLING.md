@@ -87,6 +87,7 @@ Once you've done that, create the `GCSKey_Translate` key in your `config.json` a
 | `OAuth_ClientSecret`       | ✔️ (Dashboard Only) | `""`          | Discord OAuth Client Secret |
 | `Health_Enable`            | ❌ (Bot Only)      | `false`       | Enable Health API |
 | `Health_Port`              | ❌ (Bot Only)      | `4829`        | Port to listen the Health API Web Server | 
+| `BackpackTFApiKey`         | ❌                 | `null`        | API Key for backpack.tf. Required for the `/tf2 currency` command |
 
 # Environment Variables
 | Key | Type | Description |

@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
 using Discord.WebSocket;
-using XeniaBot.Data.Models.Archival;
+using XeniaBot.DiscordCache.Models;
 
-namespace XeniaBot.Data.Helpers;
+namespace XeniaBot.DiscordCache.Helpers;
 
-public static class ArchivalHelper
+public static class DiscordCacheHelper
 {
     public static TH? ForceTypeCast<T, TH>(T input)
     {
@@ -14,32 +14,32 @@ public static class ArchivalHelper
             IgnoreReadOnlyProperties = true,
             IncludeFields = true
         };
-        var text = JsonSerializer.Serialize(input, options);
-        var output = JsonSerializer.Deserialize<TH>(text, options);
+        var teCachet = JsonSerializer.Serialize(input, options);
+        var output = JsonSerializer.Deserialize<TH>(teCachet, options);
         return output;
     }
 
-    public static XChannelType GetChannelType<T>(T channel) where T : SocketChannel
+    public static CacheChannelType GetChannelType<T>(T channel) where T : SocketChannel
     {
         if (channel is SocketCategoryChannel)
-            return XChannelType.Category;
+            return CacheChannelType.Category;
         else if (channel is SocketGroupChannel)
-            return XChannelType.Group;
+            return CacheChannelType.Group;
         else if (channel is SocketDMChannel)
-            return XChannelType.DM;
+            return CacheChannelType.DM;
         else if (channel is SocketForumChannel)
-            return XChannelType.Forum;
+            return CacheChannelType.Forum;
         else if (channel is SocketNewsChannel)
-            return XChannelType.News;
+            return CacheChannelType.News;
         else if (channel is SocketStageChannel)
-            return XChannelType.Stage;
+            return CacheChannelType.Stage;
         else if (channel is SocketThreadChannel)
-            return XChannelType.Thread;
+            return CacheChannelType.Thread;
         else if (channel is SocketVoiceChannel)
-            return XChannelType.Voice;
+            return CacheChannelType.Voice;
         else if (channel is SocketTextChannel)
-            return XChannelType.Text;
+            return CacheChannelType.Text;
         else
-            return XChannelType.Unknown;
+            return CacheChannelType.Unknown;
     }
 }

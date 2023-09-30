@@ -105,6 +105,13 @@ public static class AspHelper
             {
                 GuildId = guild.Id
             };
+
+        var greeterGoodbyeConfig = Program.Services.GetRequiredService<GuildGreetByeConfigController>();
+        data.GreeterGoodbyeConfig = await greeterGoodbyeConfig.GetLatest(guild.Id)
+            ?? new GuildByeGreeterConfigModel()
+            {
+                GuildId = guild.Id
+            };
         
         return data;
     }

@@ -7,7 +7,7 @@ namespace XeniaBot.WebPanel.Components
     public partial class ChannelSelectComponent : ComponentBase
     {
         [Parameter]
-        public IEnumerable<StrippedChannel> Channels { get; set; }
+        public ICollection<StrippedChannel> Channels { get; set; }
         [Parameter]
         public ulong? SelectedChannelId { get; set; }
         [Parameter]

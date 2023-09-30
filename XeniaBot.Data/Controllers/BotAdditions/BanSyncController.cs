@@ -140,7 +140,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             var embed = await GenerateEmbed(userInfo);
             await logChannel.SendMessageAsync(embed: embed.Build());
         }
-        public async Task<EmbedBuilder> GenerateEmbed(IEnumerable<BanSyncInfoModel> data)
+        public async Task<EmbedBuilder> GenerateEmbed(ICollection<BanSyncInfoModel> data)
         {
             var sortedData = data.OrderByDescending(v => v.Timestamp).ToArray();
             var last = sortedData.LastOrDefault();

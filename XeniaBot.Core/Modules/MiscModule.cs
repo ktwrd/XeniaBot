@@ -68,7 +68,7 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("metricreload", "Reload Prometheus Metrics")]
-        [RequireOwner]
+        [RequireUserWhitelist]
         public async Task ReloadMetrics()
         {
             var config = Program.Services.GetRequiredService<ConfigData>();
@@ -128,7 +128,7 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("fetch_config", "Fetch data from config file")]
-        [RequireOwner]
+        [RequireUserWhitelist]
         public async Task FetchConfig()
         {
             var config = Program.Services.GetRequiredService<ConfigData>();
