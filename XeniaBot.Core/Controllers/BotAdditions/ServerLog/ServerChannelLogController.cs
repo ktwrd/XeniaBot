@@ -238,10 +238,10 @@ public class ServerChannelLogController : BaseController
         if (currentChannel != null && previousChannel == null)
             embed.Description += $" Joined <#{currentChannel.Id}>";
         else if (currentChannel == null && previousChannel != null)
-            embed.Description += $"Left <#{{previous.VoiceChannel.Id}}>";
+            embed.Description += $" Left <#{previous.VoiceChannel.Id}>";
         else if (currentChannel != null && previousChannel != null)
             if (currentChannel.Id != previousChannel.Id)
-                embed.Description += $"Switched from <#{previousChannel.Id}> to <#{currentChannel.Id}>";
+                embed.Description += $" Switched from <#{previousChannel.Id}> to <#{currentChannel.Id}>";
         
         await _serverLog.EventHandle(guildUser.Guild.Id, (v) => v.MemberVoiceChangeChannel, embed);
     }
