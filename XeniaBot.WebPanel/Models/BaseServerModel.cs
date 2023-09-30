@@ -13,4 +13,5 @@ public interface IBaseServerModel
     public ServerLogModel LogConfig { get; set; }
     public ICollection<BanSyncStateHistoryItemModel> BanSyncStateHistory { get; set; }
     public GuildGreeterConfigModel GreeterConfig { get; set; }
+    public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }
 }
