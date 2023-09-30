@@ -182,71 +182,7 @@ namespace XeniaBot.Core.Modules
                         .Build());
                 await DiscordHelper.ReportError(e, Context);
             }
-        }[SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
-        public async Task GlobalLeaderboard()
-        {
-            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-            {
-                await RespondAsync("You do not have access to this command");
-                return;
-            }
-
-            await DeferAsync();
-
-            try
-            {
-                var embed = new EmbedBuilder()
-                    .WithTitle("Xp System - Global Leaderboard");
-            
-                var controller = Program.Services.GetRequiredService<LevelSystemController>();
-                if (controller == null)
-                {
-                    embed.WithDescription($"Could not fetch LevelSystemController");
-                    embed.WithColor(Color.Red);
-                    await FollowupAsync(embed: embed.Build());
-                    return;
-                }
-
-                var data = await controller.GetAllUsersCombined();
-                var resultLines = new List<string>()
-                {
-                    $"Top 5 of {data.Count} records."
-                };
-
-                var sorted = data.OrderByDescending(v => v.Xp).ToArray();
-                var length = Math.Min(5, sorted.Length);
-                string[] rankText = new string[]
-                {
-                    ":first_place:",
-                    ":second_place:",
-                    ":third_place:",
-                    ":four:",
-                    ":five:"
-                };
-                for (int i = 0; i < length; i++)
-                {
-                    var item = sorted[i];
-                    var details = LevelSystemHelper.Generate(item.Xp);
-                    var user = await Context.Client.GetUserAsync(item.UserId);
-                    resultLines.Add(string.Join(' ', new string[]
-                    {
-                        rankText[i],
-                        $"`{item.Xp}xp, level {details.UserLevel}`",
-                        $"<@{item.UserId}> ({user})"
-                    }));
-                }
-
-                embed.Description = string.Join("\n", resultLines);
-                await FollowupAsync(embed: embed.Build());
-            }
-            catch (Exception ex)
-            {
-                await FollowupWithFileAsync(
-                    new MemoryStream(Encoding.UTF8.GetBytes(ex.ToString())), "exception.txt",
-                    $"Failed to fetch leaderboard\n```\n{ex.Message}\n```");
-            }
         }
-        
         [SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
         public async Task GlobalLeaderboard()
         {
