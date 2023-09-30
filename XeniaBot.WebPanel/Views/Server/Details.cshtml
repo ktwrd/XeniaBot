@@ -22,6 +22,7 @@
                 <a class="nav-item nav-link" id="nav-mod-tab" data-toggle="tab" href="#nav-mod" role="tab" aria-controls="nav-mod" aria-selected="false">Moderation</a>
                 <a class="nav-item nav-link" id="nav-fun-tab" data-toggle="tab" href="#nav-fun" role="tab" aria-controls="nav-fun" aria-selected="false">Fun</a>
                 <a class="nav-item nav-link" id="nav-greeter-tab" data-toggle="tab" href="#nav-greeter" role="tab" aria-controls="nav-greeter" aria-selected="false">Greeter</a>
+                <a class="nav-item nav-link" id="nav-greeter-bye-tab" data-toggle="tab" href="#nav-greeter-bye" role="tab" aria-controls="nav-greeter-bye" aria-selected="false">Leave Greeter</a>
             </div>
         </nav>
     </div>
@@ -59,6 +60,9 @@
             </div>
             <div class="tab-pane fade" id="nav-greeter" role="tabpanel" aria-labelledby="nav-greeter-tab">
                 @{ await Html.RenderPartialAsync("Details/Settings/Greeter"); }
+            </div>
+            <div class="tab-pane fade" id="nav-greeter-bye" role="tabpanel" aria-labelledby="nav-greeter-bye-tab">
+                @{ await Html.RenderPartialAsync("Details/Settings/GreeterGoodbye"); }
             </div>
         </div>
     </div>

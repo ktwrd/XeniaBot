@@ -235,4 +235,79 @@ public partial class ServerController
                 message: $"Failed to save Greeter settings. {e.Message}");
         }
     }
+
+    [HttpPost("~/Server/{id}/Settings/GreeterBye")]
+    public async Task<IActionResult> SaveSettings_GreeterBye(
+        ulong id,
+        bool inputMentionUser,
+        string? inputChannelId,
+        string? inputTitle,
+        string? inputDescription,
+        string? inputImgUrl,
+        string? inputThumbUrl,
+        string? inputFooterText,
+        string? inputFooterImgUrl,
+        string? inputAuthorText,
+        string? inputAuthorImgUrl,
+        string? inputColor)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+
+        
+        ulong targetChannelId = 0;
+        if (inputChannelId == null || inputChannelId?.Length < 1)
+            targetChannelId = 0;
+        else
+        {
+            try
+            {
+                targetChannelId = ulong.Parse(inputChannelId);
+                if (targetChannelId == null)
+                    throw new Exception("ChannelId is null");
+            }
+            catch (Exception e)
+            {
+                return await Index(id,
+                    messageType: "danger",
+                    message: $"Failed to save Greeter Goodbye settings. {e.Message}");
+            }
+        }
+        
+        try
+        {
+            var controller = Program.Services.GetRequiredService<GuildGreetByeConfigController>();
+            var data = await controller.GetLatest(id)
+                ?? new GuildByeGreeterConfigModel()
+                {
+                    GuildId = id
+                };
+            data.T_Title = inputTitle;
+            data.T_Description = inputDescription;
+            data.T_ImageUrl = inputImgUrl;
+            data.T_ThumbnailUrl = inputThumbUrl;
+            data.T_FooterText = inputFooterText;
+            data.T_FooterImgUrl = inputFooterImgUrl;
+            data.T_AuthorName = inputAuthorText;
+            data.T_AuthorIconUrl = inputAuthorImgUrl;
+            data.T_Color_Hex = inputColor;
+            data.MentionNewUser = inputMentionUser;
+            if (targetChannelId == 0)
+                data.ChannelId = null;
+            else
+                data.ChannelId = targetChannelId;
+            await controller.Add(data);
+        
+            return await Index(id,
+                messageType: "success",
+                message: $"Greeter Goodbye settings saved");
+        }
+        catch (Exception e)
+        {
+            Log.Error($"Failed to save greeter goodbye settings\n{e}");
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Greeter Goodbye settings. {e.Message}");
+        }
+    }
 }
