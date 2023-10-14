@@ -1,4 +1,5 @@
 ﻿@using kate.shared.Helpers
+@using XeniaBot.WebPanel.Helpers
 @model WarnGuildDetailsViewModel
 
 @{
@@ -53,9 +54,7 @@ else
                     @Model.Client.GetUser(item.ActionedUserId).ToString()
                 </td>
                 <td>
-                    @{
-                        new DateTime(@item.CreatedAtTimestamp, DateTimeKind.Utc).ToString("yyyy/MM/dd HH:mm:ss tt");
-                    }
+                    @(AspHelper.DateTimeFromTimestamp(item.CreatedAtTimestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))
                 </td>
                 <td>
                     <code>
