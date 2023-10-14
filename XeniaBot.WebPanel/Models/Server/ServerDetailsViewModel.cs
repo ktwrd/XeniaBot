@@ -16,4 +16,5 @@ public class ServerDetailsViewModel : BaseViewModel, IBaseServerModel
     public ICollection<BanSyncStateHistoryItemModel> BanSyncStateHistory { get; set; }
     public GuildGreeterConfigModel GreeterConfig { get; set; }
     public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }
+    public ICollection<GuildWarnItemModel> WarnItems { get; set; }
 }
