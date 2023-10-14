@@ -1,0 +1,67 @@
+﻿@using kate.shared.Helpers
+@model WarnGuildDetailsViewModel
+
+@{
+    ViewBag.Title = $"{Model.Guild.Name} - Warns";
+    Layout = "_Layout";
+}
+
+<div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark">
+    <img class="me-3 rounded-circle mr-3" src="@Model.Guild.IconUrl" alt="" width="48" height="48">
+    <div class="lh-1">
+        <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
+        <small>@Model.Guild.MemberCount members &bull; @Model.WarnItems.Count warns</small>
+    </div>
+</div>
+
+@if (!@Model.WarnItems.Any())
+{
+    <div class="px-4 py-5 my-5 text-center">
+        <h4>No Warn Records Found</h4>
+        <p>There were no warn records found for this guild.</p>
+    </div>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Target User</th>
+            <th>Who Warned Them</th>
+            <th>When</th>
+            <th>Description</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in @Model.WarnItems.OrderByDescending(v => v.ModifiedAtTimestamp))
+            {
+                <td>
+                    <img src="@Model.Client.GetUser(item.TargetUserId).GetAvatarUrl()" class="card-img-top serverListIcon" />
+                    @Model.Client.GetUser(item.TargetUserId).ToString()
+                </td>
+                <td>
+                    <img src="@Model.Client.GetUser(item.ActionedUserId).GetAvatarUrl()" class="card-img-top serverListIcon" />
+                    @Model.Client.GetUser(item.ActionedUserId).ToString()
+                </td>
+                <td>
+                    @{
+                        new DateTime(@item.CreatedAtTimestamp, DateTimeKind.Utc).ToString("yyyy/MM/dd HH:mm:ss tt");
+                    }
+                </td>
+                <td>
+                    <code>
+                        @item.Description.Substring(0, Math.Min(50, item.Description.Length))
+                        @if (@item.Description.Length > 50)
+                        {
+                            <span>...</span>
+                        }
+                    </code>
+                </td>
+                <td>
+                    <a class="btn btn-secondary" asp-area="" asp-route-id="@item.WarnId" asp-controller="WarnSystem" asp-action="WarnInfo"></a>
+                </td>
+            }
+        </tbody>
+    </table>
+}
