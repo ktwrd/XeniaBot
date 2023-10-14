@@ -1,3 +1,29 @@
 ﻿@{
     Layout = "_Layout";
 }
+@using XeniaBot.WebPanel.Helpers
+@model WarnInfoViewModel
+<style>
+    .smallUserIcon {
+        height: 32px;
+        width: initial !important;
+        border-radius: 50%;
+    }
+</style>
+
+<div class="container">
+    <h1 class="mb-0">Warn Details</h1>
+    <sup>@Model.WarnItem.WarnId</sup>
+    <p>
+        <img src="@(Model.Client.GetUser(Model.WarnItem.TargetUserId).GetAvatarUrl() ?? Model.Client.GetUser(Model.WarnItem.TargetUserId).GetDefaultAvatarUrl())" class="smallUserIcon" /> <code alt="@Model.WarnItem.TargetUserId">@Model.Client.GetUser(Model.WarnItem.TargetUserId).ToString()</code>
+        was warned by
+        <img src="@(Model.Client.GetUser(Model.WarnItem.ActionedUserId).GetAvatarUrl() ?? Model.Client.GetUser(Model.WarnItem.ActionedUserId).GetDefaultAvatarUrl())" class="smallUserIcon" /> <code alt="@Model.WarnItem.ActionedUserId">@Model.Client.GetUser(Model.WarnItem.ActionedUserId).ToString()</code>
+        at
+        <code>@(AspHelper.DateTimeFromTimestamp(Model.WarnItem.CreatedAtTimestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))</code>
+    </p>
+    <h4>Description</h4>
+    <textarea class="form-control" readonly>@Model.WarnItem.Description</textarea>
+    <br/>
+    <a class="btn btn-outline-primary" asp-controller="Server" asp-action="Index" asp-route-id="@Model.Guild.Id">Go Back</a>
+</div>
+
