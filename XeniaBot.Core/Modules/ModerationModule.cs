@@ -7,6 +7,8 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
+using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Modules;
 
@@ -58,6 +60,54 @@ public class ModerationModule : InteractionModuleBase
             await DiscordHelper.ReportError(e, Context);
         }
         return null;
+    }
+
+    [SlashCommand("warn", "Warn member")]
+    [RequireUserPermission(GuildPermission.ManageMessages)]
+    public async Task WarnMember(SocketGuildUser user, string reason)
+    {
+        SocketGuildUser? member = await SafelyFetchUser(user.Id);
+        if (member == null)
+            return;
+
+        var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
+        try
+        {
+            var controller = Program.Services.GetRequiredService<GuildWarnItemConfigController>();
+            var data = new GuildWarnItemModel()
+            {
+                GuildId = user.Guild.Id,
+                TargetUserId = user.Id,
+                ActionedUserId = Context.User.Id,
+                CreatedAtTimestamp  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                Description = reason
+            };
+            await controller.Add(data);
+            embed.WithDescription($"Warned member <@{user.Id}>. Warn Id `{data.WarnId}`.");
+            if (Program.ConfigData.HasDashboard)
+            {
+                embed.Description +=
+                    $"\n[View on Dashboard]({Program.ConfigData.DashboardLocation}/Warn/Info/{data.WarnId})";
+            }
+
+            embed.WithColor(Color.Blue);
+
+            await RespondAsync(embed: embed.Build());
+        }
+        catch (Exception e)
+        {
+            embed.WithDescription(string.Join("\n", new string[]
+            {
+                "Failed to warn member, this has been reported to the developers",
+                "```",
+                e.Message,
+                "```"
+            }));
+            embed.WithColor(Color.Red);
+            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
     }
     
     [SlashCommand("kick", "Kick member from server")]

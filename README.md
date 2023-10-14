@@ -11,13 +11,15 @@ Another General-purpose Discord Bot for the masses.
 
 ## Features
 - Counting
-- Event Logging
 - e926/e621
 - Image Editing ([caption](#caption), speech bubble, etc...)
 - [Confession System](#confession-system)
-- Ban Sync
-- General Moderation
-- Ticket System
+- Moderation
+    * Ban Sync
+    * Ticket System
+    * Warn System (with Dashboard interface)
+    * Server Logging
+        - Git Diff is generated for message edits!
 - Reminders
 - Level System
 
