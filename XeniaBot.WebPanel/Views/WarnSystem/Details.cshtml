@@ -6,6 +6,14 @@
     Layout = "_Layout";
 }
 
+<style>
+    .smallUserIcon {
+        height: 32px;
+        width: initial !important;
+        border-radius: 50%;
+    }
+</style>
+
 <div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark">
     <img class="me-3 rounded-circle mr-3" src="@Model.Guild.IconUrl" alt="" width="48" height="48">
     <div class="lh-1">
@@ -37,11 +45,11 @@ else
             @foreach (var item in @Model.WarnItems.OrderByDescending(v => v.ModifiedAtTimestamp))
             {
                 <td>
-                    <img src="@Model.Client.GetUser(item.TargetUserId).GetAvatarUrl()" class="card-img-top serverListIcon" />
+                    <img src="@(Model.Client.GetUser(item.TargetUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.TargetUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
                     @Model.Client.GetUser(item.TargetUserId).ToString()
                 </td>
                 <td>
-                    <img src="@Model.Client.GetUser(item.ActionedUserId).GetAvatarUrl()" class="card-img-top serverListIcon" />
+                    <img src="@(Model.Client.GetUser(item.ActionedUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.ActionedUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
                     @Model.Client.GetUser(item.ActionedUserId).ToString()
                 </td>
                 <td>
