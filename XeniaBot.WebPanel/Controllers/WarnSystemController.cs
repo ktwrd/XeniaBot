@@ -55,4 +55,37 @@ public class WarnSystemController: BaseXeniaController
 
     }
     
+    [HttpGet("~/Warn/Info/{id}")]
+    public async Task<IActionResult> WarnInfo(string id, string? messageType = null, string? message = null)
+    {
+        var controller = Program.Services.GetRequiredService<GuildWarnItemConfigController>();
+        var warnData = await controller.GetItemsById(id);
+        if (warnData == null)
+            return View("NotFound");
+
+        var latestWarnData = warnData.FirstOrDefault();
+        if (!CanAccess(latestWarnData?.GuildId ?? 0))
+            return View("NotAuthorized");
+        
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var guild = _discord.GetGuild(latestWarnData?.GuildId ?? 0);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        
+        var data = new WarnInfoViewModel()
+        {
+            Guild = guild,
+            WarnItem = latestWarnData,
+            History = warnData
+        };
+        await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
+
+        return View("Info", data);
+    }
 }
