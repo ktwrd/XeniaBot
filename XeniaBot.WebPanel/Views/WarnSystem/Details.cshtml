@@ -15,7 +15,7 @@
     }
 </style>
 
-<div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark">
+<div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark mb-3">
     <img class="me-3 rounded-circle mr-3" src="@Model.Guild.IconUrl" alt="" width="48" height="48">
     <div class="lh-1">
         <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
@@ -32,7 +32,7 @@
 }
 else
 {
-    <table class="table">
+    <table class="table" id="warnSystemGuildList">
         <thead>
         <tr>
             <th>Target User</th>
@@ -71,4 +71,15 @@ else
             }
         </tbody>
     </table>
+    @section Scripts
+    {
+        <script type="text/javascript">
+        $(document).ready(function () {
+          $('#warnSystemGuildList').DataTable({
+            "searching": true
+          });
+          $('.dataTables_length').addClass('bs-select');
+        });
+        </script>
+    }
 }
