@@ -3,6 +3,7 @@
 @using XeniaBot.Shared.Helpers
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @using XeniaBot.WebPanel.Helpers
+@using XeniaBot.WebPanel.Controllers
 @model AdminServerModel
 
 @{
@@ -119,6 +120,95 @@
                         </tbody>
                     </table>
                 }
+            </div>
+        </div>
+    </div>
+    <div class="mr-1 mb-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                Xp System
+            </div>
+            <div class="card-body">
+                <form id="xp_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Xp" asp-route-id="@Model.Guild.Id">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_enable" name="enable" checked="@Model.XpConfig.Enable" />
+                        <label class="form-check-label" for="xp_settings_enable">
+                            Enable
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_show" name="show" checked="@Model.XpConfig.ShowLeveUpMessage"/>
+                        <label class="form-check-label" for="xp_settings_show">
+                            Show Level Up Message
+                        </label>
+                    </div>
+                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+                           {
+                               Channels = StrippedChannel.FromGuild(@Model.Guild),
+                               Categories = StrippedCategory.FromGuild(@Model.Guild),
+                               SelectedChannelId = @Model.XpConfig.LevelUpChannel,
+                               ParentFormId = "xp_settings",
+                               Name = "channelId",
+                               Id = "xp_settings_channel",
+                               DisplayName = "Notification Channel"
+                           })
+                    <input class="btn btn-success" type="submit" value="Save"/>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="mr-1 mb-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                Confession
+            </div>
+            <div class="card-body">
+                <form id="confession_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Confession" asp-route-id="@Model.Guild.Id">
+                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+                           {
+                               Channels = StrippedChannel.FromGuild(@Model.Guild),
+                               Categories = StrippedCategory.FromGuild(@Model.Guild),
+                               SelectedChannelId = @Model.CounterConfig.ChannelId,
+                               ParentFormId = "confession_settings",
+                               Name = "MessageChannelId",
+                               Id = "confession_settings_channel_out",
+                               DisplayName = "Message Channel"
+                           })
+                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+                           {
+                               Channels = StrippedChannel.FromGuild(@Model.Guild),
+                               Categories = StrippedCategory.FromGuild(@Model.Guild),
+                               SelectedChannelId = @Model.CounterConfig.ChannelId,
+                               ParentFormId = "confession_settings",
+                               Name = "ModalChannelId",
+                               Id = "confession_settings_channel_modal",
+                               DisplayName = "Modal Channel"
+                           })
+                    <a class="btn btn-danger mr-2" asp-controller="Server" asp-action="SaveSettings_Confession_Purge" asp-route-id="@Model.Guild.Id">Purge</a>
+                    <input class="btn btn-success" type="submit" value="Save"/>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="mr-1 mb-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                Counting
+            </div>
+            <div class="card-body">
+                <form id="counter_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Counting" asp-route-id="@Model.Guild.Id">
+                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+                       {
+                           Channels = StrippedChannel.FromGuild(@Model.Guild),
+                           Categories = StrippedCategory.FromGuild(@Model.Guild),
+                           SelectedChannelId = @Model.CounterConfig.ChannelId,
+                           ParentFormId = "counter_settings",
+                           Name = "inputChannelId",
+                           Id = "inputChannelId",
+                           DisplayName = "Channel"
+                       })
+                    <input class="btn btn-success" type="submit" value="Save"/>
+                </form>
             </div>
         </div>
     </div>
