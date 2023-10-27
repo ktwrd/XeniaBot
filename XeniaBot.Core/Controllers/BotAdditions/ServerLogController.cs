@@ -200,8 +200,8 @@ public class ServerLogController : BaseController
         
         string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
         long timestamp = 
-            message.Value?.CreatedAt.ToUnixTimeMilliseconds()
-            ?? funkyMessage?.CreatedAt.ToUnixTimeMilliseconds()
+            message.Value?.CreatedAt.ToUnixTimeSeconds()
+            ?? funkyMessage?.CreatedAt.ToUnixTimeSeconds()
             ?? 0;
         SocketUser? author = _discord.GetUser(message.Value?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
         var embed = DiscordHelper.BaseEmbed()
