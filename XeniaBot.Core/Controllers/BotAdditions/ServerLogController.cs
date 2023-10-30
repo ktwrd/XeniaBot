@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -56,6 +58,8 @@ public class ServerLogController : BaseController
         if (author == null)
             return;
 
+        var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
+
         var embed = DiscordHelper.BaseEmbed()
             .WithTitle("Message Edited")
             .WithDescription(string.Join("\n", new string[]
@@ -65,16 +69,22 @@ public class ServerLogController : BaseController
             }))
             .WithColor(new Color(255, 255, 255))
             .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
-            .WithThumbnailUrl(author.GetAvatarUrl())
-            .AddField("Difference", string.Join("\n", new string[]
+            .WithThumbnailUrl(author.GetAvatarUrl());
+        if (diffContent.Length > 1024-("```\n \n```".Length))
+            await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
+        else
+        {
+            embed.AddField("Difference",
+            string.Join("\n", new string[]
             {
                 "```",
-                string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? "")),
+                diffContent,
                 "```"
             }));
-        await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
+            await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
+        }
     }
-    internal async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed)
+    internal async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed, string? attachmentContent = null, string? attachmentName = null)
     {
         var data = await _config.Get(serverId);
 
@@ -91,7 +101,14 @@ public class ServerLogController : BaseController
         if (logChannel == null)
             return;
 
-        await logChannel.SendMessageAsync(embed: embed.Build());
+        if (attachmentContent == null)
+        {
+            await logChannel.SendMessageAsync(embed: embed.Build());
+            return;
+        }
+
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(attachmentContent));
+        await logChannel.SendFileAsync(ms, attachmentName ?? "content.txt", embed: embed.Build());
     }
 
     #region User Events
