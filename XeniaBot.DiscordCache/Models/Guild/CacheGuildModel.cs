@@ -27,17 +27,17 @@ public class CacheGuildModel
     public ulong? PublicUpdatesChannelId { get; set; }
     public ulong OwnerId { get; set; }
     public ulong? ApplicationId { get; set; }
-    public string VoiceRegionId { get; set; }
-    public CacheAudioClient AudioClient { get; set; }
+    public string? VoiceRegionId { get; set; }
+    public CacheAudioClient? AudioClient { get; set; }
     public CacheRole EveryoneRole { get; set; }
     public CacheGuildEmote[] Emotes { get; set; }
     public CacheCustomSticker[] Stickers { get; set; }
     public GuildFeatures Features { get; set; }
     public CacheRole[] Roles { get; set; }
     public PremiumTier PremiumTier { get; set; }
-    public string BannerId { get; set; }
-    public string BannerUrl { get; set; }
-    public string VanityURLCode { get; set; }
+    public string? BannerId { get; set; }
+    public string? BannerUrl { get; set; }
+    public string? VanityURLCode { get; set; }
     public SystemChannelMessageDeny SystemChannelFlags { get; set; }
     public string Description { get; set; }
     public int PremiumSubscriptionCount { get; set; }
