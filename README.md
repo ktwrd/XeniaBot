@@ -7,6 +7,7 @@ Another General-purpose Discord Bot for the masses.
 
 - [Features](#features)
 - [Setup Development Environment](INSTALLING)
+- [Contributing](CONTRIBUTING)
 - [Module Demos](#module-demos)
 
 ## Features
