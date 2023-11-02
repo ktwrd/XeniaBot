@@ -61,7 +61,6 @@ public class CacheMessageModel : DiscordCacheBaseModel
     {
         var instance = new CacheMessageModel();
         instance.Content = message.Content;
-        instance.ContentClean = message.CleanContent;
         instance.Timestamp = message.Timestamp;
         instance.EditedTimestamp = message.EditedTimestamp;
         instance.Embeds = message.Embeds.Select(DiscordCacheHelper.ForceTypeCast<IEmbed, CacheMessageEmbed>)
