@@ -10,8 +10,8 @@ public class CacheMessageModel : DiscordCacheBaseModel
     public string ContentClean { get; set; }
     public DateTimeOffset Timestamp { get; set; }
     public DateTimeOffset? EditedTimestamp { get; set; }
-    public CacheMessageEmbed[] Embeds { get; set; }
-    public CacheMessageTag[] Tags { get; set; }
+    public CacheMessageEmbed[]? Embeds { get; set; }
+    public CacheMessageTag[]? Tags { get; set; }
     public MessageSource Source { get; set; }
     public bool IsTTS { get; set; }
     public bool Pinned { get; set; }
@@ -21,15 +21,15 @@ public class CacheMessageModel : DiscordCacheBaseModel
     public ulong[] MentionedChannelIds { get; set; }
     public ulong[] MentionedRoleIds { get; set; }
     public ulong[] MentionedUserIds { get; set; }
-    public CacheMessageActivity Activity { get; set; }
-    public CacheMessageApplication Application { get; set; }
-    public CacheMessageReference Reference { get; set; }
+    public CacheMessageActivity? Activity { get; set; }
+    public CacheMessageApplication? Application { get; set; }
+    public CacheMessageReference? Reference { get; set; }
     public Dictionary<CacheEmote, CacheReactionMetadata> Reactions { get; set; }
     public CacheMessageComponent[] Components { get; set; }
-    public CacheStickerItem[] Stickers { get; set; }
+    public CacheStickerItem[]? Stickers { get; set; }
     public MessageFlags? Flags { get; set; }
     
-    public CacheMessageInteraction Interaction { get; set; }
+    public CacheMessageInteraction? Interaction { get; set; }
     #endregion
     
     #region ISnowflakeEntity
@@ -64,8 +64,14 @@ public class CacheMessageModel : DiscordCacheBaseModel
         instance.ContentClean = message.CleanContent;
         instance.Timestamp = message.Timestamp;
         instance.EditedTimestamp = message.EditedTimestamp;
-        instance.Embeds = message.Embeds.Select(v => DiscordCacheHelper.ForceTypeCast<IEmbed, CacheMessageEmbed>(v)).ToArray();
-        instance.Tags = message.Tags.Select(v => DiscordCacheHelper.ForceTypeCast<ITag, CacheMessageTag>(v)).ToArray();
+        instance.Embeds = message.Embeds.Select(DiscordCacheHelper.ForceTypeCast<IEmbed, CacheMessageEmbed>)
+            .Where(v => v != null)
+            .Cast<CacheMessageEmbed>()
+            .ToArray();
+        instance.Tags = message.Tags.Select(DiscordCacheHelper.ForceTypeCast<ITag, CacheMessageTag>)
+            .Where(v => v != null)
+            .Cast<CacheMessageTag>()
+            .ToArray();
         instance.Source = message.Source;
         instance.IsTTS = message.IsTTS;
         instance.Pinned = message.IsPinned;
@@ -78,14 +84,15 @@ public class CacheMessageModel : DiscordCacheBaseModel
         instance.Application = DiscordCacheHelper.ForceTypeCast<MessageApplication, CacheMessageApplication>(message.Application);
         instance.Reference = CacheMessageReference.FromMessageReference(message.Reference);
         instance.Components = message.Components
-                .Select(v => DiscordCacheHelper.ForceTypeCast<IMessageComponent, CacheMessageComponent>(v))
+                .Select(DiscordCacheHelper.ForceTypeCast<IMessageComponent, CacheMessageComponent>)
                 .Where(v => v != null)
                 .Cast<CacheMessageComponent>()
                 .ToArray();
         instance.Stickers = message.Stickers
-                .Select(v => DiscordCacheHelper.ForceTypeCast<IStickerItem, CacheStickerItem>(v))
-                .Where(v => v != null)
-                .ToArray();
+            .Select(DiscordCacheHelper.ForceTypeCast<IStickerItem, CacheStickerItem>)
+            .Where(v => v != null)
+            .Cast<CacheStickerItem>()
+            .ToArray();
         instance.Flags = message.Flags;
         instance.Interaction = DiscordCacheHelper.ForceTypeCast<IMessageInteraction, CacheMessageInteraction>(message.Interaction);
         instance.CreatedAt = message.CreatedAt;

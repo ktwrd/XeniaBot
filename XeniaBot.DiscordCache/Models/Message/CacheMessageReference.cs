@@ -4,19 +4,38 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheMessageReference
 {
-    public ulong MessageId { get; set; }
-    public ulong ChannelId { get; set; }
-    public ulong GuildId { get; set; }
-    public bool FailIfNotExists { get; set; }
+    public ulong? MessageId { get; set; }
+    public ulong? ChannelId { get; set; }
+    public ulong? GuildId { get; set; }
+    public bool? FailIfNotExists { get; set; }
 
-    public static CacheMessageReference FromMessageReference(MessageReference? r)
+    public static CacheMessageReference? FromMessageReference(MessageReference? r)
     {
-        return new CacheMessageReference()
+        if (r == null)
+            return null;
+        
+        var instance = new CacheMessageReference();
+        if (r?.MessageId.IsSpecified ?? false)
         {
-            MessageId = (r?.MessageId.IsSpecified ?? false) ? r?.MessageId.Value ?? 0 : 0,
-            ChannelId = r?.ChannelId ?? 0,
-            GuildId = (r?.GuildId.IsSpecified ?? false) ? r?.GuildId.Value ?? 0 : 0,
-            FailIfNotExists = (r?.FailIfNotExists.IsSpecified ?? false) || (r?.FailIfNotExists.Value ?? true)
-        };
+            instance.MessageId = r?.MessageId.Value ?? 0;
+        }
+        else
+        {
+            instance.MessageId = null;
+        }
+
+        instance.ChannelId = r?.ChannelId;
+        
+        if (r?.GuildId.IsSpecified ?? false)
+        {
+            instance.GuildId = r.GuildId.Value;
+        }
+        else
+        {
+            instance.GuildId = null;
+        }
+
+        instance.FailIfNotExists = (r?.FailIfNotExists.IsSpecified ?? false) || (r?.FailIfNotExists.Value ?? true);
+        return instance;
     }
 }
