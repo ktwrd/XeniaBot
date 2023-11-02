@@ -114,7 +114,7 @@ namespace XeniaBot.Core.Helpers
                 context.Channel,
                 null);
         }
-        public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IMessageChannel channel, IUserMessage? message)
+        public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IChannel channel, IMessage? message)
         {
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
             var stack = Environment.StackTrace;
@@ -171,7 +171,7 @@ namespace XeniaBot.Core.Helpers
                 context.Channel,
                 null);
         }
-        public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IMessageChannel? channel, IUserMessage? message)
+        public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IChannel? channel, IMessage? message)
         {
             Log.Error($"Failed to process. User: {user?.Id}, Guild: {guild?.Id}, Channel: {channel?.Id}.\n{response}");
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
