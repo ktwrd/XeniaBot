@@ -203,24 +203,50 @@ namespace XeniaBot.Core.Helpers
                     text: "",
                     embeds: new Embed[] { embed.Build() });
         }
-        public static async Task ReportError(Exception exception)
+        public static async Task ReportError(Exception exception, string extraText = "")
         {
             var stack = Environment.StackTrace;
             var exceptionContent = exception.ToString();
+            var targetContent = exception.ToString();
             var embed = new EmbedBuilder()
             {
-                Title = "Uncaught Exception",
-                Description = "```\n" + exceptionContent.Substring(0, Math.Min(exceptionContent.Length, 4080)) + "\n```"
+                Title = "Uncaught Exception"
             };
+            if (targetContent.Length > 2000)
+            {
+                embed.WithDescription("Exception is attached to this message.");
+            }
+            else
+            {
+                embed.WithDescription(string.Join("\n", new string[]
+                {
+                    "```",
+                    targetContent,
+                    "```"
+                }));
+            }
 
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
 
             var textChannel = client.GetGuild(Program.ConfigData.ErrorChannel).GetTextChannel(Program.ConfigData.ErrorChannel);
-            var attachments = new FileAttachment[]
+            var attachments = new List<FileAttachment>()
             {
                 new FileAttachment(stream: new MemoryStream(Encoding.UTF8.GetBytes(stack)), fileName: "stack.txt"),
                 new FileAttachment(stream: new MemoryStream(Encoding.UTF8.GetBytes(exceptionContent)), fileName: "exception.txt")
             };
+
+            if (extraText.Length > 0)
+            {
+                if (extraText.Length > 1000)
+                {
+                    attachments.Add(new FileAttachment(stream: new MemoryStream(Encoding.UTF8.GetBytes(extraText)), fileName: "notes.md"));
+                }
+                else
+                {
+                    embed.AddField("Notes", extraText);
+                }
+            }
+            
             await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
         }
         #endregion
