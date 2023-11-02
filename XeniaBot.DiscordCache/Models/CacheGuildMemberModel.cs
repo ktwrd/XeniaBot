@@ -11,7 +11,6 @@ public class CacheGuildMemberModel : CacheUserModel
     public string DisplayAvatarId => GuildAvatarId ?? AvatarId;
     public string? GuildAvatarId { get; set; }
     public GuildPermissions GuildPermissions { get; set; }
-    public bool IsWebhook { get; set; }
     public bool IsSelfDeafened { get; set; }
     public bool IsSelfMuted { get; set; }
     public bool IsSuppressed { get; set; }
@@ -35,6 +34,8 @@ public class CacheGuildMemberModel : CacheUserModel
 
     public new CacheGuildMemberModel FromExisting(SocketGuildUser? user)
     {
+        if (user == null)
+            return this;
         base.FromExisting(user);
         this.GuildId = user.Guild.Id;
         this.Nickname = user.Nickname;
