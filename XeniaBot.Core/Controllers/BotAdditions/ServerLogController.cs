@@ -46,42 +46,56 @@ public class ServerLogController : BaseController
     
     private async void DiscordCacheMessageChangeUpdate(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
-        if (type != MessageChangeType.Update)
-            return;
-
-        var previousContent = previous?.Content ?? "";
-        var currentContent = current.Content ?? "";
-        if (previousContent == currentContent)
-            return;
-
-        var author = _discord.GetUser(current.AuthorId);
-        if (author == null)
-            return;
-
-        var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
-
-        var embed = DiscordHelper.BaseEmbed()
-            .WithTitle("Message Edited")
-            .WithDescription(string.Join("\n", new string[]
-            {
-                $"From: `{author.Username}#{author.Discriminator}`",
-                $"ID: `{current.AuthorId}`"
-            }))
-            .WithColor(new Color(255, 255, 255))
-            .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
-            .WithThumbnailUrl(author.GetAvatarUrl());
-        if (diffContent.Length > 1024-("```\n \n```".Length))
-            await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
-        else
+        try
         {
-            embed.AddField("Difference",
-            string.Join("\n", new string[]
+            if (type != MessageChangeType.Update)
+                return;
+
+            var previousContent = previous?.Content ?? "";
+            var currentContent = current.Content ?? "";
+            if (previousContent == currentContent)
+                return;
+
+            var author = _discord.GetUser(current.AuthorId);
+            if (author == null)
+                return;
+
+            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
+
+            var embed = DiscordHelper.BaseEmbed()
+                .WithTitle("Message Edited")
+                .WithDescription(string.Join("\n", new string[]
+                {
+                    $"From: `{author.Username}#{author.Discriminator}`",
+                    $"ID: `{current.AuthorId}`"
+                }))
+                .WithColor(new Color(255, 255, 255))
+                .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
+                .WithThumbnailUrl(author.GetAvatarUrl());
+            if (diffContent.Length > 1024-("```\n \n```".Length))
+                await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
+            else
             {
-                "```",
-                diffContent,
-                "```"
-            }));
-            await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
+                embed.AddField("Difference",
+                    string.Join("\n", new string[]
+                    {
+                        "```",
+                        diffContent,
+                        "```"
+                    }));
+                await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to handle MessageChangeUpdate event!!\n{ex}");
+            var author = _discord.GetUser(current.AuthorId);
+            var guild = _discord.GetGuild(current.GuildId);
+            var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
+            IMessage? msg = null;
+            if (channel != null)
+                msg = await channel.GetMessageAsync(current.Snowflake);
+            await DiscordHelper.ReportError(ex, author, guild, channel, msg);
         }
     }
     internal async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed, string? attachmentContent = null, string? attachmentName = null)
