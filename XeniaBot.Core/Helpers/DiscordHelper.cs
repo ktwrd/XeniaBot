@@ -205,6 +205,7 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(Exception exception, string extraText = "")
         {
+            Log.Error($"Error Reported\n{extraText}\n{exception}");
             var stack = Environment.StackTrace;
             var exceptionContent = exception.ToString();
             var targetContent = exception.ToString();
