@@ -72,7 +72,7 @@ public class ServerLogController : BaseController
                 .WithColor(new Color(255, 255, 255))
                 .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
                 .WithThumbnailUrl(author.GetAvatarUrl());
-            if (diffContent.Length > 1024-("```\n \n```".Length))
+            if (diffContent.Length > 1000)
                 await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
             else
             {
@@ -254,20 +254,30 @@ public class ServerLogController : BaseController
         if (previousContent == currentMessage.Content)
             return;
         var socketChannel = channel as SocketGuildChannel;
+        var diffContent = string.Join(
+            "\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentMessage?.Content ?? ""));
         var embed = DiscordHelper.BaseEmbed()
             .WithTitle("Message Edited")
             .WithDescription($"From `{currentMessage.Author.Username}#{currentMessage.Author.Discriminator}`\nID: `{currentMessage.Author.Id}`")
-            .AddField("Difference", string.Join("\n",
-                new string[]
-                {
-                    "```",
-                    string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentMessage?.Content ?? "")),
-                    "```",
-                }))
             .WithColor(new Color(255, 255, 255))
             .WithUrl($"https://discord.com/channels/{socketChannel.Guild.Id}/{socketChannel.Id}/{currentMessage.Id}")
             .WithThumbnailUrl(currentMessage.Author.GetAvatarUrl());
-        await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed);
+        if (diffContent.Length < 1000)
+        {
+            embed
+                .AddField("Difference", string.Join("\n",
+                    new string[]
+                    {
+                        "```",
+                        diffContent,
+                        "```",
+                    }));
+            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed);
+        }
+        else
+        {
+            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed, diffContent, "diff.txt");
+        }
     }
     #endregion
 }
