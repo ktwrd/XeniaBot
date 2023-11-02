@@ -183,28 +183,70 @@ public class DiscordCacheController : BaseController
             case CacheChannelType.Forum:
                 if (newChannel is SocketForumChannel forumChannel)
                 {
-                    var forumData = await CacheForumChannelConfig.GetLatest(forumChannel.Id);
-                    var forumCurrentData = new CacheForumChannelModel().FromExisting(forumChannel);
-                    await CacheForumChannelConfig.Add(forumCurrentData);
-                    OnChannelChange(CacheChangeType.Update, forumCurrentData, forumData);
+                    try
+                    {
+                        var forumData = await CacheForumChannelConfig.GetLatest(forumChannel.Id);
+                        var forumCurrentData = new CacheForumChannelModel().FromExisting(forumChannel);
+                        await CacheForumChannelConfig.Add(forumCurrentData);
+                        OnChannelChange(CacheChangeType.Update, forumCurrentData, forumData);
+                    }
+                    catch (Exception ex)
+                    {
+                        var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
+                        await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
+                        {
+                            "Failed to process forum channel in DiscordCacheController._client_ChannelUpdated",
+                            "```json",
+                            channelJson,
+                            "```"
+                        }));
+                    }
                 }
                 break;
             case CacheChannelType.Voice:
                 if (newChannel is SocketVoiceChannel voiceChannel)
                 {
-                    var voiceData = await CacheVoiceChannelConfig.GetLatest(voiceChannel.Id);
-                    var voiceCurrentData = new CacheVoiceChannelModel().FromExisting(voiceChannel);
-                    await CacheVoiceChannelConfig.Add(voiceCurrentData);
-                    OnChannelChange(CacheChangeType.Update, voiceCurrentData, voiceData);
+                    try
+                    {
+                        var voiceData = await CacheVoiceChannelConfig.GetLatest(voiceChannel.Id);
+                        var voiceCurrentData = new CacheVoiceChannelModel().FromExisting(voiceChannel);
+                        await CacheVoiceChannelConfig.Add(voiceCurrentData);
+                        OnChannelChange(CacheChangeType.Update, voiceCurrentData, voiceData);
+                    }
+                    catch (Exception ex)
+                    {
+                        var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
+                        await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
+                        {
+                            "Failed to process voice channel in DiscordCacheController._client_ChannelUpdated",
+                            "```json",
+                            channelJson,
+                            "```"
+                        }));
+                    }
                 }
                 break;
             case CacheChannelType.Text:
                 if (newChannel is SocketTextChannel textChannel)
                 {
-                    var textData = await CacheTextChannelConfig.GetLatest(textChannel.Id);
-                    var textCurrentData = new CacheTextChannelModel().FromExisting(textChannel);
-                    await CacheTextChannelConfig.Add(textCurrentData);
-                    OnChannelChange(CacheChangeType.Update, textCurrentData, textData);
+                    try
+                    {
+                        var textData = await CacheTextChannelConfig.GetLatest(textChannel.Id);
+                        var textCurrentData = new CacheTextChannelModel().FromExisting(textChannel);
+                        await CacheTextChannelConfig.Add(textCurrentData);
+                        OnChannelChange(CacheChangeType.Update, textCurrentData, textData);
+                    }
+                    catch (Exception ex)
+                    {
+                        var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
+                        await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
+                        {
+                            "Failed to process text channel in DiscordCacheController._client_ChannelUpdated",
+                            "```json",
+                            channelJson,
+                            "```"
+                        }));
+                    }
                 }
                 break;
         }
