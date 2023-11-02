@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Threading.Tasks;
 using XeniaBot.DiscordCache.Helpers;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.DiscordCache.Controllers;
@@ -249,54 +251,109 @@ public class DiscordCacheController : BaseController
     #region Message
     private async Task _client_MessageReceived(SocketMessage message)
     {
-        var data = CacheMessageModel.FromMessage(message);
-        if (message.Channel is SocketGuildChannel socketChannel)
-            data.GuildId = socketChannel.Id;
-        await CacheMessageConfig.Add(data);
-        OnMessageChange(
-            MessageChangeType.Create, 
-            data, 
-            null);
+        try
+        {
+            var data = CacheMessageModel.FromMessage(message);
+            if (message.Channel is SocketGuildChannel socketChannel)
+                data.GuildId = socketChannel.Id;
+            await CacheMessageConfig.Add(data);
+            OnMessageChange(
+                MessageChangeType.Create, 
+                data, 
+                null);
+        }
+        catch (Exception ex)
+        {
+            var msgJson = JsonSerializer.Serialize(message, Program.SerializerOptions);
+            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
+            {
+                "Failed to run DiscordCacheController._client_MessageUpdated\n",
+                "Message JSON:",
+                "```json",
+                msgJson,
+                "```"
+            }));
+        }
     }
 
     private async Task _client_MessageUpdated(
-        Cacheable<IMessage, ulong> useless_object,
+        Cacheable<IMessage, ulong> previousMessage,
         SocketMessage newMessage,
         ISocketMessageChannel channel)
     {
-        // convert data to type that mongo can support
-        var data = CacheMessageModel.FromMessage(newMessage);
-        
-        // set guild if message was actually sent in a server (and not dms)
-        if (channel is SocketGuildChannel { Guild: not null } socketChannel)
-            data.GuildId = socketChannel.Guild.Id;
-        // fetch previous message for event emit
-        var previous = await CacheMessageConfig.GetLatest(data.Snowflake);
-        
-        // save in db
-        await CacheMessageConfig.Add(data);
-        
-        // emit event for other controllers.
-        OnMessageChange(
-            MessageChangeType.Update,
-            data,
-            previous);
+        try
+        {
+            // convert data to type that mongo can support
+            var data = CacheMessageModel.FromMessage(newMessage);
+
+            // set guild if message was actually sent in a server (and not dms)
+            if (channel is SocketGuildChannel { Guild: not null } socketChannel)
+                data.GuildId = socketChannel.Guild.Id;
+            // fetch previous message for event emit
+            var previous = await CacheMessageConfig.GetLatest(data.Snowflake);
+
+            // save in db
+            await CacheMessageConfig.Add(data);
+
+            // emit event for other controllers.
+            OnMessageChange(
+                MessageChangeType.Update,
+                data,
+                previous);
+        }
+        catch (Exception ex)
+        {
+            var msgJson = JsonSerializer.Serialize(newMessage, Program.SerializerOptions);
+            var channelJson = JsonSerializer.Serialize(channel, Program.SerializerOptions);
+            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
+            {
+                "Failed to run DiscordCacheController._client_MessageUpdated\n",
+                "Message JSON:",
+                "```json",
+                msgJson,
+                "```",
+                "Channel JSON:",
+                "```json",
+                channelJson,
+                "```"
+            }));
+        }
     }
 
     private async Task _client_MessageDeleted(Cacheable<IMessage, ulong> message,
         Cacheable<IMessageChannel, ulong> channel)
     {
-        var data = await CacheMessageConfig.GetLatest(message.Id);
-        if (data != null)
+        try
         {
-            var previous = data.Clone();
-            data.IsDeleted = true;
-            data.DeletedTimestamp = DateTimeOffset.UtcNow;
-            await CacheMessageConfig.Add(data);
-            OnMessageChange(
-                MessageChangeType.Delete,
-                data,
-                previous);
+            var data = await CacheMessageConfig.GetLatest(message.Id);
+            if (data != null)
+            {
+                var previous = data.Clone();
+                data.IsDeleted = true;
+                data.DeletedTimestamp = DateTimeOffset.UtcNow;
+                await CacheMessageConfig.Add(data);
+                OnMessageChange(
+                    MessageChangeType.Delete,
+                    data,
+                    previous);
+            }
+        }
+        catch (Exception ex)
+        {
+            var msgJson = JsonSerializer.Serialize(message, Program.SerializerOptions);
+            var channelJson = JsonSerializer.Serialize(channel, Program.SerializerOptions);
+            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
+            {
+                "Failed to run DiscordCacheController._client_MessageDeleted\n",
+                "Message JSON:",
+                "```json",
+                msgJson,
+                "```",
+                "Channel JSON:",
+                "```json",
+                channelJson,
+                "```"
+            }));
         }
     }
     #endregion
