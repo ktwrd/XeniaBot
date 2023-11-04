@@ -18,7 +18,7 @@ namespace XeniaBot.Core.Modules
     public class ESixModule : InteractionModuleBase
     {
         [SlashCommand("query", "Query for posts. Fetches the first one")]
-        public async Task Query(string query, bool allowNsfw = false, bool random = false)
+        public async Task Query(string query, bool random = false)
         {
             var controller = Program.Services.GetRequiredService<ESixController>();
             
@@ -28,8 +28,7 @@ namespace XeniaBot.Core.Modules
             var channel = guild.GetTextChannel(Context.Channel.Id);
 
             // If channel is not nsfw, then enforce allowNsfw
-            allowNsfw = channel.IsNsfw ? allowNsfw : false;
-            if (!allowNsfw)
+            if (!channel.IsNsfw)
                 query += " rating:s";
 
             var embed = new EmbedBuilder()
@@ -66,7 +65,7 @@ namespace XeniaBot.Core.Modules
                 ?? targetPost.Sample?.Location
                 ?? targetPost.Preview?.Location;
             embed.WithTitle("View Post")
-                 .WithUrl((allowNsfw ? $"https://e621.net" : $"https://e926.net") + $"/posts/{targetPost.Id}")
+                 .WithUrl((channel.IsNsfw ? $"https://e621.net" : $"https://e926.net") + $"/posts/{targetPost.Id}")
                  .WithImageUrl(url?.ToString() ?? "");
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
