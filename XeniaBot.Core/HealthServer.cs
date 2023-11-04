@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Core;
 
@@ -25,11 +26,11 @@ public class HealthServer
 
     public string Handle()
     {
-        var data = new Dictionary<string, object>()
+        var data = new XeniaHealthModel()
         {
-            {"StartTimestamp", Program.StartTimestamp},
-            {"Version", Program.Version},
-            {"ServiceName", "XeniaDiscordBot"}
+            StartTimestamp = Program.StartTimestamp,
+            Version = Program.Version,
+            ServiceName = "XeniaDiscordBot"
         };
         var json = JsonSerializer.Serialize(data, Program.SerializerOptions);
         return json;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -10,13 +11,14 @@ public class HealthController : BaseXeniaController
     }
 
     [HttpGet("/Health")]
+    [ProducesDefaultResponseType(type: typeof(XeniaHealthModel))]
     public IActionResult Health()
     {
-        var data = new Dictionary<string, object>()
+        var data = new XeniaHealthModel()
         {
-            {"StartTimestamp", Program.StartTimestamp},
-            {"Version", Program.Version},
-            {"ServiceName", "XeniaDiscordBot"}
+            StartTimestamp = Program.StartTimestamp,
+            Version = Program.Version?.ToString() ?? "unknown (null)",
+            ServiceName = "XeniaDiscordBot_Dashboard"
         };
         return Json(data, Program.SerializerOptions);
     }
