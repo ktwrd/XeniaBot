@@ -58,3 +58,7 @@ Just like Message Editing, it handles messages of all sizes.
 Warn Members easily via a small command.
 
 ![screen recording](https://res.kate.pet/upload/7a64954c1588/Discord_DGsLyRlOs2.gif)
+
+You can also view warns on the Dashboard.
+
+![screen recording](https://res.kate.pet/upload/973217c9dbcb/Discord_gtqh6Z0lzi.gif)
