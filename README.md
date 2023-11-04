@@ -20,13 +20,18 @@ The main reason for it's creation is to de-clutter the usage of unnecessary Disc
 - Image Editing ([caption](#caption), speech bubble, etc...)
 - [Confession System](#confession-system)
 - Moderation
-    * Ban Sync
+    * [Ban Sync](#what-is-ban-sync)
     * Ticket System
     * [Warn System](#warn-system) (with Dashboard interface)
     * [Server Logging](#server-logging)
         - [Git Diff is generated for message edits!](#message-editing)
 - Reminders
 - Level System
+
+### What is "Ban Sync"
+BanSync is one of Xenia's main features. If someone joins your server and they're banned in another server that Xenia is in, it will notify your moderators in a log channel. It will also do the same thing if someone in your server was banned from a different server that Xenia is in.
+
+Note: BanSync is a feature that you must request for using the `/bansync request` command, or via the dashboard.
 
 # Module Demos
 ## Confession System
