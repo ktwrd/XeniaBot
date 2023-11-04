@@ -1,5 +1,7 @@
 # Xenia Bot
-Xenia Bot is another General-Purpose Discord Bot.
+![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/ktwrd/XeniaBot/publish-docker-stable) ![GitHub](https://img.shields.io/github/license/ktwrd/XeniaBot) ![GitHub repo size](https://img.shields.io/github/repo-size/ktwrd/xeniabot) ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/ktwrd/xeniabot?filter=bot-*) ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/ktwrd/xeniabot?filter=dash-*)
+
+Xenia Bot is another General-Purpose Discord Bot for the masses.
 
 The main reason for it's creation is to de-clutter the usage of unnecessary Discord Bots in a server just to use one or two features in a bot (i.e, mee6 for leveling, dyno for moderation, etc...) when you can have all of those features in a single bot.
 
