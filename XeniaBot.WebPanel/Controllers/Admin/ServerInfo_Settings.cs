@@ -11,7 +11,7 @@ public partial class AdminController
     [HttpPost("~/Admin/Server/{id}/Settings/Xp")]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string channelId, bool show, bool enable)
     {
-        if (!CanAccess(id))
+        if (!CanAccess())
             return View("NotAuthorized");
         
         var guild = _discord.GetGuild(id);
@@ -62,7 +62,7 @@ public partial class AdminController
     [HttpPost("~/Admin/Server/{id}/Settings/Confession")]
     public async Task<IActionResult> SaveSettings_Confession(ulong id, string? modalChannelId, string? messageChannelId)
     {
-        if (!CanAccess(id))
+        if (!CanAccess())
             return View("NotAuthorized");
         
         var guild = _discord.GetGuild(id);
@@ -123,7 +123,7 @@ public partial class AdminController
     [HttpPost("~/Admin/Server/{id}/Settings/Counting")]
     public async Task<IActionResult> SaveSettings_Counting(ulong id, string? inputChannelId)
     {
-        if (!CanAccess(id))
+        if (!CanAccess())
             return View("NotAuthorized");
         
         var userId = AspHelper.GetUserId(HttpContext);
