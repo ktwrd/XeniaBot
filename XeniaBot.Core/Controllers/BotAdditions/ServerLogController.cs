@@ -241,8 +241,15 @@ public class ServerLogController : BaseController
             .WithColor(Color.Orange);
         if (author != null)
             embed.WithThumbnailUrl(author.GetAvatarUrl());
-        if (messageContent.Length > 0)
+        
+        if (messageContent.Length is < 2000 and > 0)
             embed.AddField("Content", messageContent);
+        else if (messageContent.Length > 2000)
+        {
+            embed.AddField("Content", "Attached to this message");
+            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed, messageContent, "content.txt");
+            return;
+        }
         await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed);
     }
 
