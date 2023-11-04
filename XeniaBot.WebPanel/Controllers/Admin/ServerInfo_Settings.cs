@@ -22,8 +22,6 @@ public partial class AdminController
         try
         {
             targetChannelId = ulong.Parse(channelId);
-            if (targetChannelId == null)
-                throw new Exception("ChannelId is null");
         }
         catch (Exception e)
         {

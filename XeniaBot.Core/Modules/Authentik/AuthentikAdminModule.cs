@@ -19,9 +19,14 @@ namespace XeniaBot.Core.Modules;
 public partial class AuthentikAdminModule : InteractionModuleBase
 {
     [SlashCommand("usercreate", "Create a user")]
-    [RequireUserWhitelist]
     public async Task Cmd_CreateUser(string username)
     {
+        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+            return;
+        }
+        
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Create User").WithCurrentTimestamp();
         try
@@ -60,9 +65,13 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userpassreset", "Create a password reset link for a user")]
-    [RequireUserWhitelist]
     public async Task Cmd_CreateResetLink(string userId)
     {
+        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+            return;
+        }
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Password Reset Link").WithCurrentTimestamp();
         try
@@ -100,9 +109,13 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userdelete", "Delete a user")]
-    [RequireUserWhitelist]
     public async Task Cmd_DeleteUser(string userId)
     {
+        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+            return;
+        }
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Delete User").WithCurrentTimestamp();
         try
@@ -143,9 +156,13 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userlist", "List all users")]
-    [RequireUserWhitelist]
     public async Task Cmd_ListUsers()
     {
+        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+            return;
+        }
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - List Users").WithCurrentTimestamp();
         try
@@ -182,9 +199,13 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("userinfo", "List all users")]
-    [RequireUserWhitelist]
     public async Task Cmd_UserInfo(string user)
     {
+        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+            return;
+        }
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - User Info").WithCurrentTimestamp();
         try
@@ -231,9 +252,13 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("addtogroup", "Add a user to a group")]
-    [RequireUserWhitelist]
     public async Task Cmd_AddUserToGroup(string user, string group)
     {
+        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+            return;
+        }
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Add to Group").WithCurrentTimestamp();
 
@@ -281,9 +306,13 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("removefromgroup", "Remove a user from a group")]
-    [RequireUserWhitelist]
     public async Task Cmd_RemoveUserFromGroup(string user, string group)
     {
+        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+            return;
+        }
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder().WithTitle("Authentik - Remove from Group").WithCurrentTimestamp();
 

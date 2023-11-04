@@ -68,9 +68,13 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("metricreload", "Reload Prometheus Metrics")]
-        [RequireUserWhitelist]
         public async Task ReloadMetrics()
         {
+            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+            {
+                await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+                return;
+            }
             var config = Program.Services.GetRequiredService<ConfigData>();
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Reload Prometheus Metrics");
@@ -128,9 +132,13 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("fetch_config", "Fetch data from config file")]
-        [RequireUserWhitelist]
         public async Task FetchConfig()
         {
+            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+            {
+                await Context.Interaction.FollowupAsync("You do not have permission to access this command");
+                return;
+            }
             var config = Program.Services.GetRequiredService<ConfigData>();
             var fileContent = JsonSerializer.Serialize(config, Program.SerializerOptions);
             await Context.Interaction.RespondWithFileAsync(
