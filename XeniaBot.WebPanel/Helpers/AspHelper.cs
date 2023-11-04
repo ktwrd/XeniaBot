@@ -1,4 +1,6 @@
-﻿using Discord.WebSocket;
+﻿using System.Diagnostics;
+using System.Reflection;
+using Discord.WebSocket;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Models;
@@ -125,5 +127,24 @@ public static class AspHelper
         DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         dateTime = dateTime.AddMilliseconds( timestamp ).ToLocalTime();
         return dateTime;
+    }
+
+    public static string GetTextFileFromResource(string resourceName,
+        string fallbackData = "",
+        bool prependWebPanelNamespace = true)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        if (prependWebPanelNamespace)
+            resourceName = $"XeniaBot.WebPanel.{resourceName}";
+        using (Stream? stream = assembly.GetManifestResourceStream(resourceName))
+        {
+            if (stream == null)
+                return fallbackData;
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
     }
 }
