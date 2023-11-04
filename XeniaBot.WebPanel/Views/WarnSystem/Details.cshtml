@@ -45,29 +45,31 @@ else
         <tbody>
             @foreach (var item in @Model.WarnItems.OrderByDescending(v => v.ModifiedAtTimestamp))
             {
-                <td>
-                    <img src="@(Model.Client.GetUser(item.TargetUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.TargetUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
-                    @Model.Client.GetUser(item.TargetUserId).ToString()
-                </td>
-                <td>
-                    <img src="@(Model.Client.GetUser(item.ActionedUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.ActionedUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
-                    @Model.Client.GetUser(item.ActionedUserId).ToString()
-                </td>
-                <td>
-                    @(AspHelper.DateTimeFromTimestamp(item.CreatedAtTimestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))
-                </td>
-                <td>
-                    <code>
-                        @item.Description.Substring(0, Math.Min(50, item.Description.Length))
-                        @if (@item.Description.Length > 50)
-                        {
-                            <span>...</span>
-                        }
-                    </code>
-                </td>
-                <td>
-                    <a class="btn btn-secondary" asp-area="" asp-route-id="@item.WarnId" asp-controller="WarnSystem" asp-action="WarnInfo"></a>
-                </td>
+                <tr>
+                    <td>
+                        <img src="@(Model.Client.GetUser(item.TargetUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.TargetUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
+                        @Model.Client.GetUser(item.TargetUserId).ToString()
+                    </td>
+                    <td>
+                        <img src="@(Model.Client.GetUser(item.ActionedUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.ActionedUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
+                        @Model.Client.GetUser(item.ActionedUserId).ToString()
+                    </td>
+                    <td>
+                        @(AspHelper.DateTimeFromTimestamp(item.CreatedAtTimestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))
+                    </td>
+                    <td>
+                        <code>
+                            @item.Description.Substring(0, Math.Min(50, item.Description.Length))
+                            @if (@item.Description.Length > 50)
+                            {
+                                <span>...</span>
+                            }
+                        </code>
+                    </td>
+                    <td>
+                        <a class="btn btn-secondary" asp-area="" asp-route-id="@item.WarnId" asp-controller="WarnSystem" asp-action="WarnInfo"></a>
+                    </td>
+                </tr>
             }
         </tbody>
     </table>
