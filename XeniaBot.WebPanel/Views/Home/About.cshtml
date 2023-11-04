@@ -1,0 +1,8 @@
+﻿@using XeniaBot.WebPanel.Helpers
+@model BaseViewModel
+@{
+    ViewData["Title"] = "About";
+}
+
+<h1>About Xenia Bot</h1>
+@await Component.InvokeAsync("RenderMarkdown", AspHelper.GetTextFileFromResource("Views.Home.About.md"))

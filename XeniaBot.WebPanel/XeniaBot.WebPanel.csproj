@@ -51,4 +51,9 @@
       <Folder Include="Pages\Components\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Views\Home\About.md" />
+      <EmbeddedResource Include="Views\Home\About.md" />
+    </ItemGroup>
+
 </Project>

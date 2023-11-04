@@ -48,6 +48,12 @@ public class HomeController : BaseXeniaController
         return View("Vote", await PopulateModel());
     }
 
+    [HttpGet("~/About")]
+    public async Task<IActionResult> About()
+    {
+        return View("About", await PopulateModel());
+    }
+
     [AuthRequired(ShowLoginButton = true)]
     [HttpGet("~/Preferences")]
     public async Task<IActionResult> Preferences()
