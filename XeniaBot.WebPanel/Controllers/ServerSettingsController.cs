@@ -111,7 +111,7 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/Xp")]
-    public async Task<IActionResult> SaveSettings_Xp(ulong id, string channelId, bool show, bool enable)
+    public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
         if (!CanAccess(id))
             return View("NotAuthorized");
@@ -123,9 +123,10 @@ public partial class ServerController
         ulong? targetChannelId = null;
         try
         {
-            targetChannelId = ulong.Parse(channelId);
-            if (targetChannelId == null)
-                throw new Exception("ChannelId is null");
+            if (channelId == null)
+                targetChannelId = null;
+            else
+                targetChannelId = ulong.Parse(channelId);
         }
         catch (Exception e)
         {

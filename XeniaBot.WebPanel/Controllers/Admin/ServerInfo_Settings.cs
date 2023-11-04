@@ -9,7 +9,7 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpPost("~/Admin/Server/{id}/Settings/Xp")]
-    public async Task<IActionResult> SaveSettings_Xp(ulong id, string channelId, bool show, bool enable)
+    public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
         if (!CanAccess())
             return View("NotAuthorized");
@@ -21,7 +21,10 @@ public partial class AdminController
         ulong? targetChannelId = null;
         try
         {
-            targetChannelId = ulong.Parse(channelId);
+            if (channelId == null)
+                targetChannelId = null;
+            else
+                targetChannelId = ulong.Parse(channelId);
         }
         catch (Exception e)
         {
