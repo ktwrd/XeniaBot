@@ -22,7 +22,7 @@ The main reason for it's creation is to de-clutter the usage of unnecessary Disc
 - Moderation
     * Ban Sync
     * Ticket System
-    * Warn System (with Dashboard interface)
+    * [Warn System](#warn-system) (with Dashboard interface)
     * [Server Logging](#server-logging)
         - [Git Diff is generated for message edits!](#message-editing)
 - Reminders
