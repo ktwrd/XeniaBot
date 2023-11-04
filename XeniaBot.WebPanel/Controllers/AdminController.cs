@@ -34,4 +34,7 @@ public partial class AdminController : BaseXeniaController
 
         return _config.UserWhitelist.Contains((ulong)userId);
     }
+
+    public override bool CanAccess(ulong guildId) => CanAccess();
+    public override bool CanAccess(ulong guildId, ulong userId) => CanAccess();
 }

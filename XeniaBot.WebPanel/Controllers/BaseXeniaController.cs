@@ -19,7 +19,7 @@ public class BaseXeniaController : Controller
         _userConfig = Program.Services.GetRequiredService<UserConfigController>();
     }
 
-    public bool CanAccess(ulong guildId)
+    public virtual bool CanAccess(ulong guildId)
     {
         bool isAuth = User?.Identity?.IsAuthenticated ?? false;
         if (!isAuth)
@@ -32,7 +32,7 @@ public class BaseXeniaController : Controller
 
         return CanAccess(guildId, (ulong)userId);
     }
-    public bool CanAccess(ulong guildId, ulong userId)
+    public virtual bool CanAccess(ulong guildId, ulong userId)
     {
         var user = _discord.GetUser(userId);
         if (user == null)
