@@ -23,6 +23,8 @@ using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared.Controllers;
 using CronNET;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace XeniaBot.Core
 {
@@ -118,6 +120,8 @@ namespace XeniaBot.Core
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
+            BsonSerializer.RegisterSerializer(objectSerializer);
             MainInit();
             MainInit_ValidateMongo();
 

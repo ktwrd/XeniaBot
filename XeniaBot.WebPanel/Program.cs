@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.IdentityModel.Logging;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
@@ -65,6 +67,8 @@ false
         Console.SetError(eso);*/
         
         StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
+        BsonSerializer.RegisterSerializer(objectSerializer);
         MainInit();
         MainInit_ValidateMongo();
         MainAsync(args).Wait();
