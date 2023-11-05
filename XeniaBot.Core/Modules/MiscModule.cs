@@ -104,7 +104,7 @@ namespace XeniaBot.Core.Modules
                     embed: embed
                         .WithDescription($"```\n{e.Message}\n```")
                         .WithTitle("Failed to Reload Prometheus Metrics")
-                        .Build();
+                        .Build());
                 throw;
             }
 
