@@ -180,7 +180,7 @@ namespace XeniaBot.Core.Modules
             {
                 embed.Description = "Your server doesn't meet the requirements";
                 embed.AddField("Reason", $"`{kind}`", true);
-                await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                await Context.Interaction.RespondAsync(embed: embed.Build());
                 return;
             }
             ConfigBanSyncModel? response;
@@ -191,7 +191,7 @@ namespace XeniaBot.Core.Modules
             catch (Exception ex)
             {
                 embed.Description = $"Failed to request guild BanSync support.\n```\n{ex.Message}\n```";
-                await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                await Context.Interaction.RespondAsync(embed: embed.Build());
                 await DiscordHelper.ReportError(ex, Context);
                 return;
             }
@@ -199,7 +199,7 @@ namespace XeniaBot.Core.Modules
             {
                 embed.Color = Color.Green;
                 embed.Description = "Your guild is under review for Ban Sync to be enabled.";
-                await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                await Context.Interaction.RespondAsync(embed: embed.Build());
                 return;
             }
 
@@ -208,7 +208,7 @@ namespace XeniaBot.Core.Modules
             {
                 embed.AddField("Reason", $"```\n{response.Reason}\n```", true);
             }
-            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await Context.Interaction.RespondAsync(embed: embed.Build());
         }
     }
 }

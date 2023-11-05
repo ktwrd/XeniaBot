@@ -104,7 +104,7 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await Context.Interaction.RespondAsync(embed: embed.Build());
             await DiscordHelper.ReportError(e, Context);
             return;
         }
@@ -134,7 +134,7 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await Context.Interaction.RespondAsync(embed: embed.Build());
             await DiscordHelper.ReportError(e, Context);
         }
 
@@ -144,8 +144,7 @@ public class ModerationModule : InteractionModuleBase
             embed.AddField("Reason", reason);
         
         await Context.Interaction.RespondAsync(
-            embed: embed.Build(),
-            ephemeral: true);
+            embed: embed.Build());
     }
 
     [SlashCommand("ban", "Ban member from server")]
@@ -160,8 +159,7 @@ public class ModerationModule : InteractionModuleBase
         {
             embed.WithColor(Color.Red).WithDescription("Parameter `pruneDays` cannot be less than `0`");
             await Context.Interaction.RespondAsync(
-                embed: embed.Build(),
-                ephemeral: true);
+                embed: embed.Build());
             return;
         }
         
@@ -184,8 +182,7 @@ public class ModerationModule : InteractionModuleBase
             }));
             embed.WithColor(Color.Red);
             await Context.Interaction.RespondAsync(
-                embed: embed.Build(),
-                ephemeral: true);
+                embed: embed.Build());
             await DiscordHelper.ReportError(e, Context);
             return;
         }
@@ -201,7 +198,7 @@ public class ModerationModule : InteractionModuleBase
         if (reason != null)
             embed.AddField("Reason", reason);
         
-        await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`", ephemeral: true);
+        await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`");
     }
 
 

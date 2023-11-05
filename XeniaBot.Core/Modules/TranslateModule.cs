@@ -39,7 +39,7 @@ namespace XeniaBot.Core.Modules
                     Description = ex.Message,
                     Color = new Color(255, 0 ,0)
                 };
-                await Context.Interaction.RespondAsync(embed: failEmbed.Build(), ephemeral: true);
+                await Context.Interaction.RespondAsync(embed: failEmbed.Build());
                 DiscordHelper.ReportError(ex, Context);
                 return;
             }
@@ -53,7 +53,7 @@ namespace XeniaBot.Core.Modules
             embed.AddField($"From ({result.SpecifiedSourceLanguage ?? result.DetectedSourceLanguage})", result.OriginalText);
             embed.AddField($"To ({result.TargetLanguage})", result.TranslatedText);
             embed.WithFooter("Translated with Google Cloud Translate API");
-            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await Context.Interaction.RespondAsync(embed: embed.Build());
         }
     }
 }
