@@ -16,9 +16,10 @@ namespace XeniaBot.Core.Modules
     {
         [SlashCommand("translate", "Translate anything to whatever language you want")]
         public async Task Translate(
+            [Discord.Interactions.Summary(description: "Target phrase to translate")]
             string phrase,
-            [Summary("language_output"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string targetLanguage="en",
-            [Summary("language_input"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string? sourceLanguage=null)
+            [Summary(name: "language_output", description: "Language to translate to"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string targetLanguage="en",
+            [Summary("language_input", description: "Language to translate from. Will detect when none provided."), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string? sourceLanguage=null)
         {
             if (targetLanguage == "null" || targetLanguage.Length < 1)
                 targetLanguage = "en";

@@ -150,7 +150,9 @@ public class ModerationModule : InteractionModuleBase
 
     [SlashCommand("ban", "Ban member from server")]
     [RequireUserPermission(GuildPermission.BanMembers)]
-    public async Task BanMember(SocketGuildUser user, string? reason = null, int pruneDays=0)
+    public async Task BanMember(SocketGuildUser user, string? reason = null, 
+        [Discord.Interactions.Summary(description: "How many days of messages should be deleted when this member is banned")]
+        int pruneDays=0)
     {
         var embed = DiscordHelper.BaseEmbed()
             .WithTitle("Ban Member");

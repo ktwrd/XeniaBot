@@ -40,7 +40,10 @@ namespace XeniaBot.Core.Modules
 
         [SlashCommand("setchannel", "Set the log channel where ban notifications get sent.")]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
-        public async Task SetChannel([ChannelTypes(ChannelType.Text)] ITextChannel logChannel)
+        public async Task SetChannel(
+            [Discord.Interactions.Summary(description: "Channel where BanSync notifications will be sent to.")]
+            [ChannelTypes(ChannelType.Text)]
+            ITextChannel logChannel)
         {
             try
             {

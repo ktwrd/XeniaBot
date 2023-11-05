@@ -11,7 +11,9 @@ namespace XeniaBot.Core.Modules;
 public class ReminderModule : InteractionModuleBase
 {
     [SlashCommand("remind", "Create a reminder")]
-    public async Task CreateReminder(string when, string? note = null)
+    public async Task CreateReminder(
+        [Discord.Interactions.Summary(description: "When you will be reminded. Example 2d 1hrs 5seconds")]
+        string when, string? note = null)
     {
         TimeSpan timeSpan;
         try

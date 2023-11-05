@@ -15,7 +15,10 @@ namespace XeniaBot.Core.Modules;
 public partial class MediaManipulationModule : InteractionModuleBase
 {
     [SlashCommand("caption", "Add a caption to a piece of media")]
-    public async Task Caption(string caption, IAttachment attachment, bool saveAsGif = false)
+    public async Task Caption(string caption,
+        IAttachment attachment,
+        [Discord.Interactions.Summary(description: "Export as a GIF")]
+        bool saveAsGif = false)
     {
         await Context.Interaction.DeferAsync();
         
@@ -254,7 +257,13 @@ public partial class MediaManipulationModule : InteractionModuleBase
     }
 
     [SlashCommand("speechbubble", "Add a speech bubble to an image or a gif.")]
-    public async Task SpeechBubble(IAttachment attachment, bool flip = false, bool alpha = false, bool saveAsGif = false)
+    public async Task SpeechBubble(IAttachment attachment,
+        [Discord.Interactions.Summary(description: "When True, the speech bubble will be on the bottom, and when False it will be on top.")]
+        bool flip = false,
+        [Discord.Interactions.Summary(description: "When True, the speech bubble will have a transparent background, or it will have a white background")]
+        bool alpha = false,
+        [Discord.Interactions.Summary(description: "Export as a GIF")]
+        bool saveAsGif = false)
     {
         await Context.Interaction.DeferAsync();
         
