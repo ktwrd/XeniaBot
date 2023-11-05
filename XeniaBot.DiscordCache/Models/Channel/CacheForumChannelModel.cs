@@ -11,32 +11,38 @@ public class CacheForumChannelModel : CacheGuildChannelModel
     public CacheForumTag[] Tags { get; set; }
     public int ThreadCreationInterval { get; set; }
     public int DefaultSlowModeInterval { get; set; }
-    public CacheEmote DefaultReactionEmoji { get; set; }
+    public CacheEmote? DefaultReactionEmoji { get; set; }
     public ForumSortOrder? DefaultSortOrder { get; set; }
     public ForumLayout DefaultLayout { get; set; }
 
-    public CacheForumChannelModel FromExisting(SocketForumChannel channel)
+    public new CacheForumChannelModel Update(SocketForumChannel channel)
     {
-        base.FromExisting(channel);
+        base.Update(channel);
         IsNsfw = channel.IsNsfw;
         Topic = channel.Topic;
         DefaultAutoArchiveDuration = channel.DefaultAutoArchiveDuration;
         var tagList = new List<CacheForumTag>();
         foreach (var i in channel.Tags)
         {
-            tagList.Add(new CacheForumTag().FromForumTag(i));
+            tagList.Add(new CacheForumTag().Update(i));
         }
 
         Tags = tagList.ToArray();
         ThreadCreationInterval = channel.ThreadCreationInterval;
         DefaultSlowModeInterval = channel.DefaultSlowModeInterval;
-        DefaultReactionEmoji = new CacheEmote()
-        {
-            Name = channel.DefaultReactionEmoji.Name
-        };
+        DefaultReactionEmoji = CacheEmote.FromExisting(channel.DefaultReactionEmoji);
         DefaultSortOrder = channel.DefaultSortOrder;
         DefaultLayout = channel.DefaultLayout;
         IsForumChannel = true;
         return this;
+    }
+
+    public static CacheForumChannelModel? FromExisting(SocketForumChannel? channel)
+    {
+        if (channel == null)
+            return null;
+
+        var instance = new CacheForumChannelModel();
+        return instance.Update(channel);
     }
 }

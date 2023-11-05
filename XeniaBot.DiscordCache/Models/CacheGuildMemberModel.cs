@@ -32,11 +32,11 @@ public class CacheGuildMemberModel : CacheUserModel
         Roles = Array.Empty<CacheRole>();
     }
 
-    public new CacheGuildMemberModel FromExisting(SocketGuildUser? user)
+    public new CacheGuildMemberModel Update(SocketGuildUser? user)
     {
         if (user == null)
             return this;
-        base.FromExisting(user);
+        base.Update(user);
         this.GuildId = user.Guild.Id;
         this.Nickname = user.Nickname;
         this.GuildAvatarId = user.GuildAvatarId;
@@ -53,16 +53,20 @@ public class CacheGuildMemberModel : CacheUserModel
         this.IsPending = user.IsPending;
         this.Flags = user.Flags;
         this.JoinedAt = user.JoinedAt;
-        this.Roles = user.Roles?.Select(CacheRole.FromRole).ToArray() ?? Array.Empty<CacheRole>();
+        this.Roles = user.Roles
+            .Select(CacheRole.FromExisting)
+            .Where(v => v != null)
+            .Cast<CacheRole>()
+            .ToArray();
         this.VoiceChannelId = user.VoiceChannel?.Id;
         this.VoiceSessionId = user.VoiceSessionId;
-        this.VoiceState = CacheVoiceState.FromVoiceState(user.VoiceState);
+        this.VoiceState = CacheVoiceState.FromExisting(user.VoiceState);
         return this;
     }
-    public static CacheGuildMemberModel? FromGuildMember(SocketGuildUser? user)
+    public static CacheGuildMemberModel? FromExisting(SocketGuildUser? user)
     {
         if (user == null)
             return null;
-        return new CacheGuildMemberModel().FromExisting(user);
+        return new CacheGuildMemberModel().Update(user);
     }
 }

@@ -125,7 +125,7 @@ public class DiscordCacheController : BaseController
         if (!userConfig.EnableProfileTracking)
             return;
         var data = await CacheUserConfig.GetLatest(previous.Id);
-        var currentData = CacheUserModel.FromUser(current);
+        var currentData = CacheUserModel.FromExisting(current);
         await CacheUserConfig.Add(currentData);
         OnUserChange(
             CacheChangeType.Update,
@@ -164,7 +164,7 @@ public class DiscordCacheController : BaseController
         SocketGuildUser newMember)
     {
         var data = await CacheGuildMemberConfig.GetLatest(oldMember.Id);
-        var currentData = CacheGuildMemberModel.FromGuildMember(newMember);
+        var currentData = CacheGuildMemberModel.FromExisting(newMember);
         await CacheGuildMemberConfig.Add(currentData);
         OnGuildMemberChange(
             CacheChangeType.Update,
@@ -186,7 +186,7 @@ public class DiscordCacheController : BaseController
                     try
                     {
                         var forumData = await CacheForumChannelConfig.GetLatest(forumChannel.Id);
-                        var forumCurrentData = new CacheForumChannelModel().FromExisting(forumChannel);
+                        var forumCurrentData = new CacheForumChannelModel().Update(forumChannel);
                         await CacheForumChannelConfig.Add(forumCurrentData);
                         OnChannelChange(CacheChangeType.Update, forumCurrentData, forumData);
                     }
@@ -209,7 +209,7 @@ public class DiscordCacheController : BaseController
                     try
                     {
                         var voiceData = await CacheVoiceChannelConfig.GetLatest(voiceChannel.Id);
-                        var voiceCurrentData = new CacheVoiceChannelModel().FromExisting(voiceChannel);
+                        var voiceCurrentData = new CacheVoiceChannelModel().Update(voiceChannel);
                         await CacheVoiceChannelConfig.Add(voiceCurrentData);
                         OnChannelChange(CacheChangeType.Update, voiceCurrentData, voiceData);
                     }
@@ -232,13 +232,13 @@ public class DiscordCacheController : BaseController
                     try
                     {
                         var textData = await CacheTextChannelConfig.GetLatest(textChannel.Id);
-                        var textCurrentData = new CacheTextChannelModel().FromExisting(textChannel);
+                        var textCurrentData = new CacheTextChannelModel().Update(textChannel);
                         await CacheTextChannelConfig.Add(textCurrentData);
                         OnChannelChange(CacheChangeType.Update, textCurrentData, textData);
                     }
                     catch (Exception ex)
                     {
-                        var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
+                        var channelJson = JsonSerializer.Serialize(newChannel as ITextChannel, Program.SerializerOptions);
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
                             "Failed to process text channel in DiscordCacheController._client_ChannelUpdated",
@@ -266,7 +266,7 @@ public class DiscordCacheController : BaseController
                     try
                     {
                         var forumData = await CacheForumChannelConfig.GetLatest(forumChannel.Id);
-                        var forumCurrentData = new CacheForumChannelModel().FromExisting(forumChannel);
+                        var forumCurrentData = new CacheForumChannelModel().Update(forumChannel);
                         await CacheForumChannelConfig.Add(forumCurrentData);
                         OnChannelChange(CacheChangeType.Create, forumCurrentData, forumData);
                     }
@@ -289,7 +289,7 @@ public class DiscordCacheController : BaseController
                     try
                     {
                         var voiceData = await CacheVoiceChannelConfig.GetLatest(voiceChannel.Id);
-                        var voiceCurrentData = new CacheVoiceChannelModel().FromExisting(voiceChannel);
+                        var voiceCurrentData = new CacheVoiceChannelModel().Update(voiceChannel);
                         await CacheVoiceChannelConfig.Add(voiceCurrentData);
                         OnChannelChange(CacheChangeType.Create, voiceCurrentData, voiceData);
                     }
@@ -312,7 +312,7 @@ public class DiscordCacheController : BaseController
                     try
                     {
                         var textData = await CacheTextChannelConfig.GetLatest(textChannel.Id);
-                        var textCurrentData = new CacheTextChannelModel().FromExisting(textChannel);
+                        var textCurrentData = new CacheTextChannelModel().Update(textChannel);
                         await CacheTextChannelConfig.Add(textCurrentData);
                         OnChannelChange(CacheChangeType.Create, textCurrentData, textData);
                     }
@@ -337,7 +337,7 @@ public class DiscordCacheController : BaseController
     {
         try
         {
-            var data = CacheMessageModel.FromMessage(message);
+            var data = CacheMessageModel.FromExisting(message);
             if (message.Channel is SocketGuildChannel socketChannel)
                 data.GuildId = socketChannel.Id;
             await CacheMessageConfig.Add(data);
@@ -368,7 +368,7 @@ public class DiscordCacheController : BaseController
         try
         {
             // convert data to type that mongo can support
-            var data = CacheMessageModel.FromMessage(newMessage);
+            var data = CacheMessageModel.FromExisting(newMessage);
 
             // set guild if message was actually sent in a server (and not dms)
             if (channel is SocketGuildChannel { Guild: not null } socketChannel)

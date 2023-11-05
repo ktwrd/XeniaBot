@@ -12,7 +12,7 @@ public class CacheOverwritePermissions
         return new OverwritePermissions(this.AllowValue, this.DenyValue);
     }
 
-    public CacheOverwritePermissions FromOverwritePermissions(OverwritePermissions perm)
+    public CacheOverwritePermissions Update(OverwritePermissions perm)
     {
         this.AllowValue = perm.AllowValue;
         this.DenyValue = perm.DenyValue;
@@ -21,6 +21,6 @@ public class CacheOverwritePermissions
     public static CacheOverwritePermissions FromExisting(OverwritePermissions perm)
     {
         var instance = new CacheOverwritePermissions();
-        return instance.FromOverwritePermissions(perm);
+        return instance.Update(perm);
     }
 }

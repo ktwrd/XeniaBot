@@ -7,15 +7,21 @@ public class CacheMessageInteraction
     public ulong Id { get; set; }
     public InteractionType Type { get; set; }
     public string Name { get; set; }
-    public CacheUserModel User { get; set; }
+    public CacheUserModel? User { get; set; }
 
-    public static CacheMessageInteraction FromInteraction(IMessageInteraction interaction)
+    public CacheMessageInteraction Update(IMessageInteraction interaction)
     {
+        Id = interaction.Id;
+        Type = interaction.Type;
+        Name = interaction.Name;
+        User = CacheUserModel.FromExisting(interaction.User);
+        return this;
+    }
+    public static CacheMessageInteraction? FromExisting(IMessageInteraction? interaction)
+    {
+        if (interaction == null)
+            return null;
         var instance = new CacheMessageInteraction();
-        instance.Id = interaction.Id;
-        instance.Type = interaction.Type;
-        instance.Name = interaction.Name;
-        instance.User = CacheUserModel.FromUser(interaction.User);
-        return instance;
+        return instance.Update(interaction);
     }
 }

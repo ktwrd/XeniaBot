@@ -22,25 +22,25 @@ public class CacheChannelModel : DiscordCacheBaseModel
         Snowflake = channel.Id;
         CreatedAt = channel.CreatedAt;
         if (channel is SocketDMChannel dmChannel)
-            DMChannel = new CacheDmChannelModel().FromExisting(dmChannel);
+            DMChannel = CacheDmChannelModel.FromExisting(dmChannel);
         if (channel is SocketForumChannel forumChannel)
-            ForumChannel = new CacheForumChannelModel().FromExisting(forumChannel);
+            ForumChannel = CacheForumChannelModel.FromExisting(forumChannel);
         if (channel is SocketGroupChannel groupChannel)
-            GroupChannel = new CacheGroupChannelModel().FromExisting(groupChannel);
+            GroupChannel = CacheGroupChannelModel.FromExisting(groupChannel);
 
         if (channel is SocketStageChannel stageChannel)
-            StageChannel = new CacheStageChannelModel().FromExisting(stageChannel);
+            StageChannel =  CacheStageChannelModel.FromExisting(stageChannel);
         if (channel is SocketVoiceChannel voiceChannel)
-            VoiceChannel = new CacheVoiceChannelModel().FromExisting(voiceChannel);
+            VoiceChannel =  CacheVoiceChannelModel.FromExisting(voiceChannel);
         if (channel is SocketNewsChannel newsChannel)
-            NewsChannel = new CacheTextChannelModel().FromExisting(newsChannel);
+            NewsChannel =  CacheTextChannelModel.FromExisting(newsChannel);
         if (channel is SocketThreadChannel threadChannel)
-            ThreadChannel = new CacheThreadChannelModel().FromExisting(threadChannel);
+            ThreadChannel =  CacheThreadChannelModel.FromExisting(threadChannel);
         if (channel is SocketTextChannel textChannel)
-            TextChannel = new CacheTextChannelModel().FromExisting(textChannel);
+            TextChannel =  CacheTextChannelModel.FromExisting(textChannel);
 
         
         if (channel is SocketGuildChannel guildChannel)
-            GuildChannel = new CacheGuildChannelModel().FromExisting(guildChannel);
+            GuildChannel = CacheGuildChannelModel.FromExisting(guildChannel);
     }
 }

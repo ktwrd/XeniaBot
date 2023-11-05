@@ -8,7 +8,7 @@ public class CacheOverwrite
     public PermissionTarget TargetType { get; set; }
     public CacheOverwritePermissions Permissions { get; set; }
 
-    public CacheOverwrite FromOverwrite(Overwrite overwrite)
+    public CacheOverwrite Update(Overwrite overwrite)
     {
         this.TargetId = overwrite.TargetId;
         this.TargetType = overwrite.TargetType;
@@ -18,6 +18,6 @@ public class CacheOverwrite
     public static CacheOverwrite FromExisting(Overwrite overwrite)
     {
         var instance = new CacheOverwrite();
-        return instance.FromOverwrite(overwrite);
+        return instance.Update(overwrite);
     }
 }

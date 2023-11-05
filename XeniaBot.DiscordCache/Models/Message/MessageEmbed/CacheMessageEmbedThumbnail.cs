@@ -1,4 +1,6 @@
-﻿namespace XeniaBot.DiscordCache.Models;
+﻿using Discord;
+
+namespace XeniaBot.DiscordCache.Models;
 
 public class CacheMessageEmbedThumbnail
 {
@@ -11,5 +13,26 @@ public class CacheMessageEmbedThumbnail
     {
         Url = "";
         ProxyUrl = "";
+    }
+
+    public CacheMessageEmbedThumbnail Update(EmbedThumbnail? thumbnail)
+    {
+        var t = thumbnail.GetValueOrDefault();
+        if (t == null)
+            return this;
+
+        this.Url = t.Url;
+        this.ProxyUrl = t.ProxyUrl;
+        this.Height = t.Height;
+        this.Width = t.Width;
+        return this;
+    }
+    public static CacheMessageEmbedThumbnail? FromExisting(EmbedThumbnail? thumbnail)
+    {
+        if (thumbnail == null)
+            return null;
+
+        var instance = new CacheMessageEmbedThumbnail();
+        return instance.Update(thumbnail);
     }
 }

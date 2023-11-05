@@ -9,13 +9,22 @@ public class CacheGroupChannelModel : CacheBaseChannel
     public ulong[] UserIds { get; set; }
     public ulong[] RecipientIds { get; set; }
 
-    public CacheGroupChannelModel FromExisting(SocketGroupChannel channel)
+    public CacheGroupChannelModel Update(SocketGroupChannel channel)
     {
-        base.FromExisting(channel);
+        base.Update(channel);
         Name = channel.Name;
         RTCRegion = channel.RTCRegion;
         UserIds = channel.Users.Select(v => v.Id).ToArray();
         RecipientIds = channel.Recipients.Select(v => v.Id).ToArray();
         return this;
+    }
+
+    public static CacheGroupChannelModel? FromExisting(SocketGroupChannel? channel)
+    {
+        if (channel == null)
+            return null;
+
+        var instance = new CacheGroupChannelModel();
+        return instance.Update(channel);
     }
 }

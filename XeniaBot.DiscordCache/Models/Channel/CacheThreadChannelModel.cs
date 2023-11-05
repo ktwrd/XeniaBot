@@ -21,9 +21,9 @@ public class CacheThreadChannelModel : CacheTextChannelModel
     public DateTimeOffset CreatedAt { get; set; }
     public ulong[] UserIds { get; set; }
 
-    public CacheThreadChannelModel FromExisting(SocketThreadChannel channel)
+    public new CacheThreadChannelModel Update(SocketThreadChannel channel)
     {
-        base.FromExisting(channel);
+        base.Update(channel);
         Type = channel.Type;
         OwnerId = channel.Owner.Id;
         HasJoined = channel.HasJoined;
@@ -40,5 +40,14 @@ public class CacheThreadChannelModel : CacheTextChannelModel
         CreatedAt = channel.CreatedAt;
         UserIds = channel.Users.Select(v => v.Id).ToArray();
         return this;
+    }
+
+    public static CacheThreadChannelModel? FromExisting(SocketThreadChannel? channel)
+    {
+        if (channel == null)
+            return null;
+
+        var instance = new CacheThreadChannelModel();
+        return instance.Update(channel);
     }
 }

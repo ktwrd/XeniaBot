@@ -6,14 +6,16 @@ namespace XeniaBot.DiscordCache.Models;
 public class CacheGuildChannelModel : CacheBaseChannel
 {
     public CacheGuildModel Guild { get; set; }
+    public ulong GuildId { get; set; }
     public string Name { get; set; }
     public int Position { get; set; }
     public ChannelFlags Flags { get; set; }
     public CacheOverwrite[] PermissionOverwrites { get; set; }
-    public CacheGuildChannelModel FromExisting(SocketGuildChannel channel)
+    public CacheGuildChannelModel Update(SocketGuildChannel channel)
     {
-        base.FromExisting(channel);
+        base.Update(channel);
         Guild = new CacheGuildModel().FromExisting(channel.Guild);
+        GuildId = channel.Guild.Id;
         Name = channel.Name;
         Position = channel.Position;
         Flags = channel.Flags;
@@ -28,5 +30,14 @@ public class CacheGuildChannelModel : CacheBaseChannel
         
         IsGuildChannel = true;
         return this;
+    }
+
+    public static CacheGuildChannelModel? FromExisting(SocketGuildChannel? channel)
+    {
+        if (channel == null)
+            return null;
+
+        var instance = new CacheGuildChannelModel();
+        return instance.Update(channel);
     }
 }

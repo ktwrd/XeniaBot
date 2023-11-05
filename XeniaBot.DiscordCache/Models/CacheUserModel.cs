@@ -40,7 +40,7 @@ public class CacheUserModel
         Activities = Array.Empty<CacheUserActivity>();
     }
 
-    public new CacheUserModel FromExisting(IUser? user)
+    public new CacheUserModel Update(IUser user)
     {
         this.Snowflake = user.Id;
         this.CreatedAt = user.CreatedAt;
@@ -54,13 +54,18 @@ public class CacheUserModel
         this.Mention = user.Mention;
         this.Status = user.Status;
         this.ActiveClients = user.ActiveClients.ToArray();
-        this.Activities = DiscordCacheHelper.ForceTypeCast<IReadOnlyCollection<IActivity>, CacheUserActivity[]>(user.Activities) ?? Array.Empty<CacheUserActivity>();
+        this.Activities = user.Activities
+            .Select(CacheUserActivity.FromExisting)
+            .Where(v => v != null)
+            .Cast<CacheUserActivity>().ToArray();
         return this;
     }
-    public static CacheUserModel? FromUser(IUser? user)
+    public static CacheUserModel? FromExisting(IUser? user)
     {
         if (user == null)
             return null;
-        return new CacheUserModel().FromExisting(user);
+
+        var instance = new CacheUserModel();
+        return instance.Update(user);
     }
 }

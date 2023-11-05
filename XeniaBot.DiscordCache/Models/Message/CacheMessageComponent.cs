@@ -11,4 +11,20 @@ public class CacheMessageComponent : IMessageComponent
     {
         CustomId = "";
     }
+
+    public CacheMessageComponent Update(IMessageComponent component)
+    {
+        Type = component.Type;
+        CustomId = component.CustomId;
+        return this;
+    }
+
+    public static CacheMessageComponent? FromExisting(IMessageComponent? component)
+    {
+        if (component == null)
+            return null;
+
+        var instance = new CacheMessageComponent();
+        return instance.Update(component);
+    }
 }
