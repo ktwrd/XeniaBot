@@ -4,8 +4,12 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheEmote
 {
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
+    public CacheEmote()
+    {
+        Name = null;
+    }
     public static CacheEmote? FromExisting(IEmote? emote)
     {
         if (emote == null)
