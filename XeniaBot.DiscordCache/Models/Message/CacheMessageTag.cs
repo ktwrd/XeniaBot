@@ -16,7 +16,19 @@ public class CacheMessageTag : ITag
         Length = tag.Length;
         Type = tag.Type;
         Key = tag.Key;
-        Value = tag.Value;
+        if (tag.Value is Discord.Emote discEmote)
+        {
+            Value = CacheEmote.FromExisting(discEmote);
+        }
+        else if (tag.Type == TagType.UserMention)
+        {
+            if (tag.Value is IUser user)
+                Value = CacheUserModel.FromExisting(user);
+        }
+        else
+        {
+            Value = null;
+        }
         return this;
     }
 
