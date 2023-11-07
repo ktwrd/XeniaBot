@@ -65,9 +65,10 @@
                 </div>
             </td>
             <td>
-                @await Component.InvokeAsync("EmbedViewer", new EmbedViewerModel()
+                @await Component.InvokeAsync("EmbedViewer", new EmbedViewerModel("greeter_goodbye_settings")
                 {
-                    Id = "greeter_goodbye_settings"
+                    ShowExportButton = true,
+                    ShowImportButton = true
                 })
             </td>
         </tr>
