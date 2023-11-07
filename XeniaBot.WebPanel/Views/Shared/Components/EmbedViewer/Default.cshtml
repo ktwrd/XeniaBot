@@ -1,26 +1,37 @@
 ﻿@model EmbedViewerModel
 
 
+@if (@Model.ShowExportButton)
+{
+    <input type="button" value="Export" id="export-embed" discord-embed-group-id="@Model.Id" class="btn btn-primary my-1 mr-3" style="display: inline" />
+}
+@if (@Model.ShowImportButton)
+{
+    <div style="display: inline">
+        <input type="file" id="import-embed-ghost" discord-embed-group-id="@Model.Id" class="display-none" />
+        <input type="button" value="Import" id="import-embed" discord-embed-group-id="@Model.Id" class="btn btn-primary my-1 mr-3 d-inline" style="display: inline" />
+    </div>
+}
+
 <div class="discord-embed discord-embed-message" discord-embed-group-id="@Model.Id">
     <div class="discord-embed-content">
         <div class="discord-embed-author">
             <img class="discord-embed-author-img" discord-embed-group-id="@Model.Id" discord-embed-field="author-img" />
-            <span discord-embed-group-id="@Model.Id" discord-embed-field="author-text" />
+            <span discord-embed-group-id="@Model.Id" discord-embed-field="author-text"></span>
         </div>
         <div class="discord-embed-title" discord-embed-group-id="@Model.Id" discord-embed-field="title"></div>
         <div class="discord-embed-description" discord-embed-group-id="@Model.Id" discord-embed-field="description"></div>
         <div class="discord-embed-image">
-            <img discord-embed-group-id="@Model.Id" discord-embed-field="image"/>
+            <img discord-embed-group-id="@Model.Id" discord-embed-field="image" />
         </div>
         <div class="discord-embed-footer">
-            <img class="discord-embed-footer-img" discord-embed-group-id="@Model.Id" discord-embed-field="footer-img"/>
+            <img class="discord-embed-footer-img" discord-embed-group-id="@Model.Id" discord-embed-field="footer-img" />
             <span discord-embed-group-id="@Model.Id" discord-embed-field="footer-text"></span>
         </div>
     </div>
     <div class="discord-embed-thumbnail">
         <img discord-embed-group-id="@Model.Id" discord-embed-field="thumbnail" />
     </div>
-
 </div>
 
 <style>
@@ -142,6 +153,87 @@ function stringReplace(content, itemType)
             return content;
     }
 }
+const allowedDataKeys = [
+    'title',
+    'description',
+    'image',
+    'thumbnail',
+    'footer-text',
+    'footer-img',
+    'author-text',
+    'author-img',
+    'color'   
+]
+function downloadFile(content, fileName){
+    let blobContent = new Blob([content], {type: 'text/plain'})
+    const aElement = document.createElement('a');
+    aElement.setAttribute('download', fileName);
+    const href = URL.createObjectURL(blobContent);
+    aElement.href = href;
+    aElement.setAttribute('target', '_blank');
+    aElement.click();
+    URL.revokeObjectURL(href);
+}
+document.querySelector(`input[type=button][discord-embed-group-id=${targetEmbedId}][id=import-embed]`).addEventListener('click', () =>
+{
+    document.querySelector(`input[type=file][discord-embed-group-id=${targetEmbedId}][id=import-embed-ghost]`).onchange = async (event) =>
+    {
+        if (event.target.files.length < 1)
+        {
+            alert('No files selected')
+            return
+        }
+        let didParseFile = false
+        for (let item of event.target.files)
+        {
+            if (item.name.endsWith('.json'))
+            {
+                try
+                {
+                    let text = await item.text()
+                    let parsed = JSON.parse(text)
+                    for (let item of Object.entries(parsed))
+                    {
+                        let key = item[0]
+                        if (allowedDataKeys.includes(key))
+                        {
+                            document.querySelector(`[embed-id=${targetEmbedId}][embed-field=${key}]`).value = item[1]
+                            console.debug(`Set [embed-id=${targetEmbedId}][embed-field=${key}] to `, item[1])
+                        }
+                        else
+                        {
+                            console.warn(`Invalid key '${key}' when parsing embed JSON for import. Ignoring`)
+                        }
+                    }
+                    didParseFile = true
+                }
+                catch (e)
+                {
+                    alert(`Failed to read file! (check console)`)
+                    console.error(`Failed to read/parse embed JSON`, e)
+                }
+            }
+        }
+        if (didParseFile)
+            alert('Done!')
+    }
+    document.querySelector(`input[type=file][discord-embed-group-id=${targetEmbedId}][id=import-embed-ghost]`).click()
+})
+document.querySelector(`input[type=button][discord-embed-group-id=${targetEmbedId}][id=export-embed]`).addEventListener('click', () =>
+{
+    var resultData = {}
+    for (var item of document.querySelectorAll(`[embed-id=${targetEmbedId}`))
+    {
+        const sourceItemField = item.attributes['embed-field'].value
+        console.log(sourceItemField, item.value);
+        if (allowedDataKeys.includes(sourceItemField))
+        {
+            resultData[sourceItemField] = item.value
+        }
+    }
+    downloadFile(JSON.stringify(resultData, null, '    '), 'embed.json')
+    alert('Exported!')
+})
 document.querySelectorAll(`[embed-id=${targetEmbedId}]`).forEach((si) => 
 {
     const sourceItemField = si.attributes['embed-field'].value
