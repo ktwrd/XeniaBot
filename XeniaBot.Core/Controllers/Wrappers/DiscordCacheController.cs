@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using XeniaBot.DiscordCache.Helpers;
 using Discord;
@@ -192,7 +193,12 @@ public class DiscordCacheController : BaseController
                     }
                     catch (Exception ex)
                     {
-                        var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
+                        var channelJson = JsonSerializer.Serialize(newChannel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
                             "Failed to process forum channel in DiscordCacheController._client_ChannelUpdated",
@@ -215,7 +221,12 @@ public class DiscordCacheController : BaseController
                     }
                     catch (Exception ex)
                     {
-                        var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
+                        var channelJson = JsonSerializer.Serialize(newChannel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
                             "Failed to process voice channel in DiscordCacheController._client_ChannelUpdated",
@@ -238,7 +249,12 @@ public class DiscordCacheController : BaseController
                     }
                     catch (Exception ex)
                     {
-                        var channelJson = JsonSerializer.Serialize(newChannel as ITextChannel, Program.SerializerOptions);
+                        var channelJson = JsonSerializer.Serialize(newChannel as ITextChannel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
                             "Failed to process text channel in DiscordCacheController._client_ChannelUpdated",
@@ -272,7 +288,12 @@ public class DiscordCacheController : BaseController
                     }
                     catch (Exception ex)
                     {
-                        var channelJson = JsonSerializer.Serialize(guildChannel, Program.SerializerOptions);
+                        var channelJson = JsonSerializer.Serialize(guildChannel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
                             "Failed to process forum channel in DiscordCacheController._client_ChannelCreated",
@@ -295,7 +316,12 @@ public class DiscordCacheController : BaseController
                     }
                     catch (Exception ex)
                     {
-                        var channelJson = JsonSerializer.Serialize(guildChannel, Program.SerializerOptions);
+                        var channelJson = JsonSerializer.Serialize(guildChannel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
                             "Failed to process voice channel in DiscordCacheController._client_ChannelCreated",
@@ -318,7 +344,12 @@ public class DiscordCacheController : BaseController
                     }
                     catch (Exception ex)
                     {
-                        var channelJson = JsonSerializer.Serialize(guildChannel, Program.SerializerOptions);
+                        var channelJson = JsonSerializer.Serialize(guildChannel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
                             "Failed to process text channel in DiscordCacheController._client_ChannelCreated",
@@ -348,7 +379,12 @@ public class DiscordCacheController : BaseController
         }
         catch (Exception ex)
         {
-            var msgJson = JsonSerializer.Serialize(message, Program.SerializerOptions);
+            var msgJson = JsonSerializer.Serialize(message, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
             await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
             {
                 "Failed to run DiscordCacheController._client_MessageUpdated\n",
@@ -387,8 +423,18 @@ public class DiscordCacheController : BaseController
         }
         catch (Exception ex)
         {
-            var msgJson = JsonSerializer.Serialize(newMessage, Program.SerializerOptions);
-            var channelJson = JsonSerializer.Serialize(channel, Program.SerializerOptions);
+            var msgJson = JsonSerializer.Serialize(newMessage, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
+            var channelJson = JsonSerializer.Serialize(channel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
             await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
             {
                 "Failed to run DiscordCacheController._client_MessageUpdated\n",
@@ -424,8 +470,18 @@ public class DiscordCacheController : BaseController
         }
         catch (Exception ex)
         {
-            var msgJson = JsonSerializer.Serialize(message, Program.SerializerOptions);
-            var channelJson = JsonSerializer.Serialize(channel, Program.SerializerOptions);
+            var msgJson = JsonSerializer.Serialize(message, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
+            var channelJson = JsonSerializer.Serialize(channel, new JsonSerializerOptions()
+            {
+                IncludeFields = true,
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve,
+            });
             await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
             {
                 "Failed to run DiscordCacheController._client_MessageDeleted\n",
