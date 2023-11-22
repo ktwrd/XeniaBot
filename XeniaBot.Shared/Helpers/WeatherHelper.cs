@@ -77,7 +77,7 @@ namespace XeniaBot.Shared.Helpers
             {
                 return new ValidateResponseResult(false, FetchErrorDescription(result.Error), result.Error.Code);
             }
-            else if (result.Current != null && matchCurrent)
+            else if (result.Current == null && matchCurrent)
             {
                 return new ValidateResponseResult(false, "Current weather data missing");
             }
