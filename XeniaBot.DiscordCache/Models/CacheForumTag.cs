@@ -5,7 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheForumTag
 {
-    public ulong Id { get; set; }
+    public ulong ForumTagId { get; set; }
     public string Name { get; set; }
     public CacheEmote? Emoji { get; set; }
     public bool IsModerated { get; set; }
@@ -13,7 +13,7 @@ public class CacheForumTag
 
     public CacheForumTag Update(ForumTag tag)
     {
-        Id = tag.Id;
+        ForumTagId = tag.Id;
         Name = tag.Name;
         Emoji = CacheEmote.FromExisting(tag.Emoji);
         IsModerated = tag.IsModerated;

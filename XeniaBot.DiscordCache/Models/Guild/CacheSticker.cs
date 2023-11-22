@@ -4,7 +4,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheSticker : CacheStickerItem
 {
-    public ulong Id { get; set; }
+    public ulong StickerId { get; set; }
     public ulong PackId { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
@@ -16,7 +16,7 @@ public class CacheSticker : CacheStickerItem
     public CacheSticker Update(ISticker sticker)
     {
         base.Update(sticker);
-        Id = sticker.Id;
+        StickerId = sticker.Id;
         PackId = sticker.PackId;
         Name = sticker.Name;
         Description = sticker.Description;

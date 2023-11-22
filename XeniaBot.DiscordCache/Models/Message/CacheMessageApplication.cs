@@ -4,7 +4,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheMessageApplication
 {
-    public ulong Id { get; set; }
+    public ulong MessageApplicationId { get; set; }
     public string? CoverImage { get; set; }
     public string? Description { get; set; }
     public string? Icon { get; set; }
@@ -13,7 +13,7 @@ public class CacheMessageApplication
 
     public CacheMessageApplication Update(MessageApplication app)
     {
-        Id = app.Id;
+        MessageApplicationId = app.Id;
         CoverImage = app.CoverImage;
         Description = app.Description;
         Icon = app.Icon;
