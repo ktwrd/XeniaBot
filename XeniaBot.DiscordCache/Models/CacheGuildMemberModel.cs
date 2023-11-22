@@ -10,7 +10,7 @@ public class CacheGuildMemberModel : CacheUserModel
     public string? Nickname { get; set; }
     public string DisplayAvatarId => GuildAvatarId ?? AvatarId;
     public string? GuildAvatarId { get; set; }
-    public GuildPermissions GuildPermissions { get; set; }
+    public CacheGuildPermissions GuildPermissions { get; set; }
     public bool IsSelfDeafened { get; set; }
     public bool IsSelfMuted { get; set; }
     public bool IsSuppressed { get; set; }
@@ -40,7 +40,7 @@ public class CacheGuildMemberModel : CacheUserModel
         this.GuildId = user.Guild.Id;
         this.Nickname = user.Nickname;
         this.GuildAvatarId = user.GuildAvatarId;
-        this.GuildPermissions = user.GuildPermissions;
+        this.GuildPermissions = new CacheGuildPermissions(user.GuildPermissions);
         this.IsWebhook = user.IsWebhook;
         this.IsSelfDeafened = user.IsSelfDeafened;
         this.IsSelfMuted = user.IsSelfMuted;
