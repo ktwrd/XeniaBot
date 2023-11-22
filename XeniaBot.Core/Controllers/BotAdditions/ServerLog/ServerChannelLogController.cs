@@ -67,8 +67,8 @@ public class ServerChannelLogController : BaseController
 
         bool previousNsfw = false;
         bool currentNsfw = false;
-        string previousTopic = "";
-        string currentTopic = "";
+        string? previousTopic = null;
+        string? currentTopic = null;
         ulong? previousCategory = null;
         ulong? currentCategory = null;
         CacheOverwrite[] currentOverwrite = Array.Empty<CacheOverwrite>();
@@ -95,8 +95,8 @@ public class ServerChannelLogController : BaseController
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel NSFW State changed")
                 .WithDescription($"<#{current.Snowflake}> set to `{currentNsfw}` from `{previousNsfw}`")
-                .AddField("Previous", previousTopic)
-                .AddField("Current", currentTopic)
+                .AddField("Previous", previousTopic ?? "<empty>")
+                .AddField("Current", currentTopic ?? "<empty>")
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
@@ -106,8 +106,8 @@ public class ServerChannelLogController : BaseController
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel Topic changed")
                 .WithDescription($"<#{current.Snowflake}>")
-                .AddField("Previous", previousTopic)
-                .AddField("Current", currentTopic)
+                .AddField("Previous", previousTopic ?? "<empty>")
+                .AddField("Current", currentTopic ?? "<empty>")
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
