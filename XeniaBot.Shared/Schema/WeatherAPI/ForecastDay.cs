@@ -94,7 +94,7 @@ namespace XeniaBot.Shared.Schema.WeatherAPI
         [JsonPropertyName("moon_phase")]
         public string MoonPhase = "00:00 AM";
         [JsonPropertyName("moon_illumination")]
-        public string MoonIllumination = "00:00 AM";
+        public int MoonIllumination = 0;
         [JsonPropertyName("is_moon_up")]
         public int IsMoonUpValue = 0;
         [JsonPropertyName("is_sun_up")]
