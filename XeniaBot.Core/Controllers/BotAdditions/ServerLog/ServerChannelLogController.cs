@@ -95,14 +95,18 @@ public class ServerChannelLogController : BaseController
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel NSFW State changed")
                 .WithDescription($"<#{current.Snowflake}> set to `{currentNsfw}` from `{previousNsfw}`")
-                .AddField("Previous", previousTopic ?? "<empty>")
-                .AddField("Current", currentTopic ?? "<empty>")
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
 
         if (currentTopic != previousTopic)
         {
+            previousTopic ??= "";
+            previousTopic = previousTopic.Length > 0 ? $"`{previousTopic}`" : "<empty>";
+            
+            currentTopic ??= "";
+            currentTopic = currentTopic.Length > 0 ? $"`{currentTopic}`" : "<empty>";
+            
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel Topic changed")
                 .WithDescription($"<#{current.Snowflake}>")
