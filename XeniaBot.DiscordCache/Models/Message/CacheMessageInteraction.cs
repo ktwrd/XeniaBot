@@ -4,14 +4,14 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheMessageInteraction
 {
-    public ulong Id { get; set; }
+    public ulong MessageInteractionId { get; set; }
     public InteractionType Type { get; set; }
     public string Name { get; set; }
     public CacheUserModel? User { get; set; }
 
     public CacheMessageInteraction Update(IMessageInteraction interaction)
     {
-        Id = interaction.Id;
+        MessageInteractionId = interaction.Id;
         Type = interaction.Type;
         Name = interaction.Name;
         User = CacheUserModel.FromExisting(interaction.User);

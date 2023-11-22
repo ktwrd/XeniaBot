@@ -2,15 +2,18 @@
 
 namespace XeniaBot.DiscordCache.Models;
 
-public class CacheStickerItem : IStickerItem
+/// <summary>
+/// Note: Unable to directly implement <see cref="IStickerItem"/> since the Id field clashes with MongoDB
+/// </summary>
+public class CacheStickerItem
 {
-    public ulong Id { get; set; }
+    public ulong StickerId { get; set; }
     public string Name { get; set; }
     public StickerFormatType Format { get; set; }
 
     public CacheStickerItem Update(IStickerItem sticker)
     {
-        Id = sticker.Id;
+        StickerId = sticker.Id;
         Name = sticker.Name;
         Format = sticker.Format;
         return this;
