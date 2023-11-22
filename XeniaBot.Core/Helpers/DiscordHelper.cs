@@ -189,19 +189,30 @@ namespace XeniaBot.Core.Helpers
                 }),
                 Color = Color.Red
             };
-
-            embed.AddField("Stack Trace", $"```\n{stack}\n```");
+            
+            bool attachStack = stack.Length > 1000;
+            if (!attachStack)
+                embed.AddField("Stack Trace", $"```\n{stack}\n```");
+            
             if (message != null)
                 embed.AddField("Message Content", $"```\n{message.Content}\n```");
 
-            await client
-                .GetGuild(Program.ConfigData.ErrorGuild)
-                .GetTextChannel(Program.ConfigData.ErrorChannel)
-                .SendFileAsync(
-                    stream: new MemoryStream(Encoding.UTF8.GetBytes(response.ToString())),
-                    filename: "exception.txt",
-                    text: "",
-                    embeds: new Embed[] { embed.Build() });
+            var errGuild = client.GetGuild(Program.ConfigData.ErrorGuild);
+            var errChannel = errGuild.GetTextChannel(Program.ConfigData.ErrorChannel);
+            
+            var attachments = new List<FileAttachment>();
+            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(response.ToString())))
+            {
+                attachments.Add(new FileAttachment(ms, "exception.txt"));
+            }
+
+            if (attachStack)
+            {
+                using var ms = new MemoryStream(Encoding.UTF8.GetBytes(stack));
+                attachments.Add(new FileAttachment(ms, "stack.txt"));
+            }
+
+            await errChannel.SendFilesAsync(attachments: attachments, text: "", embed: embed.Build());
         }
         public static async Task ReportError(Exception exception, string extraText = "")
         {
@@ -213,7 +224,7 @@ namespace XeniaBot.Core.Helpers
             {
                 Title = "Uncaught Exception"
             };
-            if (targetContent.Length > 2000)
+            if (targetContent.Length > 1000)
             {
                 embed.WithDescription("Exception is attached to this message.");
             }
