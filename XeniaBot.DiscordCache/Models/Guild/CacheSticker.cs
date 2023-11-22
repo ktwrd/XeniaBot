@@ -4,13 +4,13 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheSticker : CacheStickerItem
 {
-    public ulong StickerId { get; set; }
+    public new ulong StickerId { get; set; }
     public ulong PackId { get; set; }
-    public string Name { get; set; }
+    public new string Name { get; set; }
     public string Description { get; set; }
     public string[] Tags { get; set; }
     public StickerType Type { get; set; }
-    public StickerFormatType Format { get; set; }
+    public new StickerFormatType Format { get; set; }
     public bool? IsAvailable { get; set; }
     public int? SortOrder { get; set; }
     public CacheSticker Update(ISticker sticker)
