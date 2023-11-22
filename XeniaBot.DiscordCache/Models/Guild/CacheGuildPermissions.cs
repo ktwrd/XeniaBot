@@ -11,7 +11,7 @@ public class CacheGuildPermissions
     /// <summary> Gets a <see cref="T:Discord.GuildPermissions" /> that grants all guild permissions. </summary>
     public static readonly CacheGuildPermissions All = new CacheGuildPermissions(ulong.MaxValue);
     
-    public ulong RawValue { get; set; }
+    public string RawValue { get; set; }
 
     public CacheGuildPermissions()
         : this(0)
@@ -20,13 +20,13 @@ public class CacheGuildPermissions
 
     public CacheGuildPermissions(ulong rawValue)
     {
-        RawValue = rawValue;
+        RawValue = rawValue.ToString();
     }
     public CacheGuildPermissions(GuildPermissions gp)
         : this(gp.RawValue)
     {}
     public GuildPermissions ToGuildPermissions()
     {
-        return new GuildPermissions(RawValue);
+        return new GuildPermissions(ulong.Parse(RawValue));
     }
 }
