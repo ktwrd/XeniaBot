@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -35,7 +36,8 @@ public static class Program
         IgnoreReadOnlyFields = true,
         IgnoreReadOnlyProperties = true,
         IncludeFields = true,
-        WriteIndented = true
+        WriteIndented = true,
+        ReferenceHandler = ReferenceHandler.Preserve
     };
     /// <summary>
     /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>

@@ -17,6 +17,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
@@ -45,7 +46,8 @@ namespace XeniaBot.Core
             IgnoreReadOnlyFields = true,
             IgnoreReadOnlyProperties = true,
             IncludeFields = true,
-            WriteIndented = true
+            WriteIndented = true,
+            ReferenceHandler = ReferenceHandler.Preserve
         };
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>

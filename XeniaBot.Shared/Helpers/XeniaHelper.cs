@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
@@ -13,7 +14,8 @@ public static class XeniaHelper
         IgnoreReadOnlyFields = true,
         IgnoreReadOnlyProperties = true,
         IncludeFields = true,
-        WriteIndented = true
+        WriteIndented = true,
+        ReferenceHandler = ReferenceHandler.Preserve
     };
 
     /// <summary>

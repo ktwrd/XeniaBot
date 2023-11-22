@@ -73,7 +73,8 @@ namespace XeniaBot.Shared
                     {
                         IncludeFields = true,
                         IgnoreReadOnlyFields = true,
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                        ReferenceHandler = ReferenceHandler.Preserve
                     });
                 request.Content = new StringContent(ser, null, "application/json");
                 var client = new HttpClient();
