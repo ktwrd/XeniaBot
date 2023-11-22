@@ -13,10 +13,9 @@ public class CacheSticker : CacheStickerItem
     public StickerFormatType Format { get; set; }
     public bool? IsAvailable { get; set; }
     public int? SortOrder { get; set; }
-
-    public CacheSticker FromExisting(ISticker sticker)
+    public CacheSticker Update(ISticker sticker)
     {
-        base.FromExisting(sticker);
+        base.Update(sticker);
         Id = sticker.Id;
         PackId = sticker.PackId;
         Name = sticker.Name;
@@ -27,5 +26,13 @@ public class CacheSticker : CacheStickerItem
         IsAvailable = sticker.IsAvailable;
         SortOrder = sticker.SortOrder;
         return this;
+    }
+    public static CacheSticker? FromExisting(ISticker? sticker)
+    {
+        if (sticker == null)
+            return null;
+
+        var instance = new CacheSticker();
+        return instance.Update(sticker);
     }
 }

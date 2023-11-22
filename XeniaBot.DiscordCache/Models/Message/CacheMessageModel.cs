@@ -57,48 +57,55 @@ public class CacheMessageModel : DiscordCacheBaseModel
         return DiscordCacheHelper.ForceTypeCast<CacheMessageModel, CacheMessageModel>(this);
     }
 
-    public static CacheMessageModel FromMessage(IMessage message)
+    public CacheMessageModel Update(IMessage message)
     {
-        var instance = new CacheMessageModel();
-        instance.Content = message.Content;
-        instance.Timestamp = message.Timestamp;
-        instance.EditedTimestamp = message.EditedTimestamp;
-        instance.Embeds = message.Embeds.Select(DiscordCacheHelper.ForceTypeCast<IEmbed, CacheMessageEmbed>)
+        this.Content = message.Content;
+        this.Timestamp = message.Timestamp;
+        this.EditedTimestamp = message.EditedTimestamp;
+        this.Embeds = message.Embeds.Select(CacheMessageEmbed.FromExisting)
             .Where(v => v != null)
             .Cast<CacheMessageEmbed>()
             .ToArray();
-        instance.Tags = message.Tags.Select(DiscordCacheHelper.ForceTypeCast<ITag, CacheMessageTag>)
+        this.Tags = message.Tags.Select(CacheMessageTag.FromExisting)
             .Where(v => v != null)
             .Cast<CacheMessageTag>()
             .ToArray();
-        instance.Source = message.Source;
-        instance.IsTTS = message.IsTTS;
-        instance.Pinned = message.IsPinned;
-        instance.IsSuppressed = message.IsSuppressed;
-        instance.MentionedEveryone = message.MentionedEveryone;
-        instance.MentionedChannelIds = message.MentionedChannelIds.ToArray();
-        instance.MentionedRoleIds = message.MentionedRoleIds.ToArray();
-        instance.MentionedUserIds = message.MentionedUserIds.ToArray();
-        instance.Activity = DiscordCacheHelper.ForceTypeCast<MessageActivity, CacheMessageActivity>(message.Activity);
-        instance.Application = DiscordCacheHelper.ForceTypeCast<MessageApplication, CacheMessageApplication>(message.Application);
-        instance.Reference = CacheMessageReference.FromMessageReference(message.Reference);
-        instance.Components = message.Components
-                .Select(DiscordCacheHelper.ForceTypeCast<IMessageComponent, CacheMessageComponent>)
+        this.Source = message.Source;
+        this.IsTTS = message.IsTTS;
+        this.Pinned = message.IsPinned;
+        this.IsSuppressed = message.IsSuppressed;
+        this.MentionedEveryone = message.MentionedEveryone;
+        this.MentionedChannelIds = message.MentionedChannelIds.ToArray();
+        this.MentionedRoleIds = message.MentionedRoleIds.ToArray();
+        this.MentionedUserIds = message.MentionedUserIds.ToArray();
+        this.Activity = CacheMessageActivity.FromExisting(message.Activity);
+        this.Application = CacheMessageApplication.FromExisting(message.Application);
+        this.Reference = CacheMessageReference.FromExisting(message.Reference);
+        this.Components = message.Components
+                .Select(CacheMessageComponent.FromExisting)
                 .Where(v => v != null)
                 .Cast<CacheMessageComponent>()
                 .ToArray();
-        instance.Stickers = message.Stickers
-            .Select(DiscordCacheHelper.ForceTypeCast<IStickerItem, CacheStickerItem>)
+        this.Stickers = message.Stickers
+            .Select(CacheStickerItem.FromExisting)
             .Where(v => v != null)
             .Cast<CacheStickerItem>()
             .ToArray();
-        instance.Flags = message.Flags;
-        instance.Interaction = DiscordCacheHelper.ForceTypeCast<IMessageInteraction, CacheMessageInteraction>(message.Interaction);
-        instance.CreatedAt = message.CreatedAt;
-        instance.Snowflake = message.Id;
-        instance.AuthorId = message.Author.Id;
-        instance.ChannelId = message.Channel.Id;
-        instance.GuildId = 0;
-        return instance;
+        this.Flags = message.Flags;
+        this.Interaction = CacheMessageInteraction.FromExisting(message.Interaction);
+        this.CreatedAt = message.CreatedAt;
+        this.Snowflake = message.Id;
+        this.AuthorId = message.Author.Id;
+        this.ChannelId = message.Channel.Id;
+        this.GuildId = 0;
+        return this;
+    }
+    public static CacheMessageModel? FromExisting(IMessage? message)
+    {
+        if (message == null)
+            return null;
+        
+        var instance = new CacheMessageModel();
+        return instance.Update(message);
     }
 }

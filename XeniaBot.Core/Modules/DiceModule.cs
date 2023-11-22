@@ -7,7 +7,11 @@ namespace XeniaBot.Core.Modules;
 public class DiceModule : InteractionModuleBase
 {
     [SlashCommand("dice", "Throw a dice. Defaults to a 6-sided dice")]
-    public async Task Dice(int max, int min = 1)
+    public async Task Dice(
+        [Discord.Interactions.Summary(description: "Maximum value for dice roll")]
+        int max, 
+        [Discord.Interactions.Summary(description: "Minimum value for dice roll. Default: 1")]
+        int min = 1)
     {
         var result = Program.Random.Next(min, max);
         var embed = new EmbedBuilder()

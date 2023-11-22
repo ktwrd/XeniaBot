@@ -12,7 +12,7 @@ public abstract class CacheBaseChannel : DiscordCacheBaseModel
     public bool IsForumChannel { get; set; }
     public CacheChannelType Type { get; set; }
     
-    public CacheBaseChannel FromExisting(SocketChannel channel)
+    public CacheBaseChannel Update(SocketChannel channel)
     {
         Snowflake = channel.Id;
         CreatedAt = channel.CreatedAt;

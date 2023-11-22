@@ -100,7 +100,7 @@ public static class TimeHelper
         int minutes = 0;
         int seconds = 0;
         var dayRegex = new Regex(
-            @"(([0-9]+)d(|ay))", 
+            @"(([0-9]+)d(|ay|ays))", 
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var dayMatch = dayRegex.Match(input);
         if (dayMatch.Groups.Count >= 4)
@@ -109,7 +109,7 @@ public static class TimeHelper
         }
         
         var hourRegex = new Regex(
-            @"(([0-9]+)h(|r|our))",
+            @"(([0-9]+)h(|r|rs|our|ours))",
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var hourMatch = hourRegex.Match(input);
         if (hourMatch.Groups.Count >= 4)
@@ -118,7 +118,7 @@ public static class TimeHelper
         }
         
         var minuteRegex = new Regex(
-            @"(([0-9]+)m(|in|inute|inutes))",
+            @"(([0-9]+)m(|in|ins|inute|inutes))",
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var minMatch = minuteRegex.Match(input);
         if (minMatch.Groups.Count >= 4)
@@ -127,7 +127,7 @@ public static class TimeHelper
         }
         
         var secondRegex = new Regex(
-            @"(([0-9]+)s(|econds))",
+            @"(([0-9]+)s(|ec|ecs|econds))",
             RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
         var secMatch = secondRegex.Match(input);
         if (secMatch.Groups.Count >= 4)

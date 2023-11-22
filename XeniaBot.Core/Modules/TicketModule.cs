@@ -65,6 +65,7 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(GuildPermission.ManageChannels)]
         [SlashCommand("resolve", "Mark ticket as resolved")]
         public async Task ResolveTicket(
+            [Discord.Interactions.Summary(description: "Channel of the ticket to resolve. Will assume current channel if not provided.")]
             [ChannelTypes(ChannelType.Text)] IChannel ticketChannel = null)
         {
             // When ticket channel is null, assume we're talking about the current channel.
@@ -102,6 +103,7 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(GuildPermission.ManageChannels)]
         [SlashCommand("reject", "Mark ticket as rejected")]
         public async Task RejectTicket(
+            [Discord.Interactions.Summary(description: "Channel of the ticket to reject. Will assume current channel if not provided.")]
             [ChannelTypes(ChannelType.Text)] IChannel ticketChannel = null)
         {
             // When ticket channel is null, assume we're talking about the current channel.

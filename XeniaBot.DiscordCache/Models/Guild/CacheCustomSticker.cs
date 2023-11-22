@@ -6,12 +6,19 @@ public class CacheCustomSticker : CacheSticker
 {
     public ulong? AuthorId { get; set; }
     public ulong GuildId { get; set; }
-
-    public CacheCustomSticker FromExisting(ICustomSticker sticker)
+    public new CacheCustomSticker Update(ICustomSticker sticker)
     {
-        base.FromExisting(sticker);
+        base.Update(sticker);
         AuthorId = sticker.AuthorId;
         GuildId = sticker.Guild.Id;
         return this;
+    }
+    public static CacheCustomSticker? FromExisting(ICustomSticker? sticker)
+    {
+        if (sticker == null)
+            return null;
+
+        var instance = new CacheCustomSticker();
+        return instance.Update(sticker);
     }
 }

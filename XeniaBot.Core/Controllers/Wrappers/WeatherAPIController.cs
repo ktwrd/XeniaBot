@@ -10,6 +10,7 @@ using XeniaBot.Shared.Schema;
 using System.Text.Json;
 using XeniaBot.Shared.Schema.WeatherAPI;
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace XeniaBot.Core.Controllers.Wrappers
 {
@@ -25,7 +26,8 @@ namespace XeniaBot.Core.Controllers.Wrappers
                 IgnoreReadOnlyFields = true,
                 IgnoreReadOnlyProperties = true,
                 IncludeFields = true,
-                WriteIndented = true
+                WriteIndented = true,
+                ReferenceHandler = ReferenceHandler.Preserve
             };
 
             _sysconfig = services.GetRequiredService<ConfigData>();

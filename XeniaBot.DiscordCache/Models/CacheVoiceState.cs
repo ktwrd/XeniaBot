@@ -74,22 +74,26 @@ public class CacheVoiceState
     /// </returns>
     public bool IsVideoing { get; set; }
 
-    public static CacheVoiceState? FromVoiceState(IVoiceState? state)
+    public CacheVoiceState Update(IVoiceState state)
+    {
+        this.VoiceChannelId = state.VoiceChannel.Id;
+        this.VoiceSessionId = state.VoiceSessionId;
+        this.RequestToSpeakTimestamp = state.RequestToSpeakTimestamp;
+        this.IsMuted = state.IsMuted;
+        this.IsDeafened = state.IsDeafened;
+        this.IsSuppressed = state.IsSuppressed;
+        this.IsSelfMuted = state.IsSelfMuted;
+        this.IsSelfDeafened = state.IsSelfDeafened;
+        this.IsStreaming = state.IsStreaming;
+        this.IsVideoing = state.IsVideoing;
+        return this;
+    }
+    public static CacheVoiceState? FromExisting(IVoiceState? state)
     {
         if (state == null)
             return null;
 
         var instance = new CacheVoiceState();
-        instance.VoiceChannelId = state.VoiceChannel.Id;
-        instance.VoiceSessionId = state.VoiceSessionId;
-        instance.RequestToSpeakTimestamp = state.RequestToSpeakTimestamp;
-        instance.IsMuted = state.IsMuted;
-        instance.IsDeafened = state.IsDeafened;
-        instance.IsSuppressed = state.IsSuppressed;
-        instance.IsSelfMuted = state.IsSelfMuted;
-        instance.IsSelfDeafened = state.IsSelfDeafened;
-        instance.IsStreaming = state.IsStreaming;
-        instance.IsVideoing = state.IsVideoing;
-        return instance;
+        return instance.Update(state);
     }
 }

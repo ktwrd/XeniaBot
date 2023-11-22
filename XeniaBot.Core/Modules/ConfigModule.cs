@@ -17,8 +17,11 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("ticket", "Configure the Ticket Module. To view the current config, run with no options.")]
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task TicketConfig(
+            [Discord.Interactions.Summary(description: "Parent Category for all channels that will be created when a ticket is made.")]
             [ChannelTypes(ChannelType.Category)] ICategoryChannel ticketCategory = null,
+            [Discord.Interactions.Summary(description: "Role for who will be able to manage tickets.")]
             IRole managerRole = null,
+            [Discord.Interactions.Summary(description: "Channel where ticket states will be logged and archived.")]
             [ChannelTypes(ChannelType.Text)] ITextChannel logChannel = null)
         {
             TicketController controller = Program.Services.GetRequiredService<TicketController>();

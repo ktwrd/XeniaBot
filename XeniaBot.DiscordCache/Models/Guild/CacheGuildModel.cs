@@ -29,7 +29,7 @@ public class CacheGuildModel
     public ulong? ApplicationId { get; set; }
     public string? VoiceRegionId { get; set; }
     public CacheAudioClient? AudioClient { get; set; }
-    public CacheRole EveryoneRole { get; set; }
+    public CacheRole? EveryoneRole { get; set; }
     public CacheGuildEmote[] Emotes { get; set; }
     public CacheCustomSticker[] Stickers { get; set; }
     public GuildFeatures Features { get; set; }
@@ -76,12 +76,24 @@ public class CacheGuildModel
         OwnerId = guild.OwnerId;
         ApplicationId = guild.ApplicationId;
         VoiceRegionId = guild.VoiceRegionId;
-        AudioClient = new CacheAudioClient().FromExisting(guild.AudioClient);
-        EveryoneRole = new CacheRole().FromExisting(guild.EveryoneRole);
-        Emotes = guild.Emotes.Select(v => new CacheGuildEmote().FromExisting(v)).ToArray();
-        Stickers = guild.Stickers.Select(v => new CacheCustomSticker().FromExisting(v)).ToArray();
+        AudioClient = CacheAudioClient.FromExisting(guild.AudioClient);
+        EveryoneRole = CacheRole.FromExisting(guild.EveryoneRole);
+        Emotes = guild.Emotes
+            .Select(CacheGuildEmote.FromExisting)
+            .Where(v => v != null)
+            .Cast<CacheGuildEmote>()
+            .ToArray();
+        Stickers = guild.Stickers
+            .Select(CacheCustomSticker.FromExisting)
+            .Where(v => v != null)
+            .Cast<CacheCustomSticker>()
+            .ToArray();
         Features = guild.Features;
-        Roles = guild.Roles.Select(v => new CacheRole().FromExisting(v)).ToArray();
+        Roles = guild.Roles
+            .Select(CacheRole.FromExisting)
+            .Where(v => v != null)
+            .Cast<CacheRole>()
+            .ToArray();
         PremiumTier = guild.PremiumTier;
         BannerId = guild.BannerId;
         BannerUrl = guild.BannerUrl;

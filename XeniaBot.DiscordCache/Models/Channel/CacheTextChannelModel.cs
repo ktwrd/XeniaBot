@@ -12,9 +12,9 @@ public class CacheTextChannelModel : CacheGuildChannelModel
     public ThreadArchiveDuration DefaultArchiveDuration { get; set; }
     public string Mention { get; set; }
     public ulong[] ThreadIds { get; set; }
-    public new CacheTextChannelModel FromExisting(SocketTextChannel channel)
+    public new CacheTextChannelModel Update(SocketTextChannel channel)
     {
-        base.FromExisting(channel);
+        base.Update(channel);
         Topic = channel.Topic;
         SlowModeInterval = channel.SlowModeInterval;
         CategoryId = channel.CategoryId;
@@ -23,5 +23,14 @@ public class CacheTextChannelModel : CacheGuildChannelModel
         Mention = channel.Mention;
         ThreadIds = channel.Threads.Select(v => v.Id).ToArray();
         return this;
+    }
+
+    public static CacheTextChannelModel? FromExisting(SocketTextChannel? channel)
+    {
+        if (channel == null)
+            return null;
+
+        var instance = new CacheTextChannelModel();
+        return instance.Update(channel);
     }
 }

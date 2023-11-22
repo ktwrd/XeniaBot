@@ -40,7 +40,7 @@ namespace XeniaBot.Core.Modules
                 })
             };
 
-            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await Context.Interaction.RespondAsync(embed: embed.Build());
         }
 
         public async Task<EmbedBuilder> GenerateServerLeaderboard(ulong guildId)
@@ -103,7 +103,7 @@ namespace XeniaBot.Core.Modules
                     .WithTitle("Xp System - Error")
                     .WithDescription($"Failed to generate server leaderboard\n```\n{ex.Message}\n```")
                     .WithColor(Color.Red);
-                await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                await Context.Interaction.RespondAsync(embed: embed.Build());
                 await DiscordHelper.ReportError(ex, Context);
                 return;
             }

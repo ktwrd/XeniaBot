@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
@@ -13,7 +14,8 @@ public static class XeniaHelper
         IgnoreReadOnlyFields = true,
         IgnoreReadOnlyProperties = true,
         IncludeFields = true,
-        WriteIndented = true
+        WriteIndented = true,
+        ReferenceHandler = ReferenceHandler.Preserve
     };
 
     /// <summary>
@@ -77,5 +79,24 @@ public static class XeniaHelper
             }
         }
         await Task.WhenAll(tasks);
+    }
+
+    public static string ToHex(Discord.Color color)
+    {
+        var s = "";
+        s += color.R.ToString("X2");
+        s += color.G.ToString("X2");
+        s += color.B.ToString("X2");
+        return s;
+    }
+
+    public static Discord.Color FromHex(string hex)
+    {
+        var str = "";
+        if (!hex.StartsWith("#"))
+            str += "#";
+        str += hex;
+        var color = System.Drawing.ColorTranslator.FromHtml(str);
+        return new Discord.Color(color.R, color.G, color.B);
     }
 }

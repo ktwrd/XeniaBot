@@ -18,7 +18,9 @@ namespace XeniaBot.Core.Modules
     public class ESixModule : InteractionModuleBase
     {
         [SlashCommand("query", "Query for posts. Fetches the first one")]
-        public async Task Query(string query, bool random = false)
+        public async Task Query(string query, 
+            [Discord.Interactions.Summary(description: "Select a random post from all posts on the first page of this query.")]
+            bool random = false)
         {
             var controller = Program.Services.GetRequiredService<ESixController>();
             

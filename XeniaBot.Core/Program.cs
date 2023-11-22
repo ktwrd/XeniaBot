@@ -17,12 +17,15 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared.Controllers;
 using CronNET;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace XeniaBot.Core
 {
@@ -43,7 +46,8 @@ namespace XeniaBot.Core
             IgnoreReadOnlyFields = true,
             IgnoreReadOnlyProperties = true,
             IncludeFields = true,
-            WriteIndented = true
+            WriteIndented = true,
+            ReferenceHandler = ReferenceHandler.Preserve
         };
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
@@ -118,6 +122,8 @@ namespace XeniaBot.Core
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
+            BsonSerializer.RegisterSerializer(objectSerializer);
             MainInit();
             MainInit_ValidateMongo();
 

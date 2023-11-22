@@ -22,7 +22,7 @@
     <h4>Embed Style</h4>
     <table>
         <tr>
-            <td style="width: 40vw" class="pr-4">
+            <td style="width: 60%" class="pr-4">
                 <div class="form-group">
                     <label for="embed_example_title">Title</label>
                     <input class="form-control" type="text" name="inputTitle" id="embed_example_title" embed-field="title" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_Title" />
@@ -65,9 +65,10 @@
                 </div>
             </td>
             <td>
-                @await Component.InvokeAsync("EmbedViewer", new EmbedViewerModel()
+                @await Component.InvokeAsync("EmbedViewer", new EmbedViewerModel("greeter_goodbye_settings")
                 {
-                    Id = "greeter_goodbye_settings"
+                    ShowExportButton = true,
+                    ShowImportButton = true
                 })
             </td>
         </tr>

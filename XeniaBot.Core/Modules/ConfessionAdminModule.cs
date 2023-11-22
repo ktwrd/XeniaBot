@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Discord.Commands;
 using XeniaBot.Data.Controllers.BotAdditions;
 
 namespace XeniaBot.Core.Modules
@@ -16,7 +17,7 @@ namespace XeniaBot.Core.Modules
     public class ConfessionAdminModule : InteractionModuleBase
     {
         [SlashCommand("purge", "Remove all traces of the Confession Module from this guild")]
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [Discord.Interactions.RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Purge()
         {
             var controller = Program.Services.GetRequiredService<ConfessionConfigController>();
@@ -41,8 +42,14 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("set", "Setup the Confession Module")]
-        [RequireUserPermission(ChannelPermission.ManageChannels)]
-        public async Task Set([ChannelTypes(ChannelType.Text)] IChannel confessionOutputChannel, [ChannelTypes(ChannelType.Text)] IChannel confessionModalChannel)
+        [Discord.Interactions.RequireUserPermission(ChannelPermission.ManageChannels)]
+        public async Task Set(
+            [Discord.Interactions.Summary(name: "output-channel", description: "Channel where confessions will be sent to")]
+            [ChannelTypes(ChannelType.Text)]
+            IChannel confessionOutputChannel,
+            [ChannelTypes(ChannelType.Text)]
+            [Discord.Interactions.Summary(name: "modal-channel", description: "Channel where users will interact with a modal to create a confession.")]
+            IChannel confessionModalChannel)
         {
             if (await DiscordHelper.HasGuildPermission(Context, GuildPermission.ManageChannels, true) == false)
                 return;

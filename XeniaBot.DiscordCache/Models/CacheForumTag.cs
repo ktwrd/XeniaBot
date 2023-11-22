@@ -11,14 +11,22 @@ public class CacheForumTag
     public bool IsModerated { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
-    public CacheForumTag FromForumTag(ForumTag tag)
+    public CacheForumTag Update(ForumTag tag)
     {
         Id = tag.Id;
         Name = tag.Name;
-        if (tag.Emoji != null)
-            Emoji = DiscordCacheHelper.ForceTypeCast<IEmote, CacheEmote>(tag.Emoji);
+        Emoji = CacheEmote.FromExisting(tag.Emoji);
         IsModerated = tag.IsModerated;
         CreatedAt = tag.CreatedAt;
         return this;
+    }
+
+    public static CacheForumTag? FromExisting(ForumTag? tag)
+    {
+        if (tag == null)
+            return null;
+
+        var instance = new CacheForumTag();
+        return instance.Update((ForumTag)tag);
     }
 }

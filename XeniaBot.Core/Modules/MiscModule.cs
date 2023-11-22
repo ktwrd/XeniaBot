@@ -82,8 +82,7 @@ namespace XeniaBot.Core.Modules
             if (!config.Prometheus_Enable)
             {
                 await Context.Interaction.RespondAsync(
-                    embed: embed.WithDescription("Prometheus Exporter is disabled").Build(),
-                    ephemeral: true);
+                    embed: embed.WithDescription("Prometheus Exporter is disabled").Build());
                 return;
             }
 
@@ -91,8 +90,7 @@ namespace XeniaBot.Core.Modules
             if (prom == null)
             {
                 await Context.Interaction.RespondAsync(
-                    embed: embed.WithDescription("Failed to get required service \"PrometheusController\" since it's null.").Build(),
-                    ephemeral: true);
+                    embed: embed.WithDescription("Failed to get required service \"PrometheusController\" since it's null.").Build());
                 return;
             }
 
@@ -106,14 +104,12 @@ namespace XeniaBot.Core.Modules
                     embed: embed
                         .WithDescription($"```\n{e.Message}\n```")
                         .WithTitle("Failed to Reload Prometheus Metrics")
-                        .Build(),
-                    ephemeral: true);
+                        .Build());
                 throw;
             }
 
             await Context.Interaction.RespondAsync(
-                embed: embed.WithDescription("Done!").Build(),
-                ephemeral: true);
+                embed: embed.WithDescription("Done!").Build());
         }
 
         [SlashCommand("invite", "Get invite link for Xenia")]

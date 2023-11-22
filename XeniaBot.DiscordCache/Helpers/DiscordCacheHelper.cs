@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using Discord.WebSocket;
 using XeniaBot.DiscordCache.Models;
 
@@ -12,7 +13,8 @@ public static class DiscordCacheHelper
         {
             IgnoreReadOnlyFields = true,
             IgnoreReadOnlyProperties = true,
-            IncludeFields = true
+            IncludeFields = true,
+            ReferenceHandler = ReferenceHandler.Preserve
         };
         var teCachet = JsonSerializer.Serialize(input, options);
         var output = JsonSerializer.Deserialize<TH>(teCachet, options);

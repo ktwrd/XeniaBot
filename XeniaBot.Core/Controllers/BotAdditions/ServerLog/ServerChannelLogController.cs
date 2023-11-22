@@ -51,7 +51,7 @@ public class ServerChannelLogController : BaseController
         {
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel Name Changed")
-                .WithDescription($"<#{current.Snowflake}> changed to `{current.Name}` from `{previous.Name}`")
+                .WithDescription($"<#{current.Snowflake}> changed to `{current.Name}` from `{previous?.Name}`")
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
@@ -71,22 +71,22 @@ public class ServerChannelLogController : BaseController
         string currentTopic = "";
         ulong? previousCategory = null;
         ulong? currentCategory = null;
-        Overwrite[] currentOverwrite = Array.Empty<Overwrite>();
-        Overwrite[] previousOverwrite = Array.Empty<Overwrite>();
+        CacheOverwrite[] currentOverwrite = Array.Empty<CacheOverwrite>();
+        CacheOverwrite[] previousOverwrite = Array.Empty<CacheOverwrite>();
         
         if (current is CacheTextChannelModel currentText)
         {
             currentNsfw = currentText.IsNsfw;
             currentTopic = currentText.Topic;
             currentCategory = currentText.CategoryId;
-            currentOverwrite = currentText.PermissionOverwrite;
+            currentOverwrite = currentText.PermissionOverwrites;
         }
         if (previous is CacheTextChannelModel previousText)
         {
             previousNsfw = previousText.IsNsfw;
             previousTopic = previousText.Topic;
             previousCategory = previousText.CategoryId;
-            previousOverwrite = previousText.PermissionOverwrite;
+            previousOverwrite = previousText.PermissionOverwrites;
         }
         
         

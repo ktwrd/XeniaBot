@@ -16,9 +16,10 @@ namespace XeniaBot.Core.Modules
     {
         [SlashCommand("translate", "Translate anything to whatever language you want")]
         public async Task Translate(
+            [Discord.Interactions.Summary(description: "Target phrase to translate")]
             string phrase,
-            [Summary("language_output"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string targetLanguage="en",
-            [Summary("language_input"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string? sourceLanguage=null)
+            [Summary(name: "language_output", description: "Language to translate to"), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string targetLanguage="en",
+            [Summary("language_input", description: "Language to translate from. Will detect when none provided."), Autocomplete(typeof(GoogleTranslateAutocompleteHandler))] string? sourceLanguage=null)
         {
             if (targetLanguage == "null" || targetLanguage.Length < 1)
                 targetLanguage = "en";
@@ -38,7 +39,7 @@ namespace XeniaBot.Core.Modules
                     Description = ex.Message,
                     Color = new Color(255, 0 ,0)
                 };
-                await Context.Interaction.RespondAsync(embed: failEmbed.Build(), ephemeral: true);
+                await Context.Interaction.RespondAsync(embed: failEmbed.Build());
                 DiscordHelper.ReportError(ex, Context);
                 return;
             }
@@ -52,7 +53,7 @@ namespace XeniaBot.Core.Modules
             embed.AddField($"From ({result.SpecifiedSourceLanguage ?? result.DetectedSourceLanguage})", result.OriginalText);
             embed.AddField($"To ({result.TargetLanguage})", result.TranslatedText);
             embed.WithFooter("Translated with Google Cloud Translate API");
-            await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+            await Context.Interaction.RespondAsync(embed: embed.Build());
         }
     }
 }

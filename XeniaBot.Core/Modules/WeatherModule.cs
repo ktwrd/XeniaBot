@@ -18,14 +18,18 @@ namespace XeniaBot.Core.Modules
     public class WeatherModule : InteractionModuleBase
     {
         [SlashCommand("get", "Fetch weather")]
-        public async Task Fetch([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location, MeasurementSystem syst)
+        public async Task Fetch([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location,
+            [Summary("system", description: "Measurement system to fetch the weather in.")]
+            MeasurementSystem syst)
         {
             var resultEmbed = await WeatherEmbedHelper.CurrentForecast(location, syst);
             await Context.Interaction.RespondAsync(embed: resultEmbed.Build());
         }
 
         [SlashCommand("forecast", "Fetch 3 day weather forecast")]
-        public async Task Forecast([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location, MeasurementSystem syst)
+        public async Task Forecast([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location,
+            [Summary("system", description: "Measurement system to fetch the weather in.")]
+            MeasurementSystem syst)
         {
             var resultEmbed = await WeatherEmbedHelper.Forecast(location, syst);
             await Context.Interaction.RespondAsync(embed: resultEmbed.Build());
