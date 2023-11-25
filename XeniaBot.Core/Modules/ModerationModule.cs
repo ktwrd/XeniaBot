@@ -162,14 +162,10 @@ public class ModerationModule : InteractionModuleBase
                 embed: embed.Build());
             return;
         }
-        
-        SocketGuildUser? member = await SafelyFetchUser(user.Id);
-        if (member == null)
-            return;
 
         try
         {
-            await member.BanAsync(pruneDays, reason);
+            await Context.Guild.AddBanAsync(user.Id, pruneDays, reason);
         }
         catch (Exception e)
         {
@@ -187,7 +183,7 @@ public class ModerationModule : InteractionModuleBase
             return;
         }
 
-        string description = $"Successfully banned `{user.Username}#{user.DiscriminatorValue}`";
+        string description = $"Successfully banned `{user.Username}#{user.DiscriminatorValue} ({user.Id})`";
         if (pruneDays > 0)
         {
             description += $"\nRemoved all messages in the last {pruneDays} day" + (pruneDays > 1 ? "s" : "");
