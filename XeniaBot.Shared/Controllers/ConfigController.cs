@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using kate.shared.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
@@ -10,101 +12,154 @@ namespace XeniaBot.Shared.Controllers;
 
 public class ConfigController
 {
-    public ConfigController()
+    public ConfigController(IServiceProvider services)
     {
+        Data = FetchConfig(services.GetRequiredService<ProgramDetails>());
     }
 
-    public ConfigController(IServiceProvider services)
-        : this()
+    public ConfigController(ProgramDetails details)
     {
+        Data = FetchConfig(details);
     }
     #region Read/Write
-        public ConfigData Read()
+    public void Write(ConfigData? configData)
+    {
+        if (FeatureFlags.ConfigReadOnly)
         {
-            var config = new ConfigData();
-            if (File.Exists(Location))
-            {
-                var content = File.ReadAllText(Location);
-                config = JsonSerializer.Deserialize<ConfigData>(content, XeniaHelper.SerializerOptions);
-                var validationResponse = Validate(content);
-                if (validationResponse.Failure)
-                {
-                    Log.WriteLine($"Failed to validate config. Encountered {validationResponse.FailureCount} errors.");
-                    config = null;
-                }
-
-                if (config == null)
-                {
-                    Log.Error($"Failed to parse config");
-                    Log.Error(content);
-                    Environment.Exit(1);
-
-                    // This is only here to make VS2022 shut up
-                    return new ConfigData();
-                }
-            }
-            else
-            {
-                Log.Debug("Created config, please populate.");
-                Write(config);
-            }
-            Write(config);
-            return config;
+            Log.Warn("Not writing config since FeatureFlags.ConfigReadOnly is true");
+            return;
         }
-        public void Write(ConfigData? configData)
+        if (configData == null)
         {
-            if (configData == null)
-            {
-                Log.Error($"Parameter \"configData\" is null.");
-            }
-            else
-            {
-                var content = JsonSerializer.Serialize(configData, XeniaHelper.SerializerOptions);
-                File.WriteAllText(Location, content);                
-            }
+            Log.Error($"Parameter \"configData\" is null.");
         }
-        #endregion
-
-        #region Config Validation
-        public static string[] IgnoredValidationKeys => ConfigData.IgnoredValidationKeys;
-        public ConfigValidationResponse Validate(Dictionary<string, object> configDict)
+        else
         {
-            Dictionary<string, object> defaultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(
-                JsonSerializer.Serialize(new ConfigData(), XeniaHelper.SerializerOptions),
-                XeniaHelper.SerializerOptions) ?? new Dictionary<string, object>();
+            var content = JsonSerializer.Serialize(configData, XeniaHelper.SerializerOptions);
+            File.WriteAllText(FeatureFlags.ConfigLocation, content);                
+        }
+    }
+    #endregion
 
-            var unchangedNoIgnore = new List<string>();
-            var missing = new List<string>();
+    public string FetchConfigContent()
+    {
+        // Check if config is set from environment
+        if (FeatureFlags.ConfigFromEnvironment)
+        {
+            return FetchEnvConfig();
+        }
+        else
+        {
+            return FetchFileConfig();
+        }
+    }
+    
+    public ConfigData Data { get; private set; }
 
-            foreach (var defaultPair in defaultDict)
+    public ConfigData FetchConfig(ProgramDetails details)
+    {
+        var data = FetchConfigContent();
+        var config = new ConfigData();
+        try
+        {
+            config = JsonSerializer.Deserialize<ConfigData>(data, SerializerOptions)
+                     ?? new ConfigData();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to parse ConfigData", ex);
+            throw new Exception("Failed to parse ConfigData", ex);
+        }
+
+        ValidateConfig(config, details);
+
+        return config;
+    }
+
+    public void ValidateConfig(ConfigData config, ProgramDetails details)
+    {
+        var defaultData = JsonSerializer.Deserialize<Dictionary<string, object>>(
+            JsonSerializer.Serialize(new ConfigData(), SerializerOptions), SerializerOptions) ?? new Dictionary<string, object>();
+
+        var keysToValidate = ConfigData.RequiredKeys.ToList();
+        if (details.Platform == XeniaPlatform.Bot)
+            keysToValidate = keysToValidate.Concat(ConfigData.RequiredBotKeys).ToList();
+        else if (details.Platform == XeniaPlatform.WebPanel)
+            keysToValidate = keysToValidate.Concat(ConfigData.RequiredDashKeys).ToList();
+        
+        var (baseValidateMissing, baseValidateNotChanged) = ValidateConfigKeys(config, defaultData, keysToValidate.ToArray());
+        if (baseValidateMissing > 0 || baseValidateNotChanged > 0)
+        {
+            Log.Error("There are multiple issues with your config file. Please resolve them.");
+            Environment.Exit(11);
+        }
+    }
+
+    private (int, int) ValidateConfigKeys(ConfigData source, Dictionary<string, object> clean, string[] keys)
+    {
+        var missing = new List<string>();
+        var notChanged = new List<string>();
+        var sourceDict = JsonSerializer.Deserialize<Dictionary<string, object>>(
+            JsonSerializer.Serialize(source, SerializerOptions), SerializerOptions) ?? new Dictionary<string, object>();
+        foreach (var i in keys)
+        {
+            if (!sourceDict.ContainsKey(i))
             {
-                bool contains = configDict.ContainsKey(defaultPair.Key);
-                bool ignore = IgnoredValidationKeys.Contains(defaultPair.Key);
-                if (!contains)
-                {
-                    Log.Warn($"Missing key \"{defaultPair.Key}\"");
-                    missing.Add(defaultPair.Key);
-                    continue;
-                }
+                missing.Add(i);
+                Log.Warn($"source[{i}] not found");
+                continue;
+            }
 
-                if (configDict[defaultPair.Key] == defaultPair.Value)
+            if (clean.TryGetValue(i, out var v))
+            {
+                if (sourceDict[i] == v)
                 {
-                    unchangedNoIgnore.Add(defaultPair.Key);
-                    Log.Error($"Config Key \"{defaultPair.Key}\" has not been changed!");
+                    notChanged.Add(i);
+                    Log.Warn($"source[{i}] not changed");
                 }
             }
-            var unchanged = unchangedNoIgnore.Where(v => !IgnoredValidationKeys.Contains(v));
-
-            return new ConfigValidationResponse()
-            {
-                UnchangedKeys = unchanged.ToArray(),
-                UnchangedKeysNoIgnore = unchangedNoIgnore.ToArray(),
-                MissingKeys = missing.ToArray()
-            };
         }
-        public ConfigValidationResponse Validate(string fileContent) => Validate(JsonSerializer.Deserialize<Dictionary<string, object>>(fileContent, XeniaHelper.SerializerOptions) ?? new Dictionary<string, object>());
-        public ConfigValidationResponse Validate(ConfigData configData) => Validate(JsonSerializer.Serialize(configData, XeniaHelper.SerializerOptions) ?? "{}");
-        #endregion
+        
+        if (missing.Count > 0)
+            Log.Error($"There are {missing.Count} item");
+        if (notChanged.Count > 0)
+            Log.Error($"{notChanged.Count} item{XeniaHelper.Pluralize(missing.Count)} that haven't changed");
+        return (missing.Count, notChanged.Count);
+    }
 
-        public string Location => FeatureFlags.ConfigLocation;
+    public static JsonSerializerOptions SerializerOptions =>
+        new JsonSerializerOptions()
+        {
+            IncludeFields = true,
+            WriteIndented = true
+        };
+    
+    private string FetchFileConfig()
+    {
+        var data = new ConfigData();
+        if (!File.Exists(FeatureFlags.ConfigLocation))
+        {
+            File.WriteAllText(FeatureFlags.ConfigLocation, JsonSerializer.Serialize(data, SerializerOptions));
+        }
+
+        return File.ReadAllText(FeatureFlags.ConfigLocation);
+    }
+
+    private string FetchEnvConfig()
+    {
+        var content = FeatureFlags.ConfigContent;
+        if (FeatureFlags.ConfigContentIsBase64)
+        {
+            try
+            {
+                content = GeneralHelper.Base64Decode(content);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to decode envconfig from Base64 to String", ex);
+            }
+        }
+
+        return content ?? "{}";
+    }
 }
