@@ -109,4 +109,12 @@ public static class FeatureFlags
         ParseString(
             "CONFIG_LOCATION", Path.Join(
                 DataDirectory, "config.json"));
+
+    /// <summary>
+    /// Key: CONFIG_USE_ENV
+    /// Default: false
+    ///
+    /// Parse configuration from environment variable <see cref="ConfigContent"/>
+    /// </summary>
+    public static bool ConfigFromEnvironment => ParseBool("CONFIG_USE_ENV", false);
 }
