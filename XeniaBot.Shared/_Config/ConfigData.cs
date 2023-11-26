@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace XeniaBot.Shared;
@@ -25,6 +26,27 @@ public class ConfigData
         "Health_Port",
         "BackpackTFApiKey"
     };
+    
+    public static string[] RequiredKeys => new string[]
+    {
+        "DiscordToken",
+        "ErrorGuild",
+        "ErrorChannel",
+        "MongoDBServer",
+        "Invite_ClientId",
+        "Invite_Permissions",
+        "UserWhitelist"
+    };
+    public static string[] RequiredBotKeys => RequiredKeys.Concat(new string[]
+    {
+        "HasDashboard",
+        "DashboardLocation"
+    }).Distinct().ToArray();
+    public static string[] RequiredDashKeys => RequiredKeys.Concat(new string[]
+    {
+        "OAuth_ClientId",
+        "OAuth_ClientSecret"
+    }).Distinct().ToArray();
     
     /// <summary>
     /// Discord user token
