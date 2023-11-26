@@ -137,4 +137,12 @@ public static class FeatureFlags
     /// Is the content of <see cref="ConfigContent"/> encoded in Base64.
     /// </summary>
     public static bool ConfigContentIsBase64 => ParseBool("CONFIG_CONTENT_ISB64", true);
+
+    /// <summary>
+    /// Key: CONFIG_READONLY
+    /// Default: false
+    ///
+    /// Disable writing of config file. Will always be `true` when <see cref="ConfigFromEnvironment"/> is set.
+    /// </summary>
+    public static bool ConfigReadOnly => ParseBool("CONFIG_READONLY", false) || ConfigFromEnvironment;
 }
