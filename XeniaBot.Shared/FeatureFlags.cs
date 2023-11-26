@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using kate.shared.Helpers;
 using NetVips;
 
 namespace XeniaBot.Shared;
@@ -117,4 +118,23 @@ public static class FeatureFlags
     /// Parse configuration from environment variable <see cref="ConfigContent"/>
     /// </summary>
     public static bool ConfigFromEnvironment => ParseBool("CONFIG_USE_ENV", false);
+    
+    /// <summary>
+    /// Key: CONFIG_CONTENT
+    /// Default: {}
+    /// Default (with <see cref="ConfigContentIsBase64"/>: e30=
+    ///
+    /// Will use this variable as the config when <see cref="ConfigFromEnvironment"/> is set.
+    ///
+    /// Must be encoded with Base64 when <see cref="ConfigContentIsBase64"/> is true.
+    /// </summary>
+    public static string ConfigContent => ParseString("CONFIG_CONTENT", ConfigContentIsBase64 ? GeneralHelper.Base64Encode("{}") : "{}");
+
+    /// <summary>
+    /// Key: ConfigContentIsBase64
+    /// Default: true
+    ///
+    /// Is the content of <see cref="ConfigContent"/> encoded in Base64.
+    /// </summary>
+    public static bool ConfigContentIsBase64 => ParseBool("CONFIG_CONTENT_ISB64", true);
 }
