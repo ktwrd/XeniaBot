@@ -131,8 +131,7 @@ namespace XeniaBot.Core
         }
         private static void MainInit()
         {
-            ConfigController = new ConfigController();
-            ConfigData = ConfigController.Read();
+            ConfigController = new ConfigController(ProgramDetails);
             IdGenerator = SnowflakeHelper.Create(ConfigData.GeneratorId);
             HttpClient = new HttpClient();
         }
@@ -196,6 +195,20 @@ namespace XeniaBot.Core
             ConfigController?.Write(ConfigData);
         }
 
+        public static ProgramDetails ProgramDetails =>
+            new ProgramDetails()
+            {
+                StartTimestamp = StartTimestamp,
+                VersionRaw = VersionReallyRaw,
+                Platform = XeniaPlatform.Bot,
+                Debug =
+#if DEBUG
+                    true
+#else
+false
+#endif
+            };
+
         #region Services
         /// <summary>
         /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
@@ -206,22 +219,10 @@ namespace XeniaBot.Core
             Log.Debug("Initializing Services");
             var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
             var services = new ServiceCollection();
-            var details = new ProgramDetails()
-            {
-                StartTimestamp = StartTimestamp,
-                VersionRaw = VersionReallyRaw,
-                Platform = XeniaPlatform.Bot,
-                Debug = 
-#if DEBUG
-                    true
-#else
-false
-#endif
-            };
 
             // Add base services
             services.AddSingleton(IdGenerator)
-                .AddSingleton(details)
+                .AddSingleton(ProgramDetails)
                 .AddSingleton<CronDaemon>()
                 .AddSingleton(ConfigController)
                 .AddSingleton(ConfigData)
