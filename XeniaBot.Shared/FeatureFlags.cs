@@ -8,6 +8,7 @@ namespace XeniaBot.Shared;
 
 public static class FeatureFlags
 {
+    #region Parsing
     /// <summary>
     /// Parses an environment variable as a boolean. When trimmed&lowercased to `true` it will return true, but anything else will return `false`.
     /// When the environment variable isn't found, it wil default to <see cref="defaultValue"/>
@@ -65,6 +66,7 @@ public static class FeatureFlags
         Log.Warn($"Failed to parse {envKey} as integer (regex failed. value is \"{item}\"");
         return defaultValue;
     }
+    #endregion
 
     /// <summary>
     /// Key: LOG_COLOR
