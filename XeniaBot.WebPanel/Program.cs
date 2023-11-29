@@ -78,8 +78,8 @@ false
 
     public static void MainInit()
     {
-        ConfigController = new ConfigController();
-        ConfigData = ConfigController.Read();
+        ConfigController = new ConfigController(Details);
+        ConfigData = ConfigController.FetchConfig(Details);
         HttpClient = new HttpClient();
     }
 
