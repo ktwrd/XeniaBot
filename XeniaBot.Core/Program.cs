@@ -132,6 +132,7 @@ namespace XeniaBot.Core
         private static void MainInit()
         {
             ConfigController = new ConfigController(ProgramDetails);
+            ConfigData = ConfigController.Data;
             IdGenerator = SnowflakeHelper.Create(ConfigData.GeneratorId);
             HttpClient = new HttpClient();
         }
