@@ -68,6 +68,9 @@ public static class Log
     public static void Error(string content, [CallerMemberName] string methodname = null,
         [CallerFilePath] string methodfile = null)
         => WriteLine(content, ErrorColor, ErrorPrefix, ShowMethodName, methodname, methodfile);
+    public static void Error(string content, Exception exception, [CallerMemberName] string methodname = null,
+        [CallerFilePath] string methodfile = null)
+        => WriteLine($"{content}\n{exception}", ErrorColor, ErrorPrefix, ShowMethodName, methodname, methodfile);
 
     public static void Debug(string content, [CallerMemberName] string methodname = null,
         [CallerFilePath] string methodfile = null)

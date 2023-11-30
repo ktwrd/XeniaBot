@@ -2,12 +2,14 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using kate.shared.Helpers;
 using NetVips;
 
 namespace XeniaBot.Shared;
 
 public static class FeatureFlags
 {
+    #region Parsing
     /// <summary>
     /// Parses an environment variable as a boolean. When trimmed&lowercased to `true` it will return true, but anything else will return `false`.
     /// When the environment variable isn't found, it wil default to <see cref="defaultValue"/>
@@ -65,6 +67,7 @@ public static class FeatureFlags
         Log.Warn($"Failed to parse {envKey} as integer (regex failed. value is \"{item}\"");
         return defaultValue;
     }
+    #endregion
 
     /// <summary>
     /// Key: LOG_COLOR
@@ -107,4 +110,39 @@ public static class FeatureFlags
         ParseString(
             "CONFIG_LOCATION", Path.Join(
                 DataDirectory, "config.json"));
+
+    /// <summary>
+    /// Key: CONFIG_USE_ENV
+    /// Default: false
+    ///
+    /// Parse configuration from environment variable <see cref="ConfigContent"/>
+    /// </summary>
+    public static bool ConfigFromEnvironment => ParseBool("CONFIG_USE_ENV", false);
+    
+    /// <summary>
+    /// Key: CONFIG_CONTENT
+    /// Default: {}
+    /// Default (with <see cref="ConfigContentIsBase64"/>: e30=
+    ///
+    /// Will use this variable as the config when <see cref="ConfigFromEnvironment"/> is set.
+    ///
+    /// Must be encoded with Base64 when <see cref="ConfigContentIsBase64"/> is true.
+    /// </summary>
+    public static string ConfigContent => ParseString("CONFIG_CONTENT", ConfigContentIsBase64 ? GeneralHelper.Base64Encode("{}") : "{}");
+
+    /// <summary>
+    /// Key: ConfigContentIsBase64
+    /// Default: true
+    ///
+    /// Is the content of <see cref="ConfigContent"/> encoded in Base64.
+    /// </summary>
+    public static bool ConfigContentIsBase64 => ParseBool("CONFIG_CONTENT_ISB64", true);
+
+    /// <summary>
+    /// Key: CONFIG_READONLY
+    /// Default: false
+    ///
+    /// Disable writing of config file. Will always be `true` when <see cref="ConfigFromEnvironment"/> is set.
+    /// </summary>
+    public static bool ConfigReadOnly => ParseBool("CONFIG_READONLY", false) || ConfigFromEnvironment;
 }

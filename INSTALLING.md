@@ -53,6 +53,23 @@ Once you've done that, create the `GCSKey_Translate` key in your `config.json` a
 
 **Note** The type of the `GCSKey_Translate` must match the type `GoogleCloudKey` in `XeniaBot.Shared/_Config/ConfigData.cs`
 
+## Use Config from Environment
+If you wish to fetch the configuration from an Environment Variable then you will need to do the following;
+- Set `CONFIG_USE_ENV` to `true`
+- Set the content of `CONFIG_CONTENT` to a valid config ([see schema](#config-description))
+- OPTIONAL
+  * If you want to encode `CONFIG_CONTENT` in Base64, then set `CONFIG_CONTENT_ISB64` to `true`
+
+# Environment Variables
+| Key | Type | Default | Description |
+| --- | ---- | ------- | ----------- |
+| `LOG_COLOR` | boolean | `true` | Enable colors in log output (default: `true`) |
+| `CONFIG_LOCATION` | string | `./data/config.json` | Config file location (default: `./data/config.json` ) |
+| `CONFIG_USE_ENV` | boolean | `false` | Use config from environment, see: [Use Config from Environment](#use-config-from-environment) |
+| `CONFIG_READONLY` | boolean | `false` | Disable writing of config. Will always be `false` if `CONFIG_USE_ENV` is `true` |
+| `DATA_DIR` | string | `./data/` | Data Directory |
+| `DATA_DIR_FONTCACHE` | string | `./data/fontcache` | Font cache for MediaManu commands |
+
 # Config Description
 | Key                        | Required           | Default Value | Description |
 | -------------------------- | ------------------ | ------------- | ----------- |
@@ -88,11 +105,3 @@ Once you've done that, create the `GCSKey_Translate` key in your `config.json` a
 | `Health_Enable`            | ❌ (Bot Only)      | `false`       | Enable Health API |
 | `Health_Port`              | ❌ (Bot Only)      | `4829`        | Port to listen the Health API Web Server | 
 | `BackpackTFApiKey`         | ❌                 | `null`        | API Key for backpack.tf. Required for the `/tf2 currency` command |
-
-# Environment Variables
-| Key | Type | Description |
-| --- | ---- | ----------- |
-| `LOG_COLOR` | boolean | Enable colors in log output (default: `true`) |
-| `CONFIG_LOCATION` | string | Config file location (default: `./data/config.json` ) |
-| `DATA_DIR` | string | Data Directory. (default: `./data/`) |
-| `DATA_DIR_FONTCACHE` | string | Font cache for MediaManu commands. (default: `./data/fontcache`) |

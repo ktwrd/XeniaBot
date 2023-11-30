@@ -18,6 +18,11 @@ public static class XeniaHelper
         ReferenceHandler = ReferenceHandler.Preserve
     };
 
+    public static string Pluralize(int count)
+    {
+        return count > 0 ? "s" : "";
+    }
+
     /// <summary>
     /// Converts "PascalCase" to "Pascal Case"
     /// </summary>
