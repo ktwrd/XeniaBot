@@ -49,9 +49,12 @@ public class ServerChannelLogController : BaseController
             return;
         if (current.Name != previous?.Name)
         {
+            string previousName = previous?.Name ?? "<null>";
+            if (previousName.Length < 1)
+                previousName = "<empty>";
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel Name Changed")
-                .WithDescription($"<#{current.Snowflake}> changed to `{current.Name}` from `{previous?.Name}`")
+                .WithDescription($"<#{current.Snowflake}> changed to `{current.Name}` from `{previousName}`")
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
@@ -110,17 +113,18 @@ public class ServerChannelLogController : BaseController
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel Topic changed")
                 .WithDescription($"<#{current.Snowflake}>")
-                .AddField("Previous", previousTopic ?? "<empty>")
-                .AddField("Current", currentTopic ?? "<empty>")
+                .AddField("Previous", previousTopic)
+                .AddField("Current", currentTopic)
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
 
         if (currentCategory != previousCategory)
         {
+            var pc = previousCategory == null ? "<null>" : $"<#{previousCategory}>";
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
                 .WithTitle("Channel Category changed")
-                .WithDescription($"<#{current.Snowflake}>. Moved to <#{currentCategory}> from <#{previousCategory}>")
+                .WithDescription($"<#{current.Snowflake}>. Moved to <#{currentCategory}> from {pc}")
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
