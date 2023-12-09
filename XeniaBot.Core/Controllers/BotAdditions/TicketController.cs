@@ -216,6 +216,16 @@ namespace XeniaBot.Core.Controllers.BotAdditions
 
             return details;
         }
+        /// <summary>
+        /// Mark a ticket as closed.
+        ///
+        /// This will take a backup of the channel content, mark the ticket as closed and who did it. After all of those things are done, it will delete the channel.
+        /// </summary>
+        /// <param name="channelId"></param>
+        /// <param name="status"></param>
+        /// <param name="closingUserId"></param>
+        /// <returns></returns>
+        /// <exception cref="TicketException"></exception>
         public async Task<TicketTranscriptModel> CloseTicket(ulong channelId, TicketStatus status, ulong closingUserId)
         {
             var details = await GetTicketDetails(channelId, closingUserId);
