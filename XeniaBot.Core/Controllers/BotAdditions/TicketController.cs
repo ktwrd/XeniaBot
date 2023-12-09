@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Bindings;
-using XeniaBot.Core.Exceptions;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;

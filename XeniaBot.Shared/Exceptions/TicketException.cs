@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace XeniaBot.Core.Exceptions
+namespace XeniaBot.Shared
 {
     public class TicketException : Exception
     {

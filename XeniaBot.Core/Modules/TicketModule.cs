@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.BotAdditions;
-using XeniaBot.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules
 {
