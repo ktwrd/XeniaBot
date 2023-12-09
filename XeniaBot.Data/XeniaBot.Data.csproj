@@ -13,8 +13,4 @@
       <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Controllers\BotAdditions\RoleMenu\" />
-    </ItemGroup>
-
 </Project>
