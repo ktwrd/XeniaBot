@@ -322,6 +322,44 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             return model;
         }
 
+        /// <summary>
+        /// Generate a backup of a ticket channel. Converts messages into <see cref="CacheMessageModel"/>
+        /// </summary>
+        /// <returns>List of messages in the specified ticket channel.</returns>
+        /// <exception cref="InnerTicketException">Thrown when logic inside of this function is fucked.</exception>
+        public async Task<List<CacheMessageModel>> GenerateChannelBackup(TicketModel ticket)
+        {
+            var guild = _client.GetGuild(ticket.GuildId);
+            if (guild == null)
+                throw new InnerTicketException($"Guild {ticket.GuildId} not found.", ticket);
+
+            var channel = guild.GetTextChannel(ticket.ChannelId);
+            if (channel == null)
+                throw new InnerTicketException($"Guild {ticket.ChannelId} not found.", ticket);
+
+            var messages = await channel.GetMessagesAsync(int.MaxValue).FlattenAsync();
+            var msgArr = messages.ToArray();
+
+            var result = new List<CacheMessageModel>();
+            for (int i = 0; i < msgArr.Length; i++)
+            {
+                var msg = msgArr[i];
+                try
+                {
+                    var converted = CacheMessageModel.FromExisting(msg);
+                    if (converted != null)
+                        result.Add(converted);
+                }
+                catch (Exception ex)
+                {
+                    throw new InnerTicketException(
+                        $"Failed to convert message at index {i} (ID: {msg.Id}) to CacheMessageModel", ticket, ex);
+                }
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region MongoDB TicketModel Boilerplate
