@@ -43,8 +43,15 @@ namespace XeniaBot.Core.Modules
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
 
-        public async Task<EmbedBuilder> GenerateServerLeaderboard(ulong guildId)
+        /// <summary>
+        /// Generate leaderboard modal.
+        /// </summary>
+        /// <param name="guildId">GuildId to use</param>
+        /// <param name="size"></param>
+        /// <returns></returns>
+        public async Task<EmbedBuilder> GenerateServerLeaderboard(ulong guildId, int size = 5)
         {
+            size = Math.Min(size, 10);
             var embed = new EmbedBuilder()
                 .WithTitle("Xp System - Guild Leaderboard");
             
@@ -57,34 +64,34 @@ namespace XeniaBot.Core.Modules
             }
 
             var data = await controller.GetGuild(guildId);
+            GenerateLeaderboard(embed, data, size);
+            return embed;
+        }
+
+        public EmbedBuilder GenerateLeaderboard(EmbedBuilder embed, LevelMemberModel[] data, int size = 5)
+        {
+            size = Math.Min(size, 10);
+
             var resultLines = new List<string>()
             {
-                $"Top 5 of {data.Length} records."
+                $"Top {size} of {data.Length} records."
             };
 
             var sorted = data.OrderByDescending(v => v.Xp).ToArray();
-            var length = Math.Min(5, sorted.Length);
-            string[] rankText = new string[]
-            {
-                ":first_place:",
-                ":second_place:",
-                ":third_place:",
-                ":four:",
-                ":five:"
-            };
+            var length = Math.Min(size, sorted.Length);
             for (int i = 0; i < length; i++)
             {
                 var item = sorted[i];
                 var details = LevelSystemHelper.Generate(item.Xp);
                 resultLines.Add(string.Join(' ', new string[]
                 {
-                    rankText[i],
+                    RankText[i],
                     $"`{item.Xp}xp, level {details.UserLevel}`",
                     $"<@{item.UserId}>"
                 }));
             }
 
-            embed.Description = string.Join("\n", resultLines);
+            embed.WithDescription(string.Join("\n", resultLines));
             return embed;
         }
         
@@ -183,6 +190,20 @@ namespace XeniaBot.Core.Modules
                 await DiscordHelper.ReportError(e, Context);
             }
         }
+        public static string[] RankText => new []
+        {
+            ":first_place:",
+            ":second_place:",
+            ":third_place:",
+            ":four:",
+            ":five:",
+            ":six:",
+            ":seven:",
+            ":eight:",
+            ":nine:",
+            ":ten:"  
+        };
+        
         [SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
         public async Task GlobalLeaderboard()
         {
@@ -208,36 +229,9 @@ namespace XeniaBot.Core.Modules
                     return;
                 }
 
+
                 var data = await controller.GetAllUsersCombined();
-                var resultLines = new List<string>()
-                {
-                    $"Top 5 of {data.Count} records."
-                };
-
-                var sorted = data.OrderByDescending(v => v.Xp).ToArray();
-                var length = Math.Min(5, sorted.Length);
-                string[] rankText = new string[]
-                {
-                    ":first_place:",
-                    ":second_place:",
-                    ":third_place:",
-                    ":four:",
-                    ":five:"
-                };
-                for (int i = 0; i < length; i++)
-                {
-                    var item = sorted[i];
-                    var details = LevelSystemHelper.Generate(item.Xp);
-                    var user = await Context.Client.GetUserAsync(item.UserId);
-                    resultLines.Add(string.Join(' ', new string[]
-                    {
-                        rankText[i],
-                        $"`{item.Xp}xp, level {details.UserLevel}`",
-                        $"<@{item.UserId}> ({user})"
-                    }));
-                }
-
-                embed.Description = string.Join("\n", resultLines);
+                GenerateLeaderboard(embed, data.ToArray(), 10);
                 await FollowupAsync(embed: embed.Build());
             }
             catch (Exception ex)
