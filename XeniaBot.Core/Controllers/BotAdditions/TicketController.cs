@@ -15,8 +15,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using XeniaBot.Data;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models;
+using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
@@ -243,6 +245,23 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             if (transcript == null)
                 throw new TicketException("Failed to generate transcript");
 
+            var channelBackup = new List<CacheMessageModel>();
+            try
+            {
+                channelBackup = await GenerateChannelBackup(details.Ticket);
+            }
+            catch (Exception ex)
+            {
+                throw new TicketException("Failed to generate channel backup", ex);
+            }
+
+            var channelBackupSer = JsonSerializer.Serialize(
+                channelBackup, new JsonSerializerOptions()
+                {
+                    IncludeFields = true,
+                    WriteIndented = true,
+                });
+
             var attachment = string.Join("\n", transcript.ToString());
             var embed = new EmbedBuilder()
             {
@@ -253,10 +272,18 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                     + string.Join("\n", details.Role.Members.Select(v => $"<@{v.Id}>")),
             };
             embed.WithFooter($"Closed by {details.ClosingUser.Username}#{details.ClosingUser.Discriminator} {details.ClosingUser.Id}", details.ClosingUser.GetAvatarUrl());
-            await details.LogChannel.SendFileAsync(new MemoryStream(Encoding.UTF8.GetBytes(attachment)),
-                "transcript.txt",
-                "",
-                embed: embed.Build());
+
+            var attachmentList = new List<FileAttachment>();
+            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(attachment)))
+            {
+                attachmentList.Add(new FileAttachment(ms, "transcript.txt"));
+            }
+
+            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(channelBackupSer)))
+            {
+                attachmentList.Add(new FileAttachment(ms, "channelContent.json"));
+            }
+            await details.LogChannel.SendFilesAsync(attachmentList, "", embed: embed.Build());
 
             await details.TicketChannel.DeleteAsync();
 
