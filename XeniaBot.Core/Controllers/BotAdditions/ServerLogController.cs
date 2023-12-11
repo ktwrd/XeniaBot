@@ -197,50 +197,71 @@ public class ServerLogController : BaseController
 
     private async Task Event_UserBan(SocketUser user, SocketGuild guild)
     {
-        var userSafe = user.Username.Replace("`", "\\`");
-        var banDetails = await guild.GetBanAsync(user.Id);
-        var reason = banDetails.Reason ?? "<Unknown Reason>";
-        var embed = new EmbedBuilder()
-            .WithTitle("User Banned")
-            .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
-            {
-                "```",
-                $"{userSafe}#{user.Discriminator}",
-                $"ID: {user.Id}",
-                "```",
-            }))
-            .AddField("Account Age", string.Join("\n", new string[]
-            {
-                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                $"`{user.CreatedAt}`"
-            }))
-            .AddField("Ban Reason", $"```\n{reason}\n```")
-            .WithThumbnailUrl(user.GetAvatarUrl())
-            .WithColor(Color.Red);
+        try
+        {
+            var userSafe = user.Username.Replace("`", "\\`");
+            var banDetails = await guild.GetBanAsync(user.Id);
+            var reason = banDetails.Reason ?? "<Unknown Reason>";
+            var embed = new EmbedBuilder()
+                .WithTitle("User Banned")
+                .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
+                {
+                    "```",
+                    $"{userSafe}#{user.Discriminator}",
+                    $"ID: {user.Id}",
+                    "```",
+                }))
+                .AddField("Account Age", string.Join("\n", new string[]
+                {
+                    TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
+                    $"`{user.CreatedAt}`"
+                }))
+                .AddField("Ban Reason", $"```\n{reason}\n```")
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .WithColor(Color.Red);
 
-        await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+            await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to run.", ex);
+            await DiscordHelper.ReportError(
+                ex,
+                $"Failed run ServerLogController.Event_UserBan.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
+        }
     }
     private async Task Event_UserBanRemove(SocketUser user, SocketGuild guild)
     {
-        var userSafe = user.Username.Replace("`", "\\`");
-        var embed = new EmbedBuilder()
-            .WithTitle("User Unbanned")
-            .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
-            {
-                "```",
-                $"{userSafe}#{user.Discriminator}",
-                $"ID: {user.Id}",
-                "```",
-            }))
-            .AddField("Account Age", string.Join("\n", new string[]
-            {
-                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                $"`{user.CreatedAt}`"
-            }))
-            .WithThumbnailUrl(user.GetAvatarUrl())
-            .WithColor(Color.Red);
+        try
+        {
+            
+            var userSafe = user.Username.Replace("`", "\\`");
+            var embed = new EmbedBuilder()
+                .WithTitle("User Unbanned")
+                .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
+                {
+                    "```",
+                    $"{userSafe}#{user.Discriminator}",
+                    $"ID: {user.Id}",
+                    "```",
+                }))
+                .AddField("Account Age", string.Join("\n", new string[]
+                {
+                    TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
+                    $"`{user.CreatedAt}`"
+                }))
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .WithColor(Color.Red);
 
-        await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+            await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to run.", ex);
+            await DiscordHelper.ReportError(
+                ex,
+                $"Failed run ServerLogController.Event_UserBanRemove.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
+        }
     }
     #endregion
     
@@ -251,63 +272,98 @@ public class ServerLogController : BaseController
         var socketChannel = channel.Value as SocketGuildChannel;
         if (socketChannel?.Guild == null)
             return;
-        var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(message.Id);
-        
-        string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
-        long timestamp = 
-            message.Value?.CreatedAt.ToUnixTimeSeconds()
-            ?? funkyMessage?.CreatedAt.ToUnixTimeSeconds()
-            ?? 0;
-        SocketUser? author = _discord.GetUser(message.Value?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
-        var embed = DiscordHelper.BaseEmbed()
-            .WithTitle("Message Deleted")
-            .WithDescription($"Deleted in <#{channel.Id}> at <t:{timestamp}:F>")
-            .WithColor(Color.Orange);
-        if (author != null)
-            embed.WithThumbnailUrl(author.GetAvatarUrl());
-        
-        if (messageContent.Length is < 2000 and > 0)
-            embed.AddField("Content", messageContent);
-        else if (messageContent.Length > 2000)
+        try
         {
-            embed.AddField("Content", "Attached to this message");
-            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed, messageContent, "content.txt");
-            return;
+            var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(message.Id);
+        
+            string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
+            long timestamp = 
+                message.Value?.CreatedAt.ToUnixTimeSeconds()
+                ?? funkyMessage?.CreatedAt.ToUnixTimeSeconds()
+                ?? 0;
+            SocketUser? author = _discord.GetUser(message.Value?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
+            var embed = DiscordHelper.BaseEmbed()
+                .WithTitle("Message Deleted")
+                .WithDescription($"Deleted in <#{channel.Id}> at <t:{timestamp}:F>")
+                .WithColor(Color.Orange);
+            if (author != null)
+                embed.WithThumbnailUrl(author.GetAvatarUrl());
+        
+            if (messageContent.Length is < 2000 and > 0)
+                embed.AddField("Content", messageContent);
+            else if (messageContent.Length > 2000)
+            {
+                embed.AddField("Content", "Attached to this message");
+                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed, messageContent, "content.txt");
+                return;
+            }
+            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed);
         }
-        await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed);
+        catch (Exception ex)
+        {
+            var msg = string.Join(
+                    "\n", new string[]
+                    {
+                        "Failed run ServerLogController.Event_MessageDelete.", $"ChannelId: {socketChannel.Id}",
+                        $"Guild: {socketChannel.Guild.Id} ({socketChannel.Guild.Name})",
+                        $"MessageId: {message.Value?.Id ?? 0}"
+                    });
+            Log.Error(msg, ex);
+            await DiscordHelper.ReportError(
+                ex,
+                msg);
+        }
     }
 
     private async Task Event_MessageEdit(Cacheable<IMessage, ulong> previousMessage, SocketMessage currentMessage,
         IMessageChannel channel)
     {
-        var previousContent = previousMessage.Value?.Content ?? "";
-        var storedData = await _discordCache.CacheMessageConfig.GetLatest(currentMessage.Id);
-        if (previousContent == currentMessage.Content)
-            return;
         var socketChannel = channel as SocketGuildChannel;
-        var diffContent = string.Join(
-            "\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentMessage?.Content ?? ""));
-        var embed = DiscordHelper.BaseEmbed()
-            .WithTitle("Message Edited")
-            .WithDescription($"From `{currentMessage.Author.Username}#{currentMessage.Author.Discriminator}`\nID: `{currentMessage.Author.Id}`")
-            .WithColor(new Color(255, 255, 255))
-            .WithUrl($"https://discord.com/channels/{socketChannel.Guild.Id}/{socketChannel.Id}/{currentMessage.Id}")
-            .WithThumbnailUrl(currentMessage.Author.GetAvatarUrl());
-        if (diffContent.Length < 1000)
+        try
         {
-            embed
-                .AddField("Difference", string.Join("\n",
-                    new string[]
-                    {
-                        "```",
-                        diffContent,
-                        "```",
-                    }));
-            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed);
+            
+            var previousContent = previousMessage.Value?.Content ?? "";
+            var storedData = await _discordCache.CacheMessageConfig.GetLatest(currentMessage.Id);
+            if (previousContent == currentMessage.Content)
+                return;
+            var diffContent = string.Join(
+                "\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentMessage?.Content ?? ""));
+            var embed = DiscordHelper.BaseEmbed()
+                .WithTitle("Message Edited")
+                .WithDescription($"From `{currentMessage.Author.Username}#{currentMessage.Author.Discriminator}`\nID: `{currentMessage.Author.Id}`")
+                .WithColor(new Color(255, 255, 255))
+                .WithUrl($"https://discord.com/channels/{socketChannel.Guild.Id}/{socketChannel.Id}/{currentMessage.Id}")
+                .WithThumbnailUrl(currentMessage.Author.GetAvatarUrl());
+            if (diffContent.Length < 1000)
+            {
+                embed
+                    .AddField("Difference", string.Join("\n",
+                        new string[]
+                        {
+                            "```",
+                            diffContent,
+                            "```",
+                        }));
+                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed);
+            }
+            else
+            {
+                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed, diffContent, "diff.txt");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed, diffContent, "diff.txt");
+            var msg = string.Join(
+                "\n", new string[]
+                {
+                    "Failed run ServerLogController.Event_MessageDelete.", $"ChannelId: {socketChannel?.Id}",
+                    $"Guild: {socketChannel?.Guild.Id} ({socketChannel?.Guild.Name})",
+                    $"MessageId: {currentMessage?.Id ?? 0}"
+                });
+            Log.Error(msg, ex);
+            await DiscordHelper.ReportError(
+                ex,
+                msg);
         }
     }
     #endregion
