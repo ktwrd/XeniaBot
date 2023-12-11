@@ -115,14 +115,38 @@ public class ServerLogController : BaseController
         if (logChannel == null)
             return;
 
-        if (attachmentContent == null)
+        try
         {
-            await logChannel.SendMessageAsync(embed: embed.Build());
-            return;
-        }
+            if (attachmentContent == null)
+            {
+                await logChannel.SendMessageAsync(embed: embed.Build());
+                return;
+            }
 
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(attachmentContent));
-        await logChannel.SendFileAsync(ms, attachmentName ?? "content.txt", embed: embed.Build());
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(attachmentContent));
+            
+            await logChannel.SendFileAsync(ms, attachmentName ?? "content.txt", embed: embed.Build());
+        }
+        catch (Exception e)
+        {
+            if (e.Message.Contains("Missing Access") || e.Message.Contains("50001") || e.Message.Contains("50013"))
+            {
+                await server.Owner.SendMessageAsync(
+                    string.Join(
+                        "\n", new string[]
+                        {
+                            "Heya!", "",
+                            $"Xenia does not have access to send log events in a channel in the server `{server.Name}`, which you own.",
+                            "",
+                            "In order for the logging feature to work, make sure that Xenia has access to the following permissions.",
+                            "- View Channel",
+                            "- Send Messages",
+                            "- Embed Links",
+                            "", $"Channel affected: https://discord.com/channels/{server.Id}/{targetChannel}"
+                        }));
+            }
+            throw;
+        }
     }
 
     #region User Events
