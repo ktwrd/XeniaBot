@@ -14,7 +14,7 @@ using XeniaBot.Shared.Helpers;
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
 [BotController]
-public class GuildGreeterGoodbyeController : BaseController
+public class GuildGreeterGoodbyeController : BaseController, IFlightCheckValidator
 {
     private readonly GuildGreetByeConfigController _configByeController;
     private readonly DiscordSocketClient _discord;
@@ -24,6 +24,43 @@ public class GuildGreeterGoodbyeController : BaseController
         _discord = services.GetRequiredService<DiscordSocketClient>();
 
         _discord.UserLeft += _discord_UserLeft;
+    }
+
+    public async Task<FlightCheckValidationResult> FlightCheckGuild(SocketGuild guild)
+    {
+        var goodbyeConfig = await _configByeController.GetLatest(guild.Id);
+        if (goodbyeConfig?.ChannelId == null || (goodbyeConfig.ChannelId ?? 0) == 0)
+            return new FlightCheckValidationResult(true);
+
+        var lines = new List<string>();
+        try
+        {
+            guild.GetChannel((ulong)goodbyeConfig.ChannelId);
+        }
+        catch (Exception ex)
+        {
+            return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
+                .WithName("Guild Greeter - Goodbye")
+                .WithValue(string.Join("\n", new string[]
+                {
+                    $"Failed to fetch channel {DiscordURLHelper.GuildChannel(guild.Id, (ulong)goodbyeConfig.ChannelId)}",
+                    "```",
+                    ex.Message,
+                    "```"
+                })));
+        }
+
+        if (!DiscordHelper.CanAccessChannel(_discord, guild.GetChannel((ulong)goodbyeConfig.ChannelId)))
+        {
+            return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
+                .WithName("Guild Greeter - Goodbye")
+                .WithValue(string.Join("\n", new string[]
+                {
+                    $"Unable to send messages in {DiscordURLHelper.GuildChannel(guild.Id, (ulong)goodbyeConfig.ChannelId)}."
+                })));
+        }
+
+        return new FlightCheckValidationResult(true);
     }
 
     private async Task _discord_UserLeft(SocketGuild guild, SocketUser user)

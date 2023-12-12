@@ -14,7 +14,7 @@ using XeniaBot.Shared.Helpers;
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
 [BotController]
-public class GuildGreeterWelcomeController : BaseController
+public class GuildGreeterWelcomeController : BaseController, IFlightCheckValidator
 {
     private readonly GuildGreeterConfigController _configWelcomeController;
     private readonly DiscordSocketClient _discord;
@@ -24,6 +24,42 @@ public class GuildGreeterWelcomeController : BaseController
         _discord = services.GetRequiredService<DiscordSocketClient>();
 
         _discord.UserJoined += _discord_UserJoined;
+    }
+
+    public async Task<FlightCheckValidationResult> FlightCheckGuild(SocketGuild guild)
+    {
+        var welcomeConfig = await _configWelcomeController.GetLatest(guild.Id);
+        if (welcomeConfig == null || (welcomeConfig.ChannelId ?? 0) == 0)
+            return new FlightCheckValidationResult(true);
+
+        try
+        {
+            guild.GetChannel((ulong)welcomeConfig.ChannelId);
+        }
+        catch (Exception ex)
+        {
+            return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
+                .WithName("Guild Greeter - Welcome")
+                .WithValue(string.Join("\n", new string[]
+                {
+                    $"Failed to fetch channel {DiscordURLHelper.GuildChannel(guild.Id, (ulong)welcomeConfig.ChannelId)}",
+                    "```",
+                    ex.Message,
+                    "```"
+                })));
+        }
+
+        if (!DiscordHelper.CanAccessChannel(_discord, guild.GetChannel((ulong)welcomeConfig.ChannelId)))
+        {
+            return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
+                .WithName("Guild Greeter - Welcome")
+                .WithValue(string.Join("\n", new string[]
+                {
+                    $"Unable to send messages in {DiscordURLHelper.GuildChannel(guild.Id, (ulong)welcomeConfig.ChannelId)}."
+                })));
+        }
+
+        return new FlightCheckValidationResult(true);
     }
 
     private async Task _discord_UserJoined(SocketGuildUser user)
