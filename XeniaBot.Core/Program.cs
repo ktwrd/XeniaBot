@@ -316,6 +316,27 @@ false
                 i.Start();
             Task.WaitAll(taskList.ToArray());
         }
+        /// <summary>
+        /// Fetch all services that extend <typeparamref name="T"/>
+        /// </summary>
+        /// <returns>List of services that extend <typeparamref name="T"/></returns>
+        public static List<T> GetServicesThatExtends<T>()
+        {
+            var result = new List<T>();
+            foreach (var service in _serviceClassExtendsBaseController)
+            {
+                var svc = Services.GetServices(service);
+                foreach (var item in svc)
+                {
+                    if (item != null && item.GetType().IsAssignableTo(typeof(T)))
+                    {
+                        result.Add((T)item);
+                    }
+                }
+            }
+
+            return result;
+        }
         #endregion
         
         public static IdGenerator IdGenerator;
