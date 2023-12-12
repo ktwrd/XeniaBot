@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Core.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
 [BotController]
-public class FlightCheckController : BaseController
+public class FlightCheckController : BaseController, IFlightCheckValidator
 {
     private readonly DiscordSocketClient _discord;
     private readonly ConfigData _config;
@@ -84,6 +87,24 @@ public class FlightCheckController : BaseController
         {
             Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" has passed!");
         }
+    }
+
+    /// <summary>
+    /// Run FlightCheck on a specific guild. Pretty much running unit testing on the server to make sure that everything is okay and working.
+    /// </summary>
+    public async Task<FlightCheckValidationResult> FlightCheckGuild(SocketGuild guild)
+    {
+        if (!HasValidPermissions(guild))
+        {
+            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\": Permissions invalid");
+            var field = new EmbedFieldBuilder()
+                .WithName("Missing Guild Permissions")
+                .WithValue("Xenia may not work as intended. " +
+                           $"To resolve this, [please re-invite Xenia]({_discordCont.GetInviteLink()}).");
+            return new FlightCheckValidationResult(false, field);
+        }
+
+        return new FlightCheckValidationResult(true);
     }
 
     /// <summary>
