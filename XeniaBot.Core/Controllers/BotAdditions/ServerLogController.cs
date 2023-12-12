@@ -13,6 +13,7 @@ using XeniaBot.Data.Models;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
@@ -70,7 +71,7 @@ public class ServerLogController : BaseController
                     $"ID: `{current.AuthorId}`"
                 }))
                 .WithColor(new Color(255, 255, 255))
-                .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
+                .WithUrl(DiscordURLHelper.GuildChannelMessage(current.GuildId, current.ChannelId, current.Snowflake))
                 .WithThumbnailUrl(author.GetAvatarUrl());
             if (diffContent.Length > 1000)
                 await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
