@@ -17,18 +17,22 @@ public class FlightCheckController : BaseController, IFlightCheckValidator
 {
     private readonly DiscordSocketClient _discord;
     private readonly ConfigData _config;
+    private readonly DiscordController _discordCont;
+    private readonly IServiceProvider _services;
     public FlightCheckController(IServiceProvider services)
         : base(services)
     {
+        _services = services;
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _config = services.GetRequiredService<ConfigData>();
+        _discordCont = services.GetRequiredService<DiscordController>();
         
         _discord.JoinedGuild += DiscordOnJoinedGuild;
     }
 
     private async Task DiscordOnJoinedGuild(SocketGuild arg)
     {
-        await CheckGuild(arg);
+        await CheckGuildInAllValidators(arg);
     }
 
     public override async Task OnReady()
@@ -39,7 +43,7 @@ public class FlightCheckController : BaseController, IFlightCheckValidator
             taskList.Add(new Task(
                 delegate
                 {
-                    CheckGuild(item).Wait();
+                    CheckGuildInAllValidators(item).Wait();
                 }));
         }
 
@@ -48,44 +52,68 @@ public class FlightCheckController : BaseController, IFlightCheckValidator
         await Task.WhenAll(taskList);
     }
 
-    /// <summary>
-    /// Run FlightCheck on a specific guild. Pretty much running unit testing on the server to make sure that everything is okay and working.
-    /// </summary>
-    private async Task CheckGuild(SocketGuild guild)
+    public List<IFlightCheckValidator> FindAllValidators()
+    {
+        return Program.GetServicesThatExtends<IFlightCheckValidator>();
+    }
+
+    private async Task CheckGuildInAllValidators(SocketGuild guild)
     {
         Log.WriteLine($"Running FlightCheck on Guild {guild.Id} \"{guild.Name}\"");
+        var validators = FindAllValidators();
 
-        var embed = new EmbedBuilder()
-            .WithTitle("FlightCheck")
-            .WithColor(Color.Red)
-            .WithCurrentTimestamp();
-        
-        if (!HasValidPermissions(guild))
+        var fieldList = new List<EmbedFieldBuilder>();
+        foreach (var item in validators)
         {
-            embed.AddField("Permissions Invalid", string.Join(
-                "\n", new string[]
-                {
-                    $"I've encountered some issues in your guild [`{guild.Name}`](https://discord.com/channels/{guild.Id}/{guild.Channels.FirstOrDefault()?.Id ?? 0}), and that I do not have my required permissions.",
-                    "",
-                    $"To resolve this issue, please re-invite me with [this link](https://discord.com/oauth2/authorize?client_id={_discord.CurrentUser.Id}&scope=bot&permissions={_config.Invite_Permissions}).",
-                    "",
-                    "If this does not get resolved, some of Xenia's features will work poorly or it won't work at all. (i.e, server logging, role menu, BanSync, etc...)",
-                    "",
-                    "Thanks!",
-                    "",
-                    "P.S; If you have any issues, don't hesitate to chat to the dev team with the discord link in my bio!"
-                }));
-            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\": Permissions invalid");
+            var res = await item.FlightCheckGuild(guild);
+            if (!res.Success && res.EmbedField != null)
+            {
+                fieldList.Add(res.EmbedField);
+            }
+        }
+        if (fieldList.Count < 1)
+            return;
+
+        var embedList = new List<EmbedBuilder>();
+        var chunkedFields = ArrayHelper.Chunk<EmbedFieldBuilder>(fieldList, 10);
+        for (int i = 0; i < chunkedFields.Length; i++)
+        {
+            var groupField = chunkedFields[i];
+            var embed = new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithCurrentTimestamp();
+            if (i == 0)
+            {
+                embed.WithTitle("FlightCheck")
+                    .WithDescription(string.Join("\n", new string[]
+                    {
+                        $"Multiple issues have been detected with FlightCheck in your guild [`{guild.Name}`]({DiscordURLHelper.Guild(guild.Id)}).",
+                        "",
+                        "Please resolve them ASAP for a smooth experience with Xenia"
+                    }));
+            }
+
+            foreach (var t in groupField)
+            {
+                embed.AddField(t);
+            }
+            
+            embedList.Add(embed);
         }
 
-        if (embed.Fields.Count > 0)
+        if (embedList.Count < 1)
         {
-            await guild.Owner.SendMessageAsync(embed: embed.Build());
-            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" failed!");
+            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" has passed!");
+            return;
         }
         else
         {
-            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" has passed!");
+            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" failed!");
+        }
+        foreach (var msgEmbeds in ArrayHelper.Chunk(embedList, 10))
+        {
+            var built = msgEmbeds.Select(v => v.Build()).ToArray();
+            await guild.Owner.SendMessageAsync(embeds: built);
         }
     }
 
