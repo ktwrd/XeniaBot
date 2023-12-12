@@ -277,6 +277,15 @@ namespace XeniaBot.Shared.Controllers
         }
         #endregion
 
+        /// <summary>
+        /// Generate invite link for this bot. Will use permissions defined in <see cref="ConfigData.Invite_Permissions"/>
+        /// </summary>
+        public string GetInviteLink()
+        {
+            return
+                $"https://discord.com/oauth2/authorize?client_id={_client.CurrentUser.Id}&scope=bot&permissions={_configData.Invite_Permissions}";
+        }
+        
         public static DiscordSocketConfig GetSocketClientConfig()
         {
             return new DiscordSocketConfig()
