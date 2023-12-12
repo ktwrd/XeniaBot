@@ -57,6 +57,11 @@ public class FlightCheckController : BaseController, IFlightCheckValidator
         return Program.GetServicesThatExtends<IFlightCheckValidator>();
     }
 
+    public async Task RunGuildFlightCheck(IGuild guild)
+    {
+        await CheckGuildInAllValidators(_discord.GetGuild(guild.Id));
+    }
+    
     private async Task CheckGuildInAllValidators(SocketGuild guild)
     {
         Log.WriteLine($"Running FlightCheck on Guild {guild.Id} \"{guild.Name}\"");
