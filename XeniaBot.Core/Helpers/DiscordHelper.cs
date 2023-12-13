@@ -26,7 +26,8 @@ namespace XeniaBot.Core.Helpers
             var channelPermissions = currentGuildUser.GetPermissions(channel);
             return channelPermissions.Has(ChannelPermission.ViewChannel) &&
                    channelPermissions.Has(ChannelPermission.SendMessages) &&
-                   channelPermissions.Has(ChannelPermission.EmbedLinks);
+                   channelPermissions.Has(ChannelPermission.EmbedLinks) &&
+                   channelPermissions.Has(ChannelPermission.ReadMessageHistory);
         }
         
         public static EmbedBuilder BaseEmbed(EmbedBuilder? embed=null)
