@@ -36,7 +36,17 @@ public class ServerLogModel : BaseModel
 
     public ulong GetChannel(ServerLogEvent logEvent)
     {
-        var dict = new Dictionary<ServerLogEvent, ulong?>()
+        var dict = GetAsDictionary();
+        dict.TryGetValue(logEvent, out var targetChannel);
+        return targetChannel ?? DefaultLogChannel;
+    }
+
+    /// <summary>
+    /// Fetch ServerLogModel as a dictionary
+    /// </summary>
+    public Dictionary<ServerLogEvent, ulong?> GetAsDictionary()
+    {
+        return new Dictionary<ServerLogEvent, ulong?>()
         {
             {ServerLogEvent.MemberJoin, MemberJoinChannel},
             {ServerLogEvent.MemberLeave, MemberLeaveChannel},
@@ -49,8 +59,6 @@ public class ServerLogModel : BaseModel
             {ServerLogEvent.ChannelDelete, ChannelDeleteChannel},
             {ServerLogEvent.MemberVoiceChange, MemberVoiceChangeChannel}
         };
-        dict.TryGetValue(logEvent, out var targetChannel);
-        return targetChannel ?? DefaultLogChannel;
     }
 
     public void SetChannel(ServerLogEvent logEvent, ulong? channelId)
