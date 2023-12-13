@@ -2,19 +2,71 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
 [BotController]
-public class ConfessionConfigController : BaseConfigController<ConfessionGuildModel>
+public class ConfessionConfigController : BaseConfigController<ConfessionGuildModel>, IFlightCheckValidator
 {
     private readonly DiscordSocketClient _client;
     public ConfessionConfigController(IServiceProvider services)
         : base("confesionGuildModel", services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
+    }
+
+    public async Task<FlightCheckValidationResult> FlightCheckGuild(SocketGuild guild)
+    {
+        string flightCheckName = "Confession";
+        var data = await GetGuild(guild.Id);
+        if (data == null)
+            return new FlightCheckValidationResult(true, flightCheckName, "Not configured. Ignoring");
+
+        var issues = new List<string>();
+        
+        try
+        {
+            guild.GetChannel((ulong)data.ChannelId);
+            if (!DataHelper.CanAccessChannel(_client, guild.GetChannel((ulong)data.ChannelId)))
+            {
+                issues.Add($"Unable to send messages in {DiscordURLHelper.GuildChannel(guild.Id, (ulong)data.ChannelId)}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            issues.Add($"Failed to fetch confession channel {DiscordURLHelper.GuildChannel(guild.Id, (ulong)data.ChannelId)} (`{ex.Message}`)");
+        }
+
+        try
+        {
+            guild.GetChannel((ulong)data.ModalChannelId);
+            try
+            {
+                if (data.ModalMessageId != null)
+                {
+                    await guild.GetTextChannel((ulong)data.ModalChannelId).GetMessageAsync((ulong)data.ModalMessageId);
+                }
+            }
+            catch (Exception ex)
+            {
+                issues.Add($"Failed to find modal message {DiscordURLHelper.GuildChannelMessage(guild.Id, (ulong)data.ModalChannelId, (ulong)data.ModalMessageId)} (`{ex.Message}`)");
+            }
+        }
+        catch (Exception ex)
+        {
+            issues.Add($"Failed to fetch modal channel {DiscordURLHelper.GuildChannel(guild.Id, (ulong)data.ModalChannelId)} (`{ex.Message})");
+        }
+
+        if (issues.Count > 0)
+        {
+            return new FlightCheckValidationResult(false, flightCheckName, "Multiple issues detected. Please reconfigure the confession module.", issues: issues);
+        }
+
+        return new FlightCheckValidationResult(true, flightCheckName);
     }
     
     public async Task InitializeModal(ulong guildId, ulong channelId, ulong modalChannelId)
