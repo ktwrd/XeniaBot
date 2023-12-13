@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Models;
+using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
 using XeniaBot.Shared.Helpers;
@@ -71,9 +71,9 @@ public class FlightCheckController : BaseController, IFlightCheckValidator
         foreach (var item in validators)
         {
             var res = await item.FlightCheckGuild(guild);
-            if (!res.Success && res.EmbedField != null)
+            if (!res.Success && res.GetEmbedField() != null)
             {
-                fieldList.Add(res.EmbedField);
+                fieldList.Add(res.GetEmbedField()!);
             }
         }
         if (fieldList.Count < 1)
