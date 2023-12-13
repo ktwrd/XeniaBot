@@ -86,6 +86,9 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 return;
             }
             var context = new SocketCommandContext(_client, message);
+            // we do this to ignore DMs
+            if (context == null || context.Guild == null)
+                return;
             var data = await Get(message.Author.Id, context.Guild.Id);
             if (data == null)
                 data = new LevelMemberModel()
