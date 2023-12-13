@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Core.Models;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
@@ -38,15 +37,16 @@ namespace XeniaBot.Core.Controllers.BotAdditions
 
         public async Task<FlightCheckValidationResult> FlightCheckGuild(SocketGuild guild)
         {
+            string flightCheckName = "Xp System";
             var guildConfig = await _guildConfig.Get(guild.Id);
             if (guildConfig == null)
-                return new FlightCheckValidationResult(true);
+                return new FlightCheckValidationResult(true, flightCheckName, "Not configured. Ignoring");
 
             if (guildConfig.LevelUpChannel == null)
-                return new FlightCheckValidationResult(true);
+                return new FlightCheckValidationResult(true, flightCheckName, "Not configured. Ignoring");
 
             if (!guildConfig.ShowLeveUpMessage)
-                return new FlightCheckValidationResult(true);
+                return new FlightCheckValidationResult(true, flightCheckName, "Not configured. Ignoring");
             
             SocketGuildChannel levelUpChannel = null;
             try
@@ -57,30 +57,22 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             }
             catch (Exception ex)
             {
-                return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
-                    .WithName("Xp System")
-                    .WithValue(string.Join("\n", new string[]
-                    {
-                        $"Failed to fetch Level Up Channel {DiscordURLHelper.GuildChannel(guild.Id, (ulong)guildConfig.LevelUpChannel)}",
-                        "```",
-                        ex.Message,
-                        "```"
-                    })));
+                return new FlightCheckValidationResult(false, flightCheckName, "", issues: new string[]
+                {
+                    $"Unable to send Level Up notifications since Xenia cannot access the channel {DiscordURLHelper.GuildChannel(guild.Id, levelUpChannel.Id)}."
+                });
             }
 
             if (!DiscordHelper.CanAccessChannel(_client, levelUpChannel) && guildConfig.ShowLeveUpMessage)
             {
-                return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
-                    .WithName("Xp System")
-                    .WithValue(string.Join("\n", new string[]
-                    {
-                        $"Unable to send Level Up notifications since Xenia cannot access the channel {DiscordURLHelper.GuildChannel(guild.Id, levelUpChannel.Id)}.",
-                        "",
-                        "If you wish to disable Level Up notifications, use the command `/xp silence True`"
-                    })));
+                return new FlightCheckValidationResult(false, flightCheckName, "", issues: new string[]
+                {
+                    $"Unable to send Level Up notifications since Xenia cannot access the channel {DiscordURLHelper.GuildChannel(guild.Id, levelUpChannel.Id)}.\n" +
+                    $"If you wish to disable Level Up notifications, use the command `/xp silence True`",
+                });
             }
 
-            return new FlightCheckValidationResult(true);
+            return new FlightCheckValidationResult(true, flightCheckName);
         }
 
         private async Task _client_MessageReceived(SocketMessage rawMessage)

@@ -127,6 +127,7 @@ public class FlightCheckController : BaseController, IFlightCheckValidator
     /// </summary>
     public async Task<FlightCheckValidationResult> FlightCheckGuild(SocketGuild guild)
     {
+        string flightCheckName = "Guild Permission Validation";
         if (!HasValidPermissions(guild))
         {
             Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\": Permissions invalid");
@@ -134,10 +135,13 @@ public class FlightCheckController : BaseController, IFlightCheckValidator
                 .WithName("Missing Guild Permissions")
                 .WithValue("Xenia may not work as intended. " +
                            $"To resolve this, [please re-invite Xenia]({_discordCont.GetInviteLink()}).");
-            return new FlightCheckValidationResult(false, field);
+            return new FlightCheckValidationResult(false, flightCheckName, $"To resolve this, [please re-invite Xenia]({_discordCont.GetInviteLink()}).", new string[]
+            {
+                $"Missing required guild permissions"
+            });
         }
 
-        return new FlightCheckValidationResult(true);
+        return new FlightCheckValidationResult(true, flightCheckName);
     }
 
     /// <summary>

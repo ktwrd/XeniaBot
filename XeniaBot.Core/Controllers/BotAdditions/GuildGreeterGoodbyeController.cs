@@ -5,7 +5,6 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Core.Models;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
@@ -28,39 +27,33 @@ public class GuildGreeterGoodbyeController : BaseController, IFlightCheckValidat
 
     public async Task<FlightCheckValidationResult> FlightCheckGuild(SocketGuild guild)
     {
+        string flightCheckName = "";
         var goodbyeConfig = await _configByeController.GetLatest(guild.Id);
         if (goodbyeConfig?.ChannelId == null || (goodbyeConfig.ChannelId ?? 0) == 0)
-            return new FlightCheckValidationResult(true);
+            return new FlightCheckValidationResult(true, flightCheckName, "Not configured. Ignoring");
 
-        var lines = new List<string>();
         try
         {
             guild.GetChannel((ulong)goodbyeConfig.ChannelId);
         }
         catch (Exception ex)
         {
-            return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
-                .WithName("Guild Greeter - Goodbye")
-                .WithValue(string.Join("\n", new string[]
-                {
-                    $"Failed to fetch channel {DiscordURLHelper.GuildChannel(guild.Id, (ulong)goodbyeConfig.ChannelId)}",
-                    "```",
-                    ex.Message,
-                    "```"
-                })));
+            return new FlightCheckValidationResult(false, flightCheckName, issues: new string[]
+            {
+                $"Failed to fetch channel {DiscordURLHelper.GuildChannel(guild.Id, (ulong)goodbyeConfig.ChannelId)} (`{ex.Message}`)",
+                $"Unable to send messages in {DiscordURLHelper.GuildChannel(guild.Id, (ulong)goodbyeConfig.ChannelId)}."
+            });
         }
 
         if (!DiscordHelper.CanAccessChannel(_discord, guild.GetChannel((ulong)goodbyeConfig.ChannelId)))
         {
-            return new FlightCheckValidationResult(false, new EmbedFieldBuilder()
-                .WithName("Guild Greeter - Goodbye")
-                .WithValue(string.Join("\n", new string[]
-                {
-                    $"Unable to send messages in {DiscordURLHelper.GuildChannel(guild.Id, (ulong)goodbyeConfig.ChannelId)}."
-                })));
+            return new FlightCheckValidationResult(false, flightCheckName, issues: new string[]
+            {
+                $"Unable to send messages in {DiscordURLHelper.GuildChannel(guild.Id, (ulong)goodbyeConfig.ChannelId)}."
+            });
         }
 
-        return new FlightCheckValidationResult(true);
+        return new FlightCheckValidationResult(true, flightCheckName);
     }
 
     private async Task _discord_UserLeft(SocketGuild guild, SocketUser user)
