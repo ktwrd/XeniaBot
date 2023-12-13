@@ -23,7 +23,7 @@ public class FlightCheckModule : InteractionModuleBase
             var controller = Program.Services.GetRequiredService<FlightCheckController>();
             if (Context.Guild == null)
             {
-                await RespondAsync(
+                await FollowupAsync(
                     embed: embed
                         .WithColor(Color.Red)
                         .WithDescription("This command can only be ran in guilds").Build());
@@ -34,7 +34,7 @@ public class FlightCheckModule : InteractionModuleBase
         }
         catch (Exception ex)
         {
-            await RespondAsync(embed: embed.WithColor(Color.Red)
+            await FollowupAsync(embed: embed.WithColor(Color.Red)
                 .WithDescription(string.Join("\n", new string[]
                 {
                     "Unable to perform FlightCheck",
@@ -46,7 +46,7 @@ public class FlightCheckModule : InteractionModuleBase
             return;
         }
 
-        await RespondAsync(
+        await FollowupAsync(
             embed: embed.WithColor(Color.Blue)
                 .WithDescription(
                     "FlightCheck ran successfully. Ask the guild owner to check their DMs.\n" +
