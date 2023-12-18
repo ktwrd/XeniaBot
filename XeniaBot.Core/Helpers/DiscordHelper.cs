@@ -201,10 +201,10 @@ namespace XeniaBot.Core.Helpers
             var errChannel = errGuild.GetTextChannel(Program.ConfigData.ErrorChannel);
             
             var attachments = new List<FileAttachment>();
-            using var responseStream = new MemoryStream(Encoding.UTF8.GetBytes(response.ToString()));
+            var responseStream = new MemoryStream(Encoding.UTF8.GetBytes(response.ToString()));
             attachments.Add(new FileAttachment(responseStream, "exception.txt"));
 
-            using var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
+            var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
             if (attachStack)
             {
                 attachments.Add(new FileAttachment(stackStream, "stack.txt"));
@@ -239,8 +239,8 @@ namespace XeniaBot.Core.Helpers
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
 
             var textChannel = client.GetGuild(Program.ConfigData.ErrorChannel).GetTextChannel(Program.ConfigData.ErrorChannel);
-            using var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
-            using var exceptionStream = new MemoryStream(Encoding.UTF8.GetBytes(exceptionContent));
+            var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
+            var exceptionStream = new MemoryStream(Encoding.UTF8.GetBytes(exceptionContent));
             var attachments = new List<FileAttachment>()
             {
                 new FileAttachment(stream: stackStream, fileName: "stack.txt"),
