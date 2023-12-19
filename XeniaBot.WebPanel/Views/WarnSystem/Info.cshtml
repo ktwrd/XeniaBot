@@ -20,10 +20,11 @@
         <img src="@(Model.Client.GetUser(Model.WarnItem.ActionedUserId).GetAvatarUrl() ?? Model.Client.GetUser(Model.WarnItem.ActionedUserId).GetDefaultAvatarUrl())" class="smallUserIcon" /> <code alt="@Model.WarnItem.ActionedUserId">@Model.Client.GetUser(Model.WarnItem.ActionedUserId).ToString()</code>
         at
         <code>@(AspHelper.DateTimeFromTimestamp(Model.WarnItem.CreatedAtTimestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))</code>
+        in
+        <a asp-controller="Server" asp-route-id="@Model.Guild.Id" asp-action="Index"><code>@Model.Guild.Name</code></a>
     </p>
     <h4>Description</h4>
     <textarea class="form-control" readonly>@Model.WarnItem.Description</textarea>
-    <br/>
-    <a class="btn btn-outline-primary" asp-controller="Server" asp-action="Index" asp-route-id="@Model.Guild.Id">Go Back</a>
+    <a class="btn btn-outline-primary btn-sm mt-3" asp-controller="WarnSystem" asp-action="GuildWarns" asp-route-id="@Model.Guild.Id">Go Back</a>
 </div>
 
