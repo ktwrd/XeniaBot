@@ -20,6 +20,7 @@ public class AudioServiceController : BaseController
     public LavaNode LavaNode { get; private set; }
     public bool Enable { get; private set; }
     private readonly DiscordSocketClient _client;
+    private readonly ConfigData _configData;
     public readonly HashSet<ulong> VoteQueue;
     private readonly ConcurrentDictionary<ulong, CancellationTokenSource> _disconnectTokens;
 
@@ -27,7 +28,7 @@ public class AudioServiceController : BaseController
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
-        var _configData = services.GetRequiredService<ConfigData>();
+        _configData = services.GetRequiredService<ConfigData>();
 
         Enable = _configData.Lavalink_Enable;
 
@@ -69,9 +70,14 @@ public class AudioServiceController : BaseController
 
     public override async Task OnReady()
     {
+        if (!Enable)
+        {
+            Log.WriteLine("Not going to connect to Lavalink server since it's disabled");
+            return;
+        }
         try
         {
-            await Task.Delay(2000);
+            Log.WriteLine("Connecting to Lavalink Server");
             await LavaNode.ConnectAsync();
         }
         catch (Exception ex)
