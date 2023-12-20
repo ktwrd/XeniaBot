@@ -61,29 +61,29 @@ public class LoggerPolyfillT<T> : ILogger<T>
         Exception? exception,
         Func<TState, Exception?, string> formatter)
     {
-        // string data = formatter(state, exception);
-        // data = $"[{eventId}] {data}";
-        // switch (logLevel)
-        // {
-        //     case LogLevel.Trace:
-        //         XeniaBot.Shared.Log.Trace(data);
-        //         break;
-        //     case LogLevel.Debug:
-        //         Shared.Log.Debug(data);
-        //         break;
-        //     case LogLevel.Information:
-        //         Shared.Log.WriteLine(data);
-        //         break;
-        //     case LogLevel.Warning:
-        //         Shared.Log.Warn(data);
-        //         break;
-        //     case LogLevel.Error:
-        //         Shared.Log.Error(data);
-        //         break;
-        //     case LogLevel.Critical:
-        //         Shared.Log.Critical(data);
-        //         break;
-        // }
+        string data = formatter(state, exception);
+        data = $"[{eventId}] {data}";
+        switch (logLevel)
+        {
+            // case LogLevel.Trace:
+            //     XeniaBot.Shared.Log.Trace(data);
+            //     break;
+            // case LogLevel.Debug:
+            //     Shared.Log.Debug(data);
+            //     break;
+            case LogLevel.Information:
+                Shared.Log.WriteLine(data);
+                break;
+            case LogLevel.Warning:
+                Shared.Log.Warn(data);
+                break;
+            case LogLevel.Error:
+                Shared.Log.Error(data);
+                break;
+            case LogLevel.Critical:
+                Shared.Log.Critical(data);
+                break;
+        }
     }
 
     public bool IsEnabled(LogLevel logLevel)
