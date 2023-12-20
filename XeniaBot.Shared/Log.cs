@@ -6,8 +6,95 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace XeniaBot.Shared;
+
+public class LoggerPolyfill : ILogger
+{
+    public void Log<TState>(LogLevel logLevel,
+        EventId eventId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
+    {
+        string data = formatter(state, exception);
+        data = $"[{eventId}] {data}";
+        switch (logLevel)
+        {
+            case LogLevel.Trace:
+                XeniaBot.Shared.Log.Trace(data);
+                break;
+            case LogLevel.Debug:
+                Shared.Log.Debug(data);
+                break;
+            case LogLevel.Information:
+                Shared.Log.WriteLine(data);
+                break;
+            case LogLevel.Warning:
+                Shared.Log.Warn(data);
+                break;
+            case LogLevel.Error:
+                Shared.Log.Error(data);
+                break;
+            case LogLevel.Critical:
+                Shared.Log.Critical(data);
+                break;
+        }
+    }
+
+    public bool IsEnabled(LogLevel logLevel)
+    {
+        return true;
+    }
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+    {
+        return null;
+    }
+}
+
+public class LoggerPolyfillT<T> : ILogger<T>
+{
+    public void Log<TState>(LogLevel logLevel,
+        EventId eventId,
+        TState state,
+        Exception? exception,
+        Func<TState, Exception?, string> formatter)
+    {
+        string data = formatter(state, exception);
+        data = $"[{eventId}] {data}";
+        switch (logLevel)
+        {
+            // case LogLevel.Trace:
+            //     XeniaBot.Shared.Log.Trace(data);
+            //     break;
+            // case LogLevel.Debug:
+            //     Shared.Log.Debug(data);
+            //     break;
+            case LogLevel.Information:
+                Shared.Log.WriteLine(data);
+                break;
+            case LogLevel.Warning:
+                Shared.Log.Warn(data);
+                break;
+            case LogLevel.Error:
+                Shared.Log.Error(data);
+                break;
+            case LogLevel.Critical:
+                Shared.Log.Critical(data);
+                break;
+        }
+    }
+
+    public bool IsEnabled(LogLevel logLevel)
+    {
+        return true;
+    }
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+    {
+        return null;
+    }
+}
 
 public static class Log
 {
@@ -54,16 +141,22 @@ public static class Log
         Console.ForegroundColor = targetColor.Foreground;
     }
     public static string WarnPrefix = "[WARN]";
+    public static string CriticalPrefix = "[CRIT]";
     public static string ErrorPrefix = "[ERR] ";
     public static string LogPrefix = "[LOG] ";
     public static string DebugPrefix = "[DEBG]";
     public static string NotePrefix = "[NOTE]";
+    public static string TracePrefix = "[TRCE]";
     public static bool ShowMethodName = true;
     public static bool ShowTimestamp = false;
 
     public static void Warn(string content, [CallerMemberName] string methodname = null,
         [CallerFilePath] string methodfile = null)
         => WriteLine(content, WarnColor, WarnPrefix, ShowMethodName, methodname, methodfile);
+    
+    public static void Critical(string content, [CallerMemberName] string methodname = null,
+        [CallerFilePath] string methodfile = null)
+        => WriteLine(content, ErrorColor, CriticalPrefix, ShowMethodName, methodname, methodfile);
 
     public static void Error(string content, [CallerMemberName] string methodname = null,
         [CallerFilePath] string methodfile = null)
@@ -79,6 +172,10 @@ public static class Log
     public static void Note(string content, [CallerMemberName] string methodname = null,
         [CallerFilePath] string methodfile = null)
         => WriteLine(content, NoteColor, NotePrefix, ShowMethodName, methodfile, methodfile);
+    
+    public static void Trace(string content, [CallerMemberName] string methodname = null,
+        [CallerFilePath] string methodfile = null)
+        => WriteLine(content, ErrorColor, TracePrefix, ShowMethodName, methodfile, methodfile);
 
     #region Object Overload
     public static void Warn(object content, [CallerMemberName] string methodname = null, [CallerFilePath] string methodfile = null)

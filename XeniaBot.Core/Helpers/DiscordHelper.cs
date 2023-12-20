@@ -238,7 +238,8 @@ namespace XeniaBot.Core.Helpers
 
             var client = Program.Services.GetRequiredService<DiscordSocketClient>();
 
-            var textChannel = client.GetGuild(Program.ConfigData.ErrorChannel).GetTextChannel(Program.ConfigData.ErrorChannel);
+            var guild = client.GetGuild(Program.ConfigData.ErrorGuild);
+            var textChannel = guild.GetTextChannel(Program.ConfigData.ErrorChannel);
             var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
             var exceptionStream = new MemoryStream(Encoding.UTF8.GetBytes(exceptionContent));
             var attachments = new List<FileAttachment>()

@@ -191,6 +191,12 @@ public class ConfigData
     /// API Key for Backpack.tf
     /// </summary>
     public string? BackpackTFApiKey = null;
+
+    public bool Lavalink_Enable = false;
+    public string? Lavalink_Hostname = null;
+    public ushort Lavalink_Port = 2333;
+    public string Lavalink_Auth = "";
+    public bool Lavalink_Secure = false;
 }
 public class GoogleCloudKey
 {
