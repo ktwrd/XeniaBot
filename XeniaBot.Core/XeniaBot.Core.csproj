@@ -18,6 +18,7 @@
     <PackageReference Include="MongoDB.Driver" Version="2.21.0" />
     <PackageReference Include="Noppes.E621Client" Version="0.8.0" />
     <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
+    <PackageReference Include="Victoria" Version="6.0.1026" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
