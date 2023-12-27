@@ -27,6 +27,8 @@ public class LevelSystemGuildConfigController : BaseConfigController<LevelSystem
             {
                 GuildId = guildId
             };
+        if (first.RoleGrant == null)
+            first.RoleGrant = new List<LevelSystemRoleGrantItem>();
         return first;
     }
 
