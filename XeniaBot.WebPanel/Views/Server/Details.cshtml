@@ -21,8 +21,9 @@
                 <a class="nav-item nav-link active" id="nav-details-tab" data-toggle="tab" href="#nav-details" role="tab" aria-controls="nav-details" aria-selected="true">Details</a>
                 <a class="nav-item nav-link" id="nav-mod-tab" data-toggle="tab" href="#nav-mod" role="tab" aria-controls="nav-mod" aria-selected="false">Moderation</a>
                 <a class="nav-item nav-link" id="nav-fun-tab" data-toggle="tab" href="#nav-fun" role="tab" aria-controls="nav-fun" aria-selected="false">Fun</a>
+                <a class="nav-item nav-link mr-4" id="nav-levelsys-tab" data-toggle="tab" href="#nav-levelsys" role="tab" aria-controls="nav-levelsys" aria-selected="false">Level System</a>
                 <a class="nav-item nav-link" id="nav-greeter-tab" data-toggle="tab" href="#nav-greeter" role="tab" aria-controls="nav-greeter" aria-selected="false">Greeter</a>
-                <a class="nav-item nav-link" id="nav-greeter-bye-tab" data-toggle="tab" href="#nav-greeter-bye" role="tab" aria-controls="nav-greeter-bye" aria-selected="false">Leave Greeter</a>
+                <a class="nav-item nav-link mr-4" id="nav-greeter-bye-tab" data-toggle="tab" href="#nav-greeter-bye" role="tab" aria-controls="nav-greeter-bye" aria-selected="false">Leave Greeter</a>
                 <a class="nav-item nav-link" aria-selected="false" asp-action="GuildWarns" asp-controller="WarnSystem" asp-route-id="@Model.Guild.Id">Warns</a>
             </div>
         </nav>
@@ -58,6 +59,9 @@
             </div>
             <div class="tab-pane fade" id="nav-fun" role="tabpanel" aria-labelledby="nav-fun-tab">
                 @{ await Html.RenderPartialAsync("Details/Fun"); }
+            </div>
+            <div class="tab-pane fade" id="nav-levelsys" role="tabpanel" aria-labelledby="nav-levelsys-tab">
+                @{ await Html.RenderPartialAsync("Details/Settings/LevelSystem"); }
             </div>
             <div class="tab-pane fade" id="nav-greeter" role="tabpanel" aria-labelledby="nav-greeter-tab">
                 @{ await Html.RenderPartialAsync("Details/Settings/Greeter"); }
