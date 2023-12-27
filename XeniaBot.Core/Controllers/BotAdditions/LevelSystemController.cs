@@ -44,13 +44,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             var taskList = new List<Task>();
             foreach (var guild in _client.Guilds)
             {
-                foreach (var member in guild.Users)
-                {
-                    if (member != null && !member.IsBot)
-                    {
-                        taskList.Add(ClientOnUserJoined(member));
-                    }
-                }
+                taskList.Add(ReGrantGuildMembers(guild.Id));
             }
 
             await Task.WhenAll(taskList);
@@ -66,10 +60,26 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             OnUserLevelUp_RoleGrant(memberModel, metadata, metadata);
         }
 
+        public async Task ReGrantGuildMembers(ulong guildId)
+        {
+            var guild = _client.GetGuild(guildId);
+            if (guild == null)
+                return;
+            var taskList = new List<Task>();
+            foreach (var member in guild.Users)
+            {
+                if (member != null && !member.IsBot)
+                {
+                    taskList.Add(ClientOnUserJoined(member));
+                }
+            }
+            await Task.WhenAll(taskList);
+        }
+
         /// <summary>
         /// Grant a member a role if they reach a level milestone. This can be defined in the dashboard.
         /// </summary>
-        private async void OnUserLevelUp_RoleGrant(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
+        public async void OnUserLevelUp_RoleGrant(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
         {
             var gmodel = await _guildConfig.Get(model.GuildId);
             if (gmodel == null)
