@@ -116,6 +116,49 @@ namespace XeniaBot.Core.Modules
             }
         }
 
+        [SlashCommand("reward-reload", "Re-grant level-up rewards to members.")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task RewardReload()
+        {
+                
+            var startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            await DeferAsync();
+            try
+            {
+                var controller = Program.Services.GetRequiredService<LevelSystemController>();
+
+                try
+                { 
+                    await controller.ReGrantGuildMembers(Context.Guild.Id);
+                }
+                catch (Exception ex)
+                {
+                    var embed = new EmbedBuilder()
+                        .WithTitle("Xp System - Error")
+                        .WithDescription($"Failed to re-grant guild members.\n```\n{ex.Message}\n```")
+                        .WithColor(Color.Red);
+                    await Context.Interaction.FollowupAsync(embed: embed.Build());
+                    await DiscordHelper.ReportError(ex, Context);
+                    return;
+                }
+                
+                await Context.Interaction.FollowupAsync(embed: new EmbedBuilder()
+                    .WithTitle("Xp System - Re-grant Level-Up Reward")
+                    .WithDescription($"Done! Took {Math.Round((DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startTimestamp) / 1000f, 3)}s")
+                    .WithColor(Color.Blue)
+                    .Build());
+            }
+            catch (Exception ex)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("Xp System - Error")
+                    .WithDescription($"Failed to run command.\n```\n{ex.Message}\n```")
+                    .WithColor(Color.Red);
+                await Context.Interaction.FollowupAsync(embed: embed.Build());
+                await DiscordHelper.ReportError(ex, Context);
+            }
+        }
+
         [SlashCommand("setchannel", "Set Log Channel")]
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task SetLogChannel(
