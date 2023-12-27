@@ -1,0 +1,69 @@
+﻿@model XeniaBot.WebPanel.Models.InputComponentModel
+@using Discord.WebSocket
+
+@switch (Model.Type)
+{
+    case "button":
+        <button class="btn @Model.ExtraClass"
+                name="@Model.Name"
+                id="@Model.Id"
+                form="@Model.ParentFormId"
+                value="@Model.Value"
+                disabled="@Model.Readonly">@Model.Placeholder</button>
+        break;
+    case "checkbox":
+        <div class="form-check">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                name="@Model.Name"
+                id="@Model.Id"
+                form="@Model.ParentFormId"
+                value=""
+                disabled="@Model.Readonly"
+                checked="@Model.Checked"
+                @(Model.Required ? "required":"")>
+            <label class="form-check-label" for="@Model.Id">
+                @Model.Placeholder
+            </label>
+        </div>
+        break;
+    case "file":
+        <input
+            class="form-control-file @Model.ExtraClass"
+            type="@Model.Type"
+            name="@Model.Name"
+            id="@Model.Id"
+            form="@Model.ParentFormId"
+            placeholder="@Model.Placeholder"
+            readonly="@Model.Readonly"
+            @(Model.Required ? "required":"")/>
+        break;
+    case "textarea":
+        <textarea
+            class="form-control @Model.ExtraClass"
+            type="@Model.Type"
+            name="@Model.Name"
+            id="@Model.Id"
+            form="@Model.ParentFormId"
+            placeholder="@Model.Placeholder"
+            readonly="@Model.Readonly"
+            @(Model.Required ? "required":"")>@Model.Value</textarea>
+        break;
+    case "number":
+    case "text":
+    case "password":
+    case "email":
+    default:
+        <input
+            class="form-control @Model.ExtraClass"
+            type="@Model.Type"
+            name="@Model.Name"
+            id="@Model.Id"
+            form="@Model.ParentFormId"
+            value="@(Model.Value ?? "")"
+            placeholder="@Model.Placeholder"
+            readonly="@Model.Readonly"
+            @(Model.Required ? "required":"")/>
+        break;
+}
