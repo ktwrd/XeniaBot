@@ -1,0 +1,32 @@
+﻿@model XeniaBot.WebPanel.Models.RoleSelectComponentModel
+@using Discord.WebSocket
+
+@if (Model.InputGroup)
+{
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="@Model.Id" style="width: 12rem;">@Model.DisplayName</span>
+        </div>
+        <select class="custom-select" name="@Model.Name" id="@Model.Id" form="@Model.ParentFormId" @(Model.Required ? "required":"")>
+            @await Component.InvokeAsync("RoleSelectRaw", new RoleSelectRawComponentModel()
+                   {
+                       Roles = @Model.Roles,
+                       SelectedRoleId = @Model.SelectedRoleId
+                   });
+        </select>
+    </div>
+}
+else
+{
+    <div class="form-group mb-3">
+        <label for="@Model.Id">@Model.DisplayName</label>
+        <select class="custom-select" name="@Model.Name" id="@Model.Id" form="@Model.ParentFormId" @(Model.Required ? "required":"")>
+            @await Component.InvokeAsync("RoleSelectRaw", new RoleSelectRawComponentModel()
+                   {
+                       Roles = @Model.Roles,
+                       SelectedRoleId = @Model.SelectedRoleId
+                   });
+        </select>
+    </div>
+}
+
