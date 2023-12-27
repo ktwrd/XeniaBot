@@ -37,4 +37,38 @@
             </div>
         </div>
     </div>
+    <div class="m-1 col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm">
+                Role Rewards
+            </div>
+            <div class="card-body">
+                <div class="channel-multiselect-group">
+                    <form  enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_Xp_RoleGrant_Add" asp-route-id="@Model.Guild.Id">
+                        @await Component.InvokeAsync("RoleSelect", new RoleSelectComponentModel()
+                        {
+                            Roles = StrippedRole.FromGuild(@Model.Client, @Model.Guild),
+                            SelectedRoleId = null,
+                            Id="xp_settings_rolegrant_add_roleId",
+                            DisplayName = "Add Role",
+                            Name = "roleId",
+                            Required = true,
+                            InputGroup = false
+                        })
+                        @await Component.InvokeAsync("Input", new InputComponentModel()
+                        {
+                            Type = "text",
+                            Id = "xp_settings_rolegrant_requiredLevel",
+                            DisplayName = "Required Level",
+                            Name = "requiredLevel",
+                            Required = true,
+                            InputGroup = false,
+                            Value = ""
+                        })
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
