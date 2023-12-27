@@ -44,7 +44,7 @@
                                     @foreach (var user in @Model.UsersWhoCanAccess)
                                     {
                                         <li class="list-group-item">
-                                            <img src="@user.GetAvatarUrl()" height="32" width="32" class="rounded-circle mx-2"/> @user.Username
+                                            <img src="@(user.GetGuildAvatarUrl() ?? user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())" height="32" width="32" class="rounded-circle mx-2"/> @user.Username
                                         </li>
                                     }
                                 </ul>
