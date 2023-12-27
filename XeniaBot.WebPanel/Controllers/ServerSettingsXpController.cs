@@ -60,6 +60,53 @@ public partial class ServerController
         }
     }
 
+    [HttpPost("~/Server/{id}/Settings/Xp/RoleGrant/Remove")]
+    public async Task<IActionResult> SaveSettings_Xp_RoleGrant_Remove(ulong id, string roleId)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+        
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+
+        ulong targetRoleId;
+        try
+        {
+            targetRoleId = ulong.Parse(roleId);
+        }
+        catch (Exception ex)
+        {
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to add Role Reward item. Failed to parse \"roleId\": {ex.Message}");
+        }
+
+        try
+        {
+            var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+            var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
+            {
+                GuildId = guild.Id,
+            };
+            var roleName = guild.Roles.FirstOrDefault(v => v.Id == targetRoleId);
+            data.RoleGrant = data.RoleGrant.Where(v => v.RoleId != targetRoleId).ToList();
+            await controller.Set(data);
+            return await Index(
+                id,
+                messageType: "success",
+                message: $"Removed role {roleName?.Name} to Level Up Role Reward");
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to remove item from RoleGrant (guild: {guild.Id}, role: {roleId}\n{ex}");
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Level System settings. {ex.Message}");
+        }
+    }
+
+
     [HttpPost("~/Server/{id}/Settings/Xp/RoleGrant/Add")]
     public async Task<IActionResult> SaveSettings_Xp_RoleGrant_Add(ulong id, string roleId, string requiredLevel)
     {

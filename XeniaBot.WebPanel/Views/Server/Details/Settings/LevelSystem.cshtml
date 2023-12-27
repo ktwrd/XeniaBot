@@ -49,6 +49,7 @@
                         <tr>
                             <th>Role Name</th>
                             <th>Required Level</th>
+                            <th></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -57,6 +58,18 @@
                             <tr>
                                 <td alt="@item.RoleId">@(Model.Guild.GetRole(item.RoleId)?.Name ?? $"null ({item.RoleId})")</td>
                                 <td>@item.RequiredLevel</td>
+                                <td>
+                                    <form enctype="application/x-www-form-urlencoded"
+                                          method="post"
+                                          asp-controller="Server"
+                                          asp-action="SaveSettings_Xp_RoleGrant_Remove"
+                                          asp-route-id="@Model.Guild.Id">
+                                        <input type="text" name="roleId" value="@item.RoleId" class="display-none" />
+                                        <button class="btn btn-danger btn-sm" type="submit">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         }
                         </tbody>
