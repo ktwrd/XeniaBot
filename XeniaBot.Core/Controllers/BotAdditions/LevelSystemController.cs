@@ -34,6 +34,38 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             _memberConfig = services.GetRequiredService<LevelMemberModelController>();
             _random = new Random();
             _client.MessageReceived += _client_MessageReceived;
+            
+            UserLevelUp += OnUserLevelUp_RoleGrant;
+        }
+
+        /// <summary>
+        /// Grant a member a role if they reach a level milestone. This can be defined in the dashboard.
+        /// </summary>
+        private async void OnUserLevelUp_RoleGrant(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
+        {
+            var gmodel = await _guildConfig.Get(model.GuildId);
+            if (gmodel == null)
+                return;
+
+            var roleGrantList = gmodel?.RoleGrant ?? new List<LevelSystemRoleGrantItem>();
+            var guild = _client.GetGuild(model.GuildId);
+            var member = guild.GetUser(model.UserId);
+            foreach (var item in roleGrantList)
+            {
+                try
+                {
+                    if (current.UserLevel >= item.RequiredLevel)
+                    {
+                        var role = guild.GetRole(item.RoleId);
+                        await member.AddRoleAsync(role);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await DiscordHelper.ReportError(
+                        ex, $"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}");
+                }
+            }
         }
 
         private async Task _client_MessageReceived(SocketMessage rawMessage)
