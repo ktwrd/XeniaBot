@@ -30,6 +30,7 @@ The main reason for it's creation is to de-clutter the usage of unnecessary Disc
     * Includes Level-Up Rewards
     * Level Up rewards get re-added to members who were in the server.
     * Level Up rewards can also be bulk-added to users via `/xp reward-reload`
+- Music Bot
 
 ### What is "Ban Sync"
 BanSync is one of Xenia's main features. If someone joins your server and they're banned in another server that Xenia is in, it will notify your moderators in a log channel. It will also do the same thing if someone in your server was banned from a different server that Xenia is in.
