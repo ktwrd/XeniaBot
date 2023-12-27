@@ -75,14 +75,21 @@ public class FlightCheckController : BaseController
             Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\": Permissions invalid");
         }
 
-        if (embed.Fields.Count > 0)
+        try
         {
-            await guild.Owner.SendMessageAsync(embed: embed.Build());
-            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" failed!");
+            if (embed.Fields.Count > 0)
+            {
+                await guild.Owner.SendMessageAsync(embed: embed.Build());
+                Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" failed!");
+            }
+            else
+            {
+                Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" has passed!");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" has passed!");
+            Log.Error($"FlightCheck failed for {guild.Id} {guild.Name}\n{ex}");   
         }
     }
 
