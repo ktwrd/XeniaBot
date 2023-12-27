@@ -44,6 +44,24 @@
             </div>
             <div class="card-body">
                 <div class="channel-multiselect-group">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Role Name</th>
+                            <th>Required Level</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var item in @Model.XpConfig.RoleGrant)
+                        {
+                            <tr>
+                                <td alt="@item.RoleId">@(Model.Guild.GetRole(item.RoleId)?.Name ?? $"null ({item.RoleId})")</td>
+                                <td>@item.RequiredLevel</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                    <hr/>
                     <form  enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_Xp_RoleGrant_Add" asp-route-id="@Model.Guild.Id">
                         @await Component.InvokeAsync("RoleSelect", new RoleSelectComponentModel()
                         {
