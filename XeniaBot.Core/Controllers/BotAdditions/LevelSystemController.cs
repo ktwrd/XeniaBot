@@ -23,6 +23,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         private IMongoDatabase _db;
         private DiscordSocketClient _client;
         private Random _random;
+        private LevelMemberModelController _memberConfig;
         private LevelSystemGuildConfigController _guildConfig;
         public LevelSystemController(IServiceProvider services)
             : base(services)
@@ -30,6 +31,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             _db = services.GetRequiredService<IMongoDatabase>();
             _client = services.GetRequiredService<DiscordSocketClient>();
             _guildConfig = services.GetRequiredService<LevelSystemGuildConfigController>();
+            _memberConfig = services.GetRequiredService<LevelMemberModelController>();
             _random = new Random();
             _client.MessageReceived += _client_MessageReceived;
         }
@@ -45,14 +47,14 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 return;
             }
             var context = new SocketCommandContext(_client, message);
-            var data = await Get(message.Author.Id, context.Guild.Id);
+            var data = await _memberConfig.Get(message.Author.Id, context.Guild.Id);
             if (data == null)
                 data = new LevelMemberModel()
                 {
                     UserId = message.Author.Id,
                     GuildId = context.Guild.Id
                 };
-            await Set(data);
+            await _memberConfig.Set(data);
             var guildConfig = await _guildConfig.Get(context.Guild.Id)
                 ?? new LevelSystemGuildConfigModel();
             if (!guildConfig.Enable)
@@ -110,7 +112,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         /// <returns>Result information. See <see cref="GrantXpResult"/></returns>
         public async Task<GrantXpResult> GrantXp(LevelMemberModel model, SocketUserMessage message)
         {
-            var data = await Get(model.UserId, model.GuildId);
+            var data = await _memberConfig.Get(model.UserId, model.GuildId);
             var amount = (ulong)_random.Next(4, 16);
 
             // Generate previous and current metadata
@@ -125,10 +127,10 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             bool levelUp = metadataPrevious.UserLevel != metadata.UserLevel;
             if (levelUp)
             {
-                OnUserLevelUp(model, metadataPrevious, metadata);
+                OnUserLevelUp(data, metadataPrevious, metadata);
             }
 
-            await Set(data);
+            await _memberConfig.Set(data);
             return new GrantXpResult()
             {
                 DidLevelUp = levelUp,
@@ -143,116 +145,5 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             }
         }
         public event ExperienceComparisonDelegate UserLevelUp;
-
-        #region MongoDB
-        public const string MongoCollectionName = "levelSystem";
-        protected IMongoCollection<LevelMemberModel> GetCollection()
-        {
-            return _db.GetCollection<LevelMemberModel>(MongoCollectionName);
-        }
-        protected async Task<IAsyncCursor<LevelMemberModel>?> InternalFind(FilterDefinition<LevelMemberModel> filter)
-        {
-            var collection = GetCollection();
-            var result = await collection.FindAsync(filter);
-            return result;
-        }
-
-        public async Task<LevelMemberModel?> Get(ulong? user=null, ulong? guild=null)
-        {
-            var filter = Builders<LevelMemberModel>
-                .Filter
-                .Where(v => v.UserId == user && v.GuildId == guild);
-
-            var result = await InternalFind(filter);
-            var first = result.FirstOrDefault();
-            return first;
-        }
-        
-        public async Task<ICollection<LevelMemberModel>?> GetAllUsersCombined()
-        {
-            var filter = Builders<LevelMemberModel>
-                .Filter.Empty;
-            var result = await InternalFind(filter);
-            var data = new Dictionary<ulong, LevelMemberModel>();
-            foreach (var item in result.ToEnumerable())
-            {
-                data.TryAdd(item.UserId, new LevelMemberModel()
-                {
-                    UserId = item.UserId
-                });
-                data[item.UserId].Xp += item.Xp;
-            }
-
-            return data.Select(v => v.Value).ToList();
-        }
-        
-        public async Task<LevelMemberModel[]?> GetGuild(ulong guildId)
-        {
-            var collection = GetCollection();
-            var filter = Builders<LevelMemberModel>
-                .Filter
-                .Where(v => v.GuildId == guildId);
-
-            var result = await collection.FindAsync(filter);
-            var item = await result.ToListAsync();
-            return item.ToArray();
-        }
-        /// <summary>
-        /// Delete many objects from the database
-        /// </summary>
-        /// <returns>Amount of items deleted</returns>
-        public async Task<long> Delete(ulong? user=null, ulong? guild=null, Func<ulong, bool>? xpFilter=null)
-        {
-            Func<LevelMemberModel, bool> filterFunction = (model) =>
-            {
-                int found = 0;
-                int required = 0;
-
-                required += user == null ? 0 : 1;
-                required += guild == null ? 0 : 1;
-                required += xpFilter == null ? 0 : 1;
-
-                found += user == model.UserId ? 1 : 0;
-                found += guild == model.GuildId ? 1 : 0;
-                if (xpFilter != null)
-                {
-                    found += xpFilter(model.Xp) ? 1 : 0;
-                }
-
-                return found >= required;
-            };
-
-            var filter = Builders<LevelMemberModel>
-                .Filter
-                .Where(v => filterFunction(v));
-
-            var collection = GetCollection();
-            var count = await collection.CountDocumentsAsync(filter);
-            if (count < 1)
-                return count;
-
-            await collection.DeleteManyAsync(filter);
-            return count;
-        }
-
-        public async Task Set(LevelMemberModel model)
-        {
-            var filter = Builders<LevelMemberModel>
-                .Filter
-                .Where(v => v.UserId == model.UserId && v.GuildId == model.GuildId);
-            var exists = (await Get(model.UserId, model.GuildId)) != null;
-
-            var collection = GetCollection();
-            // Replace if exists, if not then we just insert
-            if (exists)
-            {
-                await collection.ReplaceOneAsync(filter, model);
-            }
-            else
-            {
-                await collection.InsertOneAsync(model);
-            }
-        }
-        #endregion
     }
 }

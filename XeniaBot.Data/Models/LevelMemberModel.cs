@@ -11,6 +11,7 @@ namespace XeniaBot.Data.Models
 {
     public class LevelMemberModel : BaseModel
     {
+        public static string CollectionName => "levelSystem";
         public ulong UserId { get; set; }
         public ulong GuildId { get; set; }
         public ulong Xp { get; set; }

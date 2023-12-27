@@ -22,7 +22,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("profile", "See the amount of XP you have and what level you are")]
         public async Task Profile()
         {
-            var controller = Program.Services.GetRequiredService<LevelSystemController>();
+            var controller = Program.Services.GetRequiredService<LevelMemberModelController>();
             var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
             var metadata = LevelSystemHelper.Generate(data);
 
@@ -55,10 +55,10 @@ namespace XeniaBot.Core.Modules
             var embed = new EmbedBuilder()
                 .WithTitle("Xp System - Guild Leaderboard");
             
-            var controller = Program.Services.GetRequiredService<LevelSystemController>();
+            var controller = Program.Services.GetRequiredService<LevelMemberModelController>();
             if (controller == null)
             {
-                embed.WithDescription($"Could not fetch LevelSystemController");
+                embed.WithDescription($"Could not fetch LevelMemberModelController");
                 embed.WithColor(Color.Red);
                 return embed;
             }
@@ -220,10 +220,10 @@ namespace XeniaBot.Core.Modules
                 var embed = new EmbedBuilder()
                     .WithTitle("Xp System - Global Leaderboard");
 
-                var controller = Program.Services.GetRequiredService<LevelSystemController>();
+                var controller = Program.Services.GetRequiredService<LevelMemberModelController>();
                 if (controller == null)
                 {
-                    embed.WithDescription($"Could not fetch LevelSystemController");
+                    embed.WithDescription($"Could not fetch LevelMemberModelController");
                     embed.WithColor(Color.Red);
                     await FollowupAsync(embed: embed.Build());
                     return;
