@@ -1,12 +1,23 @@
 ﻿namespace XeniaBot.WebPanel.Models;
 
-public class ChannelSelectModel
+public class ChannelSelectModel : BaseFormItemModel
 {
+    /// <summary>
+    /// Channels to display.
+    ///
+    /// Generate with <see cref="StrippedChannel.FromGuild"/>
+    /// </summary>
     public IEnumerable<StrippedChannel> Channels { get; set; }
+    /// <summary>
+    /// Current selected channel. `null` for the placeholder option to be selected
+    /// </summary>
     public ulong? SelectedChannelId { get; set; }
-    public string ParentFormId { get; set; }
-    public string Name { get; set; }
-    public string Id { get; set; }
+    /// <summary>
+    /// Content for `input-group` label. 
+    /// </summary>
     public string DisplayName { get; set; }
+    /// <summary>
+    /// Categories to group channels into.
+    /// </summary>
     public IEnumerable<StrippedCategory> Categories { get; set; }
 }
