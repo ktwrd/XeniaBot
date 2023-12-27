@@ -36,6 +36,34 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             _client.MessageReceived += _client_MessageReceived;
             
             UserLevelUp += OnUserLevelUp_RoleGrant;
+            _client.UserJoined += ClientOnUserJoined;
+        }
+
+        public override async Task OnReady()
+        {
+            var taskList = new List<Task>();
+            foreach (var guild in _client.Guilds)
+            {
+                foreach (var member in guild.Users)
+                {
+                    if (member != null && !member.IsBot)
+                    {
+                        taskList.Add(ClientOnUserJoined(member));
+                    }
+                }
+            }
+
+            await Task.WhenAll(taskList);
+        }
+
+        private async Task ClientOnUserJoined(SocketGuildUser arg)
+        {
+            var memberModel = await _memberConfig.Get(arg.Id, arg.Guild.Id);
+            if (memberModel == null)
+                return;
+            
+            var metadata =  LevelSystemHelper.Generate(memberModel);
+            OnUserLevelUp_RoleGrant(memberModel, metadata, metadata);
         }
 
         /// <summary>
