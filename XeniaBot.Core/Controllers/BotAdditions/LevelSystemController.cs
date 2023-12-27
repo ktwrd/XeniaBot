@@ -41,13 +41,20 @@ namespace XeniaBot.Core.Controllers.BotAdditions
 
         public override async Task OnReady()
         {
-            var taskList = new List<Task>();
-            foreach (var guild in _client.Guilds)
+            try
             {
-                taskList.Add(ReGrantGuildMembers(guild.Id));
-            }
+                var taskList = new List<Task>();
+                foreach (var guild in _client.Guilds)
+                {
+                    taskList.Add(ReGrantGuildMembers(guild.Id));
+                }
 
-            await Task.WhenAll(taskList);
+                await Task.WhenAll(taskList);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to run OnReady.\n{ex}");
+            }
         }
 
         private async Task ClientOnUserJoined(SocketGuildUser arg)
@@ -81,28 +88,37 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         /// </summary>
         public async void OnUserLevelUp_RoleGrant(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
         {
-            var gmodel = await _guildConfig.Get(model.GuildId);
-            if (gmodel == null)
-                return;
-
-            var roleGrantList = gmodel?.RoleGrant ?? new List<LevelSystemRoleGrantItem>();
-            var guild = _client.GetGuild(model.GuildId);
-            var member = guild.GetUser(model.UserId);
-            foreach (var item in roleGrantList)
+            try
             {
-                try
+                var gmodel = await _guildConfig.Get(model.GuildId);
+                if (gmodel == null)
+                    return;
+
+                var roleGrantList = gmodel?.RoleGrant ?? new List<LevelSystemRoleGrantItem>();
+                var guild = _client.GetGuild(model.GuildId);
+                var member = guild.GetUser(model.UserId);
+                foreach (var item in roleGrantList)
                 {
-                    if (current.UserLevel >= item.RequiredLevel)
+                    try
                     {
-                        var role = guild.GetRole(item.RoleId);
-                        await member.AddRoleAsync(role);
+                        if (current.UserLevel >= item.RequiredLevel)
+                        {
+                            var role = guild.GetRole(item.RoleId);
+                            await member.AddRoleAsync(role);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}\n{ex}");
+                        await DiscordHelper.ReportError(
+                            ex,
+                            $"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}");
                     }
                 }
-                catch (Exception ex)
-                {
-                    await DiscordHelper.ReportError(
-                        ex, $"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}");
-                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to run with user: {model.UserId} and guild {model.GuildId}\n{ex}");
             }
         }
 
