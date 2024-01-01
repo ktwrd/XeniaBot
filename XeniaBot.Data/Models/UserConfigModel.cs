@@ -4,6 +4,7 @@ namespace XeniaBot.Data.Models;
 
 public class UserConfigModel : BaseModel
 {
+    public static string CollectionName => "userConfig";
     public ulong UserId { get; set; }
     public long ModifiedAtTimestamp { get; set; }
     
