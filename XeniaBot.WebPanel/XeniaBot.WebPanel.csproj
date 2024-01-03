@@ -24,7 +24,7 @@
 
     <ItemGroup>
       <PackageReference Include="AspNet.Security.OAuth.Discord" Version="7.0.3" />
-      <PackageReference Include="Markdig" Version="0.33.0" />
+      <PackageReference Include="Markdig" Version="0.34.0" />
       <PackageReference Include="Microsoft.AspNetCore.Components" Version="7.0.14" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="7.0.10" />
       <PackageReference Include="Microsoft.IdentityModel.Logging" Version="7.1.0-preview" />
