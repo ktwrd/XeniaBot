@@ -8,7 +8,7 @@ namespace XeniaBot.Data.Controllers;
 public class UserConfigController : BaseConfigController<UserConfigModel>
 {
     public UserConfigController(IServiceProvider services)
-        : base("userConfig", services)
+        : base(UserConfigModel.CollectionName, services)
     {
     }
 
