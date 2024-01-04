@@ -7,7 +7,7 @@
 
 There are a few things that are required to setup a development environment for Xenia
 - [Privileged Gateway Intents](#privileged-gateway-intents)
-- [.NET 7.0 SDK+Runtime](#installing-net-sdk)
+- [.NET 8.0 SDK+Runtime](#installing-net-sdk)
 - [MongoDB Server (Preferably in Docker)](#setup-mongodb-server)
 - Discord Server to test (optional)
 - [First Run](#first-run)
@@ -21,11 +21,9 @@ On the Discord Developer Portal make sure that `Server Members Intent` and `Mess
 ## Installing .NET SDK
 If you are using Visual Studio 2022/2019, make sure that `.NET desktop development` is selected under the `Desktop & Mobile` section of the installer. If you're not sure, open up Visual Studio Installer and click on the `Modify` button on your installed version of Visual Studio.
 
-![screen recording](https://res.kate.pet/upload/fa204728-ccf1-4a6e-8f70-abf120eb5c49/setup_18x4FGb9x3.gif)
-
 Once you've installed the .NET SDK you can launch the Visual Studio solution.
 
-On Linux machines, install the runtime and SDK packages for .NET 7.0 package through Microsoft's Repository. See [this guide](https://learn.microsoft.com/en-us/dotnet/core/install/linux).
+On Linux machines, install the runtime and SDK packages for .NET 8.0 package through Microsoft's Repository. See [this guide](https://learn.microsoft.com/en-us/dotnet/core/install/linux).
 
 ## Setup MongoDB Server
 To setup the MongoDB server with Docker run the following command.
