@@ -142,7 +142,10 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 };
             await _memberConfig.Set(data);
             var guildConfig = await _guildConfig.Get(context.Guild.Id)
-                ?? new LevelSystemGuildConfigModel();
+                ?? new LevelSystemGuildConfigModel()
+                {
+                    GuildId = context.Guild.Id
+                };
             if (!guildConfig.Enable)
                 return;
 

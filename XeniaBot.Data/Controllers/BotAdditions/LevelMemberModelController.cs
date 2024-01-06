@@ -24,7 +24,7 @@ public class LevelMemberModelController : BaseConfigController<LevelMemberModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
         var res = await InternalFind(filter);
-        return res.First();
+        return res.FirstOrDefault();
     }
     public async Task<ICollection<LevelMemberModel>?> GetAllUsersCombined()
     {
