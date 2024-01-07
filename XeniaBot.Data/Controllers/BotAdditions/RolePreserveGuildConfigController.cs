@@ -5,9 +5,9 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
 [BotController]
-public class RolePreserveGuildController : BaseConfigController<RolePreserveGuildModel>
+public class RolePreserveGuildConfigController : BaseConfigController<RolePreserveGuildModel>
 {
-    public RolePreserveGuildController(IServiceProvider services)
+    public RolePreserveGuildConfigController(IServiceProvider services)
         : base(RolePreserveGuildModel.CollectionName, services)
     {}
 
