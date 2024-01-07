@@ -133,7 +133,6 @@ namespace XeniaBot.Core
         {
             ConfigController = new ConfigController(ProgramDetails);
             ConfigData = ConfigController.Data;
-            IdGenerator = SnowflakeHelper.Create(ConfigData.GeneratorId);
             HttpClient = new HttpClient();
         }
         private static void MainInit_ValidateMongo()
@@ -222,7 +221,7 @@ false
             var services = new ServiceCollection();
 
             // Add base services
-            services.AddSingleton(IdGenerator)
+            services
                 .AddSingleton(ProgramDetails)
                 .AddSingleton<CronDaemon>()
                 .AddSingleton(ConfigController)
@@ -318,6 +317,5 @@ false
         }
         #endregion
         
-        public static IdGenerator IdGenerator;
     }
 }
