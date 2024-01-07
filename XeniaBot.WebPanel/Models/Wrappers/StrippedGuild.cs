@@ -17,7 +17,7 @@ public class StrippedGuild
     /// </summary>
     public ulong OwnerId { get; set; }
     /// <summary>
-    /// Icon Url for this guild. Will default to `~/Debugmissing.png` when is null.
+    /// Icon Url for this guild. Will default to `/Debugempty.png` when is null.
     /// </summary>
     public string IconUrl { get; set; }
     /// <summary>
@@ -38,7 +38,7 @@ public class StrippedGuild
                 Name = "<unknown>",
                 MemberCount = -1,
                 OwnerId = 0,
-                IconUrl = "~/Debugmissing.png",
+                IconUrl = "/Debugempty.png",
                 Description = ""
             };
         }
@@ -48,7 +48,7 @@ public class StrippedGuild
             instance.Name = guild.Name;
             instance.MemberCount = guild.MemberCount;
             instance.OwnerId = guild.OwnerId;
-            instance.IconUrl = guild.IconUrl ?? "~/Debugmissing.png";
+            instance.IconUrl = guild.IconUrl ?? "/Debugempty.png";
             instance.BannerUrl = guild.BannerUrl;
             instance.Description = guild.Description ?? "";
             return instance;
