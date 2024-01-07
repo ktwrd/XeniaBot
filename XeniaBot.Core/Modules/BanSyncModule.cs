@@ -10,12 +10,44 @@ using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Modules
 {
     [Group("bansync", "Sync Bans between servers")]
     public class BanSyncModule : InteractionModuleBase
     {
+        [SlashCommand("refresh", "Refresh bans in this guild")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task Refresh()
+        {
+            await DeferAsync();
+            try
+            {
+                var controller = Program.Services.GetRequiredService<BanSyncController>();
+                await controller.RefreshBans(Context.Guild.Id);
+                
+                await FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithTitle($"BanSync - Refresh")
+                        .WithDescription($"Bans were refreshed successfully.")
+                        .WithColor(Color.Red)
+                        .WithCurrentTimestamp()
+                        .Build());
+            }
+            catch (Exception ex)
+            {
+                await FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithTitle($"BanSync - Action Failed")
+                        .WithDescription($"Failed to refresh bans in this guild. `{ex.Message}`")
+                        .WithColor(Color.Red)
+                        .WithCurrentTimestamp()
+                        .Build());
+                await Program.Services.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
+            }
+        }
+        
         [SlashCommand("userinfo", "Get ban sync details about user")]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task UserDetails(IUser user)
