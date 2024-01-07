@@ -197,6 +197,8 @@ public class ConfigData
     public ushort Lavalink_Port = 2333;
     public string Lavalink_Auth = "";
     public bool Lavalink_Secure = false;
+
+    public string SupportServerUrl = "";
 }
 public class GoogleCloudKey
 {
