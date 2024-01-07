@@ -70,63 +70,6 @@ namespace XeniaBot.Core.Modules
             }
             await Context.Interaction.RespondAsync($"Updated Log Channel to <#{logChannel.Id}>");
         }
-
-        [SlashCommand("enableguild", "Enable a guilds ability to use the Ban Sync module")]
-        public async Task EnableGuild(string guild)
-        {
-            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
-                return;
-            ulong guildId = 0;
-            try
-            {
-                guildId = ulong.Parse(guild);
-            }
-            catch (Exception ex)
-            {
-                await Context.Interaction.RespondAsync($"Failed to parse guildId\n```\n{ex.Message}\n```");
-                return;
-            }
-            var targetGuild = await Context.Client.GetGuildAsync(guildId);
-            if (targetGuild == null)
-            {
-                await Context.Interaction.RespondAsync($"Guild `{guildId}` not found (GetGuildAsync responded with null)");
-                return;
-            }
-
-            var notes = new List<string>();
-            try
-            {
-                var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
-                var data = await controller.Get(guildId);
-                if (data == null)
-                {
-                    data = new ConfigBanSyncModel()
-                    {
-                        GuildId = guildId
-                    };
-                    notes.Add("Created new database entry");
-                }
-
-                data.Enable = true;
-                await controller.Set(data);
-            }
-            catch (Exception ex)
-            {
-                await Context.Interaction.RespondAsync($"Failed to update guild config\n```\n{ex.Message}\n```");
-                await DiscordHelper.ReportError(ex, Context);
-                return;
-            }
-
-            var responseContent = $"Enabled guild `{guildId}`";
-            if (notes.Count > 0)
-            {
-                responseContent += "\n***Notes***\n";
-                responseContent += string.Join(
-                    "\n",
-                    notes.Select(v => $"`{v}`"));
-            }
-            await Context.Interaction.RespondAsync(responseContent);
-        }
         [SlashCommand("setguildstate", "Set state field of guild")]
         public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
         {
