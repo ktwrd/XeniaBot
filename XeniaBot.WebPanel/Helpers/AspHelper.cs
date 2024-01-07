@@ -117,6 +117,12 @@ public static class AspHelper
 
         var warnConfig = Program.Services.GetRequiredService<GuildWarnItemConfigController>();
         data.WarnItems = await warnConfig.GetLatestGuildItems(guild.Id) ?? new List<GuildWarnItemModel>();
+
+        var rolePreserveConfig = Program.Services.GetRequiredService<RolePreserveGuildConfigController>();
+        data.RolePreserve = await rolePreserveConfig.Get(guild.Id) ?? new RolePreserveGuildModel()
+        {
+            GuildId = guild.Id
+        };
         
         return data;
     }

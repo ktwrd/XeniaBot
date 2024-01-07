@@ -17,4 +17,5 @@ public class WarnGuildDetailsViewModel : BaseViewModel, IBaseServerModel
     public GuildGreeterConfigModel GreeterConfig { get; set; }
     public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }
     public ICollection<GuildWarnItemModel> WarnItems { get; set; }
+    public RolePreserveGuildModel RolePreserve { get; set; }
 }
