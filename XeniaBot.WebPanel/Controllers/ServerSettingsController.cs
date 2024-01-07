@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Controllers;
 using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Controllers;
@@ -32,6 +33,8 @@ public partial class ServerController
         }
         catch (Exception e)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(e, $"Failed to save counter settings");
             Log.Error(e);
             return await Index(id,
                 messageType: "danger",
@@ -99,6 +102,8 @@ public partial class ServerController
         }
         catch (Exception e)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(e, $"Failed to save logging settings");
             Log.Error($"Failed to save logging settings. \n{e}");
             return await Index(id,
                 messageType: "danger",
@@ -178,6 +183,8 @@ public partial class ServerController
         }
         catch (Exception e)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(e, $"Failed to save greeter settings");
             Log.Error($"Failed to save greeter settings\n{e}");
             return await Index(id,
                 messageType: "danger",
@@ -217,6 +224,8 @@ public partial class ServerController
             }
             catch (Exception e)
             {
+                Program.Services.GetRequiredService<ErrorReportController>()
+                    .ReportException(e, $"Failed to save goodbye settings");
                 return await Index(id,
                     messageType: "danger",
                     message: $"Failed to save Greeter Goodbye settings. {e.Message}");
@@ -253,6 +262,8 @@ public partial class ServerController
         }
         catch (Exception e)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(e, $"Failed to save goodbye settings");
             Log.Error($"Failed to save greeter goodbye settings\n{e}");
             return await Index(id,
                 messageType: "danger",

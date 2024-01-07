@@ -2,6 +2,7 @@
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -28,6 +29,8 @@ public partial class ServerController
         }
         catch (Exception e)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(e, $"Failed to save level system settings");
             return await Index(id,
                 messageType: "danger",
                 message: $"Failed to save Level System settings. {e.Message}");
@@ -77,6 +80,8 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(ex, $"Failed to add role reward item. parse fail for roleid");
             return await Index(id,
                 messageType: "danger",
                 message: $"Failed to add Role Reward item. Failed to parse \"roleId\": {ex.Message}");
@@ -99,6 +104,8 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(ex, $"Failed to remove item from RoleGrant (guild: {guild.Id}, role: {roleId})");
             Log.Error($"Failed to remove item from RoleGrant (guild: {guild.Id}, role: {roleId}\n{ex}");
             return await Index(id,
                 messageType: "danger",
@@ -169,6 +176,8 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(ex, $"Failed to add item from RoleGrant (guild: {guild.Id}, role: {roleId}, level: {requiredLevel})");
             Log.Error($"Failed to add item from RoleGrant (guild: {guild.Id}, role: {roleId}, level: {requiredLevel})\n{ex}");
             return await Index(id,
                 messageType: "danger",

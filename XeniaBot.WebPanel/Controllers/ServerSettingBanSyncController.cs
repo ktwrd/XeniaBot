@@ -2,6 +2,7 @@
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.Data;
+using XeniaBot.Shared.Controllers;
 using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Controllers;
@@ -42,6 +43,8 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(ex, $"Failed to get log channel");
             return await Index(id,
                 messageType: "danger",
                 message: $"Unable to request Ban Sync: Failed to get log channel: {ex.Message}");
@@ -95,6 +98,8 @@ public partial class ServerController
                 }
                 catch (Exception ex)
                 {
+                    Program.Services.GetRequiredService<ErrorReportController>()
+                        .ReportException(ex, $"Failed to request ban sync access in guild {id}");
                     return await Index(id,
                         messageType: "danger",
                         message: $"Unable to request Ban Sync: Failed to request. {ex.Message}");
