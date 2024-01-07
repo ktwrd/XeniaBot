@@ -56,7 +56,7 @@ namespace XeniaBot.Core.Modules
             var infoController = Program.Services.GetRequiredService<BanSyncInfoConfigController>();
             var data = await infoController.GetInfoEnumerable(user.Id);
 
-            if (data.Count() < 1)
+            if (!data.Any())
             {
                 await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                 {
