@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Helpers
 {
@@ -116,44 +117,8 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IChannel channel, IMessage? message)
         {
-            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
-            var stack = Environment.StackTrace;
-            var embed = new EmbedBuilder()
-            {
-                Title = "Failed to execute message!",
-                Description = "Failed to send HTTP Request.\n" + string.Join("\n", new string[]
-                {
-                    "```",
-                    $"Author: {user.Username}#{user.Discriminator} ({user.Id})",
-                    $"Guild: {guild.Name} ({guild.Id})",
-                    $"Channel: {channel.Name} ({channel.Id})",
-                    "```"
-                })
-            };
-
-            embed.AddField("Stack Trace", $"```\n{stack}\n```");
-            if (message != null)
-                embed.AddField("Message Content", $"```\n{message.Content}\n```");
-            embed.AddField("HTTP Details", string.Join("\n", new string[]
-            {
-                "```",
-                $"Code: {response.StatusCode} ({(int)response.StatusCode})",
-                $"URL: {response.RequestMessage?.RequestUri}",
-                "```"
-            }));
-            embed.AddField("Resposne Headers", string.Join("\n", new string[]
-            {
-                "```",
-                JsonSerializer.Serialize(response.Headers, Program.SerializerOptions),
-                JsonSerializer.Serialize(response.TrailingHeaders, Program.SerializerOptions),
-                JsonSerializer.Serialize(response.Content.Headers, Program.SerializerOptions),
-                "```"
-            }));
-
-            await client
-                .GetGuild(Program.ConfigData.ErrorGuild)
-                .GetTextChannel(Program.ConfigData.ErrorChannel)
-                .SendMessageAsync(embed: embed.Build());
+            var cont = Program.Services.GetRequiredService<ErrorReportController>();
+            await cont.ReportHTTPError(response, user, guild, channel, message);
         }
         public static async Task ReportError(Exception response, ICommandContext context)
         {
@@ -173,94 +138,13 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IChannel? channel, IMessage? message)
         {
-            Log.Error($"Failed to process. User: {user?.Id}, Guild: {guild?.Id}, Channel: {channel?.Id}.\n{response}");
-            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
-            var stack = Environment.StackTrace;
-            var embed = new EmbedBuilder()
-            {
-                Title = "Uncaught Exception",
-                Description = "Uncaught Exception. Full exception is attached\n" + string.Join("\n", new string[]
-                {
-                    "```",
-                    $"Author: {user?.Username}#{user?.Discriminator} ({user?.Id})",
-                    $"Guild: {guild?.Name} ({guild?.Id})",
-                    $"Channel: {channel?.Name} ({channel?.Id})",
-                    "```"
-                }),
-                Color = Color.Red
-            };
-            
-            bool attachStack = stack.Length > 1000;
-            if (!attachStack)
-                embed.AddField("Stack Trace", $"```\n{stack}\n```");
-            
-            if (message != null)
-                embed.AddField("Message Content", $"```\n{message.Content}\n```");
-
-            var errGuild = client.GetGuild(Program.ConfigData.ErrorGuild);
-            var errChannel = errGuild.GetTextChannel(Program.ConfigData.ErrorChannel);
-            
-            var attachments = new List<FileAttachment>();
-            var responseStream = new MemoryStream(Encoding.UTF8.GetBytes(response.ToString()));
-            attachments.Add(new FileAttachment(responseStream, "exception.txt"));
-
-            var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
-            if (attachStack)
-            {
-                attachments.Add(new FileAttachment(stackStream, "stack.txt"));
-            }
-
-            await errChannel.SendFilesAsync(attachments: attachments, text: "", embed: embed.Build());
+            var cont = Program.Services.GetRequiredService<ErrorReportController>();
+            await cont.ReportError(response, user, guild, channel, message);
         }
         public static async Task ReportError(Exception exception, string extraText = "")
         {
-            Log.Error($"Error Reported\n{extraText}\n{exception}");
-            var stack = Environment.StackTrace;
-            var exceptionContent = exception.ToString();
-            var targetContent = exception.ToString();
-            var embed = new EmbedBuilder()
-            {
-                Title = "Uncaught Exception"
-            };
-            if (targetContent.Length > 1000)
-            {
-                embed.WithDescription("Exception is attached to this message.");
-            }
-            else
-            {
-                embed.WithDescription(string.Join("\n", new string[]
-                {
-                    "```",
-                    targetContent,
-                    "```"
-                }));
-            }
-
-            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
-
-            var guild = client.GetGuild(Program.ConfigData.ErrorGuild);
-            var textChannel = guild.GetTextChannel(Program.ConfigData.ErrorChannel);
-            var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
-            var exceptionStream = new MemoryStream(Encoding.UTF8.GetBytes(exceptionContent));
-            var attachments = new List<FileAttachment>()
-            {
-                new FileAttachment(stream: stackStream, fileName: "stack.txt"),
-                new FileAttachment(stream: exceptionStream, fileName: "exception.txt")
-            };
-
-            if (extraText.Length > 0)
-            {
-                if (extraText.Length > 1000)
-                {
-                    attachments.Add(new FileAttachment(stream: new MemoryStream(Encoding.UTF8.GetBytes(extraText)), fileName: "notes.md"));
-                }
-                else
-                {
-                    embed.AddField("Notes", extraText);
-                }
-            }
-            
-            await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
+            var cont = Program.Services.GetRequiredService<ErrorReportController>();
+            await cont.ReportException(exception, extraText);
         }
         #endregion
     }
