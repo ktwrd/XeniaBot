@@ -33,11 +33,8 @@ public class RolePreserveGuildConfigController : BaseConfigController<RolePreser
 
         if (exists)
         {
-            await collection.FindOneAndReplaceAsync(filter, model);
+            await collection.DeleteManyAsync(filter);
         }
-        else
-        {
-            await collection.InsertOneAsync(model);
-        }
+        await collection.InsertOneAsync(model);
     }
 }
