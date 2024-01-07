@@ -358,7 +358,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                 $"An update about BanSync in your server, [`{guild.Name}`](https://discord.com/channels/{guild.Id}/)";
 
             var contact =
-                $"[send an email](mailto:kate@dariox.club) or [join our support server]({_configData.SupportServerUrl})";
+                $"[send kate an email](mailto:kate@dariox.club) or [join our support server]({_configData.SupportServerUrl})";
 
 
             if (current.State == BanSyncGuildState.Active)
@@ -423,6 +423,20 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                         .WithDescription(
                             $"The BanSync feature has been requested for your server. Please wait 24-48hr for our admin team to review your server. \n\n" +
                             $"***If it takes longer than that***, then {contact}.");
+                }
+            }
+            else
+            {
+                if (previous.State == BanSyncGuildState.Active)
+                {
+                    // awaiting approval
+                    embed.WithColor(Color.Blue)
+                        .WithDescription(
+                            $"The BanSync feature has been disabled in your server. Please {contact} for more information.");
+                }
+                else
+                {
+                    return;
                 }
             }
 
