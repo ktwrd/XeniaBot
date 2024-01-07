@@ -142,6 +142,8 @@ namespace XeniaBot.Core
                 Log.Debug("Connecting to MongoDB");
                 var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBConnectionUrl);
                 connectionSettings.AllowInsecureTls = true;
+                connectionSettings.MaxConnectionPoolSize = 500;
+                connectionSettings.WaitQueueSize = 2000;
                 MongoClient = new MongoClient(connectionSettings);
                 MongoClient.StartSession();
             }
