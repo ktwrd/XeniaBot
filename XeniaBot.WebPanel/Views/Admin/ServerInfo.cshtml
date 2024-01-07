@@ -10,13 +10,7 @@
     ViewData["Title"] = @Model.Guild.Name + " (Admin)";
 }
 
-<div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark">
-    <img class="me-3 rounded-circle mr-3" src="@(Model.Guild.IconUrl ?? "~/Debugempty.png")" alt="" width="48" height="48">
-    <div class="lh-1">
-        <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
-        <small>@Model.Guild.MemberCount members</small>
-    </div>
-</div>
+@await Component.InvokeAsync("GuildBanner", @Model.Guild.Id)
 
 <div class="row d-flex flex-row mt-3">
     <div class="col-auto mr-1">
