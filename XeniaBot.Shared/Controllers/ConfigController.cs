@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
@@ -58,12 +59,24 @@ public class ConfigController
 
     public ConfigData FetchConfig(ProgramDetails details)
     {
-        var data = FetchConfigContent();
+        var stringContent = FetchConfigContent();
+
+        var obj = new JObject(stringContent);
+
+        switch (obj["Version"]?.ToString() ?? "")
+        {
+            case "":
+            case "1":
+                var oldConf = JsonSerializer.Deserialize<ConfigDataV1>(stringContent, SerializerOptions);
+                ValidateConfigV1(oldConf, details);
+                stringContent = JsonSerializer.Serialize(oldConf, SerializerOptions);
+                break;
+        }
+        
         var config = new ConfigData();
         try
         {
-            config = JsonSerializer.Deserialize<ConfigData>(data, SerializerOptions)
-                     ?? new ConfigData();
+            config = ConfigData.Migrate(stringContent);
         }
         catch (Exception ex)
         {
@@ -71,23 +84,23 @@ public class ConfigController
             throw new Exception("Failed to parse ConfigData", ex);
         }
 
-        ValidateConfig(config, details);
+        ConfigData.Validate(details, config);
 
         return config;
     }
 
-    public void ValidateConfig(ConfigData config, ProgramDetails details)
+    public void ValidateConfigV1(ConfigDataV1 config, ProgramDetails details)
     {
         var defaultData = JsonSerializer.Deserialize<Dictionary<string, object>>(
-            JsonSerializer.Serialize(new ConfigData(), SerializerOptions), SerializerOptions) ?? new Dictionary<string, object>();
+            JsonSerializer.Serialize(new ConfigDataV1(), SerializerOptions), SerializerOptions) ?? new Dictionary<string, object>();
 
-        var keysToValidate = ConfigData.RequiredKeys.ToList();
+        var keysToValidate = ConfigDataV1.RequiredKeys.ToList();
         if (details.Platform == XeniaPlatform.Bot)
-            keysToValidate = keysToValidate.Concat(ConfigData.RequiredBotKeys).ToList();
+            keysToValidate = keysToValidate.Concat(ConfigDataV1.RequiredBotKeys).ToList();
         else if (details.Platform == XeniaPlatform.WebPanel)
-            keysToValidate = keysToValidate.Concat(ConfigData.RequiredDashKeys).ToList();
+            keysToValidate = keysToValidate.Concat(ConfigDataV1.RequiredDashKeys).ToList();
         
-        var (baseValidateMissing, baseValidateNotChanged) = ValidateConfigKeys(config, defaultData, keysToValidate.ToArray());
+        var (baseValidateMissing, baseValidateNotChanged) = ValidateConfigKeysV1(config, defaultData, keysToValidate.ToArray());
         if (baseValidateMissing > 0 || baseValidateNotChanged > 0)
         {
             Log.Error("There are multiple issues with your config file. Please resolve them.");
@@ -95,7 +108,7 @@ public class ConfigController
         }
     }
 
-    private (int, int) ValidateConfigKeys(ConfigData source, Dictionary<string, object> clean, string[] keys)
+    private (int, int) ValidateConfigKeysV1(ConfigDataV1 source, Dictionary<string, object> clean, string[] keys)
     {
         var missing = new List<string>();
         var notChanged = new List<string>();
@@ -136,7 +149,6 @@ public class ConfigController
     
     private string FetchFileConfig()
     {
-        var data = new ConfigData();
         if (!File.Exists(FeatureFlags.ConfigLocation))
         {
             File.WriteAllText(FeatureFlags.ConfigLocation, JsonSerializer.Serialize(data, SerializerOptions));
