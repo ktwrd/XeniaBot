@@ -374,7 +374,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                         .WithDescription(
                             $"Your guild has been removed from the blacklist and BanSync has been re-enabled.");
                 }
-                else if (previous.State != BanSyncGuildState.Active)
+                else
                 {
                     // bansync added
                     embed.WithColor(Color.Green)
