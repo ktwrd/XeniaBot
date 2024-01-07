@@ -148,7 +148,11 @@ public class RolePreserveController : BaseController
         var taskList = new List<Task>();
         foreach (var u in guild.Users)
         {
-            taskList.Add(PreserveGuildMember(guild.Id, u.Id));
+            taskList.Add(new Task(
+                delegate
+                {
+                    PreserveGuildMember(guild.Id, u.Id).Wait();
+                }));
         }
 
         foreach (var i in taskList)
