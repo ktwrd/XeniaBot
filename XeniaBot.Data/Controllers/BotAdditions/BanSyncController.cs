@@ -44,7 +44,68 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             }
         }
 
-        public override Task InitializeAsync() => Task.CompletedTask;
+        public override async Task OnReady()
+        {
+            var taskList = new List<Task>();
+            foreach (var item in _client.Guilds)
+            {
+                var guildId = item.Id;
+                taskList.Add(new Task(
+                    delegate
+                    {
+                        var guild = _client.GetGuild(guildId);
+                        try
+                        {
+                            RefreshBans(item).Wait();
+                        }
+                        catch (Exception ex)
+                        {
+                            _err.ReportException(ex, $"Failed to run RefreshBans on {guild.Name} {guild.Id}");
+                        }
+                    }));
+            }
+
+            foreach (var i in taskList)
+                i.Start();
+            await Task.WhenAll(taskList);
+        }
+
+        public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
+        public async Task RefreshBans(SocketGuild guild)
+        {
+            var config = await _config.Get(guild.Id);
+            if ((config?.Enable ?? false) == false)
+                return;
+
+            var bans = await guild.GetBansAsync().FlattenAsync().ConfigureAwait(false);
+            foreach (var i in bans)
+            {
+                try
+                {
+                    var existing = await _infoConfig.GetInfo(i.User.Id, guild.Id);
+                    if (existing != null)
+                        continue;
+                
+                    var info = new BanSyncInfoModel()
+                    {
+                        UserId = i.User.Id,
+                        UserName = i.User.Username,
+                        UserDiscriminator = i.User.Discriminator,
+                        GuildId = guild.Id,
+                        GuildName = guild.Name,
+                        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                        Reason = i?.Reason ?? "null"
+                    };
+                    await _infoConfig.SetInfo(info);
+                }
+                catch (Exception ex)
+                {
+                    await _err.ReportException(
+                        ex,
+                        $"Failed to add ban for {i.User.Username} ({i.User.Id}) in guild {guild.Name} ({guild.Id})");
+                }
+            }
+        }
 
         /// <summary>
         /// Add user to database and notify mutual servers. <see cref="NotifyBan(BanSyncInfoModel)"/>
@@ -105,7 +166,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                 i.Start();
             await Task.WhenAll(taskList);
         }
-
+        
         /// <summary>
         /// Remove user from the database if they exist
         /// </summary>
@@ -228,6 +289,19 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             
             await SetGuildState_Notify(config);
             await SetGuildState_NotifyGuild(config, oldConfig);
+
+            if (state == BanSyncGuildState.Active)
+            {
+                try
+                {
+                    await RefreshBans(_client.GetGuild(guildId));
+                }
+                catch (Exception ex)
+                {
+                    var guild = _client.GetGuild(guildId);
+                    await _err.ReportException(ex, $"Failed to refresh bans in {guild.Name} ({guildId})");
+                }
+            }
 
             return config;
         }
