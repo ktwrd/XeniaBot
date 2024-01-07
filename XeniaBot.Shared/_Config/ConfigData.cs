@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Shared;
@@ -11,7 +12,12 @@ public class ConfigData
     ///
     /// 2: New schema version. Requires total transformation.
     /// </summary>
-    public const uint Version = 2;
+    public uint Version
+    {
+        get => 2;
+        set { value = 2; }
+    }
+
     /// <summary>
     /// Discord token to login as.
     /// </summary>
@@ -81,13 +87,14 @@ public class ConfigData
     {
         var b = JsonSerializer.Deserialize<ConfigDataVersionField>(content, ConfigController.SerializerOptions);
         var instance = new ConfigData();
-        switch (b?.Version)
+        var version = JObject.Parse(content)["Version"]?.ToString();
+        switch (version)
         {
             case null:
                 Log.Error($"Unable to determine version in config since it is null. Aborting.\nIf you recently upgraded and your config is relatively flat, try setting it to `1`.");
                 Environment.Exit(1);
                 break;
-            case 1:
+            case "1":
                 var v1 = JsonSerializer.Deserialize<ConfigDataV1>(content, ConfigController.SerializerOptions);
                 instance.DiscordToken = v1.DiscordToken;
                 instance.MongoDBConnectionUrl = v1.MongoDBServer;

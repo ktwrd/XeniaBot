@@ -61,15 +61,14 @@ public class ConfigController
     {
         var stringContent = FetchConfigContent();
 
-        var obj = new JObject(stringContent);
-
+        var obj = JObject.Parse(stringContent);
+        var v = obj["Version"]?.ToString();
         switch (obj["Version"]?.ToString() ?? "")
         {
             case "":
             case "1":
                 var oldConf = JsonSerializer.Deserialize<ConfigDataV1>(stringContent, SerializerOptions);
                 ValidateConfigV1(oldConf, details);
-                stringContent = JsonSerializer.Serialize(oldConf, SerializerOptions);
                 break;
         }
         

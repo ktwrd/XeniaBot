@@ -51,7 +51,11 @@ public class ConfigDataV1
     /// <summary>
     /// Current config version.
     /// </summary>
-    public const uint Version = 1;
+    public uint Version
+    {
+        get => 1;
+        set { value = 1; }
+    }
     
     /// <summary>
     /// Discord user token
