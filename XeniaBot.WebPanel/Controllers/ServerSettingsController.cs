@@ -115,6 +115,37 @@ public partial class ServerController
             message: $"Logging settings saved");
     }
 
+    [HttpPost("~/Server/{id}/Settings/RolePreserve")]
+    public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+
+        try
+        {
+            var controller = Program.Services.GetRequiredService<RolePreserveGuildConfigController>();
+            var data = await controller.Get(id) ?? new RolePreserveGuildModel()
+            {
+                GuildId = id
+            };
+
+            data.Enable = enable;
+            await controller.Set(data);
+
+            return await Index(
+                id, messageType: "success", message: $"Role Preserve " + (enable ? "Enabled" : "Disabled"));
+        }
+        catch (Exception ex)
+        {
+            Program.Services.GetRequiredService<ErrorReportController>()
+                .ReportException(ex, $"Failed to save role preserve settings");
+            Log.Error($"Failed to save role preserve settings\n{ex}");
+            return await Index(id,
+                messageType: "danger",
+                message: $"Failed to save Role Preserve settings. {ex.Message}");
+        }
+    }
+
     [HttpPost("~/Server/{id}/Settings/Greeter")]
     public async Task<IActionResult> SaveSettings_Greeter(
         ulong id,
