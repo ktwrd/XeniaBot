@@ -24,6 +24,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
         private readonly ConfigData _configData;
         private readonly BanSyncInfoConfigController _infoConfig;
         private readonly ProgramDetails _details;
+        private readonly ErrorReportController _err;
         public BanSyncController(IServiceProvider services)
             : base(services)
         {
@@ -33,6 +34,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             _configData = services.GetRequiredService<ConfigData>();
             _infoConfig = services.GetRequiredService<BanSyncInfoConfigController>();
             _details = services.GetRequiredService<ProgramDetails>();
+            _err = services.GetRequiredService<ErrorReportController>();
 
             if (_details.Platform != XeniaPlatform.WebPanel)
             {
@@ -205,6 +207,8 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             if (config == null)
                 return null;
 
+            var oldConfig = config;
+
             if (state == BanSyncGuildState.Blacklisted || state == BanSyncGuildState.RequestDenied)
             {
                 if (config.Reason.Length < 1)
@@ -223,6 +227,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             await _config.Set(config);
             
             await SetGuildState_Notify(config);
+            await SetGuildState_NotifyGuild(config, oldConfig);
 
             return config;
         }
@@ -255,6 +260,110 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                 return;
             }
         }
+
+        /// <summary>
+        /// Notify guild owner when the BanSync state for their guild has changed.
+        /// </summary>
+        /// <param name="current">Current model content in db.</param>
+        /// <param name="previous">Previous model in db before the change was made.</param>
+        protected async Task SetGuildState_NotifyGuild(ConfigBanSyncModel current, ConfigBanSyncModel previous)
+        {
+            var guild = _client.GetGuild(current.GuildId);
+            var channel = guild.GetTextChannel(current.LogChannel);
+            if (channel == null)
+            {
+                Log.Warn($"Failed to get channel {current.LogChannel} in guild {guild.Id} ({guild.Name})");
+                return;
+            }
+
+            var embed = new EmbedBuilder()
+                .WithCurrentTimestamp()
+                .WithTitle("Ban Sync Notification");
+            var baseServerMsg = $"<@{guild.OwnerId}> An update about BanSync in your server.";
+            var baseDmMsg =
+                $"An update about BanSync in your server, [`{guild.Name}`](https://discord.com/channels/{guild.Id}/)";
+
+            var contact =
+                $"[send an email](mailto:kate@dariox.club) or [join our support server]({_configData.SupportServerUrl})";
+
+
+            if (current.State == BanSyncGuildState.Active)
+            {
+                if (previous.State == BanSyncGuildState.RequestDenied)
+                {
+                    // mind has been changed
+                    embed.WithColor(Color.Green)
+                        .WithDescription(
+                            $"A mistake may have been made by the admins. BanSync has been re-enabled for your guild.");
+                }
+                else if (previous.State == BanSyncGuildState.Blacklisted)
+                {
+                    // blacklist removed
+                    embed.WithColor(Color.Green)
+                        .WithDescription(
+                            $"Your guild has been removed from the blacklist and BanSync has been re-enabled.");
+                }
+                else if (previous.State != BanSyncGuildState.Active)
+                {
+                    // bansync added
+                    embed.WithColor(Color.Green)
+                        .WithDescription(
+                            "Congratulations! The BanSync feature was approved for usage in your server. All banned members have been synchronized on our side and you can see members in your server with an existing history on the dashboard.\n" +
+                            "\n" +
+                            $"If you need any assistance. Feel free to {contact}.");              
+                }
+            }
+            else if (current.State == BanSyncGuildState.Blacklisted)
+            {
+                if (previous.State == BanSyncGuildState.PendingRequest)
+                {
+                    // rejected and blacklisted
+                    embed.WithColor(Color.Red)
+                        .WithDescription(
+                            $"Your request to enable BanSync has been rejected and your guild has been blacklisted. For more information, {contact} if you would like to appeal.");
+                }
+                else if (previous.State != BanSyncGuildState.Blacklisted)
+                {
+                    // blacklisted
+                    embed.WithColor(Color.Red)
+                        .WithDescription(
+                            $"Your guild has been blacklisted to use the BanSync feature. For more information, {contact} if you would like to appeal.");
+                }
+            }
+            else if (current.State == BanSyncGuildState.RequestDenied)
+            {
+                if (previous.State != BanSyncGuildState.RequestDenied)
+                {
+                    // request has been denied
+                    embed.WithColor(Color.Red)
+                        .WithDescription(
+                            $"Your request to enable the BanSync feature has been denied. For more information, {contact}");
+                }
+            }
+            else if (current.State == BanSyncGuildState.PendingRequest)
+            {
+                if (previous.State != BanSyncGuildState.PendingRequest)
+                {
+                    // awaiting approval
+                    embed.WithColor(Color.Blue)
+                        .WithDescription(
+                            $"The BanSync feature has been requested for your server. Please wait 24-48hr for our admin team to review your server. \n\n" +
+                            $"***If it takes longer than that***, then {contact}.");
+                }
+            }
+
+            await channel.SendMessageAsync(
+                baseServerMsg, embed: embed.Build());
+
+            await guild.Owner.SendMessageAsync(
+                baseDmMsg,
+                embed: embed.Build());
+        }
+        /// <summary>
+        /// Request for BanSync to be enabled on the guild specified.
+        /// </summary>
+        /// <param name="guildId">GuildId to request the BanSync feature on.</param>
+        /// <returns>Updated <see cref="ConfigBanSyncModel"/></returns>
         public async Task<ConfigBanSyncModel> RequestGuildEnable(ulong guildId)
         {
             var config = await _config.Get(guildId);
@@ -276,8 +385,13 @@ namespace XeniaBot.Data.Controllers.BotAdditions
 
             await RequestGuildEnable_SendNotification(config);
 
+            config = await _config.Get(guildId);
+
             return config;
         }
+        /// <summary>
+        /// Send notification to <see cref="BanSyncConfigItem.RequestChannelId."/> that a server has requested the BanSync feature.
+        /// </summary>
         protected async Task RequestGuildEnable_SendNotification(ConfigBanSyncModel model)
         {
             var guild = _client.GetGuild(model.GuildId);
@@ -294,6 +408,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
 
             await logRequestChannel.SendMessageAsync(embed: new EmbedBuilder()
             {
+                Title = "BanSync Request Received.",
                 Description = string.Join("\n", new string[]
                 {
                     "```",
