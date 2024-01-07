@@ -74,7 +74,10 @@ namespace XeniaBot.Core.Modules
         public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
         {
             if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+            {
+                await Context.Interaction.RespondAsync($"Invalid permissions.");
                 return;
+            }
             ulong guildId = 0;
             try
             {
