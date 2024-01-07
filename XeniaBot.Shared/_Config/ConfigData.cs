@@ -115,7 +115,7 @@ public class ConfigData
                 };
                 instance.BanSync = new BanSyncConfigItem()
                 {
-                    AdminGuildId = v1.BanSync_AdminServer,
+                    GuildId = v1.BanSync_AdminServer,
                     LogChannelId = v1.BanSync_GlobalLogChannel,
                     RequestChannelId = v1.BanSync_RequestChannel
                 };

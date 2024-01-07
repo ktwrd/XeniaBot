@@ -40,7 +40,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
 
 
             Log.Debug("Validating WeatherAPI.com API Key");
-            Enable = ValidateToken(_sysconfig.WeatherAPI_Key);
+            Enable = _sysconfig.ApiKeys.Weather != null && ValidateToken(_sysconfig.ApiKeys.Weather);
         }
         private bool Enable = true;
         protected HttpClient HttpClient = new HttpClient();
@@ -90,7 +90,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
 #if DEBUG
             Log.Debug($"Query {location} (airQuality: {airQuality})");
 #endif
-            var url = WeatherAPIEndpoint.Current(_sysconfig.WeatherAPI_Key, location, airQuality);
+            var url = WeatherAPIEndpoint.Current(_sysconfig.ApiKeys.Weather, location, airQuality);
             var response = await HttpClient.GetAsync(url);
             int statusCode = (int)response.StatusCode;
             bool deser = WeatherAPIEndpoint.StatusCodeError.Contains(statusCode) || WeatherAPIEndpoint.StatusCodeSuccess.Contains(statusCode);
@@ -117,7 +117,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
 #if DEBUG
             Log.Debug($"Requesting autocomplete for \"{query}\"");
 #endif
-            string url = WeatherAPIEndpoint.Search(_sysconfig.WeatherAPI_Key, query);
+            string url = WeatherAPIEndpoint.Search(_sysconfig.ApiKeys.Weather, query);
             var response = await HttpClient.GetAsync(url);
             int statusCode = (int)response.StatusCode;
             bool errorDeser = WeatherAPIEndpoint.StatusCodeError.Contains(statusCode);
@@ -158,7 +158,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
             if (days < 1 || days > 10)
                 throw new ArgumentException("Argument \"days\" must be >= 1 or <= 10");
 
-            var url = WeatherAPIEndpoint.Forecast(_sysconfig.WeatherAPI_Key, location, days, airQuality, alerts);
+            var url = WeatherAPIEndpoint.Forecast(_sysconfig.ApiKeys.Weather, location, days, airQuality, alerts);
             var response = await HttpClient.GetAsync(url);
 
             int statusCode = (int)response.StatusCode;

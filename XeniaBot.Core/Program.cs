@@ -141,7 +141,7 @@ namespace XeniaBot.Core
             try
             {
                 Log.Debug("Connecting to MongoDB");
-                var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBServer);
+                var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBConnectionUrl);
                 connectionSettings.AllowInsecureTls = true;
                 MongoClient = new MongoClient(connectionSettings);
                 MongoClient.StartSession();
@@ -162,9 +162,9 @@ namespace XeniaBot.Core
                 RunServicesReadyFunc();
             };
             await _discordController.Run();
-            if (ConfigData.Health_Enable)
+            if (ConfigData.Health.Enable)
             {
-                new HealthServer().Run(ConfigData.Health_Port);
+                new HealthServer().Run(ConfigData.Health.Port);
             }
 
             await Task.Delay(-1);

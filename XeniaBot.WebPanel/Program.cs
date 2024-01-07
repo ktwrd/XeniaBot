@@ -88,7 +88,7 @@ false
         try
         {
             Log.Debug("Connecting to MongoDB");
-            var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBServer);
+            var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBConnectionUrl);
             connectionSettings.AllowInsecureTls = true;
             MongoClient = new MongoClient(connectionSettings);
             MongoClient.StartSession();
@@ -239,8 +239,8 @@ false
             })
             .AddDiscord(options =>
             {
-                options.ClientId = ConfigData.OAuth_ClientId;
-                options.ClientSecret = ConfigData.OAuth_ClientSecret;
+                options.ClientId = ConfigData.OAuthId;
+                options.ClientSecret = ConfigData.OAuthSecret;
                 
                 options.ClaimActions.MapCustomJson("urn:discord:avatar:url", user =>
                     string.Format(

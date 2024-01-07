@@ -30,15 +30,15 @@ public class AudioServiceController : BaseController
         _client = services.GetRequiredService<DiscordSocketClient>();
         _configData = services.GetRequiredService<ConfigData>();
 
-        Enable = _configData.Lavalink_Enable;
+        Enable = _configData.Lavalink.Enable;
 
-        if (_configData.Lavalink_Enable == false)
+        if (_configData.Lavalink.Enable == false)
         {
-            Log.Warn("ConfigData.Lavalink_Enable is false. Ignoring.");
+            Log.Warn("ConfigData.Lavalink.Enable is false. Ignoring.");
         }
         else
         {
-            if (_configData.Lavalink_Hostname == null)
+            if (_configData.Lavalink.Hostname == null)
             {
                 Log.Error("ConfigData.Lavalink_Hostname is null. Please fix.");
                 Environment.Exit(1);
@@ -47,10 +47,10 @@ public class AudioServiceController : BaseController
         }
         var config = new NodeConfiguration()
         {
-            Hostname = _configData.Lavalink_Hostname,
-            Port = _configData.Lavalink_Port,
-            Authorization = _configData.Lavalink_Auth,
-            IsSecure = _configData.Lavalink_Secure,
+            Hostname = _configData.Lavalink.Hostname,
+            Port = _configData.Lavalink.Port,
+            Authorization = _configData.Lavalink.Auth,
+            IsSecure = _configData.Lavalink.Secure,
             EnableResume = true
         };
         LavaNode = new LavaNode(_client, config, new LoggerPolyfillT<LavaNode>());

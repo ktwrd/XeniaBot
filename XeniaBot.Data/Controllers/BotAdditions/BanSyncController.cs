@@ -229,23 +229,31 @@ namespace XeniaBot.Data.Controllers.BotAdditions
         
         protected async Task SetGuildState_Notify(ConfigBanSyncModel model)
         {
-            var guild = _client.GetGuild(model.GuildId);
-            var logGuild = _client.GetGuild(_configData.BanSync_AdminServer);
-            var logChannel = logGuild.GetTextChannel(_configData.BanSync_GlobalLogChannel);
-
-            await logChannel.SendMessageAsync(embed: new EmbedBuilder()
+            try
             {
-                Title = "SetGuildState",
-                Description = string.Join("\n", new string[]
+                var guild = _client.GetGuild(model.GuildId);
+                var logGuild = _client.GetGuild(_configData.BanSync.GuildId);
+                var logChannel = logGuild.GetTextChannel(_configData.BanSync.LogChannelId);
+
+                await logChannel.SendMessageAsync(embed: new EmbedBuilder()
                 {
-                    "```",
-                    $"Guild: {guild.Name ?? "<null>"} ({model.GuildId})",
-                    $"State: {model.State}",
-                    $"Reason: {model.Reason}",
-                    "```"
-                }),
-                Url = _configData.HasDashboard ? $"{_configData.DashboardLocation}/Admin/Server/{guild.Id}#settings" : ""
-            }.WithCurrentTimestamp().Build());
+                    Title = "SetGuildState",
+                    Description = string.Join("\n", new string[]
+                    {
+                        "```",
+                        $"Guild: {guild.Name ?? "<null>"} ({model.GuildId})",
+                        $"State: {model.State}",
+                        $"Reason: {model.Reason}",
+                        "```"
+                    }),
+                    Url = _configData.HasDashboard ? $"{_configData.DashboardUrl}/Admin/Server/{guild.Id}#settings" : ""
+                }.WithCurrentTimestamp().Build());
+            }
+            catch (Exception ex)
+            {
+                await _err.ReportException(ex, $"To notify bot owner about guild state change for {model.GuildId}");
+                return;
+            }
         }
         public async Task<ConfigBanSyncModel> RequestGuildEnable(ulong guildId)
         {
@@ -273,8 +281,8 @@ namespace XeniaBot.Data.Controllers.BotAdditions
         protected async Task RequestGuildEnable_SendNotification(ConfigBanSyncModel model)
         {
             var guild = _client.GetGuild(model.GuildId);
-            var logGuild = _client.GetGuild(_configData.BanSync_AdminServer);
-            var logRequestChannel = logGuild.GetTextChannel(_configData.BanSync_RequestChannel);
+            var logGuild = _client.GetGuild(_configData.BanSync.GuildId);
+            var logRequestChannel = logGuild.GetTextChannel(_configData.BanSync.RequestChannelId);
             // Fetch first text channel to create invite for
             var firstTextChannel = guild.Channels.OfType<ITextChannel>().FirstOrDefault();
 
@@ -296,7 +304,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                     $"Invite: {inviteUrl}",
                     "```"
                 }),
-                Url = _configData.HasDashboard ? $"{_configData.DashboardLocation}/Admin/Server/{guild.Id}#settings" : ""
+                Url = _configData.HasDashboard ? $"{_configData.DashboardUrl}/Admin/Server/{guild.Id}#settings" : ""
             }.Build());
         }
     }

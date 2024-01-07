@@ -71,13 +71,13 @@ namespace XeniaBot.Shared
             var argPos = 0;
 
             var context = new SocketCommandContext(_client, message);
-            if (_configData.DeveloperMode)
+            if (_configData.Developer.Enable)
             {
-                if (context.Guild?.Id != _configData.DeveloperMode_Server)
+                if (context.Guild?.Id != _configData.Developer.GuildId)
                     return;
             }
 
-            if (_configData.UserWhitelistEnable)
+            if (_configData.UserWhitelist.Enable)
             {
                 if (!_configData.UserWhitelist.Contains(context.User.Id))
                     return;

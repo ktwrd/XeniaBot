@@ -34,7 +34,7 @@ namespace XeniaBot.Shared
         {
             try
             {
-                if (string.IsNullOrEmpty(_configData.DiscordBotList_Token))
+                if (string.IsNullOrEmpty(_configData.ApiKeys.DiscordBotList))
                 {
                     Log.WriteLine($"Ignoring since DiscordBotList_Token is empty");
                     return;
@@ -67,7 +67,7 @@ namespace XeniaBot.Shared
                     RequestUri = new Uri($"https://discordbotlist.com/api/v1/bots/{_client.CurrentUser.Id}/commands"),
                     Method = HttpMethod.Post,
                 };
-                request.Headers.Add("Authorization", $"Bot {_configData.DiscordBotList_Token}");
+                request.Headers.Add("Authorization", $"Bot {_configData.ApiKeys.DiscordBotList}");
                 var ser = JsonSerializer.Serialize(
                     casted, new JsonSerializerOptions()
                     {

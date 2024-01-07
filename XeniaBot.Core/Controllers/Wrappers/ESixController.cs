@@ -51,7 +51,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
         {
             try
             {
-                await _client.LogInAsync(_configData.ESix_Username, _configData.ESix_ApiKey, false);
+                await _client.LogInAsync(_configData.ApiKeys.ESix.Username, _configData.ApiKeys.ESix.ApiKey, false);
             }
             catch (Exception ex)
             {

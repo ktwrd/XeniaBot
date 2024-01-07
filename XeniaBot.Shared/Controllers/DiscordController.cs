@@ -73,7 +73,7 @@ namespace XeniaBot.Shared.Controllers
         private Counter? _promCount_InteractionCount = null;
         private async Task InitializeMetrics()
         {
-            if (!_configData.Prometheus_Enable)
+            if (!_configData.Prometheus.Enable)
             {
                 Log.WriteLine("Ignoring, Prometheus Metrics are disabled");
                 return;
@@ -125,7 +125,7 @@ namespace XeniaBot.Shared.Controllers
         private Timer _metricTimer;
         private void CreateMetricTimer()
         {
-            if (!_configData.Prometheus_Enable)
+            if (!_configData.Prometheus.Enable)
                 return;
             
             _metricTimer = new Timer(MetricTimerInterval);
@@ -143,7 +143,7 @@ namespace XeniaBot.Shared.Controllers
         #region Metrics (Triggered by Timer)
         public async Task ReloadMetrics()
         {
-            if (!_configData.Prometheus_Enable)
+            if (!_configData.Prometheus.Enable)
                 return;
             
             var taskList = new List<Task>()
@@ -158,7 +158,7 @@ namespace XeniaBot.Shared.Controllers
         /// <exception cref="Exception">When <see cref="_promCount_GuildCount"/> or <see cref="_promCount_GuildUserCount"/> is null</exception>
         private async Task ReloadMetrics_GuildCountSlow()
         {
-            if (!_configData.Prometheus_Enable)
+            if (!_configData.Prometheus.Enable)
                 return;
             
             if (_promCount_GuildCount == null)
@@ -186,7 +186,7 @@ namespace XeniaBot.Shared.Controllers
         #region Metrics (Triggered by Events)
         private Task Event_SlashCommandExecuted_Prom(SocketSlashCommand interaction)
         {
-            if (!_configData.Prometheus_Enable)
+            if (!_configData.Prometheus.Enable)
                 return Task.CompletedTask;
             
             if (_promCount_InteractionCount == null)

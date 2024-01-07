@@ -30,10 +30,10 @@ namespace XeniaBot.Core.Controllers.Wrappers
         private void Validate()
         {
             bool configInvalid =
-                _configData.GCSKey_Translate == null;
+                _configData.GoogleCloud == null;
             var configDictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(
                 JsonSerializer.Serialize(
-                    _configData.GCSKey_Translate ?? new GoogleCloudKey(),
+                    _configData.GoogleCloud ?? new GoogleCloudKey(),
                     Program.SerializerOptions) ?? "{}",
                 Program.SerializerOptions) ?? new Dictionary<string, string>();
             int dictRequired = configDictionary.Count;
@@ -87,7 +87,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
 
         private async Task<GoogleCredential?> LoadCredentials()
         {
-            bool denyAccess = _configData.GCSKey_Translate == null || _configData.GCSKey_Translate.ProjectId.Length < 1;
+            bool denyAccess = _configData.GoogleCloud == null || _configData.GoogleCloud.ProjectId.Length < 1;
             if (denyAccess)
             {
                 Log.Error("Config not setup (null or project_id not set)");
@@ -97,7 +97,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
             GoogleCredential? cred = null;
             using (CancellationTokenSource source = new CancellationTokenSource())
             {
-                var jsonText = JsonSerializer.Serialize(_configData.GCSKey_Translate, Program.SerializerOptions);
+                var jsonText = JsonSerializer.Serialize(_configData.GoogleCloud, Program.SerializerOptions);
                 if (jsonText == null)
                 {
                     Log.Error("Failed to serialize Google Cloud Config.");

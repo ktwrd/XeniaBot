@@ -64,7 +64,7 @@ public class FlightCheckController : BaseController
                 {
                     $"I've encountered some issues in your guild [`{guild.Name}`](https://discord.com/channels/{guild.Id}/{guild.Channels.FirstOrDefault()?.Id ?? 0}), and that I do not have my required permissions.",
                     "",
-                    $"To resolve this issue, please re-invite me with [this link](https://discord.com/oauth2/authorize?client_id={_discord.CurrentUser.Id}&scope=bot&permissions={_config.Invite_Permissions}).",
+                    $"To resolve this issue, please re-invite me with [this link](https://discord.com/oauth2/authorize?client_id={_discord.CurrentUser.Id}&scope=bot&permissions={_config.InvitePermissions}).",
                     "",
                     "If this does not get resolved, some of Xenia's features will work poorly or it won't work at all. (i.e, server logging, role menu, BanSync, etc...)",
                     "",
@@ -102,7 +102,7 @@ public class FlightCheckController : BaseController
     {
         // Check if we have the correct permissions
         var selfMember = guild.GetUser(_discord.CurrentUser.Id);
-        var targetPerms = new GuildPermissions(_config.Invite_Permissions);
+        var targetPerms = new GuildPermissions(_config.InvitePermissions);
         var permissions = selfMember.GuildPermissions.ToList();
         
         // Do we have the specified permission in the guild?

@@ -149,6 +149,7 @@ public class ConfigController
     
     private string FetchFileConfig()
     {
+        var data = new ConfigData();
         if (!File.Exists(FeatureFlags.ConfigLocation))
         {
             File.WriteAllText(FeatureFlags.ConfigLocation, JsonSerializer.Serialize(data, SerializerOptions));

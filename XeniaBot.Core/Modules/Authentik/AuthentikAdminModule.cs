@@ -31,7 +31,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - Create User").WithCurrentTimestamp();
         try
         {
-            if (!Program.ConfigData.AuthentikEnable)
+            if (!(Program.ConfigData.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -45,7 +45,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
             embed.WithColor(Color.Green)
                 .WithDescription(string.Join("\n", new string[]
                 {
-                    $"Account created! ([view](https://{Program.ConfigData.AuthentikUrl}/if/admin/#/identity/users/{response.Id};%7B%22page%22%3A%22page-overview%22%7D))",
+                    $"Account created! ([view](https://{Program.ConfigData.Authentik.Url}/if/admin/#/identity/users/{response.Id};%7B%22page%22%3A%22page-overview%22%7D))",
                     "```",
                     $"Id: {response.Id}",
                     $"Username: {response.Username}",
@@ -76,7 +76,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - Password Reset Link").WithCurrentTimestamp();
         try
         {
-            if (!Program.ConfigData.AuthentikEnable)
+            if (!(Program.ConfigData.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -120,7 +120,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - Delete User").WithCurrentTimestamp();
         try
         {
-            if (!Program.ConfigData.AuthentikEnable)
+            if (!(Program.ConfigData.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -167,7 +167,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - List Users").WithCurrentTimestamp();
         try
         {
-            if (!Program.ConfigData.AuthentikEnable)
+            if (!(Program.ConfigData.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -210,7 +210,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - User Info").WithCurrentTimestamp();
         try
         {
-            if (!Program.ConfigData.AuthentikEnable)
+            if (!(Program.ConfigData.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -264,7 +264,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
 
         try
         {
-            if (!Program.ConfigData.AuthentikEnable)
+            if (!(Program.ConfigData.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -318,7 +318,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
 
         try
         {
-            if (!Program.ConfigData.AuthentikEnable)
+            if (!(Program.ConfigData.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());

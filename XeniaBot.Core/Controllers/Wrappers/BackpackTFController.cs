@@ -23,7 +23,7 @@ public class BackpackTFController : BaseController
     {
         _http = new HttpClient();
         var conf = services.GetRequiredService<ConfigData>();
-        _apiKey = conf.BackpackTFApiKey ?? "";
+        _apiKey = conf.ApiKeys.BackpackTF ?? "";
     }
 
     public T ParseResponse<T>(string content)

@@ -87,7 +87,7 @@ public class ModerationModule : InteractionModuleBase
             if (Program.ConfigData.HasDashboard)
             {
                 embed.Description +=
-                    $"\n[View on Dashboard]({Program.ConfigData.DashboardLocation}/Warn/Info/{data.WarnId})";
+                    $"\n[View on Dashboard]({Program.ConfigData.DashboardUrl}/Warn/Info/{data.WarnId})";
             }
 
             embed.WithColor(Color.Blue);

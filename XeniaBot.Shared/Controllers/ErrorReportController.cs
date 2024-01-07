@@ -91,8 +91,8 @@ public class ErrorReportController : BaseController
             "```"
         }));
 
-        var logGuild = _client.GetGuild(_config.ErrorGuild);
-        var logChannel = logGuild.GetTextChannel(_config.ErrorChannel);
+        var logGuild = _client.GetGuild(_config.ErrorReporting.GuildId);
+        var logChannel = logGuild.GetTextChannel(_config.ErrorReporting.ChannelId);
         await logChannel.SendMessageAsync(embed: embed.Build());
     }
     #endregion
@@ -143,8 +143,8 @@ public class ErrorReportController : BaseController
         if (message != null)
             embed.AddField("Message Content", $"```\n{message.Content}\n```");
 
-        var errGuild = _client.GetGuild(_config.ErrorGuild);
-        var errChannel = errGuild.GetTextChannel(_config.ErrorChannel);
+        var errGuild = _client.GetGuild(_config.ErrorReporting.GuildId);
+        var errChannel = errGuild.GetTextChannel(_config.ErrorReporting.ChannelId);
             
         var attachments = new List<FileAttachment>();
         var responseStream = new MemoryStream(Encoding.UTF8.GetBytes(response.ToString()));
@@ -198,8 +198,8 @@ public class ErrorReportController : BaseController
             embed.AddField("Notes", $"```\n{notes}\n```");
         }
         
-        var guild = _client.GetGuild(_config.ErrorGuild);
-        var textChannel = guild.GetTextChannel(_config.ErrorChannel);
+        var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
+        var textChannel = guild.GetTextChannel(_config.ErrorReporting.ChannelId);
 
         if (attachments.Count > 0)
         {

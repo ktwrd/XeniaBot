@@ -65,7 +65,7 @@ public class AudioModule : InteractionModuleBase
 
     [SlashCommand("leave", "Leave voice channel.")]
     public async Task LeaveAsync() {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -106,7 +106,7 @@ public class AudioModule : InteractionModuleBase
     [SlashCommand("play", "Add track to queue and play it.")]
     public async Task PlayAsync([Remainder] string searchQuery)
     {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -211,7 +211,7 @@ public class AudioModule : InteractionModuleBase
     [SlashCommand("pause", "Pause queue.")]
     [Command("Pause")]
     public async Task PauseAsync() {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -250,7 +250,7 @@ public class AudioModule : InteractionModuleBase
 
     [SlashCommand("resume", "Resume queue after it's been paused.")]
     public async Task ResumeAsync() {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -289,7 +289,7 @@ public class AudioModule : InteractionModuleBase
 
     [SlashCommand("stop", "Stop queue")]
     public async Task StopAsync() {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -326,7 +326,7 @@ public class AudioModule : InteractionModuleBase
 
     [SlashCommand("skip", "Skip current track.")]
     public async Task SkipAsync() {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -386,7 +386,7 @@ public class AudioModule : InteractionModuleBase
 
     [SlashCommand("seek", "Seek current track to specific time.")]
     public async Task SeekAsync(TimeSpan timeSpan) {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -425,7 +425,7 @@ public class AudioModule : InteractionModuleBase
 
     [SlashCommand("volume", "Set the volume for the bot.")]
     public async Task VolumeAsync(ushort volume) {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -458,7 +458,7 @@ public class AudioModule : InteractionModuleBase
 
     [SlashCommand("nowplaying", "Show what track is currently playing in your voice chat.")]
     public async Task NowPlayingAsync() {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;
@@ -497,7 +497,7 @@ public class AudioModule : InteractionModuleBase
     [SlashCommand("queue", "Get track queue")]
     public async Task Queue()
     {
-        if (!Program.ConfigData.Lavalink_Enable)
+        if (!Program.ConfigData.Lavalink.Enable)
         {
             await RespondAsync("Music Module is disabled.");
             return;

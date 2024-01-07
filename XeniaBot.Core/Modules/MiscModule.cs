@@ -51,7 +51,7 @@ namespace XeniaBot.Core.Modules
             {
                 await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                     .WithTitle("Xenia Dashboard")
-                    .WithDescription($"The dashboard is publicly accessible at {Program.ConfigData.DashboardLocation}")
+                    .WithDescription($"The dashboard is publicly accessible at {Program.ConfigData.DashboardUrl}")
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp()
                     .Build());
@@ -79,7 +79,7 @@ namespace XeniaBot.Core.Modules
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Reload Prometheus Metrics");
             
-            if (!config.Prometheus_Enable)
+            if (!config.Prometheus.Enable)
             {
                 await Context.Interaction.RespondAsync(
                     embed: embed.WithDescription("Prometheus Exporter is disabled").Build());
@@ -117,7 +117,7 @@ namespace XeniaBot.Core.Modules
         {
             var config = Program.Services.GetRequiredService<ConfigData>();
             var inviteLink =
-                $"https://discord.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions={config.Invite_Permissions}";
+                $"https://discord.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions={config.InvitePermissions}";
             await Context.Interaction.RespondAsync(embed: DiscordHelper.BaseEmbed()
                 .WithUrl(inviteLink)
                 .WithTitle("Invite Xenia")

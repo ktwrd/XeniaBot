@@ -23,9 +23,9 @@ namespace XeniaBot.Shared.Controllers
             _configData = services.GetRequiredService<ConfigData>();
             _details = services.GetRequiredService<ProgramDetails>();
             Server = new Prometheus.KestrelMetricServer(
-            hostname: _configData.Prometheus_Hostname,
-                port: _configData.Prometheus_Port,
-                 url: _configData.Prometheus_Url);
+            hostname: _configData.Prometheus.Hostname,
+                port: _configData.Prometheus.Port,
+                 url: _configData.Prometheus.Url);
         }
         public event TaskDelegate? ServerStart;
         public event TaskDelegate? ReloadMetrics;
@@ -36,27 +36,27 @@ namespace XeniaBot.Shared.Controllers
         }
         /// <summary>
         /// Invoked when we want to start the server.
-        /// Ignored when <see cref="ProgramDetails.Platform"/> is <see cref="XeniaPlatform.WebPanel"/> or <see cref="ConfigData.Prometheus_Enable"/> is `false`.
+        /// Ignored when <see cref="ProgramDetails.Platform"/> is <see cref="XeniaPlatform.WebPanel"/> or <see cref="PrometheusConfigItem.Enable"/> is `false`.
         /// </summary>
         private void OnServerStart()
         {
-            if (_details.Platform == XeniaPlatform.WebPanel || !_configData.Prometheus_Enable)
+            if (_details.Platform == XeniaPlatform.WebPanel || !_configData.Prometheus.Enable)
                 return;
-            string address = _configData.Prometheus_Hostname;
+            string address = _configData.Prometheus.Hostname;
             if (address == "+")
                 address = "0.0.0.0";
-            Log.Note($"Available at http://{address}:{_configData.Prometheus_Port}{_configData.Prometheus_Url}");
+            Log.Note($"Available at http://{address}:{_configData.Prometheus.Port}{_configData.Prometheus.Url}");
             ServerStart?.Invoke();
         }
 
         /// <summary>
         /// Initialize Prometheus.
         ///
-        /// Ignored when <see cref="ProgramDetails.Platform"/> is <see cref="XeniaPlatform.WebPanel"/> or <see cref="ConfigData.Prometheus_Enable"/> is `false`.
+        /// Ignored when <see cref="ProgramDetails.Platform"/> is <see cref="XeniaPlatform.WebPanel"/> or <see cref="PrometheusConfigItem.Enable"/> is `false`.
         /// </summary>
         public override Task InitializeAsync()
         {
-            if (!_configData.Prometheus_Enable || _details.Platform == XeniaPlatform.WebPanel)
+            if (!_configData.Prometheus.Enable || _details.Platform == XeniaPlatform.WebPanel)
             {
                 Log.Note("Prometheus Metrics is disabled");
                 return Task.CompletedTask;
