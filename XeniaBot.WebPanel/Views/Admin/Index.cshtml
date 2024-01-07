@@ -23,7 +23,7 @@
     {
         <tr>
             <td>
-                <img src="@guild.IconUrl" class="rounded-circle" style="width: 2.5rem; height: 2.5rem;" />
+                <img src="@(guild.IconUrl ?? "~/Debugempty.png")" class="rounded-circle" style="width: 2.5rem; height: 2.5rem;" />
             </td>
             <td>
                 @guild.Name
