@@ -1,0 +1,57 @@
+﻿@using XeniaBot.WebPanel.Helpers
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+    <div class="container-fluid">
+        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Xenia Dashboard <sup style="color: red">Beta</sup></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+            <ul class="navbar-nav flex-grow-1">
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" href="https://github.com/ktwrd/xeniabot">Github</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Vote">Vote</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" href="https://ktwrd.github.io/XeniaBot">About</a>
+                </li>
+                
+                @if (User?.Identity?.IsAuthenticated ?? false)
+                {
+                    <li class="nav-item" style="padding-top: 0; padding-bottom: 0; margin-top: 0.5rem; margin-bottom: 0.5rem; border-left: 1px solid var(--gray)">
+                        <a class="nav-link text-dark" style="padding-top: 0; padding-bottom:  0;" asp-area="" asp-controller="Server" asp-action="List">Servers</a>
+                    </li>
+                }
+                @if (AspHelper.IsCurrentUserAdmin(@Context))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">Admin Panel</a>
+                    </li>
+                }
+            </ul>
+            @if (User?.Identity?.IsAuthenticated ?? false)
+            {
+                <ul class="navbar-nav">
+                    <li class="nav-item" style="padding-top: 0; padding-bottom: 0; margin-top: 0.5rem; margin-bottom: 0.5rem; border-right: 1px solid var(--gray)">
+                        <a style="padding-top: 0; padding-bottom: 0;" class="nav-link text-dark" asp-controller="Home" asp-action="Preferences">Preferences</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark">@User.Identity.Name</a>
+                    </li>
+                    <a class="btn btn-outline-danger" href="/signout?returnUrl=%2F">Sign out</a>
+                </ul>
+            }
+            else
+            {
+                <a class="btn btn btn-outline-success" href="/signin?returnUrl=%2F">Sign in</a>
+            }
+        </div>
+    </div>
+</nav>
