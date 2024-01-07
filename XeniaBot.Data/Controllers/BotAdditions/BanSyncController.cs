@@ -268,7 +268,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             if (config == null)
                 return null;
 
-            var oldConfig = config;
+            var oldConfig = await _config.Get(guildId);
 
             if (state == BanSyncGuildState.Blacklisted || state == BanSyncGuildState.RequestDenied)
             {
@@ -279,10 +279,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                 config.Enable = false;
             }
 
-            if (state == BanSyncGuildState.Active)
-            {
-                config.Enable = true;
-            }
+            config.Enable = state == BanSyncGuildState.Active;
             config.State = state;
 
             await _config.Set(config);
@@ -358,7 +355,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                 $"An update about BanSync in your server, [`{guild.Name}`](https://discord.com/channels/{guild.Id}/)";
 
             var contact =
-                $"[send kate an email](mailto:kate@dariox.club) or [join our support server]({_configData.SupportServerUrl})";
+                $"[join our support server]({_configData.SupportServerUrl})";
 
 
             if (current.State == BanSyncGuildState.Active)
