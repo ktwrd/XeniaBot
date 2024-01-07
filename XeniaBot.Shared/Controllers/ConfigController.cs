@@ -21,6 +21,10 @@ public class ConfigController
     public ConfigController(ProgramDetails details)
     {
         Data = FetchConfig(details);
+        if (!FeatureFlags.ConfigReadOnly)
+        {
+            Write(Data);
+        }
     }
     #region Read/Write
     public void Write(ConfigData? configData)
