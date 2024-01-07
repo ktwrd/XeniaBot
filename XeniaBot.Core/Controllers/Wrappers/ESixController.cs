@@ -49,6 +49,11 @@ namespace XeniaBot.Core.Controllers.Wrappers
 
         public override async Task InitializeAsync()
         {
+            if (_configData.ApiKeys.ESix.Enable == false)
+            {
+                Log.Warn($"ESix controller disabled");
+                return;
+            }
             try
             {
                 await _client.LogInAsync(_configData.ApiKeys.ESix.Username, _configData.ApiKeys.ESix.ApiKey, false);
@@ -63,6 +68,8 @@ namespace XeniaBot.Core.Controllers.Wrappers
 
         public async Task<Post[]> Query(string query, int? page=null)
         {
+            if (_configData.ApiKeys.ESix.Enable == false)
+                return Array.Empty<Post>();
             foreach (var i in Ethanol)
                 query += $" -{i}";
             var res = await _client.GetPostsAsync(query, page);
