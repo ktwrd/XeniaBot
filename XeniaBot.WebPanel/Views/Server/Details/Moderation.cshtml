@@ -11,6 +11,14 @@
     </div>
     <div class="m-1 col-auto">
         <div class="card">
+            <div class="card-header card-header-sm" id="rolePreserve">Role Preserve</div>
+            <div class="card-body">
+                @{ await Html.RenderPartialAsync("Details/Settings/RolePreserve"); }
+            </div>
+        </div>
+    </div>
+    <div class="m-1 col-auto">
+        <div class="card">
             <div class="card-header card-header-sm" id="log">Logging</div>
             <div class="card-body">
                 @{ await Html.RenderPartialAsync("Details/Settings/Logging"); }
