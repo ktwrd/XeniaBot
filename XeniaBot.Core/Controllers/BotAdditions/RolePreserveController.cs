@@ -158,6 +158,7 @@ public class RolePreserveController : BaseController
         foreach (var i in taskList)
             i.Start();
         await Task.WhenAll(taskList);
+        Log.Debug($"Guild {guild.Name} ({guild.Id}) Preserved. ({taskList.Count} members)");
     }
 
     public async Task PreserveGuildMember(ulong guildId, ulong userId)
