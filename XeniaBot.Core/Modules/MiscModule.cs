@@ -7,10 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Flurl.Util;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using XeniaBot.Core.Controllers;
 using XeniaBot.Data.Controllers;
 using XeniaBot.Shared;
@@ -142,6 +144,35 @@ namespace XeniaBot.Core.Modules
                 "config.json",
                 "Attached as JSON",
                 ephemeral: true);
+        }
+
+        [SlashCommand("dadjoke", "Ya know, jokes that your dad would make?")]
+        public async Task DadJoke()
+        {
+            try
+            {
+                await DeferAsync();   
+                var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("User-Agent", $"Xenia Bot (https://github.com/ktwrd/xeniabot)");
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                var response = await client.GetAsync("https://icanhazdadjoke.com/");
+                var text = response.Content.ReadAsStringAsync().Result;
+                var deser = JObject.Parse(text);
+                if (deser?["joke"] != null)
+                {
+                    await FollowupAsync(deser["joke"].ToString());
+                }
+                else
+                {
+                    await FollowupAsync("`Failed to get dad joke ;w;`");
+                    await Program.Services.GetRequiredService<ErrorReportController>().ReportError(response, Context);
+                }
+            }
+            catch (Exception ex)
+            {
+                await FollowupAsync($"`Failed to get dad joke ;w; ({ex.Message})`");
+                await Program.Services.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
+            }
         }
     }
 }
