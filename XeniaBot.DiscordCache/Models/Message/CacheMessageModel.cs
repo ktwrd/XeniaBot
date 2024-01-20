@@ -36,6 +36,7 @@ public class CacheMessageModel : DiscordCacheBaseModel
     public DateTimeOffset CreatedAt { get; set; }
     #endregion
     
+    public List<CacheMessageAttachment> Attachments { get; set; }
     public ulong AuthorId { get; set; }
     public ulong ChannelId { get; set; }
     public ulong GuildId { get; set; }
@@ -50,6 +51,7 @@ public class CacheMessageModel : DiscordCacheBaseModel
         Tags = Array.Empty<CacheMessageTag>();
         IsDeleted = false;
         DeletedTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(0);
+        Attachments = new List<CacheMessageAttachment>();
     }
 
     public CacheMessageModel? Clone()
@@ -98,6 +100,9 @@ public class CacheMessageModel : DiscordCacheBaseModel
         this.AuthorId = message.Author.Id;
         this.ChannelId = message.Channel.Id;
         this.GuildId = 0;
+        this.Attachments = message.Attachments == null
+            ? new List<CacheMessageAttachment>()
+            : message.Attachments.Select(v => CacheMessageAttachment.FromExisting(v)).Where(v => v != null).ToList();
         return this;
     }
     public static CacheMessageModel? FromExisting(IMessage? message)
