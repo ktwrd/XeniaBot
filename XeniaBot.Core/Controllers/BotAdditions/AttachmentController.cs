@@ -27,6 +27,8 @@ public class AttachmentController : BaseController
 
     private async Task DiscordOnMessageReceived(SocketMessage arg)
     {
+        if (!_configData.AttachmentArchive.Enable)
+            return;
         if (arg.Channel is SocketGuildChannel guildChannel)
         {
             
