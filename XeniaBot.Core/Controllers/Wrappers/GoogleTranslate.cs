@@ -41,7 +41,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
 
             if (dictRequired < 1)
             {
-                Log.Error("Config.GCSKey_Translate is empty");
+                Log.Error("Config.GoogleCloud is empty");
                 Program.Quit(1);
             }
             foreach (var pair in configDictionary)
@@ -49,11 +49,11 @@ namespace XeniaBot.Core.Controllers.Wrappers
                 if (pair.Value.Length > 0)
                     dictFound++;
                 else
-                    Log.Warn($"Empty value \"Config.GCSKey_Translate.{pair.Key}\"");
+                    Log.Warn($"Empty value \"Config.GoogleCloud.{pair.Key}\"");
             }
             if (dictFound < dictRequired)
             {
-                Log.Error("Not all fields have a value in \"Config.GCSKey_Translate\"");
+                Log.Error("Not all fields have a value in \"Config.GoogleCloud\"");
                 configInvalid = false;
             }
 
