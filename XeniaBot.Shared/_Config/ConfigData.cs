@@ -48,6 +48,7 @@ public class ConfigData
     public HealthConfigItem Health { get; set; }
     public LavalinkConfigItem Lavalink { get; set; }
     public GoogleCloudKey? GoogleCloud { get; set; }
+    public AttachmentArchiveConfigItem AttachmentArchive { get; set; }
     
     public string? SupportServerUrl { get; set; }
     public bool HasDashboard { get; set; }
@@ -76,6 +77,7 @@ public class ConfigData
         i.Authentik = AuthentikConfigItem.Default();
         i.Health = HealthConfigItem.Default();
         i.GoogleCloud = null;
+        i.AttachmentArchive = AttachmentArchiveConfigItem.Default();
 
         i.SupportServerUrl = null;
         i.HasDashboard = false;
