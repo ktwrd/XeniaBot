@@ -112,11 +112,12 @@ public class AudioModule : InteractionModuleBase
             return;
         }
         
+        await Context.Interaction.DeferAsync();
         try
         {
             if (string.IsNullOrWhiteSpace(searchQuery))
             {
-                await RespondAsync(
+                await FollowupAsync(
                     embed: BaseEmbed()
                         .WithDescription("Please provide search terms.")
                         .WithColor(Color.Red)
@@ -129,7 +130,7 @@ public class AudioModule : InteractionModuleBase
                 var voiceState = Context.User as IVoiceState;
                 if (voiceState?.VoiceChannel == null)
                 {
-                    await RespondAsync(
+                    await FollowupAsync(
                         embed: BaseEmbed()
                             .WithDescription("You must be connected to a voice channel!")
                             .WithColor(Color.Red)
@@ -147,7 +148,7 @@ public class AudioModule : InteractionModuleBase
                 }
                 catch (Exception exception)
                 {
-                    await RespondAsync(
+                    await FollowupAsync(
                         embed: BaseEmbed()
                             .WithDescription($"Failed to join your channel!\n`{exception.Message}`")
                             .WithColor(Color.Red)
@@ -162,7 +163,7 @@ public class AudioModule : InteractionModuleBase
                 searchQuery);
             if (searchResponse.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
             {
-                await RespondAsync(
+                await FollowupAsync(
                     embed: BaseEmbed()
                         .WithDescription($"I wasn't able to find anything for `{searchQuery}`.")
                         .WithColor(Color.Red)
@@ -173,7 +174,7 @@ public class AudioModule : InteractionModuleBase
             if (!string.IsNullOrWhiteSpace(searchResponse.Playlist.Name))
             {
                 player.Vueue.Enqueue(searchResponse.Tracks);
-                await RespondAsync(
+                await FollowupAsync(
                     embed: BaseEmbed()
                         .WithDescription($"Enqueued {searchResponse.Tracks.Count} songs.")
                         .WithColor(Color.Red)
@@ -184,7 +185,7 @@ public class AudioModule : InteractionModuleBase
                 var track = searchResponse.Tracks.FirstOrDefault();
                 player.Vueue.Enqueue(track);
 
-                await RespondAsync(
+                await FollowupAsync(
                     embed: BaseEmbed()
                         .WithDescription($"Added {track?.Title} to queue.")
                         .Build());
