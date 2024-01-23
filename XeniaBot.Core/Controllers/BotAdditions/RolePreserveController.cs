@@ -51,6 +51,8 @@ public class RolePreserveController : BaseController
             var fail = new List<ulong>();
             foreach (var item in model.Roles)
             {
+                if (item == arg.Guild.EveryoneRole.Id)
+                    continue;
                 try
                 {
                     await arg.AddRoleAsync(item);
