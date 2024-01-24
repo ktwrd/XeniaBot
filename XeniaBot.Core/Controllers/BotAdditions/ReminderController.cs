@@ -42,6 +42,8 @@ public class ReminderController : BaseController
         var taskList = new List<Task>();
         foreach (var item in notCalled)
         {
+            if (item.HasReminded)
+                continue;
             taskList.Add(new Task(delegate
             {
                 SendNotification(item).Wait();
@@ -66,8 +68,15 @@ public class ReminderController : BaseController
 
     private async Task AddReminderTask(ReminderModel model)
     {
+        if (model.HasReminded)
+            return;
         var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var diff = (model.ReminderTimestamp - currentTimestamp) * 1000;
+        if (diff < 1)
+        {
+            Log.Warn($"Reminder ${model.ReminderId} too short, ignoring.");
+            return;
+        }
         var timer = new Timer(diff);
         timer.Elapsed += (sender, args) =>
         {

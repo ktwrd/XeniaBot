@@ -36,6 +36,13 @@ public class ReminderModule : InteractionModuleBase
         try
         {
             var controller = Program.Services.GetRequiredService<ReminderController>();
+            var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var diff = (timestamp - currentTimestamp) * 1000;
+            if (diff < 3)
+            {
+                await Context.Interaction.RespondAsync("Duration provided is too short! (must be <3s)");
+                return;
+            }
             await controller.CreateReminderTask(
                 timestamp,
                 Context.User.Id,
