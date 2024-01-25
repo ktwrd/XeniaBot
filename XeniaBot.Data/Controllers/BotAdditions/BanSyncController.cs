@@ -156,7 +156,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                     var embed = new EmbedBuilder()
                     {
                         Title = "User in your server just got banned",
-                        Description = $"<@{info.UserId}> just got banned from `{guild.Name}` at <t:{info.Timestamp}:F>",
+                        Description = $"<@{info.UserId}> just got banned from `{info.GuildName}` at <t:{info.Timestamp}:F>",
                     };
                     embed.AddField("Reason", $"```\n{info.Reason}\n```");
                     await textChannel.SendMessageAsync(embed: embed.Build());
