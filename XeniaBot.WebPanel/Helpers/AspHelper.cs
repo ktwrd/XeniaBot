@@ -84,6 +84,18 @@ public static class AspHelper
         var s = guild.IconUrl ?? "/Debugempty.png";
         return s;
     }
+    
+    public static async Task<ServerBanSyncViewModel> FillServerModel(ulong serverId, ServerBanSyncViewModel data)
+    {
+        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var guild = discord.GetGuild(serverId);
+        data.Guild = guild;
+        
+        var banSyncRecordConfig = Program.Services.GetRequiredService<BanSyncInfoConfigController>();
+        data.BanSyncRecords = await banSyncRecordConfig.GetInfoAllInGuild(serverId);
+
+        return data;
+    }
     public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
     {
         
