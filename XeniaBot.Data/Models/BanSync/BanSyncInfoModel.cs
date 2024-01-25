@@ -20,7 +20,7 @@ namespace XeniaBot.Data.Models
         /// <summary>
         /// Unix Epoch in UTC Seconds
         /// </summary>
-        public double Timestamp { get; set; }
+        public long Timestamp { get; set; }
         public string Reason { get; set; }
         public BanSyncInfoModel()
         {
