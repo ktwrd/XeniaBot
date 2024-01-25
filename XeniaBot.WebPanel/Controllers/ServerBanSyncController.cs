@@ -49,4 +49,45 @@ public class ServerBanSyncController : BaseXeniaController
         return View("Index", data);
     }
 
+    [HttpGet("~/BanSync/Record/{id}")]
+    public async Task<IActionResult> RecordInfo(string id)
+    {
+        var idSplit = id.Split("_");
+        if (idSplit.Length < 2)
+            return View("NotFound");
+
+        ulong targetUserId = 0;
+        try
+        { targetUserId = ulong.Parse(idSplit[0]);
+        } catch
+        { return View("NotFound"); }
+
+        ulong targetGuildId = 0;
+        try
+        { targetGuildId = ulong.Parse(idSplit[1]);
+        } catch
+        { return View("NotFound"); }
+
+        var banSyncInfoController = Program.Services.GetRequiredService<BanSyncInfoConfigController>();
+        try
+        {
+            var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
+            if (record == null)
+            {
+                return View("NotFound");
+            }
+
+            var data = new BanSyncRecordViewModel()
+            {
+                Record = record
+            };
+            await PopulateModel(data);
+
+            return View("Details", data);
+        }
+        catch (Exception ex)
+        {
+            return View("Error");
+        }
+    }
 }
