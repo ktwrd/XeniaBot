@@ -93,7 +93,6 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                         UserDiscriminator = i.User.Discriminator,
                         GuildId = guild.Id,
                         GuildName = guild.Name,
-                        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                         Reason = i?.Reason ?? "null"
                     };
                     await _infoConfig.SetInfo(info);
