@@ -38,6 +38,7 @@
       <_ContentIncludedByDefault Remove="Views\Server\Settings\Counting.cshtml" />
       <_ContentIncludedByDefault Remove="Views\Server\Settings\LevelSystem.cshtml" />
       <_ContentIncludedByDefault Remove="Views\Server\Settings\Logging.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Server\Details\BanSync\Index.cshtml" />
     </ItemGroup>
 
     <ItemGroup>
