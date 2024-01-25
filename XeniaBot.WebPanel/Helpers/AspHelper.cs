@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using Discord.WebSocket;
+using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Models;
@@ -59,6 +60,19 @@ public static class AspHelper
         "warning",
         "info"
     };
+
+    public static string GetUserProfilePicture(ulong userId)
+    {
+        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var user = discord.GetUser(userId);
+        if (user == null)
+            return "/Debugempty.png";
+
+        var v = user.GetAvatarUrl();
+        v ??= user.GetDefaultAvatarUrl();
+        v ??= "/Debugempty.png";
+        return v;
+    }
     public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
     {
         
