@@ -55,14 +55,16 @@
 }
 <form id="bansync_settings_channel" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_BanSync" asp-route-id="@Model.Guild.Id">
     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-           {
-               Channels = StrippedChannel.FromGuild(@Model.Guild),
-               Categories = StrippedCategory.FromGuild(@Model.Guild),
-               SelectedChannelId = @Model.BanSyncConfig.LogChannel,
-               ParentFormId = "bansync_settings_channel",
-               Id = "bansync_settings_channel_select",
-               Name = "logChannel",
-               DisplayName = "Channel"
-           })
+    {
+        Channels = StrippedChannel.FromGuild(@Model.Guild),
+        Categories = StrippedCategory.FromGuild(@Model.Guild),
+        SelectedChannelId = @Model.BanSyncConfig.LogChannel,
+        ParentFormId = "bansync_settings_channel",
+        Id = "bansync_settings_channel_select",
+        Name = "logChannel",
+        DisplayName = "Channel"
+    })
     <input class="btn btn-success" type="submit" value="Save"/>
 </form>
+<hr/>
+<a asp-controller="ServerBanSync" asp-route-id="@Model.Guild.Id" asp-action="Index" class="btn btn-outline-primary">See Mutual Records</a>
