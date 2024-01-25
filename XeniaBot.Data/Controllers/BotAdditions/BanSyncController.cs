@@ -74,7 +74,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
         public async Task RefreshBans(SocketGuild guild)
         {
             var config = await _config.Get(guild.Id);
-            if ((config?.Enable ?? false) == false)
+            if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                 return;
 
             var bans = await guild.GetBansAsync().FlattenAsync().ConfigureAwait(false);
@@ -114,7 +114,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
         {
             // Ignore if guild config is disabled
             var config = await _config.Get(guild.Id);
-            if ((config?.Enable ?? false) == false)
+            if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                 return;
 
             var banInfo = await guild.GetBanAsync(user);
@@ -148,7 +148,7 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                     continue;
 
                 var guildConfig = await _config.Get(guild.Id);
-                if (guildConfig == null)
+                if (guildConfig == null || (guildConfig?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                     continue;
                 taskList.Add(new Task(async delegate
                 {
@@ -187,6 +187,9 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             // Check if the guild has config stuff setup
             // If not then we just ignore
             if (guildConfig == null)
+                return;
+                
+            if ((guildConfig?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                 return;
 
             // Check if config channel has been made, if not then ignore
