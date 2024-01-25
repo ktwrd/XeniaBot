@@ -73,6 +73,17 @@ public static class AspHelper
         v ??= "/Debugempty.png";
         return v;
     }
+
+    public static string GetGuildImage(ulong guildId)
+    {
+        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var guild = discord.GetGuild(guildId);
+        if (guild == null)
+            return "/Debugempty.png";
+
+        var s = guild.IconUrl ?? "/Debugempty.png";
+        return s;
+    }
     public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
     {
         
