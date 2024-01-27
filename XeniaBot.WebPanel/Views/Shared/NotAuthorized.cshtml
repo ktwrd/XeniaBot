@@ -15,5 +15,9 @@
         <a class="btn btn-success" asp-area="" asp-controller="Authentication" asp-action="SignIn">Login</a>
     }
     <hr class="mb-2" />
+    @if (!string.IsNullOrEmpty(@Model.Message))
+    {
+        <p>@Model.Message</p>
+    }
 }
 <h4><a asp-area="" asp-controller="Home" asp-action="Index">Go Home</a></h4>
