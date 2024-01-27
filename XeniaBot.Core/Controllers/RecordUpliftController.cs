@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared;
 
@@ -11,6 +12,11 @@ public class RecordUpliftController : BaseController
         : base(services)
     {}
 
+    public override async Task OnReadyDelay()
+    {
+        await UpliftController(_services.GetRequiredService<BanSyncInfoConfigController>());
+    }
+    
     public async Task UpliftController(BanSyncInfoConfigController controller)
     {
         var records = await controller.GetAll();
