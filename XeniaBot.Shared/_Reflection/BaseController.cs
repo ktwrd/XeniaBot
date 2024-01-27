@@ -28,5 +28,14 @@ namespace XeniaBot.Shared
         {
             return Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Called when discord is ready, but with a 2s delay.
+        /// </summary>
+        /// <returns></returns>
+        public virtual Task OnReadyDelay()
+        {
+            return Task.CompletedTask;
+        }
     }
 }
