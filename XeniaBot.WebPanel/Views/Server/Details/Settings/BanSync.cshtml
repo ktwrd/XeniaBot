@@ -67,4 +67,7 @@
     <input class="btn btn-success" type="submit" value="Save"/>
 </form>
 <hr/>
-<a asp-controller="ServerBanSync" asp-route-id="@Model.Guild.Id" asp-action="Index" class="btn btn-outline-primary">See Mutual Records</a>
+@if (@Model.BanSyncConfig.Enable)
+{
+    <a asp-controller="ServerBanSync" asp-route-id="@Model.Guild.Id" asp-action="Index" class="btn btn-outline-primary">See Mutual Records</a>
+}
