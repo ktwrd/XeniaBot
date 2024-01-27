@@ -31,12 +31,12 @@ public static class AspHelper
     public static bool IsCurrentUserAdmin(HttpContext context)
     {
         var userId = GetUserId(context) ?? 0;
-        return Program.ConfigData.UserWhitelist.Contains(userId);
+        return Program.Core.Config.Data.UserWhitelist.Contains(userId);
     }
 
     public static bool CanAccessGuild(ulong guildId, ulong userId)
     {
-        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
         
         var user = discord.GetUser(userId);
         if (user == null)
@@ -63,7 +63,7 @@ public static class AspHelper
 
     public static string GetUserProfilePicture(ulong userId)
     {
-        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
         var user = discord.GetUser(userId);
         if (user == null)
             return "/Debugempty.png";
@@ -76,7 +76,7 @@ public static class AspHelper
 
     public static string GetGuildImage(ulong guildId)
     {
-        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
         var guild = discord.GetGuild(guildId);
         if (guild == null)
             return "/Debugempty.png";
@@ -87,11 +87,11 @@ public static class AspHelper
     
     public static async Task<ServerBanSyncViewModel> FillServerModel(ulong serverId, ServerBanSyncViewModel data)
     {
-        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
         var guild = discord.GetGuild(serverId);
         data.Guild = guild;
         
-        var banSyncRecordConfig = Program.Services.GetRequiredService<BanSyncInfoConfigController>();
+        var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoConfigController>();
         data.BanSyncRecords = await banSyncRecordConfig.GetInfoAllInGuild(serverId);
 
         return data;
@@ -99,32 +99,32 @@ public static class AspHelper
     public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
     {
         
-        var discord = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
         var guild = discord.GetGuild(serverId);
         data.Guild = guild;
 
-        var counterController = Program.Services.GetRequiredService<CounterConfigController>();
+        var counterController = Program.Core.GetRequiredService<CounterConfigController>();
         data.CounterConfig = await counterController.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = serverId
         };
 
-        var banSyncConfig = Program.Services.GetRequiredService<BanSyncConfigController>();
+        var banSyncConfig = Program.Core.GetRequiredService<BanSyncConfigController>();
         data.BanSyncConfig = await banSyncConfig.Get(guild.Id) ?? new ConfigBanSyncModel()
         {
             GuildId = guild.Id
         };
 
-        var banSyncStateHistory = Program.Services.GetRequiredService<BanSyncStateHistoryConfigController>();
+        var banSyncStateHistory = Program.Core.GetRequiredService<BanSyncStateHistoryConfigController>();
         data.BanSyncStateHistory = await banSyncStateHistory.GetMany(guild.Id) ?? Array.Empty<BanSyncStateHistoryItemModel>();
 
-        var xpConfig = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+        var xpConfig = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
         data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
         {
             GuildId = guild.Id
         };
 
-        var logConfig = Program.Services.GetRequiredService<ServerLogConfigController>();
+        var logConfig = Program.Core.GetRequiredService<ServerLogConfigController>();
         data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
         {
             ServerId = guild.Id
@@ -138,24 +138,24 @@ public static class AspHelper
         }
         data.UsersWhoCanAccess = membersWhoCanAccess;
 
-        var greeterConfig = Program.Services.GetRequiredService<GuildGreeterConfigController>();
+        var greeterConfig = Program.Core.GetRequiredService<GuildGreeterConfigController>();
         data.GreeterConfig = await greeterConfig.GetLatest(guild.Id)
             ?? new GuildGreeterConfigModel()
             {
                 GuildId = guild.Id
             };
 
-        var greeterGoodbyeConfig = Program.Services.GetRequiredService<GuildGreetByeConfigController>();
+        var greeterGoodbyeConfig = Program.Core.GetRequiredService<GuildGreetByeConfigController>();
         data.GreeterGoodbyeConfig = await greeterGoodbyeConfig.GetLatest(guild.Id)
             ?? new GuildByeGreeterConfigModel()
             {
                 GuildId = guild.Id
             };
 
-        var warnConfig = Program.Services.GetRequiredService<GuildWarnItemConfigController>();
+        var warnConfig = Program.Core.GetRequiredService<GuildWarnItemConfigController>();
         data.WarnItems = await warnConfig.GetLatestGuildItems(guild.Id) ?? new List<GuildWarnItemModel>();
 
-        var rolePreserveConfig = Program.Services.GetRequiredService<RolePreserveGuildConfigController>();
+        var rolePreserveConfig = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
         data.RolePreserve = await rolePreserveConfig.Get(guild.Id) ?? new RolePreserveGuildModel()
         {
             GuildId = guild.Id

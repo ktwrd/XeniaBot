@@ -15,8 +15,8 @@ public class BaseXeniaController : Controller
     public BaseXeniaController()
         : base()
     {
-        _discord = Program.Services.GetRequiredService<DiscordSocketClient>();
-        _userConfig = Program.Services.GetRequiredService<UserConfigController>();
+        _discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        _userConfig = Program.Core.GetRequiredService<UserConfigController>();
     }
 
     public virtual bool CanAccess(ulong guildId)

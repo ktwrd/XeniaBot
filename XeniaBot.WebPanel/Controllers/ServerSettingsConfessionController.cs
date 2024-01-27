@@ -43,7 +43,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
             var data = await controller.GetGuild(id) ??
                        new ConfessionGuildModel()
                        {
@@ -65,7 +65,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(ex, $"Failed to save confession settings");
             return await Index(id,
                 messageType: "danger",
@@ -88,7 +88,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
             var data = await controller.GetGuild(id)
                 ?? new ConfessionGuildModel()
                 {
@@ -101,7 +101,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(ex, $"Failed to purge confession messages");
             return await Index(id,
                 messageType: "danger",

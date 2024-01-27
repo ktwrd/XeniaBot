@@ -15,7 +15,7 @@ public partial class AdminController : BaseXeniaController
     public AdminController()
         : base()
     {
-        _services = Program.Services;
+        _services = Program.Core.Services;
 
         _client = _services.GetRequiredService<DiscordSocketClient>();
         _config = _services.GetRequiredService<ConfigData>();

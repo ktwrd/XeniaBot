@@ -58,7 +58,7 @@ public class WarnSystemController: BaseXeniaController
     [HttpGet("~/Warn/Info/{id}")]
     public async Task<IActionResult> WarnInfo(string id, string? messageType = null, string? message = null)
     {
-        var controller = Program.Services.GetRequiredService<GuildWarnItemConfigController>();
+        var controller = Program.Core.GetRequiredService<GuildWarnItemConfigController>();
         var warnData = await controller.GetItemsById(id);
         if (warnData == null)
             return View("NotFound");

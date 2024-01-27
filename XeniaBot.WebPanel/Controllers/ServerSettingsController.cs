@@ -33,7 +33,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(e, $"Failed to save counter settings");
             Log.Error(e);
             return await Index(id,
@@ -41,7 +41,7 @@ public partial class ServerController
                 message: $"Failed to save Counting settings. {e.Message}");
         }
 
-        var controller = Program.Services.GetRequiredService<CounterConfigController>();
+        var controller = Program.Core.GetRequiredService<CounterConfigController>();
         var counterData = await controller.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = guild.Id,
@@ -82,7 +82,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<ServerLogConfigController>();
+            var controller = Program.Core.GetRequiredService<ServerLogConfigController>();
             var currentConfig = await controller.Get(guild.Id) ?? new ServerLogModel()
             {
                 ServerId = guild.Id
@@ -102,7 +102,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(e, $"Failed to save logging settings");
             Log.Error($"Failed to save logging settings. \n{e}");
             return await Index(id,
@@ -123,7 +123,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<RolePreserveGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
             var data = await controller.Get(id) ?? new RolePreserveGuildModel()
             {
                 GuildId = id
@@ -137,7 +137,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(ex, $"Failed to save role preserve settings");
             Log.Error($"Failed to save role preserve settings\n{ex}");
             return await Index(id,
@@ -186,7 +186,7 @@ public partial class ServerController
         
         try
         {
-            var controller = Program.Services.GetRequiredService<GuildGreeterConfigController>();
+            var controller = Program.Core.GetRequiredService<GuildGreeterConfigController>();
             var data = await controller.GetLatest(id)
                 ?? new GuildGreeterConfigModel()
                 {
@@ -214,7 +214,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(e, $"Failed to save greeter settings");
             Log.Error($"Failed to save greeter settings\n{e}");
             return await Index(id,
@@ -255,7 +255,7 @@ public partial class ServerController
             }
             catch (Exception e)
             {
-                Program.Services.GetRequiredService<ErrorReportController>()
+                Program.Core.GetRequiredService<ErrorReportController>()
                     .ReportException(e, $"Failed to save goodbye settings");
                 return await Index(id,
                     messageType: "danger",
@@ -265,7 +265,7 @@ public partial class ServerController
         
         try
         {
-            var controller = Program.Services.GetRequiredService<GuildGreetByeConfigController>();
+            var controller = Program.Core.GetRequiredService<GuildGreetByeConfigController>();
             var data = await controller.GetLatest(id)
                 ?? new GuildByeGreeterConfigModel()
                 {
@@ -293,7 +293,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(e, $"Failed to save goodbye settings");
             Log.Error($"Failed to save greeter goodbye settings\n{e}");
             return await Index(id,

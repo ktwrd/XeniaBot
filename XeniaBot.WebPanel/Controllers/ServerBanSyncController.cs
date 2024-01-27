@@ -68,7 +68,7 @@ public class ServerBanSyncController : BaseXeniaController
         } catch
         { return View("NotFound"); }
 
-        var banSyncInfoController = Program.Services.GetRequiredService<BanSyncInfoConfigController>();
+        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoConfigController>();
         try
         {
             var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);

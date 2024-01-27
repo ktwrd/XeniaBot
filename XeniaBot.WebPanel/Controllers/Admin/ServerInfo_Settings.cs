@@ -35,7 +35,7 @@ public partial class AdminController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
             var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
             {
                 GuildId = guild.Id,
@@ -90,7 +90,7 @@ public partial class AdminController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
             var data = await controller.GetGuild(id) ??
                        new ConfessionGuildModel()
                        {
@@ -149,7 +149,7 @@ public partial class AdminController
                 message: $"Failed to save Counting settings. {e.Message}");
         }
 
-        var controller = Program.Services.GetRequiredService<CounterConfigController>();
+        var controller = Program.Core.GetRequiredService<CounterConfigController>();
         var counterData = await controller.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = guild.Id,

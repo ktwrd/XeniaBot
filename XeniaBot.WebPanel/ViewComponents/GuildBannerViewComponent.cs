@@ -8,7 +8,7 @@ public class GuildBannerViewComponent : ViewComponent
 {
     public async Task<IViewComponentResult> InvokeAsync(ulong guildId)
     {
-        var client = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var client = Program.Core.GetRequiredService<DiscordSocketClient>();
         var guild = client.GetGuild(guildId);
         var data = StrippedGuild.FromGuild(guild);
         return View("Default", data);

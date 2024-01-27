@@ -29,7 +29,7 @@ public partial class AdminController
         if (!CanAccess())
             return View("NotAuthorized");
 
-        var controller = Program.Services.GetRequiredService<BanSyncController>();
+        var controller = Program.Core.GetRequiredService<BanSyncController>();
         var model = new AdminServerModel();
         await AspHelper.FillServerModel(id, model);
         await PopulateModel(model);

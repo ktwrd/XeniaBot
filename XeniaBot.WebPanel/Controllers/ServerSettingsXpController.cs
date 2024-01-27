@@ -29,7 +29,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(e, $"Failed to save level system settings");
             return await Index(id,
                 messageType: "danger",
@@ -38,7 +38,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
             var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
             {
                 GuildId = guild.Id,
@@ -80,7 +80,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(ex, $"Failed to add role reward item. parse fail for roleid");
             return await Index(id,
                 messageType: "danger",
@@ -89,7 +89,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
             var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
             {
                 GuildId = guild.Id,
@@ -104,7 +104,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(ex, $"Failed to remove item from RoleGrant (guild: {guild.Id}, role: {roleId})");
             Log.Error($"Failed to remove item from RoleGrant (guild: {guild.Id}, role: {roleId}\n{ex}");
             return await Index(id,
@@ -150,7 +150,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
             var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
             {
                 GuildId = guild.Id,
@@ -176,7 +176,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportController>()
                 .ReportException(ex, $"Failed to add item from RoleGrant (guild: {guild.Id}, role: {roleId}, level: {requiredLevel})");
             Log.Error($"Failed to add item from RoleGrant (guild: {guild.Id}, role: {roleId}, level: {requiredLevel})\n{ex}");
             return await Index(id,

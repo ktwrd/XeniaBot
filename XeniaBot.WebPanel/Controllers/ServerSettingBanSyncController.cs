@@ -23,7 +23,7 @@ public partial class ServerController
         if (guild == null)
             return View("NotFound", "Guild not found");
         
-        var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
+        var controller = Program.Core.Services.GetRequiredService<BanSyncConfigController>();
         var configData = await controller.Get(guild.Id) ?? new ConfigBanSyncModel()
         {
             GuildId = guild.Id
@@ -43,7 +43,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Services.GetRequiredService<ErrorReportController>()
+            Program.Core.Services.GetRequiredService<ErrorReportController>()
                 .ReportException(ex, $"Failed to get log channel");
             return await Index(id,
                 messageType: "danger",
@@ -87,7 +87,7 @@ public partial class ServerController
                 // Request ban sync
                 try
                 {
-                    var dcon = Program.Services.GetRequiredService<BanSyncController>();
+                    var dcon = Program.Core.Services.GetRequiredService<BanSyncController>();
                     if (dcon == null)
                         throw new Exception($"Failed to get BanSyncController");
 
@@ -98,7 +98,7 @@ public partial class ServerController
                 }
                 catch (Exception ex)
                 {
-                    Program.Services.GetRequiredService<ErrorReportController>()
+                    Program.Core.Services.GetRequiredService<ErrorReportController>()
                         .ReportException(ex, $"Failed to request ban sync access in guild {id}");
                     return await Index(id,
                         messageType: "danger",
@@ -131,7 +131,7 @@ public partial class ServerController
         }
         var channelId = (ulong)channelIdResult.ChannelId;
         
-        var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
+        var controller = Program.Core.Services.GetRequiredService<BanSyncConfigController>();
         var configData = await controller.Get(guild.Id) ?? new ConfigBanSyncModel()
         {
             GuildId = guild.Id,
