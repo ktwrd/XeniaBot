@@ -22,15 +22,9 @@ public static class Program
 {
     
     #region Fields
-    public static ConfigController ConfigController = null;
-    public static ConfigData ConfigData = null;
-    public static HttpClient HttpClient = null;
-    public static MongoClient MongoClient = null;
-    private static DiscordController _discordController;
     /// <summary>
     /// Created after <see cref="CreateServiceProvider"/> is called in <see cref="MainAsync(string[])"/>
     /// </summary>
-    public static ServiceProvider Services = null;
     public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
     {
         IgnoreReadOnlyFields = true,
@@ -43,12 +37,7 @@ public static class Program
     /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
     /// </summary>
     public static long StartTimestamp { get; private set; }
-    public const string MongoDatabaseName = "xenia_discord";
     #endregion
-    public static IMongoDatabase? GetMongoDatabase()
-    {
-        return MongoClient.GetDatabase(MongoDatabaseName);
-    }
     public static ProgramDetails Details => new ProgramDetails()
     {
         VersionRaw = typeof(Program).Assembly.GetName()?.Version,
@@ -59,6 +48,7 @@ true
 false
 #endif
     };
+    public static CoreContext Core { get; private set; }
     public static void Main(string[] args)
     {
         /*var fo = File.Open("log.txt", FileMode.OpenOrCreate);
@@ -71,48 +61,21 @@ false
         StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
         BsonSerializer.RegisterSerializer(objectSerializer);
-        MainInit();
-        MainInit_ValidateMongo();
-        MainAsync(args).Wait();
-    }
 
-    public static void MainInit()
-    {
-        ConfigController = new ConfigController(Details);
-        ConfigData = ConfigController.FetchConfig(Details);
-        HttpClient = new HttpClient();
-    }
-
-    public static void MainInit_ValidateMongo()
-    {
-        try
+        Core = new CoreContext(Details);
+        Core.StartTimestamp = StartTimestamp;
+        Core.AlternativeMain = async (a) =>
         {
-            Log.Debug("Connecting to MongoDB");
-            var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBConnectionUrl);
-            connectionSettings.AllowInsecureTls = true;
-            MongoClient = new MongoClient(connectionSettings);
-            MongoClient.StartSession();
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Failed to connect to MongoDB Server\n{ex}");
-            Environment.Exit(1);
-        }
-    }
-
-    public static async Task MainAsync(string[] args)
-    {
-        CreateServiceProvider();
-        Log.Debug("Connecting to Discord");
-        _discordController = Services.GetRequiredService<DiscordController>();
-        _discordController.Ready += (c) =>
-        {
-            RunServicesReadyFunc();
+            await Main_AspNet(a);
+            await Task.Delay(-1);
         };
-        await _discordController.Run();
-        await Main_AspNet(args);
-
-        await Task.Delay(-1);
+        Core.MainAsync(args, (s) =>
+        {
+            AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, s);
+            AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, s);
+            AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", s);
+            return Task.CompletedTask;
+        }).Wait();
     }
 
     public static Version? Version => typeof(Program).Assembly.GetName().Version;
@@ -127,99 +90,6 @@ false
             return buildDate;
         }
     }
-    #region Service Provider
-    /// <summary>
-    /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
-    /// </summary>
-    private static void CreateServiceProvider()
-    {
-        Log.Debug("Initializing Services");
-        var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
-        var services = new ServiceCollection();
-
-        var details = new ProgramDetails()
-        {
-            StartTimestamp = StartTimestamp,
-            VersionRaw = typeof(Program).Assembly.GetName().Version,
-            Platform = XeniaPlatform.WebPanel
-        };
-
-        services.AddSingleton(details)
-            .AddSingleton(ConfigController)
-            .AddSingleton(ConfigData)
-            .AddSingleton(dsc)
-            .AddSingleton(GetMongoDatabase())
-            .AddSingleton<DiscordController>();
-
-        AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, services);
-        AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, services);
-        AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", services);
-        _serviceClassExtendsBaseController = new List<Type>();
-
-        foreach (var item in services)
-        {
-            if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !_serviceClassExtendsBaseController.Contains(item.ServiceType))
-            {
-                _serviceClassExtendsBaseController.Add(item.ServiceType);
-            }
-        }
-
-        var built = services.BuildServiceProvider();
-        Services = built;
-        RunServicesInitFunc();
-    }
-    /// <summary>
-    /// Used to generate a list of all types that extend <see cref="BaseController"/> in <see cref="Services"/> before it's built.
-    /// </summary>
-    private static List<Type> _serviceClassExtendsBaseController = new List<Type>();
-    /// <summary>
-    /// Run the InitializeAsync function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
-    /// </summary>
-    private static void RunServicesInitFunc()
-    {
-        BaseServiceFunc((contr) =>
-        {
-            contr.InitializeAsync().Wait();
-            return Task.CompletedTask;
-        });
-    }
-    /// <summary>
-    /// Call the OnReady function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
-    /// </summary>
-    private static void RunServicesReadyFunc()
-    {
-        BaseServiceFunc((contr) =>
-        {
-            contr.OnReady().Wait();
-            return Task.CompletedTask;
-        });
-    }
-    /// <summary>
-    /// For every instance of something that extends <see cref="BaseController"/> on <see cref="Services"/>, call <paramref name="func"/> so you can do what you want.
-    /// </summary>
-    /// <param name="func"></param>
-    private static void BaseServiceFunc(Func<BaseController, Task> func)
-    {
-        var taskList = new List<Task>();
-        foreach (var service in _serviceClassExtendsBaseController)
-        {
-            var svc = Services.GetServices(service);
-            foreach (var item in svc)
-            {
-                if (item != null && item.GetType().IsAssignableTo(typeof(BaseController)))
-                {
-                    taskList.Add(new Task(delegate
-                    {
-                        func((BaseController)item).Wait();
-                    }));
-                }
-            }
-        }
-        foreach (var i in taskList)
-            i.Start();
-        Task.WaitAll(taskList.ToArray());
-    }
-    #endregion
 
     public static async Task Main_AspNet(string[] args)
     {
@@ -239,8 +109,8 @@ false
             })
             .AddDiscord(options =>
             {
-                options.ClientId = ConfigData.OAuthId;
-                options.ClientSecret = ConfigData.OAuthSecret;
+                options.ClientId = Core.Config.Data.OAuthId;
+                options.ClientSecret = Core.Config.Data.OAuthSecret;
                 
                 options.ClaimActions.MapCustomJson("urn:discord:avatar:url", user =>
                     string.Format(
