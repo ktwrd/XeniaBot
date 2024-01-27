@@ -94,6 +94,12 @@ public static class AspHelper
         var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoConfigController>();
         data.BanSyncRecords = await banSyncRecordConfig.GetInfoAllInGuild(serverId);
 
+        var banSyncGuildConfig = Program.Core.GetRequiredService<BanSyncStateHistoryConfigController>();
+        data.BanSyncGuild = await banSyncGuildConfig.GetLatest(serverId) ?? new BanSyncStateHistoryItemModel()
+        {
+            GuildId = serverId
+        };
+
         return data;
     }
     public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
