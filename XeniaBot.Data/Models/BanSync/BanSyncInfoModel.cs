@@ -11,6 +11,7 @@ namespace XeniaBot.Data.Models
 {
     public class BanSyncInfoModel : BaseModel
     {
+        public string RecordId { get; set; }
         public ulong UserId { get; set; }
         public string UserName { get; set; }
         public string UserDiscriminator { get; set; }
@@ -24,6 +25,7 @@ namespace XeniaBot.Data.Models
         public BanSyncInfoModel()
         {
             Reason = "<unknown>";
+            RecordId = Guid.NewGuid().ToString();
         }
     }
 }
