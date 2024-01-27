@@ -49,6 +49,13 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
     }
     #region Get/Set
     #region Get
+    public async Task<ICollection<BanSyncInfoModel>> GetAll()
+    {
+        var filter = Builders<BanSyncInfoModel>
+            .Filter
+            .Empty;
+        return await BaseInfoFind(filter);
+    }
     public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId)
     {
         var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
