@@ -38,6 +38,13 @@ public class ServerBanSyncController : BaseXeniaController
         if (guild == null)
             return View("NotFound", "Guild not found");
         var guildUser = guild.GetUser(user.Id);
+        if (!guildUser.GuildPermissions.ManageGuild)
+        {
+            return View("NotAuthorized", new NotAuthorizedViewModel()
+            {
+                Message = "You are missing the Manage Server permission."
+            });
+        }
 
         var data = await GetDetails(guild.Id);
         await PopulateModel(data);
