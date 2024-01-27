@@ -125,12 +125,18 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
     }
     #endregion
 
-    public async Task SetInfo(BanSyncInfoModel data)
+    public async Task SetInfo(BanSyncInfoModel data, bool atTimestamp = false)
     {
         var collection = GetCollection();
         var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.UserId == data.UserId && v.GuildId == data.GuildId);
+        if (atTimestamp)
+        {
+            filter = Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => v.UserId == data.UserId && v.GuildId == data.GuildId && v.Timestamp == data.Timestamp);
+        }
         if (await InfoExists(data))
         {
             await collection.ReplaceOneAsync(filter, data);
