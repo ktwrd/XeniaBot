@@ -59,8 +59,6 @@ false
         Console.SetError(eso);*/
         
         StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
-        BsonSerializer.RegisterSerializer(objectSerializer);
 
         Core = new CoreContext(Details);
         Core.StartTimestamp = StartTimestamp;
