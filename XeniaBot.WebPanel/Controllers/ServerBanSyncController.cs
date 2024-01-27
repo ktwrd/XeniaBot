@@ -53,6 +53,14 @@ public class ServerBanSyncController : BaseXeniaController
         if (message != null)
             data.Message = message;
 
+        if (!data.BanSyncGuild.Enable)
+        {
+            return View("NotAuthorized", new NotAuthorizedViewModel()
+            {
+                Message = "BanSync is not enabled on your server. <a href=\"https://xenia.kate.pet/guide/about_bansync\">More Information</a>"
+            });
+        }
+        
         if (targetUserId != null)
         {
             data.FilterRecordsByUserId = targetUserId;
