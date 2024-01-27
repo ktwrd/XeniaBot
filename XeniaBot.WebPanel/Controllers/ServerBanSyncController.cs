@@ -25,7 +25,7 @@ public class ServerBanSyncController : BaseXeniaController
     }
     
     [HttpGet("~/Server/{id}/BanSync")]
-    public async Task<IActionResult> Index(ulong id, string? messageType = null, string? message = null)
+    public async Task<IActionResult> Index(ulong id, string? messageType = null, string? message = null, ulong? targetUserId = null)
     {
         if (!CanAccess(id))
             return View("NotAuthorized");
@@ -45,6 +45,12 @@ public class ServerBanSyncController : BaseXeniaController
             data.MessageType = messageType;
         if (message != null)
             data.Message = message;
+
+        if (targetUserId != null)
+        {
+            data.FilterRecordsByUserId = targetUserId;
+            data.BanSyncRecords = data.BanSyncRecords.Where(v => v.UserId == targetUserId).ToList();
+        }
 
         return View("Index", data);
     }

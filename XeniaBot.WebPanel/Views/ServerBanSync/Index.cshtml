@@ -24,10 +24,21 @@
 </style>
 @if (!@Model.BanSyncRecords.Any())
 {
-    <div class="px-4 py-5 my-5 text-center">
-        <h4>No Records Found</h4>
-        <p>No members in your server have any records in the database.</p>
-    </div>
+    @if (@Model.FilterRecordsByUserId != null)
+    {
+        <div class="px-4 py-5 my-5 text-center">
+            <h4>No Records Matching User were found</h4>
+            <p>No records for the user provided were found.<br/>
+                <a asp-controller="ServerBanSync" asp-action="Index" asp-route-id="@Model.Guild.Id" class="btn btn-outline-dark btn-sm">See All Records</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="px-4 py-5 my-5 text-center">
+            <h4>No Records Found</h4>
+            <p>No members in your server have any records in the database.</p>
+        </div>
+    }
 }
 else
 {
