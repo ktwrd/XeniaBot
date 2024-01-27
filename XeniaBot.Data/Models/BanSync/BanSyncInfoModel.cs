@@ -5,13 +5,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models
 {
-    public class BanSyncInfoModel
+    public class BanSyncInfoModel : BaseModel
     {
-        [Browsable(false)]
-        public ObjectId _id { get; set; }
         public ulong UserId { get; set; }
         public string UserName { get; set; }
         public string UserDiscriminator { get; set; }
