@@ -379,11 +379,15 @@ namespace XeniaBot.Data.Controllers.BotAdditions
                 else
                 {
                     // bansync added
+                    var d =
+                        "Congratulations! The BanSync feature was approved for usage in your server. All banned members have been synchronized on our side and you can see members in your server with an existing history on the dashboard.\n" +
+                        "\n" +
+                        $"If you need any assistance. Feel free to {contact}.";
+                    if (_configData.HasDashboard)
+                        d += $"\n\nIf you would like to check mutual records in your server, you can do so [via the dashboard]({_configData.DashboardUrl}/Server/{guild.Id}/BanSync)";
                     embed.WithColor(Color.Green)
                         .WithDescription(
-                            "Congratulations! The BanSync feature was approved for usage in your server. All banned members have been synchronized on our side and you can see members in your server with an existing history on the dashboard.\n" +
-                            "\n" +
-                            $"If you need any assistance. Feel free to {contact}.");              
+                            d);              
                 }
             }
             else if (current.State == BanSyncGuildState.Blacklisted)
