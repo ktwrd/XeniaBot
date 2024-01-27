@@ -22,7 +22,7 @@ namespace XeniaBot.Core.Helpers
             if (embed == null)
                 embed = new EmbedBuilder();
 
-            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
+            var client = Program.Core.GetRequiredService<DiscordSocketClient>();
             var icon = client.CurrentUser.GetAvatarUrl();
 
             return embed
@@ -117,7 +117,7 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IChannel channel, IMessage? message)
         {
-            var cont = Program.Services.GetRequiredService<ErrorReportController>();
+            var cont = Program.Core.GetRequiredService<ErrorReportController>();
             await cont.ReportHTTPError(response, user, guild, channel, message);
         }
         public static async Task ReportError(Exception response, ICommandContext context)
@@ -138,12 +138,12 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IChannel? channel, IMessage? message)
         {
-            var cont = Program.Services.GetRequiredService<ErrorReportController>();
+            var cont = Program.Core.GetRequiredService<ErrorReportController>();
             await cont.ReportError(response, user, guild, channel, message);
         }
         public static async Task ReportError(Exception exception, string extraText = "")
         {
-            var cont = Program.Services.GetRequiredService<ErrorReportController>();
+            var cont = Program.Core.GetRequiredService<ErrorReportController>();
             await cont.ReportException(exception, extraText);
         }
         #endregion

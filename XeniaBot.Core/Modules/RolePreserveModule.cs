@@ -18,7 +18,7 @@ public class RolePreserveModule : InteractionModuleBase
     {
         try
         {
-            var controller = Program.Services.GetRequiredService<RolePreserveGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
             var data = await controller.Get(Context.Guild.Id) ?? new RolePreserveGuildModel()
             {
                 GuildId = Context.Guild.Id
@@ -48,7 +48,7 @@ public class RolePreserveModule : InteractionModuleBase
     {
         try
         {
-            var controller = Program.Services.GetRequiredService<RolePreserveGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
             var data = await controller.Get(Context.Guild.Id) ?? new RolePreserveGuildModel()
             {
                 GuildId = Context.Guild.Id

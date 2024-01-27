@@ -18,10 +18,10 @@ public partial class AuthentikAdminModule
     {
         if (!_http.DefaultRequestHeaders.Contains("authorization"))
         {
-            _http.DefaultRequestHeaders.Add("authorization", $"Bearer {Program.ConfigData.Authentik?.Token ?? string.Empty}");
+            _http.DefaultRequestHeaders.Add("authorization", $"Bearer {Program.Core.Config.Data.Authentik?.Token ?? string.Empty}");
         }
         _http.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", Program.ConfigData.Authentik?.Token);
+            new AuthenticationHeaderValue("Bearer", Program.Core.Config.Data.Authentik?.Token);
     }
     private void ThrowOnFailure(HttpResponseMessage message)
     {
@@ -77,11 +77,11 @@ public partial class AuthentikAdminModule
         InitHttpClient();
         return new HttpRequestMessage()
         {
-            RequestUri = new Uri($"https://{Program.ConfigData.Authentik?.Url}/api/v3/{url}"),
+            RequestUri = new Uri($"https://{Program.Core.Config.Data.Authentik?.Url}/api/v3/{url}"),
             Headers =
             {
                 {
-                    "authorization", $"Bearer {Program.ConfigData.Authentik?.Token}"
+                    "authorization", $"Bearer {Program.Core.Config.Data.Authentik?.Token}"
                 },
                 {
                     "accept", "application/json"

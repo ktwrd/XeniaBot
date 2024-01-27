@@ -22,10 +22,10 @@ namespace XeniaBot.Core.Modules
             [Discord.Interactions.Summary(description: "Select a random post from all posts on the first page of this query.")]
             bool random = false)
         {
-            var controller = Program.Services.GetRequiredService<ESixController>();
+            var controller = Program.Core.GetRequiredService<ESixController>();
             
             // Manually get current channel as text channel
-            var discordClient = Program.Services.GetRequiredService<DiscordSocketClient>();
+            var discordClient = Program.Core.GetRequiredService<DiscordSocketClient>();
             var guild = discordClient.GetGuild(Context.Guild.Id);
             var channel = guild.GetTextChannel(Context.Channel.Id);
 

@@ -25,7 +25,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("info", "Information about Xenia")]
         public async Task Info()
         {
-            var client = Program.Services.GetRequiredService<DiscordSocketClient>();
+            var client = Program.Core.GetRequiredService<DiscordSocketClient>();
             var embed = DiscordHelper.BaseEmbed()
                 .WithDescription(string.Join(" ", new string[]
                 {
@@ -49,11 +49,11 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("dashboard", "Fetch Dashboard information")]
         public async Task Dashboard()
         {
-            if (Program.ConfigData.HasDashboard)
+            if (Program.Core.Config.Data.HasDashboard)
             {
                 await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                     .WithTitle("Xenia Dashboard")
-                    .WithDescription($"The dashboard is publicly accessible at {Program.ConfigData.DashboardUrl}")
+                    .WithDescription($"The dashboard is publicly accessible at {Program.Core.Config.Data.DashboardUrl}")
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp()
                     .Build());
@@ -72,12 +72,12 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("metricreload", "Reload Prometheus Metrics")]
         public async Task ReloadMetrics()
         {
-            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+            if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
             {
                 await Context.Interaction.FollowupAsync("You do not have permission to access this command");
                 return;
             }
-            var config = Program.Services.GetRequiredService<ConfigData>();
+            var config = Program.Core.GetRequiredService<ConfigData>();
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Reload Prometheus Metrics");
             
@@ -88,7 +88,7 @@ namespace XeniaBot.Core.Modules
                 return;
             }
 
-            var prom = Program.Services.GetRequiredService<PrometheusController>();
+            var prom = Program.Core.GetRequiredService<PrometheusController>();
             if (prom == null)
             {
                 await Context.Interaction.RespondAsync(
@@ -117,7 +117,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("invite", "Get invite link for Xenia")]
         public async Task Invite()
         {
-            var config = Program.Services.GetRequiredService<ConfigData>();
+            var config = Program.Core.GetRequiredService<ConfigData>();
             var inviteLink =
                 $"https://discord.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions={config.InvitePermissions}";
             await Context.Interaction.RespondAsync(embed: DiscordHelper.BaseEmbed()
@@ -132,12 +132,12 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("fetch_config", "Fetch data from config file")]
         public async Task FetchConfig()
         {
-            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+            if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
             {
                 await Context.Interaction.FollowupAsync("You do not have permission to access this command");
                 return;
             }
-            var config = Program.Services.GetRequiredService<ConfigData>();
+            var config = Program.Core.GetRequiredService<ConfigData>();
             var fileContent = JsonSerializer.Serialize(config, Program.SerializerOptions);
             await Context.Interaction.RespondWithFileAsync(
                 new MemoryStream(Encoding.UTF8.GetBytes(fileContent)), 
@@ -165,13 +165,13 @@ namespace XeniaBot.Core.Modules
                 else
                 {
                     await FollowupAsync("`Failed to get dad joke ;w;`");
-                    await Program.Services.GetRequiredService<ErrorReportController>().ReportError(response, Context);
+                    await Program.Core.GetRequiredService<ErrorReportController>().ReportError(response, Context);
                 }
             }
             catch (Exception ex)
             {
                 await FollowupAsync($"`Failed to get dad joke ;w; ({ex.Message})`");
-                await Program.Services.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
+                await Program.Core.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
             }
         }
     }

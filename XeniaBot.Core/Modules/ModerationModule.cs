@@ -73,7 +73,7 @@ public class ModerationModule : InteractionModuleBase
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
         try
         {
-            var controller = Program.Services.GetRequiredService<GuildWarnItemConfigController>();
+            var controller = Program.Core.GetRequiredService<GuildWarnItemConfigController>();
             var data = new GuildWarnItemModel()
             {
                 GuildId = user.Guild.Id,
@@ -84,10 +84,10 @@ public class ModerationModule : InteractionModuleBase
             };
             await controller.Add(data);
             embed.WithDescription($"Warned member <@{user.Id}>. Warn Id `{data.WarnId}`.");
-            if (Program.ConfigData.HasDashboard)
+            if (Program.Core.Config.Data.HasDashboard)
             {
                 embed.Description +=
-                    $"\n[View on Dashboard]({Program.ConfigData.DashboardUrl}/Warn/Info/{data.WarnId})";
+                    $"\n[View on Dashboard]({Program.Core.Config.Data.DashboardUrl}/Warn/Info/{data.WarnId})";
             }
 
             embed.WithColor(Color.Blue);
@@ -204,7 +204,7 @@ public class ModerationModule : InteractionModuleBase
         int count,
         [ChannelTypes(ChannelType.Text)] IChannel? channel = null)
     {
-        var client = Program.Services.GetRequiredService<DiscordSocketClient>();
+        var client = Program.Core.GetRequiredService<DiscordSocketClient>();
         var guild = client.GetGuild(Context.Guild.Id);
         
         // Use Context.Channel when no channel given.

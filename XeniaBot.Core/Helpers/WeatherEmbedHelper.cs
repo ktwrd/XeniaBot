@@ -79,7 +79,7 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task<EmbedBuilder> CurrentForecast(string location, MeasurementSystem syst)
         {
-            var controller = Program.Services.GetRequiredService<WeatherAPIController>();
+            var controller = Program.Core.GetRequiredService<WeatherAPIController>();
             var embed = new EmbedBuilder()
             {
                 Color = Color.Red
@@ -117,7 +117,7 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task<EmbedBuilder> Forecast(string location, MeasurementSystem syst)
         {
-            var controller = Program.Services.GetRequiredService<WeatherAPIController>();
+            var controller = Program.Core.GetRequiredService<WeatherAPIController>();
             var embed = new EmbedBuilder()
             {
                 Color = Color.Red

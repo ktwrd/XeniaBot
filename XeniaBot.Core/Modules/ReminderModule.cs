@@ -35,7 +35,7 @@ public class ReminderModule : InteractionModuleBase
         var timestamp = DateTimeOffset.UtcNow.Add(timeSpan).ToUnixTimeSeconds();
         try
         {
-            var controller = Program.Services.GetRequiredService<ReminderController>();
+            var controller = Program.Core.GetRequiredService<ReminderController>();
             var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var diff = (timestamp - currentTimestamp) * 1000;
             if (diff < 3)

@@ -19,7 +19,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("create", "Create a new ticket")]
         public async Task CreateTicket()
         {
-            var controller = Program.Services.GetRequiredService<TicketController>();
+            var controller = Program.Core.GetRequiredService<TicketController>();
             var baseEmbed = new EmbedBuilder();
             baseEmbed.Timestamp = DateTimeOffset.UtcNow;
             baseEmbed.WithFooter("Xenia Ticket Management");
@@ -72,7 +72,7 @@ namespace XeniaBot.Core.Modules
             if (ticketChannel == null)
                 ticketChannel = Context.Channel;
 
-            var controller = Program.Services.GetRequiredService<TicketController>();
+            var controller = Program.Core.GetRequiredService<TicketController>();
             var embed = new EmbedBuilder()
             {
                 Title = "Resolved Ticket",
@@ -110,7 +110,7 @@ namespace XeniaBot.Core.Modules
             if (ticketChannel == null)
                 ticketChannel = Context.Channel;
 
-            var controller = Program.Services.GetRequiredService<TicketController>();
+            var controller = Program.Core.GetRequiredService<TicketController>();
             var embed = new EmbedBuilder()
             {
                 Title = "Rejected Ticket",

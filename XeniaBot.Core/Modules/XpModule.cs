@@ -22,7 +22,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("profile", "See the amount of XP you have and what level you are")]
         public async Task Profile()
         {
-            var controller = Program.Services.GetRequiredService<LevelMemberModelController>();
+            var controller = Program.Core.GetRequiredService<LevelMemberModelController>();
             var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
             var metadata = LevelSystemHelper.Generate(data);
 
@@ -55,7 +55,7 @@ namespace XeniaBot.Core.Modules
             var embed = new EmbedBuilder()
                 .WithTitle("Xp System - Guild Leaderboard");
             
-            var controller = Program.Services.GetRequiredService<LevelMemberModelController>();
+            var controller = Program.Core.GetRequiredService<LevelMemberModelController>();
             if (controller == null)
             {
                 embed.WithDescription($"Could not fetch LevelMemberModelController");
@@ -125,7 +125,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Services.GetRequiredService<LevelSystemController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemController>();
 
                 try
                 { 
@@ -167,7 +167,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemGuildConfigModel()
                             {
@@ -204,7 +204,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemGuildConfigModel()
                             {
@@ -250,7 +250,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
         public async Task GlobalLeaderboard()
         {
-            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+            if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
             {
                 await RespondAsync("You do not have access to this command");
                 return;
@@ -263,7 +263,7 @@ namespace XeniaBot.Core.Modules
                 var embed = new EmbedBuilder()
                     .WithTitle("Xp System - Global Leaderboard");
 
-                var controller = Program.Services.GetRequiredService<LevelMemberModelController>();
+                var controller = Program.Core.GetRequiredService<LevelMemberModelController>();
                 if (controller == null)
                 {
                     embed.WithDescription($"Could not fetch LevelMemberModelController");
@@ -292,7 +292,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemGuildConfigModel()
                             {
@@ -332,7 +332,7 @@ namespace XeniaBot.Core.Modules
                 .WithCurrentTimestamp();
             try
             {
-                var controller = Program.Services.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemGuildConfigModel()
                             {

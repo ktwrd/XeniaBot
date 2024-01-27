@@ -25,7 +25,7 @@ public class BackpackTFModule : InteractionModuleBase
             .WithCurrentTimestamp();
         try
         {
-            var controller = Program.Services.GetRequiredService<BackpackTFController>();
+            var controller = Program.Core.GetRequiredService<BackpackTFController>();
             var data = await controller.GetCurrenciesAsync();
             if (data == null)
             {
@@ -63,7 +63,7 @@ public class BackpackTFModule : InteractionModuleBase
             embed.WithDescription($"Failed to get currency data! `{ex.Message}`")
                 .WithColor(Color.Red);
             
-            var programDetails = Program.Services.GetRequiredService<ProgramDetails>();
+            var programDetails = Program.Core.GetRequiredService<ProgramDetails>();
             if (programDetails.Debug)
             {
                 using var ms = new MemoryStream(Encoding.UTF8.GetBytes(ex.ToString()));

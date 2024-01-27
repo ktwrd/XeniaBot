@@ -24,7 +24,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Services.GetRequiredService<BanSyncController>();
+                var controller = Program.Core.GetRequiredService<BanSyncController>();
                 await controller.RefreshBans(Context.Guild.Id);
                 
                 await FollowupAsync(
@@ -44,7 +44,7 @@ namespace XeniaBot.Core.Modules
                         .WithColor(Color.Red)
                         .WithCurrentTimestamp()
                         .Build());
-                await Program.Services.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
+                await Program.Core.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
             }
         }
         
@@ -52,8 +52,8 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task UserDetails(IUser user)
         {
-            var controller = Program.Services.GetRequiredService<BanSyncController>();
-            var infoController = Program.Services.GetRequiredService<BanSyncInfoConfigController>();
+            var controller = Program.Core.GetRequiredService<BanSyncController>();
+            var infoController = Program.Core.GetRequiredService<BanSyncInfoConfigController>();
             var data = await infoController.GetInfoEnumerable(user.Id);
 
             if (!data.Any())
@@ -79,7 +79,7 @@ namespace XeniaBot.Core.Modules
         {
             try
             {
-                var controller = Program.Services.GetRequiredService<BanSyncConfigController>();
+                var controller = Program.Core.GetRequiredService<BanSyncConfigController>();
                 var data = await controller.Get(Context.Guild.Id);
                 if (data == null)
                 {
@@ -105,7 +105,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("setguildstate", "Set state field of guild")]
         public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
         {
-            if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+            if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
             {
                 await Context.Interaction.RespondAsync($"Invalid permissions.");
                 return;
@@ -129,7 +129,7 @@ namespace XeniaBot.Core.Modules
 
             try
             {
-                var controller = Program.Services.GetRequiredService<BanSyncController>();
+                var controller = Program.Core.GetRequiredService<BanSyncController>();
                 await controller.SetGuildState(guildId, state, reason);
             }
             catch (Exception ex)
@@ -145,7 +145,7 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task RequestGuild()
         {
-            var controller = Program.Services.GetRequiredService<BanSyncController>();
+            var controller = Program.Core.GetRequiredService<BanSyncController>();
             var kind = controller.GetGuildKind(Context.Guild.Id);
 
             var embed = new EmbedBuilder()

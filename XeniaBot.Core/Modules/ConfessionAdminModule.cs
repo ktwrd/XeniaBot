@@ -20,7 +20,7 @@ namespace XeniaBot.Core.Modules
         [Discord.Interactions.RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Purge()
         {
-            var controller = Program.Services.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
             var item = await controller.GetGuild(Context.Guild.Id);
             if (item == null)
             {
@@ -60,8 +60,8 @@ namespace XeniaBot.Core.Modules
                 return;
             }
 
-            var controller = Program.Services.GetRequiredService<ConfessionController>();
-            var config = Program.Services.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionController>();
+            var config = Program.Core.GetRequiredService<ConfessionConfigController>();
             var item = await config.GetGuild(Context.Guild.Id);
             if (item != null)
             {

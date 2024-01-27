@@ -45,7 +45,7 @@ namespace XeniaBot.Core.Modules
             {
                 var url = $"https://api.tinyfox.dev/img?animal={animalType}";
                 var jsonUrl = url + "&json";
-                var response = Program.HttpClient.GetAsync(jsonUrl).Result;
+                var response = new HttpClient().GetAsync(jsonUrl).Result;
 
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {

@@ -16,7 +16,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
         private List<Language>? languageList = null;
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
         {
-            var service = Program.Services.GetRequiredService<GoogleTranslate>();
+            var service = Program.Core.GetRequiredService<GoogleTranslate>();
 
             var results = new List<AutocompleteResult>();
             var currentSearch = autocompleteInteraction.Data.Current.Value?.ToString()?.Trim().ToLower() ?? "";

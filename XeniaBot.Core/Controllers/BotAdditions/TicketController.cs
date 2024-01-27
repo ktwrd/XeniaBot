@@ -303,7 +303,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         public const string MongoTranscriptCollectionName = "ticketTranscript";
         protected static IMongoCollection<T>? GetTranscriptCollection<T>()
         {
-            return Program.GetMongoDatabase()?.GetCollection<T>(MongoTranscriptCollectionName);
+            return Program.Core.GetDatabase()?.GetCollection<T>(MongoTranscriptCollectionName);
         }
         protected static IMongoCollection<TicketTranscriptModel>? GetTranscriptCollection()
             => GetTranscriptCollection<TicketTranscriptModel>();
@@ -393,7 +393,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         public const string MongoTicketCollectionName = "ticketDetails";
         protected static IMongoCollection<T>? GetTicketCollection<T>()
         {
-            return Program.GetMongoDatabase()?.GetCollection<T>(MongoTicketCollectionName);
+            return Program.Core.GetDatabase()?.GetCollection<T>(MongoTicketCollectionName);
         }
         protected static IMongoCollection<TicketModel>? GetTicketCollection()
             => GetTicketCollection<TicketModel>();
@@ -427,7 +427,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         public const string MongoConfigCollectionName = "ticketGuildConfig";
         protected static IMongoCollection<T>? GetConfigCollection<T>()
         {
-            return Program.GetMongoDatabase()?.GetCollection<T>(MongoConfigCollectionName);
+            return Program.Core.GetDatabase()?.GetCollection<T>(MongoConfigCollectionName);
         }
         protected static IMongoCollection<ConfigGuildTicketModel>? GetConfigCollection()
             => GetConfigCollection<ConfigGuildTicketModel>();

@@ -19,7 +19,7 @@ public class EconomyModule : InteractionModuleBase
         var embed = new EmbedBuilder()
             .WithTitle("Economy - Daily")
             .WithCurrentTimestamp();
-        var controller = Program.Services.GetRequiredService<EconomyConfigController>();
+        var controller = Program.Core.GetRequiredService<EconomyConfigController>();
 
         EconProfileModel? data = null;
         try
@@ -73,7 +73,7 @@ public class EconomyModule : InteractionModuleBase
         try
         {
             // Increment coins and set last timestamp
-            var inc = Program.Random.Next(10, 30);
+            var inc = new Random().Next(10, 30);
             data.Coins += inc;
             data.LastDailyTimestamp = currentTimestamp;
             await controller.Set(data);
@@ -98,7 +98,7 @@ public class EconomyModule : InteractionModuleBase
         var embed = new EmbedBuilder()
             .WithTitle("Economy - Balance")
             .WithCurrentTimestamp();
-        var controller = Program.Services.GetRequiredService<EconomyConfigController>();
+        var controller = Program.Core.GetRequiredService<EconomyConfigController>();
 
         try
         {

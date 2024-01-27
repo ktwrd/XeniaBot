@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 
@@ -13,7 +14,7 @@ public class DiceModule : InteractionModuleBase
         [Discord.Interactions.Summary(description: "Minimum value for dice roll. Default: 1")]
         int min = 1)
     {
-        var result = Program.Random.Next(min, max);
+        var result = new Random().Next(min, max);
         var embed = new EmbedBuilder()
             .WithTitle("Dice")
             .WithDescription($"Resulted in `{result}` (between {min} and {max})")

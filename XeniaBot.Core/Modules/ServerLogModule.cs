@@ -18,7 +18,7 @@ public class ServerLogModule : InteractionModuleBase
     {
         try
         {
-            var controller = Program.Services.GetRequiredService<ServerLogConfigController>();
+            var controller = Program.Core.GetRequiredService<ServerLogConfigController>();
 
             var data = await controller.Get(Context.Guild.Id);
             data.SetChannel(logEvent, channelId);

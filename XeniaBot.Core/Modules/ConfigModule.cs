@@ -24,7 +24,7 @@ namespace XeniaBot.Core.Modules
             [Discord.Interactions.Summary(description: "Channel where ticket states will be logged and archived.")]
             [ChannelTypes(ChannelType.Text)] ITextChannel logChannel = null)
         {
-            TicketController controller = Program.Services.GetRequiredService<TicketController>();
+            TicketController controller = Program.Core.GetRequiredService<TicketController>();
 
             ConfigGuildTicketModel? model = await controller.GetGuildConfig(Context.Guild.Id);
             if (model == null)

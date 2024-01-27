@@ -25,7 +25,7 @@ namespace XeniaBot.Core.Modules
                 targetLanguage = "en";
             if (sourceLanguage == "null" || sourceLanguage?.Length < 1)
                 sourceLanguage = null;
-            var controller = Program.Services.GetRequiredService<GoogleTranslate>();
+            var controller = Program.Core.GetRequiredService<GoogleTranslate>();
             TranslationResult result = null;
             try
             {

@@ -21,7 +21,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     [SlashCommand("usercreate", "Create a user")]
     public async Task Cmd_CreateUser(string username)
     {
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.FollowupAsync("You do not have permission to access this command");
             return;
@@ -31,7 +31,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - Create User").WithCurrentTimestamp();
         try
         {
-            if (!(Program.ConfigData.Authentik?.Enable ?? false))
+            if (!(Program.Core.Config.Data.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -45,7 +45,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
             embed.WithColor(Color.Green)
                 .WithDescription(string.Join("\n", new string[]
                 {
-                    $"Account created! ([view](https://{Program.ConfigData.Authentik.Url}/if/admin/#/identity/users/{response.Id};%7B%22page%22%3A%22page-overview%22%7D))",
+                    $"Account created! ([view](https://{Program.Core.Config.Data.Authentik.Url}/if/admin/#/identity/users/{response.Id};%7B%22page%22%3A%22page-overview%22%7D))",
                     "```",
                     $"Id: {response.Id}",
                     $"Username: {response.Username}",
@@ -67,7 +67,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     [SlashCommand("userpassreset", "Create a password reset link for a user")]
     public async Task Cmd_CreateResetLink(string userId)
     {
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.FollowupAsync("You do not have permission to access this command");
             return;
@@ -76,7 +76,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - Password Reset Link").WithCurrentTimestamp();
         try
         {
-            if (!(Program.ConfigData.Authentik?.Enable ?? false))
+            if (!(Program.Core.Config.Data.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -111,7 +111,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     [SlashCommand("userdelete", "Delete a user")]
     public async Task Cmd_DeleteUser(string userId)
     {
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.FollowupAsync("You do not have permission to access this command");
             return;
@@ -120,7 +120,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - Delete User").WithCurrentTimestamp();
         try
         {
-            if (!(Program.ConfigData.Authentik?.Enable ?? false))
+            if (!(Program.Core.Config.Data.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -158,7 +158,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     [SlashCommand("userlist", "List all users")]
     public async Task Cmd_ListUsers()
     {
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.FollowupAsync("You do not have permission to access this command");
             return;
@@ -167,7 +167,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - List Users").WithCurrentTimestamp();
         try
         {
-            if (!(Program.ConfigData.Authentik?.Enable ?? false))
+            if (!(Program.Core.Config.Data.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -201,7 +201,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     [SlashCommand("userinfo", "List all users")]
     public async Task Cmd_UserInfo(string user)
     {
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.FollowupAsync("You do not have permission to access this command");
             return;
@@ -210,7 +210,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
         var embed = new EmbedBuilder().WithTitle("Authentik - User Info").WithCurrentTimestamp();
         try
         {
-            if (!(Program.ConfigData.Authentik?.Enable ?? false))
+            if (!(Program.Core.Config.Data.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -254,7 +254,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     [SlashCommand("addtogroup", "Add a user to a group")]
     public async Task Cmd_AddUserToGroup(string user, string group)
     {
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.FollowupAsync("You do not have permission to access this command");
             return;
@@ -264,7 +264,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
 
         try
         {
-            if (!(Program.ConfigData.Authentik?.Enable ?? false))
+            if (!(Program.Core.Config.Data.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());
@@ -308,7 +308,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
     [SlashCommand("removefromgroup", "Remove a user from a group")]
     public async Task Cmd_RemoveUserFromGroup(string user, string group)
     {
-        if (!Program.ConfigData.UserWhitelist.Contains(Context.User.Id))
+        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.FollowupAsync("You do not have permission to access this command");
             return;
@@ -318,7 +318,7 @@ public partial class AuthentikAdminModule : InteractionModuleBase
 
         try
         {
-            if (!(Program.ConfigData.Authentik?.Enable ?? false))
+            if (!(Program.Core.Config.Data.Authentik?.Enable ?? false))
             {
                 embed.WithDescription("Disabled");
                 await FollowupAsync(embed: embed.Build());

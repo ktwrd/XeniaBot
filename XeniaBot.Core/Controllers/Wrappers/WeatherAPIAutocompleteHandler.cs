@@ -14,7 +14,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
     {
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
         {
-            var service = Program.Services.GetRequiredService<WeatherAPIController>();
+            var service = Program.Core.GetRequiredService<WeatherAPIController>();
 
             var results = new List<AutocompleteResult>();
             var currentSearch = autocompleteInteraction.Data.Current.Value.ToString();
