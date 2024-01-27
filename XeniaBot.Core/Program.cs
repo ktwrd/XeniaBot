@@ -32,15 +32,6 @@ namespace XeniaBot.Core
     public static class Program
     {
         #region Fields
-        public static ConfigController ConfigController = null;
-        public static ConfigData ConfigData = null;
-        public static HttpClient HttpClient = null;
-        public static MongoClient MongoClient = null;
-        private static DiscordController _discordController;
-        /// <summary>
-        /// Created after <see cref="CreateServiceProvider"/> is called in <see cref="MainAsync(string[])"/>
-        /// </summary>
-        public static ServiceProvider Services = null;
         public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
         {
             IgnoreReadOnlyFields = true,
@@ -52,8 +43,7 @@ namespace XeniaBot.Core
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
         /// </summary>
-        public static long StartTimestamp { get; private set; }
-        public const string MongoDatabaseName = "xenia_discord";
+        public static long StartTimestamp { get; set; }
 
         public static string Version
         {
@@ -112,73 +102,28 @@ namespace XeniaBot.Core
             }
         }
         #endregion
-        public static IMongoDatabase? GetMongoDatabase()
-        {
-            return MongoClient.GetDatabase(MongoDatabaseName);
-        }
-
-        #region Main
+        public static CoreContext Core { get; private set; }
         public static void Main(string[] args)
         {
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
-            BsonSerializer.RegisterSerializer(objectSerializer);
-            MainInit();
-            MainInit_ValidateMongo();
-
-            MainAsync(args).Wait();
-        }
-        private static void MainInit()
-        {
-            ConfigController = new ConfigController(ProgramDetails);
-            ConfigData = ConfigController.Data;
-            HttpClient = new HttpClient();
-        }
-        private static void MainInit_ValidateMongo()
-        {
-            try
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            
+            Core = new CoreContext(ProgramDetails);
+            Core.StartTimestamp = StartTimestamp;
+            Core.MainAsync(args, (s) =>
             {
-                Log.Debug("Connecting to MongoDB");
-                var connectionSettings = MongoClientSettings.FromConnectionString(ConfigData.MongoDBConnectionUrl);
-                connectionSettings.AllowInsecureTls = true;
-                connectionSettings.MaxConnectionPoolSize = 500;
-                connectionSettings.WaitQueueSize = 2000;
-                MongoClient = new MongoClient(connectionSettings);
-                MongoClient.StartSession();
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Failed to connect to MongoDB Server\n{ex}");
-                Quit(1);
-            }
+                AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", s);
+                AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, s);
+                AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
+                return Task.CompletedTask;
+            }).Wait();
         }
-        private static async Task MainAsync(string[] args)
-        {
-            CreateServiceProvider();
-            Log.Debug("Connecting to Discord");
-            _discordController = Services.GetRequiredService<DiscordController>();
-            _discordController.Ready += (c) =>
-            {
-                RunServicesReadyFunc();
-            };
-            await _discordController.Run();
-            if (ConfigData.Health.Enable)
-            {
-                new HealthServer().Run(ConfigData.Health.Port);
-            }
-
-            await Task.Delay(-1);
-        }
-        #endregion
-
-        public static Random Random => new Random();
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             var except = (Exception)e.ExceptionObject;
             Console.Error.WriteLine(except);
-            if (_discordController.IsReady)
+            if (Core.Services.GetRequiredService<DiscordController>().IsReady)
             {
                 DiscordHelper.ReportError(except).Wait();
             }
@@ -189,135 +134,21 @@ namespace XeniaBot.Core
 
         public static void Quit(int exitCode = 0)
         {
-            BeforeQuit();
-            Environment.Exit(exitCode);
-        }
-        private static void BeforeQuit()
-        {
-            ConfigController?.Write(ConfigData);
+            Core.OnQuit(exitCode);
         }
 
-        public static ProgramDetails ProgramDetails =>
-            new ProgramDetails()
-            {
-                StartTimestamp = StartTimestamp,
-                VersionRaw = VersionReallyRaw,
-                Platform = XeniaPlatform.Bot,
-                Debug =
+        public static ProgramDetails ProgramDetails => new()
+        {
+            StartTimestamp = StartTimestamp,
+            VersionRaw = VersionReallyRaw,
+            Platform = XeniaPlatform.Bot,
+            Debug =
 #if DEBUG
-                    true
+                true
 #else
-false
+                false
 #endif
-            };
-
-        #region Services
-        /// <summary>
-        /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
-        /// </summary>
-        private static void CreateServiceProvider()
-        {
-            // Initialize required stuff
-            Log.Debug("Initializing Services");
-            var dsc = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
-            var services = new ServiceCollection();
-
-            // Add base services
-            services
-                .AddSingleton(ProgramDetails)
-                .AddSingleton<CronDaemon>()
-                .AddSingleton(ConfigController)
-                .AddSingleton(ConfigData)
-                .AddSingleton(dsc);
-            
-            // Check if MongoDB was fetch successfully, otherwise abort.
-            var mongoDb = GetMongoDatabase();
-            if (mongoDb == null)
-            {
-                Log.Error("FATAL ERROR!!! GetMongoDatabase() resulted in null");
-                Environment.Exit(1);
-            }
-            
-            // Add all custom services
-            services
-                .AddSingleton(mongoDb)
-                .AddSingleton<DiscordController>()
-                .AddSingleton<CommandService>()
-                .AddSingleton<InteractionService>()
-                .AddSingleton<CommandHandler>()
-                .AddSingleton<InteractionHandler>();
-            
-            // Inject controllers from other projects.
-            AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
-            AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, services);
-            AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
-
-            // Get all custom controllers and build service provider.
-            _serviceClassExtendsBaseController = new List<Type>();
-            foreach (var item in services)
-            {
-                if (item.ServiceType.IsAssignableTo(typeof(BaseController)) && !_serviceClassExtendsBaseController.Contains(item.ServiceType))
-                {
-                    _serviceClassExtendsBaseController.Add(item.ServiceType);
-                }
-            }
-            Services = services.BuildServiceProvider();
-            
-            // Invoke event to tell controllers that init is complete
-            RunServicesInitFunc();
-        }
-        /// <summary>
-        /// Used to generate a list of all types that extend <see cref="BaseController"/> in <see cref="Services"/> before it's built.
-        /// </summary>
-        private static List<Type> _serviceClassExtendsBaseController = new List<Type>();
-        /// <summary>
-        /// Run the InitializeAsync function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
-        /// </summary>
-        private static void RunServicesInitFunc()
-        {
-            BaseServiceFunc((contr) =>
-            {
-                contr.InitializeAsync().Wait();
-                return Task.CompletedTask;
-            });
-        }
-        /// <summary>
-        /// Call the OnReady function on all types in <see cref="Services"/> that extend <see cref="BaseController"/>. Calls <see cref="BaseServiceFunc(Func{BaseController, Task})"/>
-        /// </summary>
-        private static void RunServicesReadyFunc()
-        {
-            BaseServiceFunc((contr) =>
-            {
-                contr.OnReady().Wait();
-                return Task.CompletedTask;
-            });
-        }
-        /// <summary>
-        /// For every instance of something that extends <see cref="BaseController"/> on <see cref="Services"/>, call <paramref name="func"/> so you can do what you want.
-        /// </summary>
-        /// <param name="func"></param>
-        private static void BaseServiceFunc(Func<BaseController, Task> func)
-        {
-            var taskList = new List<Task>();
-            foreach (var service in _serviceClassExtendsBaseController)
-            {
-                var svc = Services.GetServices(service);
-                foreach (var item in svc)
-                {
-                    if (item != null && item.GetType().IsAssignableTo(typeof(BaseController)))
-                    {
-                        taskList.Add(new Task(delegate
-                        {
-                            func((BaseController)item).Wait();
-                        }));
-                    }
-                }
-            }
-            foreach (var i in taskList)
-                i.Start();
-            Task.WaitAll(taskList.ToArray());
-        }
-        #endregion
+        };
         
     }
 }
