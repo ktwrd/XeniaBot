@@ -11,21 +11,18 @@ public class ConfigData
     /// Current config version.
     ///
     /// 2: New schema version. Requires total transformation.
+    /// 3: Move MongoDB connection URL from MongoDBConnectionUrl to MongoDB.ConnectionUrl
     /// </summary>
     public uint Version
     {
-        get => 2;
-        set { value = 2; }
+        get => 3;
+        set { value = 3; }
     }
 
     /// <summary>
     /// Discord token to login as.
     /// </summary>
     public string DiscordToken { get; set; }
-    /// <summary>
-    /// Connection Url for MongoDB Server
-    /// </summary>
-    public string MongoDBConnectionUrl { get; set; }
     public string Prefix { get; set; }
     public ulong InviteClientId { get; set; }
     public ulong InvitePermissions { get; set; }
@@ -48,6 +45,7 @@ public class ConfigData
     public HealthConfigItem Health { get; set; }
     public LavalinkConfigItem Lavalink { get; set; }
     public GoogleCloudKey? GoogleCloud { get; set; }
+    public MongoDBConfigItem MongoDB { get; set; }
     
     public string? SupportServerUrl { get; set; }
     public bool HasDashboard { get; set; }
@@ -62,7 +60,6 @@ public class ConfigData
     {
         i ??= new ConfigData();
         i.DiscordToken = "";
-        i.MongoDBConnectionUrl = "";
         i.InviteClientId = default;
         i.InvitePermissions = default;
         i.Prefix = "x.";
@@ -76,6 +73,7 @@ public class ConfigData
         i.Authentik = AuthentikConfigItem.Default();
         i.Health = HealthConfigItem.Default();
         i.GoogleCloud = null;
+        i.MongoDB = MongoDBConfigItem.Default();
 
         i.SupportServerUrl = null;
         i.HasDashboard = false;
@@ -88,6 +86,7 @@ public class ConfigData
         var b = JsonSerializer.Deserialize<ConfigDataVersionField>(content, ConfigController.SerializerOptions);
         var instance = new ConfigData();
         var version = JObject.Parse(content)["Version"]?.ToString();
+        var jobject = JObject.Parse(content);
         switch (version)
         {
             case null:
@@ -97,7 +96,10 @@ public class ConfigData
             case "1":
                 var v1 = JsonSerializer.Deserialize<ConfigDataV1>(content, ConfigController.SerializerOptions);
                 instance.DiscordToken = v1.DiscordToken;
-                instance.MongoDBConnectionUrl = v1.MongoDBServer;
+                if (jobject.TryGetValue("MongoDBConnectionUrl", out var s))
+                {
+                    instance.MongoDB.ConnectionUrl = s.ToString();
+                }
                 instance.Prefix = v1.Prefix;
                 
                 instance.InviteClientId = v1.Invite_ClientId;
@@ -167,6 +169,16 @@ public class ConfigData
                 instance.SupportServerUrl = v1.SupportServerUrl;
                 instance.HasDashboard = v1.HasDashboard;
                 instance.DashboardUrl = v1.DashboardLocation;
+                return instance;
+                break;
+            case "2":
+                instance = JsonSerializer.Deserialize<ConfigData>(content, ConfigController.SerializerOptions) ??
+                           new ConfigData();
+                if (jobject.TryGetValue("MongoDBConnectionUrl", out var sk))
+                {
+                    instance.MongoDB.ConnectionUrl = sk.ToString();
+                }
+
                 return instance;
                 break;
         }
