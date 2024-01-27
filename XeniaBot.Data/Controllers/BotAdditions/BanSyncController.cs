@@ -201,6 +201,8 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             if (!userInfo.Any())
                 return;
 
+            userInfo = userInfo.Where(v => !v.Ghost).ToArray();
+
             // Create embed then send message in log channel.
             var embed = await GenerateEmbed(userInfo);
             await logChannel.SendMessageAsync(embed: embed.Build());
