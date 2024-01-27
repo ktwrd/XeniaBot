@@ -22,10 +22,12 @@ namespace XeniaBot.Data.Models
         /// </summary>
         public long Timestamp { get; set; }
         public string Reason { get; set; }
+        public bool Ghost { get; set; }
         public BanSyncInfoModel()
         {
             Reason = "<unknown>";
             RecordId = Guid.NewGuid().ToString();
+            Ghost = false;
         }
     }
 }

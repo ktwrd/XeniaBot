@@ -27,4 +27,13 @@
     </p>
     <h4>Reason</h4>
     <textarea class="form-control" readonly>@Model.Record.Reason</textarea>
+    @if (AspHelper.IsCurrentUserAdmin(this.Context))
+    {
+        <hr/>
+        <label for="ghost-record">Set Ghost State</label>
+        <div class="btn-group" id="host-record" role="group" aria-label="Ghost Record">
+            <a class="btn btn-sm btn-outline-dark" asp-controller="ServerBanSync" asp-action="GhostEnable" asp-route-id="@Model.Record.UserId+'_'+@Model.Record.GuildId">True</a>
+            <a class="btn btn-sm btn-outline-dark" asp-controller="ServerBanSync" asp-action="GhostDisable" asp-route-id="@Model.Record.UserId+'_'+@Model.Record.GuildId">False</a>
+        </div>
+    }
 </div>

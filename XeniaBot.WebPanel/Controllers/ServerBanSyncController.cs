@@ -48,6 +48,12 @@ public class ServerBanSyncController : BaseXeniaController
 
         var data = await GetDetails(guild.Id);
         await PopulateModel(data);
+
+        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
+        {
+            data.BanSyncRecords = data.BanSyncRecords.Where(v => !v.Ghost).ToList();
+        }
+        
         if (messageType != null)
             data.MessageType = messageType;
         if (message != null)
@@ -70,6 +76,99 @@ public class ServerBanSyncController : BaseXeniaController
         return View("Index", data);
     }
 
+    [HttpGet("~/BanSync/Record/{id}/Ghost/True")]
+    public async Task<IActionResult> GhostEnable(string id)
+    {
+        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
+            return View("NotFound");
+        var idSplit = id.Split("_");
+        if (idSplit.Length < 2)
+            return View("NotFound");
+
+        ulong targetUserId = 0;
+        try
+        { targetUserId = ulong.Parse(idSplit[0]);
+        } catch
+        { return View("NotFound"); }
+
+        ulong targetGuildId = 0;
+        try
+        { targetGuildId = ulong.Parse(idSplit[1]);
+        } catch
+        { return View("NotFound"); }
+
+        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoConfigController>();
+        try
+        {
+            var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
+            if (record == null)
+            {
+                return View("NotFound");
+            }
+
+            record.Ghost = true;
+            await banSyncInfoController.SetInfo(record);
+            
+            var data = new BanSyncRecordViewModel()
+            {
+                Record = record
+            };
+            await PopulateModel(data);
+
+            return View("Details", data);
+        }
+        catch (Exception ex)
+        {
+            return View("Error");
+        }
+    }
+    [HttpGet("~/BanSync/Record/{id}/Ghost/False")]
+    public async Task<IActionResult> GhostDisable(string id)
+    {
+        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
+            return View("NotFound");
+        var idSplit = id.Split("_");
+        if (idSplit.Length < 2)
+            return View("NotFound");
+
+        ulong targetUserId = 0;
+        try
+        { targetUserId = ulong.Parse(idSplit[0]);
+        } catch
+        { return View("NotFound"); }
+
+        ulong targetGuildId = 0;
+        try
+        { targetGuildId = ulong.Parse(idSplit[1]);
+        } catch
+        { return View("NotFound"); }
+
+        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoConfigController>();
+        try
+        {
+            var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
+            if (record == null)
+            {
+                return View("NotFound");
+            }
+
+            record.Ghost = true;
+            await banSyncInfoController.SetInfo(record);
+            
+            var data = new BanSyncRecordViewModel()
+            {
+                Record = record
+            };
+            await PopulateModel(data);
+
+            return View("Details", data);
+        }
+        catch (Exception ex)
+        {
+            return View("Error");
+        }
+    }
+    
     [HttpGet("~/BanSync/Record/{id}")]
     public async Task<IActionResult> RecordInfo(string id)
     {
@@ -94,6 +193,11 @@ public class ServerBanSyncController : BaseXeniaController
         {
             var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
             if (record == null)
+            {
+                return View("NotFound");
+            }
+
+            if (!AspHelper.IsCurrentUserAdmin(this.HttpContext) && record.Ghost)
             {
                 return View("NotFound");
             }

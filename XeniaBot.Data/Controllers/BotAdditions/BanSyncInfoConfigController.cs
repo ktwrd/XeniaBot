@@ -56,37 +56,56 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
             .Empty;
         return await BaseInfoFind(filter);
     }
-    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId)
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId, bool allowGhost = false)
     {
         var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.UserId == userId && v.GuildId == guildId);
+            .Where(v => v.UserId == userId && v.GuildId == guildId && !v.Ghost);
+        
+        if (allowGhost)
+        {
+            filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => v.UserId == userId && v.GuildId == guildId);
+        }
 
         return await BaseInfoFind(filter);
     }
-    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(BanSyncInfoModel data)
-        => await GetInfoEnumerable(data.UserId, data.GuildId);
-    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId)
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(BanSyncInfoModel data, bool allowGhost = false)
+        => await GetInfoEnumerable(data.UserId, data.GuildId, allowGhost);
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, bool allowGhost = false)
     {
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        var filter = Builders<BanSyncInfoModel>
             .Filter
-            .Eq("UserId", userId);
+            .Where(v => v.UserId == userId && !v.Ghost);
+        if (allowGhost)
+        {
+            filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+                .Filter
+                .Eq("UserId", userId);
+        }
 
         return await BaseInfoFind(filter);
     }
-    public async Task<BanSyncInfoModel?> GetInfo(ulong userId, ulong guildId)
+    public async Task<BanSyncInfoModel?> GetInfo(ulong userId, ulong guildId, bool allowGhost = false)
     {
         var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.UserId == userId && v.GuildId == guildId);
+            .Where(v => v.UserId == userId && v.GuildId == guildId && !v.Ghost);
+        if (allowGhost)
+        {
+            filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => v.UserId == userId && v.GuildId == guildId);
+        }
         var res = await BaseInfoFind(filter);
         var sorted = res.OrderByDescending(v => v.Timestamp);
         return sorted.FirstOrDefault();
     }
-    public async Task<BanSyncInfoModel?> GetInfo(BanSyncInfoModel data)
-        => await GetInfo(data.UserId, data.GuildId);
+    public async Task<BanSyncInfoModel?> GetInfo(BanSyncInfoModel data, bool allowGhost = false)
+        => await GetInfo(data.UserId, data.GuildId, allowGhost);
 
-    public async Task<List<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = true)
+    public async Task<List<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = true, bool allowGhost = false)
     {
         var result = new List<BanSyncInfoModel>();
         var guild = _discord.GetGuild(guildId);
@@ -94,7 +113,13 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
         {
             var filter = Builders<BanSyncInfoModel>
                 .Filter
-                .Where(v => v.UserId == user.Id);
+                .Where(v => v.UserId == user.Id && !v.Ghost);
+            if (allowGhost)
+            {
+                filter = Builders<BanSyncInfoModel>
+                    .Filter
+                    .Where(v => v.UserId == user.Id);
+            }
             var userResult = await BaseInfoFind(filter);
             var innerUser = new List<BanSyncInfoModel>();
             foreach (var re in userResult)
@@ -114,10 +139,10 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
             }
         }
 
-        foreach (var i in await BaseInfoFind(
-                     Builders<BanSyncInfoModel>
-                         .Filter
-                         .Where(v => v.GuildId == guildId)))
+        var currentServerFilter = Builders<BanSyncInfoModel>
+            .Filter
+            .Where(v => v.GuildId == guildId);
+        foreach (var i in await BaseInfoFind(currentServerFilter))
         {
             result.Add(i);
         }
