@@ -1,0 +1,23 @@
+﻿@model XeniaBot.WebPanel.Models.UserSelectModel
+@using Discord.WebSocket
+@if ((Model.SelectedUserId ?? 0) == 0)
+{
+    <option value="" selected>None</option>
+}
+else
+{
+    <option value="">None</option>
+}
+@foreach (var user in Model.Users)
+{
+    <option value="@user.Id">
+        @if (user.DisplayName?.Length > 0)
+        {
+            @(user.DisplayName + " (" + user.Username + "#" + user.Discriminator + ")")
+        }
+        else
+        {
+            @(user.Username + "#" + user.Discriminator)
+        }
+    </option>
+}

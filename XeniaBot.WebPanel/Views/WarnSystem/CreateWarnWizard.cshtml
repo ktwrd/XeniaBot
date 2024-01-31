@@ -1,0 +1,30 @@
+﻿@using kate.shared.Helpers
+@using XeniaBot.WebPanel.Helpers
+@model WarnGuildDetailsViewModel
+
+@{
+    ViewBag.Title = $"{Model.Guild.Name} - Create Warn";
+    Layout = "_Layout";
+}
+
+
+<h1>Create Warn</h1>
+<form id="create_warn" enctype="application/x-www-form-urlencoded" method="post" asp-controller="WarnSystem" asp-action="CreateWarn" asp-route-id="@Model.Guild.Id">
+    @await Component.InvokeAsync("UserSelect", new UserSelectModel()
+    {
+        Users = StrippedUser.FromGuild(Model.Client, Model.Guild),
+        SelectedUserId = null,
+        ParentFormId = "create_warn",
+        Id = "create_warn_user",
+        Name = "user",
+        DisplayName = "Target User",
+        Required = true
+    })
+    
+    <div class="form-group mb-3">
+        <label for="create_warn_reason">Reason</label>
+        <textarea class="form-control" id="create_warn_reason" name="reason" rows="5" required></textarea>
+    </div>
+    
+    <input class="btn btn-success" type="submit" value="Submit"/>
+</form>

@@ -30,6 +30,10 @@
     <div class="px-4 py-5 my-5 text-center">
         <h4>No Warn Records Found</h4>
         <p>There were no warn records found for this guild.</p>
+        
+        <a class="btn btn-success pt-3" asp-controller="WarnSystem" asp-action="CreateWarnWizard" asp-route-id="@Model.Guild.Id">
+            Create Warn
+        </a>
     </div>
 }
 else
@@ -41,7 +45,11 @@ else
             <th>Who Warned Them</th>
             <th>When</th>
             <th>Description</th>
-            <th></th>
+            <th>
+                <a class="btn btn-success btn-sm" asp-controller="WarnSystem" asp-action="CreateWarnWizard" asp-route-id="@Model.Guild.Id">
+                    <i class="bi bi-plus"></i>
+                </a>
+            </th>
         </tr>
         </thead>
         <tbody>
