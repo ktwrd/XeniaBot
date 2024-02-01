@@ -46,8 +46,14 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                 var taskList = new List<Task>();
                 foreach (var guild in _client.Guilds)
                 {
-                    taskList.Add(ReGrantGuildMembers(guild.Id));
+                    taskList.Add(new Task(delegate
+                    {
+                        ReGrantGuildMembers(guild.Id).Wait();
+                    }));
                 }
+
+                foreach (var i in taskList)
+                    i.Start();
 
                 await Task.WhenAll(taskList);
             }
@@ -77,9 +83,14 @@ namespace XeniaBot.Core.Controllers.BotAdditions
             {
                 if (member != null && !member.IsBot)
                 {
-                    taskList.Add(ClientOnUserJoined(member));
+                    taskList.Add(new Task(delegate
+                    {
+                        ClientOnUserJoined(member).Wait();
+                    }));
                 }
             }
+            foreach (var i in taskList)
+                i.Start();
             await Task.WhenAll(taskList);
         }
 
