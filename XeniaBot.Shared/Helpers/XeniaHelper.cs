@@ -1,14 +1,46 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
+using Discord;
+using Discord.WebSocket;
+using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Shared.Helpers;
 
 public static class XeniaHelper
 {
+    public static EmbedBuilder BaseEmbed(EmbedBuilder? builder = null)
+    {
+        if (CoreContext.Instance == null)
+            throw new Exception("CoreContext hasn't been initialized.");
+
+        var client = CoreContext.Instance.GetRequiredService<DiscordSocketClient>();
+        return BaseEmbed(client, builder);
+    }
+    public static EmbedBuilder BaseEmbed(DiscordSocketClient client, EmbedBuilder? embed=null)
+    {
+        embed ??= new EmbedBuilder();
+
+        var icon = client.CurrentUser.GetAvatarUrl();
+
+        string? version = null;
+        if (CoreContext.Instance != null && CoreContext.Instance?.Details.Version != null)
+            version = CoreContext.Instance?.Details.Version;
+
+        var footer = new EmbedFooterBuilder()
+            .WithIconUrl(icon);
+        if (version != null)
+            footer.WithText($"Xenia v{version}");
+        
+        return embed
+            .WithTimestamp(DateTimeOffset.UtcNow)
+            .WithFooter(footer);
+    }
+    
     public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
     {
         IgnoreReadOnlyFields = true,
