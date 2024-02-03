@@ -188,7 +188,9 @@ namespace XeniaBot.Shared.Controllers
         {
             if (!_configData.Prometheus.Enable)
                 return Task.CompletedTask;
-            
+            if (_details.Platform == XeniaPlatform.WebPanel)
+                return Task.CompletedTask;
+
             if (_promCount_InteractionCount == null)
                 throw new Exception("InitializeMetrics not called, _promCount_InteractionCount is null");
             SocketGuild? guild =
