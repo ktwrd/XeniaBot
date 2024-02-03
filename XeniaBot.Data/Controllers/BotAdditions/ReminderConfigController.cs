@@ -85,4 +85,32 @@ public class ReminderConfigController : BaseConfigController<ReminderModel>
             await collection.InsertOneAsync(model);
         }
     }
+
+    public async Task<List<ReminderModel>> GetForgotten(string[] currentItems, long initTimestamp)
+    {
+        var notCalled = await GetMany(
+            beforeTimestamp: initTimestamp,
+            hasReminded: false) ?? Array.Empty<ReminderModel>();
+
+        var results = new List<ReminderModel>();
+        foreach (var i in notCalled)
+        {
+            if (!currentItems.Contains(i.ReminderId))
+            {
+                results.Add(i);
+            }
+        }
+
+        return results;
+    }
+
+    public async Task<ICollection<ReminderModel>> GetByUser(ulong userId)
+    {
+        var filter = Builders<ReminderModel>
+            .Filter
+            .Eq("UserId", userId);
+        var collection = GetCollection();
+        var results = await collection.FindAsync(filter);
+        return results.ToList();
+    }
 }

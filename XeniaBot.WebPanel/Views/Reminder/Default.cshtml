@@ -1,0 +1,62 @@
+﻿@using XeniaBot.WebPanel.Helpers
+@model ReminderViewModel
+
+@{
+    ViewBag.Title = "Reminders";
+    Layout = "_Layout";
+}
+
+<style>
+    .smallUserIcon {
+        height: 32px;
+        width: initial !important;
+        border-radius: 50%;
+    }
+</style>
+<h2>Current Reminders</h2>
+@if (!Model.Reminders.Any())
+{
+    <div class="px-4 py-5 my-5 text-center">
+        <h4>No Reminders found.</h4>
+        <p>
+            @* <a asp-controller="Reminder" asp-action="CreatePage" class="btn btn-success">Create</a> *@
+        </p>
+    </div>
+}
+else
+{
+    <table class="table" id="reminderTable">
+        <thead>
+        <th>Guild</th>
+        <th>When</th>
+        <th>Notes</th>
+        <th></th>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Reminders)
+        {
+            <tr>
+                <th>
+                    <img src="@(AspHelper.GetGuildImage(item.GuildId))"
+                         class="card-img-top smallUserIcon" />
+                    @(AspHelper.GetGuildName(item.GuildId))
+                </th>
+                <th>
+                    @(AspHelper.GetChannelName(item.GuildId, item.ChannelId))
+                </th>
+                <td>
+                    @(AspHelper.DateTimeFromTimestamp(item.ReminderTimestamp * 1000).ToString("yyyy/MM/dd HH:mm:ss tt"))
+                </td>
+                <td>
+                    <pre><code>@item.Note</code></pre>
+                </td>
+                <td>
+                    <a asp-controller="Reminder" asp-action="Remove" asp-route-id="@item.ReminderId" class="btn btn-danger btn-sm">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

@@ -12,11 +12,12 @@ public class ConfigData
     ///
     /// 2: New schema version. Requires total transformation.
     /// 3: Move MongoDB connection URL from MongoDBConnectionUrl to MongoDB.ConnectionUrl
+    /// 4: Add property ReminderService. No upgrade required.
     /// </summary>
     public uint Version
     {
-        get => 3;
-        set { value = 3; }
+        get => 4;
+        set { value = 4; }
     }
 
     /// <summary>
@@ -46,6 +47,7 @@ public class ConfigData
     public LavalinkConfigItem Lavalink { get; set; }
     public GoogleCloudKey? GoogleCloud { get; set; }
     public MongoDBConfigItem MongoDB { get; set; }
+    public ReminderServiceConfigItem ReminderService { get; set; }
     
     public string? SupportServerUrl { get; set; }
     public bool HasDashboard { get; set; }
@@ -74,6 +76,7 @@ public class ConfigData
         i.Health = HealthConfigItem.Default();
         i.GoogleCloud = null;
         i.MongoDB = MongoDBConfigItem.Default();
+        i.ReminderService = ReminderServiceConfigItem.Default();
 
         i.SupportServerUrl = null;
         i.HasDashboard = false;

@@ -5,6 +5,8 @@ using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Controllers.BotAdditions;
 using XeniaBot.Core.Helpers;
+using XeniaBot.Data.Models;
+using XeniaBot.Logic.Services;
 
 namespace XeniaBot.Core.Modules;
 
@@ -35,7 +37,7 @@ public class ReminderModule : InteractionModuleBase
         var timestamp = DateTimeOffset.UtcNow.Add(timeSpan).ToUnixTimeSeconds();
         try
         {
-            var controller = Program.Core.GetRequiredService<ReminderController>();
+            var controller = Program.Core.GetRequiredService<ReminderService>();
             var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var diff = (timestamp - currentTimestamp) * 1000;
             if (diff < 3)
@@ -48,7 +50,8 @@ public class ReminderModule : InteractionModuleBase
                 Context.User.Id,
                 Context.Channel.Id,
                 Context.Guild.Id,
-                note);
+                note,
+                RemindSource.Bot);
         }
         catch (Exception e)
         {
@@ -65,6 +68,7 @@ public class ReminderModule : InteractionModuleBase
 
         var embed = DiscordHelper.BaseEmbed()
             .WithDescription($"Reminder will be sent <t:{timestamp}:R>")
+            .AddField("Notes", $"```\n{note}\n```")
             .WithColor(Color.Green);
         await Context.Interaction.RespondAsync(embed: embed.Build());
     }
