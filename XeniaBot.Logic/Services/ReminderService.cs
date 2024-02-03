@@ -34,7 +34,7 @@ public class ReminderService : BaseController
     #region OnReady
     public override async Task OnReady()
     {
-        InitTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        InitTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if (!_configData.ReminderService.Enable)
         {
             Log.Warn("Ignoring since ReminderServiceConfigItem.Enable is false");
