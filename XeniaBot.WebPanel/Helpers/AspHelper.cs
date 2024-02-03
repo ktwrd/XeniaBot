@@ -84,6 +84,32 @@ public static class AspHelper
         var s = guild.IconUrl ?? "/Debugempty.png";
         return s;
     }
+
+    public static string GetGuildName(ulong guildId)
+    {
+        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        var guild = discord.GetGuild(guildId);
+        if (guild == null)
+            return guildId.ToString();
+
+        return guild.Name;
+    }
+
+    public static string GetChannelName(ulong guildId, ulong channelId)
+    {
+        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        var guild = discord.GetGuild(guildId);
+        if (guild == null)
+            return channelId.ToString();
+
+        foreach (var i in guild.Channels)
+        {
+            if (i.Id == channelId)
+                return i.Name;
+        }
+
+        return channelId.ToString();
+    }
     
     public static async Task<ServerBanSyncViewModel> FillServerModel(ulong serverId, ServerBanSyncViewModel data)
     {
