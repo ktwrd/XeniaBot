@@ -289,9 +289,9 @@ public class ServerLogController : BaseController
             if (author != null)
                 embed.WithThumbnailUrl(author.GetAvatarUrl());
         
-            if (messageContent.Length is < 2000 and > 0)
-                embed.AddField("Content", messageContent);
-            else if (messageContent.Length > 2000)
+            if (messageContent.Length is < 1000 and > 0)
+                embed.AddField("Content", $"```\n{messageContent}\n```");
+            else if (messageContent.Length > 1000)
             {
                 embed.AddField("Content", "Attached to this message");
                 await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed, messageContent, "content.txt");
