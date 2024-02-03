@@ -10,15 +10,19 @@ public class ReminderModel : BaseModel
     public ulong UserId { get; set; }
     public ulong GuildId { get; set; }
     public ulong ChannelId { get; set; }
+    public long CreatedAt { get; set; }
     public long ReminderTimestamp { get; set; }
     public bool HasReminded { get; set; }
     public string Note { get; set; }
+    public long RemindedAt { get; set; }
+    public RemindSource Source { get; set; }
 
     public ReminderModel()
     {
         ReminderId = GeneralHelper.GenerateUID();
         HasReminded = false;
         Note = "";
+        CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
 
     public ReminderModel(
@@ -26,6 +30,7 @@ public class ReminderModel : BaseModel
         ulong channelId,
         ulong guildId,
         long timestamp,
+        RemindSource source,
         string? note = null)
     : base()
     {
@@ -36,5 +41,13 @@ public class ReminderModel : BaseModel
         ReminderTimestamp = timestamp;
         Note = note ?? "";
         HasReminded = false;
+        Source = source;
     }
+}
+
+public enum RemindSource
+{
+    Unknown = -1,
+    Bot = 0,
+    Dashboard = 1
 }
