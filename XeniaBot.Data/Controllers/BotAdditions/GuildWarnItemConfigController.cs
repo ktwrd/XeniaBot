@@ -4,7 +4,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class GuildWarnItemConfigController : BaseConfigController<GuildWarnItemModel>
 {
     public GuildWarnItemConfigController(IServiceProvider services)

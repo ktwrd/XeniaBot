@@ -16,7 +16,7 @@ using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
 {
-    [BotController]
+    [XeniaController]
     public class ConfessionController : BaseController
     {
         private readonly DiscordSocketClient _client;

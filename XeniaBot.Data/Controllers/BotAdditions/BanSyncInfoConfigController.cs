@@ -14,7 +14,7 @@ using XeniaBot.Data.Models;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel>
 {
     private readonly DiscordSocketClient _discord;

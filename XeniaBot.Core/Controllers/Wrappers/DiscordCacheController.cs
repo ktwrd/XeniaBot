@@ -17,7 +17,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.Wrappers;
 
-[BotController]
+[XeniaController]
 public class DiscordCacheController : BaseController
 {
 

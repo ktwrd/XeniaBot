@@ -10,7 +10,7 @@ namespace XeniaBot.Shared
     {
         public static void InjectControllerAttributes(Assembly assembly, IServiceCollection services)
         {
-            var classes = GetTypesWithAttribute<BotControllerAttribute>(assembly);
+            var classes = GetTypesWithAttribute<XeniaControllerAttribute>(assembly);
             foreach (var item in classes)
             {
                 var descriptor = new ServiceDescriptor(item, item, ServiceLifetime.Singleton);

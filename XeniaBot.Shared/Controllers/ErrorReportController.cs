@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace XeniaBot.Shared.Controllers;
 
-[BotController]
+[XeniaController]
 public class ErrorReportController : BaseController
 {
     private readonly DiscordSocketClient _client;

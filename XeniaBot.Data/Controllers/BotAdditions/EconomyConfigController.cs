@@ -6,7 +6,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class EconomyConfigController : BaseConfigController<EconProfileModel>
 {
     public EconomyConfigController(IServiceProvider services)

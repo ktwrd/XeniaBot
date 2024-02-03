@@ -14,7 +14,7 @@ using System.Text.Json.Serialization;
 
 namespace XeniaBot.Core.Controllers.Wrappers
 {
-    [BotController]
+    [XeniaController]
     public class WeatherAPIController : BaseController
     {
         protected ConfigData _sysconfig;

@@ -16,7 +16,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class ServerChannelLogController : BaseController
 {
     private readonly ServerLogConfigController _config;

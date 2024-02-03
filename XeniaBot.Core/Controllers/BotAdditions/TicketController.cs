@@ -33,7 +33,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         public SocketTextChannel TicketChannel;
         public SocketGuildUser ClosingUser;
     }
-    [BotController]
+    [XeniaController]
     public class TicketController : BaseController
     {
         private readonly DiscordSocketClient _client;

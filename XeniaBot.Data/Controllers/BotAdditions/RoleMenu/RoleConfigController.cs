@@ -9,7 +9,7 @@ using XeniaBot.Data.Models;
 
 namespace XeniaBot.Data.Controllers.BotAdditions
 {
-    [BotController]
+    [XeniaController]
     public class RoleConfigController : BaseConfigController<RoleConfigModel>
     {
         public RoleConfigController(IServiceProvider services)

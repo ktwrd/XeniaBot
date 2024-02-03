@@ -4,7 +4,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class LevelMemberModelController : BaseConfigController<LevelMemberModel>
 {
     public LevelMemberModelController(IServiceProvider services)

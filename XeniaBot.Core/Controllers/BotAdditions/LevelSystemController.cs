@@ -17,7 +17,7 @@ using XeniaBot.Data.Models;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
 {
-    [BotController]
+    [XeniaController]
     public class LevelSystemController : BaseController
     {
         private IMongoDatabase _db;

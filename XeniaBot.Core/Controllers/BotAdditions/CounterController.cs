@@ -17,7 +17,7 @@ using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
 {
-    [BotController]
+    [XeniaController]
     public class CounterController : BaseController
     {
         private readonly DiscordSocketClient _client;

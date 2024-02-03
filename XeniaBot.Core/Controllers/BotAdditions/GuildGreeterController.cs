@@ -9,7 +9,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class GuildGreeterController : BaseController
 {
     private readonly GuildGreeterConfigController _configWelcomeController;

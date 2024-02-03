@@ -14,7 +14,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers;
 
-[BotController]
+[XeniaController]
 public class AudioServiceController : BaseController
 {
     public LavaNode LavaNode { get; private set; }

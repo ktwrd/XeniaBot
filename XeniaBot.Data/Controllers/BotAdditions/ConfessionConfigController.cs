@@ -7,7 +7,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class ConfessionConfigController : BaseConfigController<ConfessionGuildModel>
 {
     private readonly DiscordSocketClient _client;

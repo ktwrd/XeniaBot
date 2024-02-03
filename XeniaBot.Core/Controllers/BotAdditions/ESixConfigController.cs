@@ -6,7 +6,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class ESixConfigController : BaseConfigController<ESixConfigModel>
 {
     public ESixConfigController(IServiceProvider services)

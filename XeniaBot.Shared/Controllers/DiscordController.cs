@@ -15,7 +15,7 @@ using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Controllers
 {
-    [BotController]
+    [XeniaController]
     public class DiscordController
     {
         private readonly IServiceProvider _services;

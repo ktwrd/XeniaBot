@@ -17,7 +17,7 @@ using ReactionChannel = Discord.Cacheable<Discord.IMessageChannel, ulong>;
 
 namespace XeniaBot.Core.Controllers.BotAdditions
 {
-    [BotController]
+    [XeniaController]
     public class RoleController : BaseController
     {
         private DiscordSocketClient _client;

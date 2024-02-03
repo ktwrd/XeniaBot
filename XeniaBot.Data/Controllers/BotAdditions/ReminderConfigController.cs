@@ -6,7 +6,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class ReminderConfigController : BaseConfigController<ReminderModel>
 {
     public ReminderConfigController(IServiceProvider services)

@@ -11,7 +11,7 @@ using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Controllers
 {
-    [BotController]
+    [XeniaController]
     public class PrometheusController : BaseController
     {
         private ConfigData _configData;

@@ -11,7 +11,7 @@ using XeniaBot.Data.Models;
 
 namespace XeniaBot.Data.Controllers.BotAdditions
 {
-    [BotController]
+    [XeniaController]
     public class RoleMessageConfigController : BaseConfigController<RoleMessageConfigModel>
     {
         private IMongoDatabase _db;

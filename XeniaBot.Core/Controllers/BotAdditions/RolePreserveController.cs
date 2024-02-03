@@ -15,7 +15,7 @@ using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class RolePreserveController : BaseController
 {
     private readonly DiscordSocketClient _client;

@@ -12,7 +12,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.Wrappers;
 
-[BotController]
+[XeniaController]
 public class BackpackTFController : BaseController
 {
     private readonly HttpClient _http;

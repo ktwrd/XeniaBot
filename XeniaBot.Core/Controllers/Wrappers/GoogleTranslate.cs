@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace XeniaBot.Core.Controllers.Wrappers
 {
-    [BotController]
+    [XeniaController]
     public class GoogleTranslate : BaseController
     {
         private ConfigData _configData;

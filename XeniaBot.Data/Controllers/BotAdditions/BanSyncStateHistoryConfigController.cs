@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class BanSyncStateHistoryConfigController : BaseConfigController<BanSyncStateHistoryItemModel>
 {
     public BanSyncStateHistoryConfigController(IServiceProvider services)

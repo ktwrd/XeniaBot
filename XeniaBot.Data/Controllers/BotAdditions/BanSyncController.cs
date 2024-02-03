@@ -15,7 +15,7 @@ using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Data.Controllers.BotAdditions
 {
-    [BotController]
+    [XeniaController]
     public class BanSyncController : BaseController
     {
         private readonly DiscordSocketClient _client;

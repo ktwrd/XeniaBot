@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace XeniaBot.Core.Controllers.Wrappers
 {
-    [BotController]
+    [XeniaController]
     public class ESixController : BaseController
     {
         private IE621Client _client;

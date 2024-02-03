@@ -4,7 +4,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers;
 
-[BotController]
+[XeniaController]
 public class UserConfigController : BaseConfigController<UserConfigModel>
 {
     public UserConfigController(IServiceProvider services)

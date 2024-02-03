@@ -6,7 +6,7 @@ using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Shared.Controllers;
 
-[BotController]
+[XeniaController]
 public class GuildPrefixConfigController : BaseConfigController<GuildPrefixConfigModel>
 {
     private readonly ConfigData _config;

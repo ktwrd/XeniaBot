@@ -11,7 +11,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class ReminderController : BaseController
 {
     private readonly ReminderConfigController _config;

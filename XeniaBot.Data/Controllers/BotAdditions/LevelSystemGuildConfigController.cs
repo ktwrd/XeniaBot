@@ -6,7 +6,7 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.Data.Controllers.BotAdditions;
 
-[BotController]
+[XeniaController]
 public class LevelSystemGuildConfigController : BaseConfigController<LevelSystemGuildConfigModel>
 {
     public LevelSystemGuildConfigController(IServiceProvider services)
