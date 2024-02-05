@@ -147,7 +147,7 @@ namespace XeniaBot.Core.Modules
         public async Task RequestGuild()
         {
             var controller = Program.Core.GetRequiredService<BanSyncService>();
-            var kind = controller.GetGuildKind(Context.Guild.Id);
+            var kind = await controller.GetGuildKind(Context.Guild.Id);
 
             var embed = new EmbedBuilder()
             {
