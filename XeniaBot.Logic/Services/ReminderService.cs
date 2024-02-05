@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Data.Controllers.BotAdditions;
@@ -154,14 +155,16 @@ public class ReminderService : BaseController
 
     #region Reminder Creation
     /// <summary>
-    /// Create timer for Reminder which will then call <see cref="SendNotification"/>
+    /// Create timer for Reminder which will then call <see cref="SendNotification"/>.
+    ///
+    /// <see cref="ReminderModel.ReminderTimestamp"/> should be more than 3s into the future.
     /// </summary>
     /// <param name="model"></param>
     private async Task AddReminderTask(ReminderModel model)
     {  
         var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var diff = (model.ReminderTimestamp - currentTimestamp) * 1000;
-        if (diff < 1)
+        var diff = model.ReminderTimestamp - currentTimestamp;
+        if (diff < 3)
         {
             Log.Warn($"Reminder ${model.ReminderId} too short, ignoring.");
             return;
@@ -182,6 +185,12 @@ public class ReminderService : BaseController
     /// <summary>
     /// Create and add a reminder into the database. Also calls <see cref="AddReminderTask"/>
     /// </summary>
+    /// <param name="timestamp">Timestamp when the reminder should be ran at. Seconds since Unix Epoch (UTC)</param>
+    /// <param name="userId">Snowflake for user that this reminder is for</param>
+    /// <param name="channelId">Channel Id that the user should be pinged in</param>
+    /// <param name="guildId">Guild Id this reminder is for</param>
+    /// <param name="notes">(Optional) notes that the user should be pinged with.</param>
+    /// <param name="source">Where was the reminder created from (<see cref="RemindSource"/>)</param>
     public async Task CreateReminderTask(
         long timestamp,
         ulong userId,
@@ -221,7 +230,8 @@ public class ReminderService : BaseController
 
         var embed = XeniaHelper.BaseEmbed()
             .WithTitle("Reminder")
-            .WithDescription(model.Note);
+            .WithDescription(model.Note)
+            .WithColor(Color.Blue);
 
         await channel.SendMessageAsync($"<@{model.UserId}>", embed: embed.Build());
 
