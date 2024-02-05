@@ -78,7 +78,8 @@ namespace XeniaBot.Data.Services
             {
                 try
                 {
-                    var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id);
+                    // dont add existing ban to db, even if the existing one is ghosted.
+                    var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id, allowGhost: true);
                     if (existing != null)
                         continue;
                 
