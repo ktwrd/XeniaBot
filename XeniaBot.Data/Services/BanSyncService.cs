@@ -18,24 +18,22 @@ namespace XeniaBot.Data.Services
     public class BanSyncService : BaseController
     {
         private readonly DiscordSocketClient _client;
-        private readonly DiscordController _discord;
-        private readonly BanSyncConfigRepository _config;
+        private readonly BanSyncConfigRepository _guildConfigRepo;
         private readonly ConfigData _configData;
-        private readonly BanSyncInfoRepository _infoConfig;
-        private readonly ProgramDetails _details;
+        private readonly BanSyncInfoRepository _banInfoRepo;
         private readonly ErrorReportController _err;
         public BanSyncService(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
-            _discord = services.GetRequiredService<DiscordController>();
-            _config = services.GetRequiredService<BanSyncConfigRepository>();
+            _guildConfigRepo = services.GetRequiredService<BanSyncConfigRepository>();
             _configData = services.GetRequiredService<ConfigData>();
-            _infoConfig = services.GetRequiredService<BanSyncInfoRepository>();
-            _details = services.GetRequiredService<ProgramDetails>();
+            _banInfoRepo = services.GetRequiredService<BanSyncInfoRepository>();
             _err = services.GetRequiredService<ErrorReportController>();
 
-            if (_details.Platform != XeniaPlatform.WebPanel)
+            var programDetails = services.GetRequiredService<ProgramDetails>();
+
+            if (programDetails.Platform != XeniaPlatform.WebPanel)
             {
                 _client.UserJoined += _client_UserJoined;
                 _client.UserBanned += _client_UserBanned;
@@ -58,7 +56,7 @@ namespace XeniaBot.Data.Services
                         }
                         catch (Exception ex)
                         {
-                            _err.ReportException(ex, $"Failed to run RefreshBans on {guild.Name} {guild.Id}");
+                            _err.ReportException(ex, $"Failed to run RefreshBans on {guild.Name} {guild.Id}").Wait();
                         }
                     }));
             }
@@ -71,7 +69,7 @@ namespace XeniaBot.Data.Services
         public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
         public async Task RefreshBans(SocketGuild guild)
         {
-            var config = await _config.Get(guild.Id);
+            var config = await _guildConfigRepo.Get(guild.Id);
             if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                 return;
 
@@ -80,7 +78,7 @@ namespace XeniaBot.Data.Services
             {
                 try
                 {
-                    var existing = await _infoConfig.GetInfo(i.User.Id, guild.Id);
+                    var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id);
                     if (existing != null)
                         continue;
                 
@@ -93,7 +91,7 @@ namespace XeniaBot.Data.Services
                         GuildName = guild.Name,
                         Reason = i?.Reason ?? "null"
                     };
-                    await _infoConfig.SetInfo(info);
+                    await _banInfoRepo.SetInfo(info);
                 }
                 catch (Exception ex)
                 {
@@ -110,7 +108,7 @@ namespace XeniaBot.Data.Services
         public async Task _client_UserBanned(SocketUser user, SocketGuild guild)
         {
             // Ignore if guild config is disabled
-            var config = await _config.Get(guild.Id);
+            var config = await _guildConfigRepo.Get(guild.Id);
             if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                 return;
 
@@ -126,7 +124,7 @@ namespace XeniaBot.Data.Services
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Reason = banInfo?.Reason ?? "null",
             };
-            await _infoConfig.SetInfo(info);
+            await _banInfoRepo.SetInfo(info);
             await NotifyBan(info);
         }
 
@@ -144,7 +142,7 @@ namespace XeniaBot.Data.Services
                 if (guildUser == null)
                     continue;
 
-                var guildConfig = await _config.Get(guild.Id);
+                var guildConfig = await _guildConfigRepo.Get(guild.Id);
                 if (guildConfig == null || (guildConfig?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                     continue;
                 taskList.Add(new Task(async delegate
@@ -166,7 +164,7 @@ namespace XeniaBot.Data.Services
 
         private async Task _client_UserJoined(SocketGuildUser arg)
         {
-            var guildConfig = await _config.Get(arg.Guild.Id);
+            var guildConfig = await _guildConfigRepo.Get(arg.Guild.Id);
 
             // Check if the guild has config stuff setup
             // If not then we just ignore
@@ -182,7 +180,7 @@ namespace XeniaBot.Data.Services
                 return;
 
             // Check if this user has been banned before, if not then ignore
-            var userInfo = (await _infoConfig.GetInfoEnumerable(arg.Id)).ToArray();
+            var userInfo = (await _banInfoRepo.GetInfoEnumerable(arg.Id)).ToArray();
             if (!userInfo.Any())
                 return;
 
@@ -253,11 +251,11 @@ namespace XeniaBot.Data.Services
         /// <exception cref="Exception">When <paramref name="reason"/> is empty when required.</exception>
         public async Task<ConfigBanSyncModel?> SetGuildState(ulong guildId, BanSyncGuildState state, string reason = "")
         {
-            var config = await _config.Get(guildId);
+            var config = await _guildConfigRepo.Get(guildId);
             if (config == null)
                 return null;
 
-            var oldConfig = await _config.Get(guildId);
+            var oldConfig = await _guildConfigRepo.Get(guildId);
 
             if (state == BanSyncGuildState.Blacklisted || state == BanSyncGuildState.RequestDenied)
             {
@@ -271,7 +269,7 @@ namespace XeniaBot.Data.Services
             config.Enable = state == BanSyncGuildState.Active;
             config.State = state;
 
-            await _config.Set(config);
+            await _guildConfigRepo.Set(config);
             
             await SetGuildState_Notify(config);
             await SetGuildState_NotifyGuild(config, oldConfig);
@@ -444,7 +442,7 @@ namespace XeniaBot.Data.Services
         /// <returns>Updated <see cref="ConfigBanSyncModel"/></returns>
         public async Task<ConfigBanSyncModel> RequestGuildEnable(ulong guildId)
         {
-            var config = await _config.Get(guildId);
+            var config = await _guildConfigRepo.Get(guildId);
             if (config == null)
             {
                 config = new ConfigBanSyncModel()
@@ -459,11 +457,11 @@ namespace XeniaBot.Data.Services
             }
 
             config.State = BanSyncGuildState.PendingRequest;
-            await _config.Set(config);
+            await _guildConfigRepo.Set(config);
 
             await RequestGuildEnable_SendNotification(config);
 
-            config = await _config.Get(guildId);
+            config = await _guildConfigRepo.Get(guildId);
 
             return config;
         }
