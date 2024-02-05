@@ -2,7 +2,7 @@
 
 namespace XeniaBot.Data.Models;
 
-public class LevelSystemGuildConfigModel : BaseModel
+public class LevelSystemConfigModel : BaseModel
 {
     public ulong GuildId { get; set; }
     public ulong? LevelUpChannel { get; set; }
@@ -14,7 +14,7 @@ public class LevelSystemGuildConfigModel : BaseModel
     /// </summary>
     public List<LevelSystemRoleGrantItem> RoleGrant { get; set; }
 
-    public LevelSystemGuildConfigModel()
+    public LevelSystemConfigModel()
     {
         LevelUpChannel = null;
         Enable = true;
