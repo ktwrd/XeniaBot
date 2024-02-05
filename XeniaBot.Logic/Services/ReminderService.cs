@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
@@ -27,9 +28,14 @@ public class ReminderService : BaseController
         CurrentReminders = new List<string>();
     }
     
+    /// <summary>
+    /// Seconds since Unix Epoch (UTC)
+    /// </summary>
     public long InitTimestamp { get; private set; }
     
-    
+    /// <summary>
+    /// List of <see cref="ReminderModel.ReminderId"/> that has a timer created.
+    /// </summary>
     private List<string> CurrentReminders { get; set; }
     #region OnReady
     public override async Task OnReady()
@@ -44,29 +50,36 @@ public class ReminderService : BaseController
         await CallForgottenReminders();
         await OnReadyTasks();
 
-        ReminderDbCheckLoop();
+        CreateUnregisteredTasksCompleted += ReminderDbCheckLoop;
     }
 
-    private async Task ReminderDbCheckLoop()
+    /// <summary>
+    /// Runs function every 5 seconds to look call <see cref="AddReminderTask"/> on every reminder that isn't in <see cref="CurrentReminders"/>.
+    /// </summary>
+    private void ReminderDbCheckLoop()
     {
-        var timer = new System.Threading.Timer(
-            (o) =>
-            {
-                lock (CurrentReminders)
-                {
-                    var cur = CurrentReminders.ToArray();
-                    var notCalled = _reminderDb.GetForgotten(cur, InitTimestamp).Result;
-                    
-                    CreateUnregisteredTasks(cur).Wait();
-
-                    CurrentReminders = cur.Concat(notCalled.Select(v => v.ReminderId)).ToList();
-                }
-            },
+        new System.Threading.Timer(
+            ReminderDbCheckLoop_Callback,
             null,
             0,
             5000);
     }
+    private void ReminderDbCheckLoop_Callback(object? obj)
+    {
+        lock (CurrentReminders)
+        {
+            var cur = CurrentReminders.ToArray();
+            var notCalled = _reminderDb.GetForgotten(cur, InitTimestamp).Result;
+                    
+            CreateUnregisteredTasks(cur).Wait();
 
+            CurrentReminders = cur.Concat(notCalled.Select(v => v.ReminderId)).ToList();
+        }
+    }
+
+    /// <summary>
+    /// Call <see cref="SendNotification"/> for all reminders that are due to call that have <see cref="ReminderModel.HasReminded"/> set to `false`.
+    /// </summary>
     private async Task CallForgottenReminders()
     {
         if (!_configData.ReminderService.Enable)
@@ -101,11 +114,17 @@ public class ReminderService : BaseController
             return;
         }
 
-        await CreateUnregisteredTasks(Array.Empty<string>());
+        await CreateUnregisteredTasks(appendToCurrentReminders: true);
     }
 
-    private async Task CreateUnregisteredTasks(string[] ignoreItems)
+    /// <summary>
+    /// Call <see cref="AddReminderTask"/> for all reminders. Will ignore timer creation of timer if <see cref="ReminderModel.ReminderId"/> exists in <paramref name="ignoreItems"/>
+    /// </summary>
+    /// <param name="ignoreItems">Array of ReminderId that should be ignored when calling <see cref="AddReminderTask"/></param>
+    /// <param name="appendToCurrentReminders">When `true`, it will add <see cref="ReminderModel.ReminderId"/> <see cref="CurrentReminders"/> if it decides to call <see cref="AddReminderTask"/></param>
+    private async Task CreateUnregisteredTasks(string[]? ignoreItems = null, bool appendToCurrentReminders = false)
     {
+        ignoreItems ??= Array.Empty<string>();
         var targets = await _reminderDb.GetMany(
             afterTimestamp: InitTimestamp,
             hasReminded: false) ?? Array.Empty<ReminderModel>();
@@ -113,17 +132,31 @@ public class ReminderService : BaseController
         var taskList = new List<Task>();
         foreach (var i in targets)
         {
-            if (ignoreItems.Length > 0 && ignoreItems.Contains(i.ReminderId))
+            if (i.HasReminded)
+                continue;
+            if (ignoreItems.Length < 1 || ignoreItems.Contains(i.ReminderId))
             {
                 Log.Debug($"Registered {i.ReminderId}");
                 taskList.Add(new Task(delegate { AddReminderTask(i).Wait(); }));
+                if (appendToCurrentReminders)
+                {
+                    lock (CurrentReminders)
+                    { CurrentReminders.Add(i.ReminderId); }
+                }
             }
         }
         await XeniaHelper.TaskWhenAll(taskList);
+        CreateUnregisteredTasksCompleted?.Invoke();
     }
+
+    private VoidDelegate CreateUnregisteredTasksCompleted;
     #endregion
 
     #region Reminder Creation
+    /// <summary>
+    /// Create timer for Reminder which will then call <see cref="SendNotification"/>
+    /// </summary>
+    /// <param name="model"></param>
     private async Task AddReminderTask(ReminderModel model)
     {  
         var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -146,6 +179,9 @@ public class ReminderService : BaseController
         timer.AutoReset = false;
         timer.Start();
     }
+    /// <summary>
+    /// Create and add a reminder into the database. Also calls <see cref="AddReminderTask"/>
+    /// </summary>
     public async Task CreateReminderTask(
         long timestamp,
         ulong userId,
@@ -166,6 +202,12 @@ public class ReminderService : BaseController
     }
     #endregion
     
+    /// <summary>
+    /// Send notifications to user for their reminder.
+    ///
+    /// Will not send if <see cref="ReminderModel.HasReminded"/> is `true`.
+    /// </summary>
+    /// <param name="reminderId"><see cref="ReminderModel.ReminderId"/></param>
     private async Task SendNotification(string reminderId)
     {
         var model = await _reminderDb.Get(reminderId);
