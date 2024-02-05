@@ -39,7 +39,6 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             if (_details.Platform != XeniaPlatform.WebPanel)
             {
                 _client.UserJoined += _client_UserJoined;
-                _client.UserUnbanned += _client_UserUnbanned;
                 _client.UserBanned += _client_UserBanned;
             }
         }
@@ -164,19 +163,6 @@ namespace XeniaBot.Data.Controllers.BotAdditions
             foreach (var i in taskList)
                 i.Start();
             await Task.WhenAll(taskList);
-        }
-        
-        /// <summary>
-        /// Remove user from the database if they exist
-        /// </summary>
-        public async Task _client_UserUnbanned(SocketUser user, SocketGuild guild)
-        {
-            // Ignore if guild config is disabled
-            var config = await _config.Get(guild.Id);
-            if ((config?.Enable ?? false) == false)
-                return;
-
-            await _infoConfig.RemoveInfo(user.Id, guild.Id);
         }
 
         private async Task _client_UserJoined(SocketGuildUser arg)
