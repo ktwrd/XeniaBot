@@ -16,7 +16,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class ServerChannelLogService : BaseController
+public class ServerChannelLogService : BaseService
 {
     private readonly ServerLogRepository _config;
     private readonly DiscordSocketClient _discord;

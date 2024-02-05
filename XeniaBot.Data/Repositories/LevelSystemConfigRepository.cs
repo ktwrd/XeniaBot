@@ -7,7 +7,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class LevelSystemConfigRepository : BaseConfigController<LevelSystemConfigModel>
+public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel>
 {
     public LevelSystemConfigRepository(IServiceProvider services)
         : base("levelSystem_GuildConfig", services)

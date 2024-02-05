@@ -5,8 +5,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using XeniaBot.Shared.Controllers;
 using XeniaBot.Shared.Models;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Shared;
 

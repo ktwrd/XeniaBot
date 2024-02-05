@@ -10,7 +10,7 @@ using XeniaBot.Data.Models;
 namespace XeniaBot.Data.Repositories
 {
     [XeniaController]
-    public class RoleConfigRepository : BaseConfigController<RoleConfigModel>
+    public class RoleConfigRepository : BaseRepository<RoleConfigModel>
     {
         public RoleConfigRepository(IServiceProvider services)
             : base("roleConfig", services)

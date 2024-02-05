@@ -7,7 +7,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ServerLogRepository : BaseConfigController<ServerLogModel>
+public class ServerLogRepository : BaseRepository<ServerLogModel>
 {
     public ServerLogRepository(IServiceProvider services)
         : base("serverLogConfig", services)

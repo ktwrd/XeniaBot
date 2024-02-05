@@ -7,7 +7,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ReminderRepository : BaseConfigController<ReminderModel>
+public class ReminderRepository : BaseRepository<ReminderModel>
 {
     public ReminderRepository(IServiceProvider services)
         : base("reminderConfig", services)

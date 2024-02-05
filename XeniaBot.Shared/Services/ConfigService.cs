@@ -9,16 +9,16 @@ using Newtonsoft.Json.Linq;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Shared.Controllers;
+namespace XeniaBot.Shared.Services;
 
-public class ConfigController
+public class ConfigService
 {
-    public ConfigController(IServiceProvider services)
+    public ConfigService(IServiceProvider services)
     {
         Data = FetchConfig(services.GetRequiredService<ProgramDetails>());
     }
 
-    public ConfigController(ProgramDetails details)
+    public ConfigService(ProgramDetails details)
     {
         Data = FetchConfig(details);
         if (!FeatureFlags.ConfigReadOnly)

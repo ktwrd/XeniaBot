@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Controllers;
@@ -33,7 +33,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save counter settings");
             Log.Error(e);
             return await Index(id,
@@ -102,7 +102,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save logging settings");
             Log.Error($"Failed to save logging settings. \n{e}");
             return await Index(id,
@@ -137,7 +137,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to save role preserve settings");
             Log.Error($"Failed to save role preserve settings\n{ex}");
             return await Index(id,
@@ -214,7 +214,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save greeter settings");
             Log.Error($"Failed to save greeter settings\n{e}");
             return await Index(id,
@@ -255,7 +255,7 @@ public partial class ServerController
             }
             catch (Exception e)
             {
-                Program.Core.GetRequiredService<ErrorReportController>()
+                Program.Core.GetRequiredService<ErrorReportService>()
                     .ReportException(e, $"Failed to save goodbye settings");
                 return await Index(id,
                     messageType: "danger",
@@ -293,7 +293,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save goodbye settings");
             Log.Error($"Failed to save greeter goodbye settings\n{e}");
             return await Index(id,

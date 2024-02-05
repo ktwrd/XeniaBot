@@ -6,7 +6,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class CounterConfigRepository : BaseConfigController<CounterGuildModel>
+public class CounterConfigRepository : BaseRepository<CounterGuildModel>
 {
     public Dictionary<ulong, ulong> CachedItems { get; set; }
 

@@ -2,7 +2,7 @@
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -29,7 +29,7 @@ public partial class ServerController
         }
         catch (Exception e)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save level system settings");
             return await Index(id,
                 messageType: "danger",
@@ -80,7 +80,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to add role reward item. parse fail for roleid");
             return await Index(id,
                 messageType: "danger",
@@ -104,7 +104,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to remove item from RoleGrant (guild: {guild.Id}, role: {roleId})");
             Log.Error($"Failed to remove item from RoleGrant (guild: {guild.Id}, role: {roleId}\n{ex}");
             return await Index(id,
@@ -176,7 +176,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to add item from RoleGrant (guild: {guild.Id}, role: {roleId}, level: {requiredLevel})");
             Log.Error($"Failed to add item from RoleGrant (guild: {guild.Id}, role: {roleId}, level: {requiredLevel})\n{ex}");
             return await Index(id,

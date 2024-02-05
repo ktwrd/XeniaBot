@@ -14,7 +14,7 @@ using MongoDB.Driver;
 using XeniaBot.Data;
 using XeniaBot.Data.Services;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
 
 public static class Program

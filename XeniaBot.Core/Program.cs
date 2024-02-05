@@ -20,7 +20,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using XeniaBot.Data;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 using CronNET;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -124,7 +124,7 @@ namespace XeniaBot.Core
         {
             var except = (Exception)e.ExceptionObject;
             Console.Error.WriteLine(except);
-            if (Core.Services.GetRequiredService<DiscordController>().IsReady)
+            if (Core.Services.GetRequiredService<DiscordService>().IsReady)
             {
                 DiscordHelper.ReportError(except).Wait();
             }

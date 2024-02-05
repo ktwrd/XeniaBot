@@ -12,21 +12,21 @@ using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Services.BotAdditions
 {
     [XeniaController]
-    public class CounterService : BaseController
+    public class CounterService : BaseService
     {
         private readonly DiscordSocketClient _client;
-        private readonly DiscordController _discord;
+        private readonly DiscordService _discord;
         private readonly CounterConfigRepository _config;
         public CounterService(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
-            _discord = services.GetRequiredService<DiscordController>();
+            _discord = services.GetRequiredService<DiscordService>();
             _config = services.GetRequiredService<CounterConfigRepository>();
         }
         public override Task InitializeAsync()

@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace XeniaBot.Shared
 {
-    public abstract class BaseController
+    public abstract class BaseService
     {
         protected IServiceProvider _services;
-        protected BaseController(IServiceProvider services)
+        protected BaseService(IServiceProvider services)
         {
             _services = services;
         }

@@ -5,7 +5,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class LevelMemberRepository : BaseConfigController<LevelMemberModel>
+public class LevelMemberRepository : BaseRepository<LevelMemberModel>
 {
     public LevelMemberRepository(IServiceProvider services)
         : base(LevelMemberModel.CollectionName, services)

@@ -7,7 +7,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class EconomyProfileRepository : BaseConfigController<EconProfileModel>
+public class EconomyProfileRepository : BaseRepository<EconProfileModel>
 {
     public EconomyProfileRepository(IServiceProvider services)
         : base("econData", services)

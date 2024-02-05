@@ -65,13 +65,13 @@ public class WarnSystemController: BaseXeniaController
             return View("NotFound");
 
         var latestWarnData = warnData.FirstOrDefault();
-        if (!CanAccess(latestWarnData?.GuildId ?? 0))
+        if (!CanAccess(latestWarnData?.GuildId ?? (ulong)0))
             return View("NotAuthorized");
         
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var guild = _discord.GetGuild(latestWarnData?.GuildId ?? 0);
+        var guild = _discord.GetGuild(latestWarnData?.GuildId ?? (ulong)0);
         if (guild == null)
             return View("NotFound", "Guild not found");
         

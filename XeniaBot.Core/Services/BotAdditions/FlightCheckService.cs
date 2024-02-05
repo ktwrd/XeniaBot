@@ -10,7 +10,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class FlightCheckService : BaseController
+public class FlightCheckService : BaseService
 {
     private readonly DiscordSocketClient _discord;
     private readonly ConfigData _config;

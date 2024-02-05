@@ -5,7 +5,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class GuildGreetByeConfigRepository : BaseConfigController<GuildByeGreeterConfigModel>
+public class GuildGreetByeConfigRepository : BaseRepository<GuildByeGreeterConfigModel>
 {
     public GuildGreetByeConfigRepository(IServiceProvider services)
         : base(GuildByeGreeterConfigModel.CollectionName, services)

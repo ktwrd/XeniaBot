@@ -10,25 +10,25 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class RolePreserveService : BaseController
+public class RolePreserveService : BaseService
 {
     private readonly DiscordSocketClient _client;
     private readonly RolePreserveRepository _config;
     private readonly RolePreserveGuildRepository _guildConfig;
-    private readonly ErrorReportController _err;
+    private readonly ErrorReportService _err;
     private readonly ServerLogRepository _serverLogConfig;
     public RolePreserveService(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
         _config = services.GetRequiredService<RolePreserveRepository>();
-        _err = services.GetRequiredService<ErrorReportController>();
+        _err = services.GetRequiredService<ErrorReportService>();
         _serverLogConfig = services.GetRequiredService<ServerLogRepository>();
         _guildConfig = services.GetRequiredService<RolePreserveGuildRepository>();
         

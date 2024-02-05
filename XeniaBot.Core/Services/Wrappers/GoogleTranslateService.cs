@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 namespace XeniaBot.Core.Services.Wrappers
 {
     [XeniaController]
-    public class GoogleTranslateService : BaseController
+    public class GoogleTranslateService : BaseService
     {
         private ConfigData _configData;
         private GoogleCredential _gcsCred;

@@ -13,19 +13,19 @@ using XeniaBot.Shared;
 using Prometheus;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Shared.Controllers
+namespace XeniaBot.Shared.Services
 {
     [XeniaController]
-    public class DiscordController
+    public class DiscordService
     {
         private readonly IServiceProvider _services;
         private readonly DiscordSocketClient _client;
         private readonly ConfigData _configData;
         private readonly CommandHandler? _commandHandler;
         private readonly InteractionHandler? _interactionHandler;
-        private readonly PrometheusController _prom;
+        private readonly PrometheusService _prom;
         private readonly ProgramDetails _details;
-        public DiscordController(IServiceProvider services)
+        public DiscordService(IServiceProvider services)
         {
             _details = services.GetRequiredService<ProgramDetails>();
             
@@ -43,7 +43,7 @@ namespace XeniaBot.Shared.Controllers
                 _interactionHandler = null;
             }
 
-            _prom = services.GetRequiredService<PrometheusController>();
+            _prom = services.GetRequiredService<PrometheusService>();
 
             _services = services;
 

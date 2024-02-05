@@ -22,10 +22,10 @@ namespace XeniaBot.Core.Modules;
 
 public class AudioModule : InteractionModuleBase
 {
-    private LavaNode _lavaNode => Program.Core.GetRequiredService<AudioServiceController>().LavaNode;
+    private LavaNode _lavaNode => Program.Core.GetRequiredService<AudioServiceService>().LavaNode;
 
-    private AudioServiceController _audioServiceController =>
-        Program.Core.GetRequiredService<AudioServiceController>();
+    private AudioServiceService AudioServiceService =>
+        Program.Core.GetRequiredService<AudioServiceService>();
     private static readonly IEnumerable<int> Range = Enumerable.Range(1900, 2000);
 
     // [SlashCommand("join", "Join your current voice channel")]
@@ -351,7 +351,7 @@ public class AudioModule : InteractionModuleBase
         // var voiceChannelUsers = (player.VoiceChannel.Guild as SocketGuild).Users
         //     .Where(x => !x.IsBot)
         //     .ToArray();
-        // if (_audioServiceController.VoteQueue.Contains(Context.User.Id)) {
+        // if (AudioServiceService.VoteQueue.Contains(Context.User.Id)) {
         //     await RespondAsync(embed: BaseEmbed()
         //         .WithDescription("You've already voted.")
         //         .WithColor(Color.Red)
@@ -359,8 +359,8 @@ public class AudioModule : InteractionModuleBase
         //     return;
         // }
 
-        // _audioServiceController.VoteQueue.Add(Context.User.Id);
-        // var percentage = _audioServiceController.VoteQueue.Count / voiceChannelUsers.Length * 100;
+        // AudioServiceService.VoteQueue.Add(Context.User.Id);
+        // var percentage = AudioServiceService.VoteQueue.Count / voiceChannelUsers.Length * 100;
         // if (percentage < 85) {
         //     await RespondAsync(embed: BaseEmbed()
         //         .WithDescription("You need more than 85% votes to skip this song.")

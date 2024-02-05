@@ -12,7 +12,7 @@ using XeniaBot.Data.Models;
 namespace XeniaBot.Data.Repositories
 {
     [XeniaController]
-    public class RoleMessageConfigRepository : BaseConfigController<RoleMessageConfigModel>
+    public class RoleMessageConfigRepository : BaseRepository<RoleMessageConfigModel>
     {
         private IMongoDatabase _db;
         public RoleMessageConfigRepository(IServiceProvider services)

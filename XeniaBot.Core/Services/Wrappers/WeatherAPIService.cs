@@ -15,7 +15,7 @@ using System.Text.Json.Serialization;
 namespace XeniaBot.Core.Services.Wrappers
 {
     [XeniaController]
-    public class WeatherAPIService : BaseController
+    public class WeatherAPIService : BaseService
     {
         protected ConfigData _sysconfig;
         public WeatherAPIService(IServiceProvider services)
@@ -33,7 +33,7 @@ namespace XeniaBot.Core.Services.Wrappers
             _sysconfig = services.GetRequiredService<ConfigData>();
             if (_sysconfig == null)
             {
-                Log.Error("Service \"ConfigController.Config\" is null!!!");
+                Log.Error("Service \"ConfigService.Config\" is null!!!");
                 Program.Quit();
                 return;
             }

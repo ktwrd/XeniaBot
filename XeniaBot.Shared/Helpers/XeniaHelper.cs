@@ -7,7 +7,7 @@ using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 using Discord;
 using Discord.WebSocket;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Shared.Helpers;
 

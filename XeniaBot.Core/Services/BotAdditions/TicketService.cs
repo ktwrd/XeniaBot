@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 using XeniaBot.Data;
 using XeniaBot.Data.Models;
 using XeniaBot.DiscordCache.Models;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Services.BotAdditions
 {
@@ -33,15 +33,15 @@ namespace XeniaBot.Core.Services.BotAdditions
         public SocketGuildUser ClosingUser;
     }
     [XeniaController]
-    public class TicketService : BaseController
+    public class TicketService : BaseService
     {
         private readonly DiscordSocketClient _client;
-        private readonly DiscordController _discord;
+        private readonly DiscordService _discord;
         public TicketService(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
-            _discord = services.GetRequiredService<DiscordController>();
+            _discord = services.GetRequiredService<DiscordService>();
         }
         public override Task InitializeAsync() => Task.CompletedTask;
 

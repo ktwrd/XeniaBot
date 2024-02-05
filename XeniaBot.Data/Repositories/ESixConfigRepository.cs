@@ -7,7 +7,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ESixConfigRepository : BaseConfigController<ESixConfigModel>
+public class ESixConfigRepository : BaseRepository<ESixConfigModel>
 {
     public ESixConfigRepository(IServiceProvider services)
         : base("esixGuildConfig", services)

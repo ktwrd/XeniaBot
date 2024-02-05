@@ -13,7 +13,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 
-namespace XeniaBot.Shared.Controllers;
+namespace XeniaBot.Shared.Services;
 
 /// <summary>
 /// A Monolithic class that controls all the important aspects of getting the services and required controllers ready for a working Xenia project.
@@ -29,7 +29,7 @@ public class CoreContext
         }
 
         Details = details;
-        Discord = new DiscordSocketClient(DiscordController.GetSocketClientConfig());
+        Discord = new DiscordSocketClient(DiscordService.GetSocketClientConfig());
 
         RegisteredBaseControllers = new List<Type>();
         
@@ -43,11 +43,11 @@ public class CoreContext
         var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
         BsonSerializer.RegisterSerializer(objectSerializer);
 
-        Config = new ConfigController(Details);
+        Config = new ConfigService(Details);
         InitMongoClient();
         InitServices(beforeServiceBuild);
 
-        var discordController = Services.GetRequiredService<DiscordController>();
+        var discordController = Services.GetRequiredService<DiscordService>();
         discordController.Ready += (c) =>
         {
             RunServiceReady();
@@ -66,11 +66,11 @@ public class CoreContext
         }
     }
     /// <summary>
-    /// When not null, it is called after <see cref="DiscordController.Run()"/> in <see cref="MainAsync"/>.
+    /// When not null, it is called after <see cref="DiscordService.Run()"/> in <see cref="MainAsync"/>.
     /// </summary>
     public Func<string[], Task>? AlternativeMain { get; set; }
     public ProgramDetails Details { get; private set; }
-    public ConfigController Config { get; private set; }
+    public ConfigService Config { get; private set; }
     public DiscordSocketClient Discord { get; private set; }
     /// <summary>
     /// Created after <see cref="InjectServices"/> is called in <see cref="MainAsync"/>
@@ -130,7 +130,7 @@ public class CoreContext
         InjectServices(new ServiceCollection(), beforeServiceBuild);
     }
     /// <summary>
-    /// Initialize all service-related stuff. <see cref="DiscordController"/> is also created here and added as a singleton to <see cref="Services"/>
+    /// Initialize all service-related stuff. <see cref="DiscordService"/> is also created here and added as a singleton to <see cref="Services"/>
     /// </summary>
     public void InjectServices(ServiceCollection services, Func<ServiceCollection, Task> beforeBuild)
     {
@@ -150,7 +150,7 @@ public class CoreContext
         }
         
         services.AddSingleton(mongoDb)
-            .AddSingleton<DiscordController>()
+            .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
             .AddSingleton<InteractionService>()
             .AddSingleton<CommandHandler>()
@@ -161,7 +161,7 @@ public class CoreContext
         RegisteredBaseControllers = new List<Type>();
         foreach (var item in services)
         {
-            if (item.ServiceType.IsAssignableTo(typeof(BaseController)) &&
+            if (item.ServiceType.IsAssignableTo(typeof(BaseService)) &&
                 !RegisteredBaseControllers.Contains(item.ServiceType))
             {
                 RegisteredBaseControllers.Add(item.ServiceType);
@@ -200,9 +200,9 @@ public class CoreContext
         });
     }
     /// <summary>
-    /// For every registered class that extends <see cref="BaseController"/>, call <paramref name="func"/> with the argument as the target controller.
+    /// For every registered class that extends <see cref="BaseService"/>, call <paramref name="func"/> with the argument as the target controller.
     /// </summary>
-    public void AllBaseServices(Func<BaseController, Task> func)
+    public void AllBaseServices(Func<BaseService, Task> func)
     {
         var taskList = new List<Task>();
         foreach (var service in RegisteredBaseControllers)
@@ -210,11 +210,11 @@ public class CoreContext
             var svc = Services.GetServices(service);
             foreach (var item in svc)
             {
-                if (item != null && item.GetType().IsAssignableTo(typeof(BaseController)))
+                if (item != null && item.GetType().IsAssignableTo(typeof(BaseService)))
                 {
                     taskList.Add(new Task(delegate
                     {
-                        func((BaseController)item).Wait();
+                        func((BaseService)item).Wait();
                     }));
                 }
             }

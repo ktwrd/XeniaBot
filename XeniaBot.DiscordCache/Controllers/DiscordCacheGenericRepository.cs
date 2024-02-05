@@ -4,9 +4,9 @@ using XeniaBot.Shared;
 
 namespace XeniaBot.DiscordCache.Controllers;
 
-public class DiscordCacheGenericConfigController<T> : BaseConfigController<T> where T : DiscordCacheBaseModel
+public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : DiscordCacheBaseModel
 {
-    public DiscordCacheGenericConfigController(string collectionName, IServiceProvider services)
+    public DiscordCacheGenericRepository(string collectionName, IServiceProvider services)
         : base(collectionName, services)
     {
     }

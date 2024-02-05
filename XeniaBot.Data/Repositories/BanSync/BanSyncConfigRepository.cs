@@ -13,7 +13,7 @@ using XeniaBot.Data.Models;
 namespace XeniaBot.Data.Repositories
 {
     [XeniaController]
-    public class BanSyncConfigRepository : BaseConfigController<ConfigBanSyncModel>
+    public class BanSyncConfigRepository : BaseRepository<ConfigBanSyncModel>
     {
         private readonly BanSyncStateHistoryRepository _stateHistory;
         public BanSyncConfigRepository(IServiceProvider services)

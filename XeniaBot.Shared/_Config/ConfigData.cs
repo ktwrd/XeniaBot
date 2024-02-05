@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Shared;
 
@@ -86,7 +86,7 @@ public class ConfigData
     
     public static ConfigData Migrate(string content)
     {
-        var b = JsonSerializer.Deserialize<ConfigDataVersionField>(content, ConfigController.SerializerOptions);
+        var b = JsonSerializer.Deserialize<ConfigDataVersionField>(content, ConfigService.SerializerOptions);
         var instance = new ConfigData();
         var version = JObject.Parse(content)["Version"]?.ToString();
         var jobject = JObject.Parse(content);
@@ -97,7 +97,7 @@ public class ConfigData
                 Environment.Exit(1);
                 break;
             case "1":
-                var v1 = JsonSerializer.Deserialize<ConfigDataV1>(content, ConfigController.SerializerOptions);
+                var v1 = JsonSerializer.Deserialize<ConfigDataV1>(content, ConfigService.SerializerOptions);
                 instance.DiscordToken = v1.DiscordToken;
                 if (jobject.TryGetValue("MongoDBConnectionUrl", out var s))
                 {
@@ -175,7 +175,7 @@ public class ConfigData
                 return instance;
                 break;
             case "2":
-                instance = JsonSerializer.Deserialize<ConfigData>(content, ConfigController.SerializerOptions) ??
+                instance = JsonSerializer.Deserialize<ConfigData>(content, ConfigService.SerializerOptions) ??
                            new ConfigData();
                 if (jobject.TryGetValue("MongoDBConnectionUrl", out var sk))
                 {
@@ -185,7 +185,7 @@ public class ConfigData
                 return instance;
                 break;
         }
-        return JsonSerializer.Deserialize<ConfigData>(content, ConfigController.SerializerOptions) ?? new ConfigData();
+        return JsonSerializer.Deserialize<ConfigData>(content, ConfigService.SerializerOptions) ?? new ConfigData();
     }
 
     public static void Validate(ProgramDetails details, ConfigData i)

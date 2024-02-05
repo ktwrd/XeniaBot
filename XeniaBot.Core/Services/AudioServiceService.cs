@@ -15,7 +15,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Core.Services;
 
 [XeniaController]
-public class AudioServiceController : BaseController
+public class AudioServiceService : BaseService
 {
     public LavaNode LavaNode { get; private set; }
     public bool Enable { get; private set; }
@@ -24,7 +24,7 @@ public class AudioServiceController : BaseController
     public readonly HashSet<ulong> VoteQueue;
     private readonly ConcurrentDictionary<ulong, CancellationTokenSource> _disconnectTokens;
 
-    public AudioServiceController(IServiceProvider services)
+    public AudioServiceService(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();

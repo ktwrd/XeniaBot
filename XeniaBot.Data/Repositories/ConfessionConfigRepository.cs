@@ -8,7 +8,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ConfessionConfigRepository : BaseConfigController<ConfessionGuildModel>
+public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
 {
     private readonly DiscordSocketClient _client;
     public ConfessionConfigRepository(IServiceProvider services)

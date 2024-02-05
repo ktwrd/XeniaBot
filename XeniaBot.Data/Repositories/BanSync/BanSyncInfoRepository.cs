@@ -13,7 +13,7 @@ using XeniaBot.Data.Models;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class BanSyncInfoRepository : BaseConfigController<BanSyncInfoModel>
+public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
 {
     private readonly DiscordSocketClient _discord;
     private readonly BanSyncStateHistoryRepository _banSyncStateController;

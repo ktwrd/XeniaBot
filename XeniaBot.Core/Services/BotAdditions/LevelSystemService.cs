@@ -18,7 +18,7 @@ using XeniaBot.Data.Repositories;
 namespace XeniaBot.Core.Services.BotAdditions
 {
     [XeniaController]
-    public class LevelSystemService : BaseController
+    public class LevelSystemService : BaseService
     {
         private IMongoDatabase _db;
         private DiscordSocketClient _client;

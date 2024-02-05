@@ -5,7 +5,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class GuildWarnItemRepository : BaseConfigController<GuildWarnItemModel>
+public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
 {
     public GuildWarnItemRepository(IServiceProvider services)
         : base(GuildWarnItemModel.CollectionName, services)

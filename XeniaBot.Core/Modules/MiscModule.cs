@@ -15,7 +15,7 @@ using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using XeniaBot.Core.Services;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules
 {
@@ -87,11 +87,11 @@ namespace XeniaBot.Core.Modules
                 return;
             }
 
-            var prom = Program.Core.GetRequiredService<PrometheusController>();
+            var prom = Program.Core.GetRequiredService<PrometheusService>();
             if (prom == null)
             {
                 await Context.Interaction.RespondAsync(
-                    embed: embed.WithDescription("Failed to get required service \"PrometheusController\" since it's null.").Build());
+                    embed: embed.WithDescription("Failed to get required service \"PrometheusService\" since it's null.").Build());
                 return;
             }
 
@@ -164,13 +164,13 @@ namespace XeniaBot.Core.Modules
                 else
                 {
                     await FollowupAsync("`Failed to get dad joke ;w;`");
-                    await Program.Core.GetRequiredService<ErrorReportController>().ReportError(response, Context);
+                    await Program.Core.GetRequiredService<ErrorReportService>().ReportError(response, Context);
                 }
             }
             catch (Exception ex)
             {
                 await FollowupAsync($"`Failed to get dad joke ;w; ({ex.Message})`");
-                await Program.Core.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
+                await Program.Core.GetRequiredService<ErrorReportService>().ReportError(ex, Context);
             }
         }
     }

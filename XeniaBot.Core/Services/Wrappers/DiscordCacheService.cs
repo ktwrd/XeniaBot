@@ -18,18 +18,18 @@ using XeniaBot.Shared;
 namespace XeniaBot.Core.Services.Wrappers;
 
 [XeniaController]
-public class DiscordCacheService : BaseController
+public class DiscordCacheService : BaseService
 {
 
-    public DiscordCacheGenericConfigController<CacheMessageModel> CacheMessageConfig;
-    public DiscordCacheGenericConfigController<CacheUserModel> CacheUserConfig;
-    public DiscordCacheGenericConfigController<CacheGuildMemberModel> CacheGuildMemberConfig;
-    public DiscordCacheGenericConfigController<CacheGuildModel> CacheGuildConfig;
+    public DiscordCacheGenericRepository<CacheMessageModel> CacheMessageConfig;
+    public DiscordCacheGenericRepository<CacheUserModel> CacheUserConfig;
+    public DiscordCacheGenericRepository<CacheGuildMemberModel> CacheGuildMemberConfig;
+    public DiscordCacheGenericRepository<CacheGuildModel> CacheGuildConfig;
 
-    public DiscordCacheGenericConfigController<CacheForumChannelModel> CacheForumChannelConfig;
-    public DiscordCacheGenericConfigController<CacheVoiceChannelModel> CacheVoiceChannelConfig;
-    public DiscordCacheGenericConfigController<CacheStageChannelModel> CacheStageChannelConfig;
-    public DiscordCacheGenericConfigController<CacheTextChannelModel> CacheTextChannelConfig;
+    public DiscordCacheGenericRepository<CacheForumChannelModel> CacheForumChannelConfig;
+    public DiscordCacheGenericRepository<CacheVoiceChannelModel> CacheVoiceChannelConfig;
+    public DiscordCacheGenericRepository<CacheStageChannelModel> CacheStageChannelConfig;
+    public DiscordCacheGenericRepository<CacheTextChannelModel> CacheTextChannelConfig;
     private readonly UserConfigRepository _userConfig;
     private readonly DiscordSocketClient _client;
     public DiscordCacheService(IServiceProvider services)
@@ -37,21 +37,21 @@ public class DiscordCacheService : BaseController
     {
         _userConfig = services.GetRequiredService<UserConfigRepository>();
         _client = services.GetRequiredService<DiscordSocketClient>();
-        CacheMessageConfig = new DiscordCacheGenericConfigController<CacheMessageModel>("bb_store_message", services);
-        CacheUserConfig = new DiscordCacheGenericConfigController<CacheUserModel>("cache_store_user", services);
+        CacheMessageConfig = new DiscordCacheGenericRepository<CacheMessageModel>("bb_store_message", services);
+        CacheUserConfig = new DiscordCacheGenericRepository<CacheUserModel>("cache_store_user", services);
         CacheGuildMemberConfig =
-            new DiscordCacheGenericConfigController<CacheGuildMemberModel>("cache_store_guild_member", services);
-        CacheGuildConfig = new DiscordCacheGenericConfigController<CacheGuildModel>("cache_store_guild", services);
+            new DiscordCacheGenericRepository<CacheGuildMemberModel>("cache_store_guild_member", services);
+        CacheGuildConfig = new DiscordCacheGenericRepository<CacheGuildModel>("cache_store_guild", services);
         
         
         CacheForumChannelConfig =
-            new DiscordCacheGenericConfigController<CacheForumChannelModel>("cache_store_channel_forum", services);
+            new DiscordCacheGenericRepository<CacheForumChannelModel>("cache_store_channel_forum", services);
         CacheVoiceChannelConfig =
-            new DiscordCacheGenericConfigController<CacheVoiceChannelModel>("cache_store_channel_voice", services);
+            new DiscordCacheGenericRepository<CacheVoiceChannelModel>("cache_store_channel_voice", services);
         CacheStageChannelConfig =
-            new DiscordCacheGenericConfigController<CacheStageChannelModel>("cache_store_channel_stage", services);
+            new DiscordCacheGenericRepository<CacheStageChannelModel>("cache_store_channel_stage", services);
         CacheTextChannelConfig =
-            new DiscordCacheGenericConfigController<CacheTextChannelModel>("cache_store_channel_text", services);
+            new DiscordCacheGenericRepository<CacheTextChannelModel>("cache_store_channel_text", services);
     }
 
     public override Task InitializeAsync()

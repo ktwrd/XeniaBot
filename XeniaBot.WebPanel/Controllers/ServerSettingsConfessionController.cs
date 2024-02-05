@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -65,7 +65,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to save confession settings");
             return await Index(id,
                 messageType: "danger",
@@ -101,7 +101,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportController>()
+            Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to purge confession messages");
             return await Index(id,
                 messageType: "danger",

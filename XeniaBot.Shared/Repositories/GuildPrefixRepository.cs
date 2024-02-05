@@ -4,13 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Shared.Controllers;
+namespace XeniaBot.Shared.Repositories;
 
 [XeniaController]
-public class GuildPrefixConfigController : BaseConfigController<GuildPrefixConfigModel>
+public class GuildPrefixRepository : BaseRepository<GuildPrefixConfigModel>
 {
     private readonly ConfigData _config;
-    public GuildPrefixConfigController(IServiceProvider services)
+    public GuildPrefixRepository(IServiceProvider services)
         : base("guildPrefix", services)
     {
         _config = services.GetRequiredService<ConfigData>();

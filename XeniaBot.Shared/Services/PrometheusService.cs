@@ -9,15 +9,15 @@ using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Shared.Controllers
+namespace XeniaBot.Shared.Services
 {
     [XeniaController]
-    public class PrometheusController : BaseController
+    public class PrometheusService : BaseService
     {
         private ConfigData _configData;
         private ProgramDetails _details;
         protected Prometheus.KestrelMetricServer? Server { get; private set; }
-        public PrometheusController(IServiceProvider services)
+        public PrometheusService(IServiceProvider services)
             : base(services)
         {
             _configData = services.GetRequiredService<ConfigData>();

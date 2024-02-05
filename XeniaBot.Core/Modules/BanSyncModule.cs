@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Services;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules
 {
@@ -45,7 +45,7 @@ namespace XeniaBot.Core.Modules
                         .WithColor(Color.Red)
                         .WithCurrentTimestamp()
                         .Build());
-                await Program.Core.GetRequiredService<ErrorReportController>().ReportError(ex, Context);
+                await Program.Core.GetRequiredService<ErrorReportService>().ReportError(ex, Context);
             }
         }
         

@@ -11,15 +11,15 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace XeniaBot.Shared.Controllers;
+namespace XeniaBot.Shared.Services;
 
 [XeniaController]
-public class ErrorReportController : BaseController
+public class ErrorReportService : BaseService
 {
     private readonly DiscordSocketClient _client;
     private readonly ConfigData _config;
 
-    public ErrorReportController(IServiceProvider services)
+    public ErrorReportService(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();

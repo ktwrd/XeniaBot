@@ -9,8 +9,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Controllers;
 using XeniaBot.Shared.Helpers;
+using XeniaBot.Shared.Repositories;
 
 namespace XeniaBot.Shared
 {
@@ -21,7 +21,7 @@ namespace XeniaBot.Shared
         private readonly DiscordSocketClient _client;
         private readonly IServiceProvider _services;
         private readonly ConfigData _configData;
-        private readonly GuildPrefixConfigController _prefixConfig;
+        private readonly GuildPrefixRepository _prefixConfig;
 
         public CommandHandler(IServiceProvider services)
         {
@@ -30,7 +30,7 @@ namespace XeniaBot.Shared
             // since we passed the services in, we can use GetRequiredService to pass them into the fields set earlier
             _commands = services.GetRequiredService<CommandService>();
             _client = services.GetRequiredService<DiscordSocketClient>();
-            _prefixConfig = services.GetRequiredService<GuildPrefixConfigController>();
+            _prefixConfig = services.GetRequiredService<GuildPrefixRepository>();
             _services = services;
 
             // take action when we execute a command

@@ -5,15 +5,14 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Controllers;
 using XeniaBot.Shared.Helpers;
-
+using XeniaBot.Shared.Services;
 using Timer = System.Timers.Timer;
 
 namespace XeniaBot.Logic.Services;
 
 [XeniaController]
-public class ReminderService : BaseController
+public class ReminderService : BaseService
 {
     private readonly CoreContext _core;
     private readonly ConfigData _configData;

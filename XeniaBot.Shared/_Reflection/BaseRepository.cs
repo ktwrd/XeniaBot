@@ -8,14 +8,14 @@ namespace XeniaBot.Shared;
 /// Base controller that interacts with MongoDB
 /// </summary>
 /// <typeparam name="TH">Type of the target collection specified at <see cref="MongoCollectionName"/></typeparam>
-public class BaseConfigController<TH> : BaseController
+public class BaseRepository<TH> : BaseService
 {
     protected IMongoDatabase _db { get; private set; }
     /// <summary>
     /// Name of the MongoDB Collection
     /// </summary>
     public string MongoCollectionName { get; private set; }
-    public BaseConfigController(string collectionName, IServiceProvider services)
+    public BaseRepository(string collectionName, IServiceProvider services)
         : base(services)
     {
         _db = services.GetRequiredService<IMongoDatabase>();

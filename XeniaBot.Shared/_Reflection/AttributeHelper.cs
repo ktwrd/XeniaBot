@@ -34,7 +34,7 @@ namespace XeniaBot.Shared
         public static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly)
         {
             foreach(Type type in assembly.GetTypes()) {
-                if (type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableTo(typeof(BaseController))) {
+                if (type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableTo(typeof(BaseService))) {
                     yield return type;
                 }
             }

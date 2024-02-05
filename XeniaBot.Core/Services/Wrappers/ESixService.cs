@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace XeniaBot.Core.Services.Wrappers
 {
     [XeniaController]
-    public class ESixService : BaseController
+    public class ESixService : BaseService
     {
         private IE621Client _client;
         private ConfigData _configData;

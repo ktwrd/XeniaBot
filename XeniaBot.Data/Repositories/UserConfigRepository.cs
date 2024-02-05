@@ -5,7 +5,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class UserConfigRepository : BaseConfigController<UserConfigModel>
+public class UserConfigRepository : BaseRepository<UserConfigModel>
 {
     public UserConfigRepository(IServiceProvider services)
         : base(UserConfigModel.CollectionName, services)

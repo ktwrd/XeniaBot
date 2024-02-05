@@ -10,7 +10,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class GuildGreeterService : BaseController
+public class GuildGreeterService : BaseService
 {
     private readonly GuildGreeterConfigRepository _configWelcomeRepository;
     private readonly GuildGreetByeConfigRepository _configByeRepository;

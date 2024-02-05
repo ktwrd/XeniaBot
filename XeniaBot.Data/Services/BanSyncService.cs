@@ -10,18 +10,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
-using XeniaBot.Shared.Controllers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Data.Services
 {
     [XeniaController]
-    public class BanSyncService : BaseController
+    public class BanSyncService : BaseService
     {
         private readonly DiscordSocketClient _client;
         private readonly BanSyncConfigRepository _guildConfigRepo;
         private readonly ConfigData _configData;
         private readonly BanSyncInfoRepository _banInfoRepo;
-        private readonly ErrorReportController _err;
+        private readonly ErrorReportService _err;
         public BanSyncService(IServiceProvider services)
             : base(services)
         {
@@ -29,7 +29,7 @@ namespace XeniaBot.Data.Services
             _guildConfigRepo = services.GetRequiredService<BanSyncConfigRepository>();
             _configData = services.GetRequiredService<ConfigData>();
             _banInfoRepo = services.GetRequiredService<BanSyncInfoRepository>();
-            _err = services.GetRequiredService<ErrorReportController>();
+            _err = services.GetRequiredService<ErrorReportService>();
 
             var programDetails = services.GetRequiredService<ProgramDetails>();
 

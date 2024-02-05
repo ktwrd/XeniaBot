@@ -6,7 +6,7 @@ using System.Linq;
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class BanSyncStateHistoryRepository : BaseConfigController<BanSyncStateHistoryItemModel>
+public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryItemModel>
 {
     public BanSyncStateHistoryRepository(IServiceProvider services)
         : base(BanSyncStateHistoryItemModel.CollectionName, services)
