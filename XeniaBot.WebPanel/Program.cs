@@ -12,8 +12,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using XeniaBot.Data;
-using XeniaBot.Data.Controllers;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
 using XeniaBot.Shared.Helpers;
@@ -70,7 +69,7 @@ false
         Core.MainAsync(args, (s) =>
         {
             AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, s);
-            AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, s);
+            AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s);
             AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", s);
             return Task.CompletedTask;
         }).Wait();
