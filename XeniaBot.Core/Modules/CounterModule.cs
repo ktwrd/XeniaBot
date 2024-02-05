@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 using System;
@@ -9,8 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 
 namespace XeniaBot.Core.Modules
 {
@@ -22,7 +22,7 @@ namespace XeniaBot.Core.Modules
         public async Task SetChannel(
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
-            var counterConfig = Program.Core.GetRequiredService<CounterConfigController>();
+            var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
             CounterGuildModel data = await counterConfig.Get(Context.Guild);
             if (data == null)
             {
@@ -51,7 +51,7 @@ namespace XeniaBot.Core.Modules
         public async Task DeleteChannel(
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
-            var counterConfig = Program.Core.GetRequiredService<CounterConfigController>();
+            var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
             CounterGuildModel data = counterConfig.Get(targetChannel);
             if (data == null)
             {
@@ -76,7 +76,7 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Delete()
         {
-            var counterConfig = Program.Core.GetRequiredService<CounterConfigController>();
+            var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
             CounterGuildModel data = await counterConfig.Get(Context.Guild);
             if (data == null)
             {
@@ -101,7 +101,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("info", "Information about the counter module for this guild")]
         public async Task Info()
         {
-            var controller = Program.Core.GetRequiredService<CounterConfigController>();
+            var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
             var data = await controller.Get(Context.Guild);
             if (data == null)
             {

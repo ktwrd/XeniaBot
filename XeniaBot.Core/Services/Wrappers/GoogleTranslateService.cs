@@ -13,15 +13,15 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace XeniaBot.Core.Controllers.Wrappers
+namespace XeniaBot.Core.Services.Wrappers
 {
     [XeniaController]
-    public class GoogleTranslate : BaseController
+    public class GoogleTranslateService : BaseController
     {
         private ConfigData _configData;
         private GoogleCredential _gcsCred;
         private TranslationClient _translateClient;
-        public GoogleTranslate(IServiceProvider services)
+        public GoogleTranslateService(IServiceProvider services)
             : base(services)
         {
             _configData = services.GetRequiredService<ConfigData>();
@@ -150,7 +150,7 @@ namespace XeniaBot.Core.Controllers.Wrappers
         public override async Task InitializeAsync()
         {
             var start_ts = GeneralHelper.GetMicroseconds();
-            Log.Debug("Initializing GoogleTranslate");
+            Log.Debug("Initializing GoogleTranslateService");
             Validate();
 
             // Fetch credentials, if failed then throw exception

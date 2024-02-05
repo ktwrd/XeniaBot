@@ -12,13 +12,13 @@ using XeniaBot.Shared.Schema.WeatherAPI;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 
-namespace XeniaBot.Core.Controllers.Wrappers
+namespace XeniaBot.Core.Services.Wrappers
 {
     [XeniaController]
-    public class WeatherAPIController : BaseController
+    public class WeatherAPIService : BaseController
     {
         protected ConfigData _sysconfig;
-        public WeatherAPIController(IServiceProvider services)
+        public WeatherAPIService(IServiceProvider services)
             : base(services)
         {
             serializerOptions = new JsonSerializerOptions()

@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson;
-using XeniaBot.Core.Controllers.Wrappers;
+using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Schema.WeatherAPI;
 using System;
@@ -79,7 +79,7 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task<EmbedBuilder> CurrentForecast(string location, MeasurementSystem syst)
         {
-            var controller = Program.Core.GetRequiredService<WeatherAPIController>();
+            var controller = Program.Core.GetRequiredService<WeatherAPIService>();
             var embed = new EmbedBuilder()
             {
                 Color = Color.Red
@@ -87,8 +87,8 @@ namespace XeniaBot.Core.Helpers
 
             if (controller == null)
             {
-                Log.Error($"WeatherAPIController is null!");
-                embed.Description = "WeatherAPIController is null!";
+                Log.Error($"WeatherAPIService is null!");
+                embed.Description = "WeatherAPIService is null!";
                 return embed;
             }
 
@@ -117,7 +117,7 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task<EmbedBuilder> Forecast(string location, MeasurementSystem syst)
         {
-            var controller = Program.Core.GetRequiredService<WeatherAPIController>();
+            var controller = Program.Core.GetRequiredService<WeatherAPIService>();
             var embed = new EmbedBuilder()
             {
                 Color = Color.Red
@@ -125,8 +125,8 @@ namespace XeniaBot.Core.Helpers
 
             if (controller == null)
             {
-                Log.Error($"WeatherAPIController is null!");
-                embed.Description = "WeatherAPIController is null!";
+                Log.Error($"WeatherAPIService is null!");
+                embed.Description = "WeatherAPIService is null!";
                 return embed;
             }
 

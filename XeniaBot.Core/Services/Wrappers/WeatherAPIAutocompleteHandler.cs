@@ -8,13 +8,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XeniaBot.Core.Controllers.Wrappers
+namespace XeniaBot.Core.Services.Wrappers
 {
     public class WeatherAPIAutocompleteHandler : AutocompleteHandler
     {
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
         {
-            var service = Program.Core.GetRequiredService<WeatherAPIController>();
+            var service = Program.Core.GetRequiredService<WeatherAPIService>();
 
             var results = new List<AutocompleteResult>();
             var currentSearch = autocompleteInteraction.Data.Current.Value.ToString();

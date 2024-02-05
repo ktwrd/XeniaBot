@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.Wrappers;
+using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules;
@@ -25,7 +25,7 @@ public class BackpackTFModule : InteractionModuleBase
             .WithCurrentTimestamp();
         try
         {
-            var controller = Program.Core.GetRequiredService<BackpackTFController>();
+            var controller = Program.Core.GetRequiredService<BackpackTFService>();
             var data = await controller.GetCurrenciesAsync();
             if (data == null)
             {

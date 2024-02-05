@@ -9,16 +9,16 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models.Archival;
+using XeniaBot.Data.Repositories;
 using XeniaBot.DiscordCache.Controllers;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.Wrappers;
+namespace XeniaBot.Core.Services.Wrappers;
 
 [XeniaController]
-public class DiscordCacheController : BaseController
+public class DiscordCacheService : BaseController
 {
 
     public DiscordCacheGenericConfigController<CacheMessageModel> CacheMessageConfig;
@@ -30,12 +30,12 @@ public class DiscordCacheController : BaseController
     public DiscordCacheGenericConfigController<CacheVoiceChannelModel> CacheVoiceChannelConfig;
     public DiscordCacheGenericConfigController<CacheStageChannelModel> CacheStageChannelConfig;
     public DiscordCacheGenericConfigController<CacheTextChannelModel> CacheTextChannelConfig;
-    private readonly UserConfigController _userConfig;
+    private readonly UserConfigRepository _userConfig;
     private readonly DiscordSocketClient _client;
-    public DiscordCacheController(IServiceProvider services)
+    public DiscordCacheService(IServiceProvider services)
         : base(services)
     {
-        _userConfig = services.GetRequiredService<UserConfigController>();
+        _userConfig = services.GetRequiredService<UserConfigRepository>();
         _client = services.GetRequiredService<DiscordSocketClient>();
         CacheMessageConfig = new DiscordCacheGenericConfigController<CacheMessageModel>("bb_store_message", services);
         CacheUserConfig = new DiscordCacheGenericConfigController<CacheUserModel>("cache_store_user", services);
@@ -196,7 +196,7 @@ public class DiscordCacheController : BaseController
                         var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
-                            "Failed to process forum channel in DiscordCacheController._client_ChannelUpdated",
+                            "Failed to process forum channel in DiscordCacheService._client_ChannelUpdated",
                             "```json",
                             channelJson,
                             "```"
@@ -219,7 +219,7 @@ public class DiscordCacheController : BaseController
                         var channelJson = JsonSerializer.Serialize(newChannel, Program.SerializerOptions);
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
-                            "Failed to process voice channel in DiscordCacheController._client_ChannelUpdated",
+                            "Failed to process voice channel in DiscordCacheService._client_ChannelUpdated",
                             "```json",
                             channelJson,
                             "```"
@@ -242,7 +242,7 @@ public class DiscordCacheController : BaseController
                         var channelJson = JsonSerializer.Serialize(newChannel as ITextChannel, Program.SerializerOptions);
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
-                            "Failed to process text channel in DiscordCacheController._client_ChannelUpdated",
+                            "Failed to process text channel in DiscordCacheService._client_ChannelUpdated",
                             "```json",
                             channelJson,
                             "```"
@@ -276,7 +276,7 @@ public class DiscordCacheController : BaseController
                         var channelJson = JsonSerializer.Serialize(guildChannel, Program.SerializerOptions);
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
-                            "Failed to process forum channel in DiscordCacheController._client_ChannelCreated",
+                            "Failed to process forum channel in DiscordCacheService._client_ChannelCreated",
                             "```json",
                             channelJson,
                             "```"
@@ -299,7 +299,7 @@ public class DiscordCacheController : BaseController
                         var channelJson = JsonSerializer.Serialize(guildChannel, Program.SerializerOptions);
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
-                            "Failed to process voice channel in DiscordCacheController._client_ChannelCreated",
+                            "Failed to process voice channel in DiscordCacheService._client_ChannelCreated",
                             "```json",
                             channelJson,
                             "```"
@@ -322,7 +322,7 @@ public class DiscordCacheController : BaseController
                         var channelJson = JsonSerializer.Serialize(guildChannel, Program.SerializerOptions);
                         await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
                         {
-                            "Failed to process text channel in DiscordCacheController._client_ChannelCreated",
+                            "Failed to process text channel in DiscordCacheService._client_ChannelCreated",
                             "```json",
                             channelJson,
                             "```"
@@ -357,7 +357,7 @@ public class DiscordCacheController : BaseController
             });
             await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
             {
-                "Failed to run DiscordCacheController._client_MessageUpdated\n",
+                "Failed to run DiscordCacheService._client_MessageUpdated\n",
                 "Message JSON:",
                 "```json",
                 msgJson,
@@ -397,7 +397,7 @@ public class DiscordCacheController : BaseController
             var channelJson = JsonSerializer.Serialize(channel, Program.SerializerOptions);
             await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
             {
-                "Failed to run DiscordCacheController._client_MessageUpdated\n",
+                "Failed to run DiscordCacheService._client_MessageUpdated\n",
                 "Message JSON:",
                 "```json",
                 msgJson,
@@ -434,7 +434,7 @@ public class DiscordCacheController : BaseController
             var channelJson = JsonSerializer.Serialize(channel, Program.SerializerOptions);
             await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
             {
-                "Failed to run DiscordCacheController._client_MessageDeleted\n",
+                "Failed to run DiscordCacheService._client_MessageDeleted\n",
                 "Message JSON:",
                 "```json",
                 msgJson,

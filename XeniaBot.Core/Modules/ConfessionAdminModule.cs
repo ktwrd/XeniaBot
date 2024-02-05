@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord.Commands;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 
 namespace XeniaBot.Core.Modules
 {
@@ -20,7 +20,7 @@ namespace XeniaBot.Core.Modules
         [Discord.Interactions.RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task Purge()
         {
-            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
             var item = await controller.GetGuild(Context.Guild.Id);
             if (item == null)
             {
@@ -60,8 +60,8 @@ namespace XeniaBot.Core.Modules
                 return;
             }
 
-            var controller = Program.Core.GetRequiredService<ConfessionController>();
-            var config = Program.Core.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionService>();
+            var config = Program.Core.GetRequiredService<ConfessionConfigRepository>();
             var item = await config.GetGuild(Context.Guild.Id);
             if (item != null)
             {

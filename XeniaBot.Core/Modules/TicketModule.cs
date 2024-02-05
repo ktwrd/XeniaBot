@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Services.BotAdditions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +19,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("create", "Create a new ticket")]
         public async Task CreateTicket()
         {
-            var controller = Program.Core.GetRequiredService<TicketController>();
+            var controller = Program.Core.GetRequiredService<TicketService>();
             var baseEmbed = new EmbedBuilder();
             baseEmbed.Timestamp = DateTimeOffset.UtcNow;
             baseEmbed.WithFooter("Xenia Ticket Management");
@@ -72,7 +72,7 @@ namespace XeniaBot.Core.Modules
             if (ticketChannel == null)
                 ticketChannel = Context.Channel;
 
-            var controller = Program.Core.GetRequiredService<TicketController>();
+            var controller = Program.Core.GetRequiredService<TicketService>();
             var embed = new EmbedBuilder()
             {
                 Title = "Resolved Ticket",
@@ -110,7 +110,7 @@ namespace XeniaBot.Core.Modules
             if (ticketChannel == null)
                 ticketChannel = Context.Channel;
 
-            var controller = Program.Core.GetRequiredService<TicketController>();
+            var controller = Program.Core.GetRequiredService<TicketService>();
             var embed = new EmbedBuilder()
             {
                 Title = "Rejected Ticket",

@@ -6,28 +6,28 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.Wrappers;
+using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Models.Archival;
+using XeniaBot.Data.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.BotAdditions;
+namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class ServerLogController : BaseController
+public class ServerLogService : BaseController
 {
-    private readonly ServerLogConfigController _config;
+    private readonly ServerLogRepository _config;
     private readonly DiscordSocketClient _discord;
-    private readonly DiscordCacheController _discordCache;
-    public ServerLogController(IServiceProvider services)
+    private readonly DiscordCacheService _discordCache;
+    public ServerLogService(IServiceProvider services)
         : base(services)
     {
-        _config = services.GetRequiredService<ServerLogConfigController>();
+        _config = services.GetRequiredService<ServerLogRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
-        _discordCache = services.GetRequiredService<DiscordCacheController>();
+        _discordCache = services.GetRequiredService<DiscordCacheService>();
     }
 
     public override Task InitializeAsync()
@@ -227,7 +227,7 @@ public class ServerLogController : BaseController
             Log.Error("Failed to run.", ex);
             await DiscordHelper.ReportError(
                 ex,
-                $"Failed run ServerLogController.Event_UserBan.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
+                $"Failed run ServerLogService.Event_UserBan.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
         }
     }
     private async Task Event_UserBanRemove(SocketUser user, SocketGuild guild)
@@ -260,7 +260,7 @@ public class ServerLogController : BaseController
             Log.Error("Failed to run.", ex);
             await DiscordHelper.ReportError(
                 ex,
-                $"Failed run ServerLogController.Event_UserBanRemove.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
+                $"Failed run ServerLogService.Event_UserBanRemove.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
         }
     }
     #endregion
@@ -304,7 +304,7 @@ public class ServerLogController : BaseController
             var msg = string.Join(
                     "\n", new string[]
                     {
-                        "Failed run ServerLogController.Event_MessageDelete.", $"ChannelId: {socketChannel.Id}",
+                        "Failed run ServerLogService.Event_MessageDelete.", $"ChannelId: {socketChannel.Id}",
                         $"Guild: {socketChannel.Guild.Id} ({socketChannel.Guild.Name})",
                         $"MessageId: {message.Value?.Id ?? 0}"
                     });
@@ -356,7 +356,7 @@ public class ServerLogController : BaseController
             var msg = string.Join(
                 "\n", new string[]
                 {
-                    "Failed run ServerLogController.Event_MessageDelete.", $"ChannelId: {socketChannel?.Id}",
+                    "Failed run ServerLogService.Event_MessageDelete.", $"ChannelId: {socketChannel?.Id}",
                     $"Guild: {socketChannel?.Guild.Id} ({socketChannel?.Guild.Name})",
                     $"MessageId: {currentMessage?.Id ?? 0}"
                 });

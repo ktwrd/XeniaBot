@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
@@ -19,13 +19,13 @@ public class EconomyModule : InteractionModuleBase
         var embed = new EmbedBuilder()
             .WithTitle("Economy - Daily")
             .WithCurrentTimestamp();
-        var controller = Program.Core.GetRequiredService<EconomyConfigController>();
+        var controller = Program.Core.GetRequiredService<EconomyProfileRepository>();
 
         EconProfileModel? data = null;
         try
         {
             if (controller == null)
-                throw new Exception("EconomyConfigController is null");
+                throw new Exception("EconomyProfileRepository is null");
             data = await controller.Get(Context.User.Id, Context.Guild.Id)
                ?? new EconProfileModel()
                {
@@ -98,12 +98,12 @@ public class EconomyModule : InteractionModuleBase
         var embed = new EmbedBuilder()
             .WithTitle("Economy - Balance")
             .WithCurrentTimestamp();
-        var controller = Program.Core.GetRequiredService<EconomyConfigController>();
+        var controller = Program.Core.GetRequiredService<EconomyProfileRepository>();
 
         try
         {
             if (controller == null)
-                throw new Exception("EconomyConfigController is null");
+                throw new Exception("EconomyProfileRepository is null");
 
             var data = await controller.Get(Context.User.Id, Context.Guild.Id)
                ?? new EconProfileModel()

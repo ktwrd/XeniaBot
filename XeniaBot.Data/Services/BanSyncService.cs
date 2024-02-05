@@ -8,31 +8,30 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using XeniaBot.Data.Controllers;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Controllers;
 
-namespace XeniaBot.Data.Controllers.BotAdditions
+namespace XeniaBot.Data.Services
 {
     [XeniaController]
-    public class BanSyncController : BaseController
+    public class BanSyncService : BaseController
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
-        private readonly BanSyncConfigController _config;
+        private readonly BanSyncConfigRepository _config;
         private readonly ConfigData _configData;
-        private readonly BanSyncInfoConfigController _infoConfig;
+        private readonly BanSyncInfoRepository _infoConfig;
         private readonly ProgramDetails _details;
         private readonly ErrorReportController _err;
-        public BanSyncController(IServiceProvider services)
+        public BanSyncService(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
             _discord = services.GetRequiredService<DiscordController>();
-            _config = services.GetRequiredService<BanSyncConfigController>();
+            _config = services.GetRequiredService<BanSyncConfigRepository>();
             _configData = services.GetRequiredService<ConfigData>();
-            _infoConfig = services.GetRequiredService<BanSyncInfoConfigController>();
+            _infoConfig = services.GetRequiredService<BanSyncInfoRepository>();
             _details = services.GetRequiredService<ProgramDetails>();
             _err = services.GetRequiredService<ErrorReportController>();
 

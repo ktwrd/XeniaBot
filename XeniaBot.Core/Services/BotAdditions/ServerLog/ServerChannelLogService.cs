@@ -7,30 +7,29 @@ using DiffPlex.DiffBuilder.Model;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.Wrappers;
-using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Data.Models.Archival;
+using XeniaBot.Data.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.BotAdditions;
+namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class ServerChannelLogController : BaseController
+public class ServerChannelLogService : BaseController
 {
-    private readonly ServerLogConfigController _config;
+    private readonly ServerLogRepository _config;
     private readonly DiscordSocketClient _discord;
-    private readonly DiscordCacheController _discordCache;
-    private readonly ServerLogController _serverLog;
+    private readonly DiscordCacheService _discordCache;
+    private readonly ServerLogService _serverLog;
 
-    public ServerChannelLogController(IServiceProvider services)
+    public ServerChannelLogService(IServiceProvider services)
         : base(services)
     {
-        _config = services.GetRequiredService<ServerLogConfigController>();
+        _config = services.GetRequiredService<ServerLogRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
-        _discordCache = services.GetRequiredService<DiscordCacheController>();
-        _serverLog = services.GetRequiredService<ServerLogController>();
+        _discordCache = services.GetRequiredService<DiscordCacheService>();
+        _serverLog = services.GetRequiredService<ServerLogService>();
     }
 
     public override Task InitializeAsync()

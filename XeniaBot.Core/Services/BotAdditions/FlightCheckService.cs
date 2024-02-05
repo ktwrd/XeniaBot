@@ -7,14 +7,14 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.BotAdditions;
+namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class FlightCheckController : BaseController
+public class FlightCheckService : BaseController
 {
     private readonly DiscordSocketClient _discord;
     private readonly ConfigData _config;
-    public FlightCheckController(IServiceProvider services)
+    public FlightCheckService(IServiceProvider services)
         : base(services)
     {
         _discord = services.GetRequiredService<DiscordSocketClient>();

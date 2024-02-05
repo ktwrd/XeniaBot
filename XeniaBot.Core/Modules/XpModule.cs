@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
@@ -9,9 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules
@@ -22,7 +22,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("profile", "See the amount of XP you have and what level you are")]
         public async Task Profile()
         {
-            var controller = Program.Core.GetRequiredService<LevelMemberModelController>();
+            var controller = Program.Core.GetRequiredService<LevelMemberRepository>();
             var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
             var metadata = LevelSystemHelper.Generate(data);
 
@@ -55,10 +55,10 @@ namespace XeniaBot.Core.Modules
             var embed = new EmbedBuilder()
                 .WithTitle("Xp System - Guild Leaderboard");
             
-            var controller = Program.Core.GetRequiredService<LevelMemberModelController>();
+            var controller = Program.Core.GetRequiredService<LevelMemberRepository>();
             if (controller == null)
             {
-                embed.WithDescription($"Could not fetch LevelMemberModelController");
+                embed.WithDescription($"Could not fetch LevelMemberRepository");
                 embed.WithColor(Color.Red);
                 return embed;
             }
@@ -125,7 +125,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemService>();
 
                 try
                 { 
@@ -167,9 +167,9 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
-                            new LevelSystemGuildConfigModel()
+                            new LevelSystemConfigModel()
                             {
                                 GuildId = Context.Guild.Id
                             };
@@ -204,9 +204,9 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
-                            new LevelSystemGuildConfigModel()
+                            new LevelSystemConfigModel()
                             {
                                 GuildId = Context.Guild.Id
                             };
@@ -263,10 +263,10 @@ namespace XeniaBot.Core.Modules
                 var embed = new EmbedBuilder()
                     .WithTitle("Xp System - Global Leaderboard");
 
-                var controller = Program.Core.GetRequiredService<LevelMemberModelController>();
+                var controller = Program.Core.GetRequiredService<LevelMemberRepository>();
                 if (controller == null)
                 {
-                    embed.WithDescription($"Could not fetch LevelMemberModelController");
+                    embed.WithDescription($"Could not fetch LevelMemberRepository");
                     embed.WithColor(Color.Red);
                     await FollowupAsync(embed: embed.Build());
                     return;
@@ -292,9 +292,9 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
-                            new LevelSystemGuildConfigModel()
+                            new LevelSystemConfigModel()
                             {
                                 GuildId = Context.Guild.Id
                             };
@@ -332,9 +332,9 @@ namespace XeniaBot.Core.Modules
                 .WithCurrentTimestamp();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
+                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
-                            new LevelSystemGuildConfigModel()
+                            new LevelSystemConfigModel()
                             {
                                 GuildId = Context.Guild.Id
                             };

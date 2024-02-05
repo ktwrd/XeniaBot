@@ -9,26 +9,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 using ReactionMessage = Discord.Cacheable<Discord.IUserMessage, ulong>;
 using ReactionChannel = Discord.Cacheable<Discord.IMessageChannel, ulong>;
 
 
-namespace XeniaBot.Core.Controllers.BotAdditions
+namespace XeniaBot.Core.Services.BotAdditions
 {
     [XeniaController]
-    public class RoleController : BaseController
+    public class RoleService : BaseController
     {
         private DiscordSocketClient _client;
-        private RoleConfigController _config;
-        private RoleMessageConfigController _messageConfig;
-        public RoleController(IServiceProvider services)
+        private RoleConfigRepository _config;
+        private RoleMessageConfigRepository _messageConfig;
+        public RoleService(IServiceProvider services)
             : base (services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
-            _config = services.GetRequiredService<RoleConfigController>();
-            _messageConfig = services.GetRequiredService<RoleMessageConfigController>();
+            _config = services.GetRequiredService<RoleConfigRepository>();
+            _messageConfig = services.GetRequiredService<RoleMessageConfigRepository>();
         }
 
         public override Task OnReady()

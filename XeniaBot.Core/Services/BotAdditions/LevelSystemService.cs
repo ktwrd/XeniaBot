@@ -11,27 +11,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 
-namespace XeniaBot.Core.Controllers.BotAdditions
+namespace XeniaBot.Core.Services.BotAdditions
 {
     [XeniaController]
-    public class LevelSystemController : BaseController
+    public class LevelSystemService : BaseController
     {
         private IMongoDatabase _db;
         private DiscordSocketClient _client;
         private Random _random;
-        private LevelMemberModelController _memberConfig;
-        private LevelSystemGuildConfigController _guildConfig;
-        public LevelSystemController(IServiceProvider services)
+        private LevelMemberRepository _memberConfig;
+        private LevelSystemConfigRepository _config;
+        public LevelSystemService(IServiceProvider services)
             : base(services)
         {
             _db = services.GetRequiredService<IMongoDatabase>();
             _client = services.GetRequiredService<DiscordSocketClient>();
-            _guildConfig = services.GetRequiredService<LevelSystemGuildConfigController>();
-            _memberConfig = services.GetRequiredService<LevelMemberModelController>();
+            _config = services.GetRequiredService<LevelSystemConfigRepository>();
+            _memberConfig = services.GetRequiredService<LevelMemberRepository>();
             _random = new Random();
             _client.MessageReceived += _client_MessageReceived;
             
@@ -101,7 +101,7 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         {
             try
             {
-                var gmodel = await _guildConfig.Get(model.GuildId);
+                var gmodel = await _config.Get(model.GuildId);
                 if (gmodel == null)
                     return;
 
@@ -152,8 +152,8 @@ namespace XeniaBot.Core.Controllers.BotAdditions
                     GuildId = context.Guild.Id
                 };
             await _memberConfig.Set(data);
-            var guildConfig = await _guildConfig.Get(context.Guild.Id)
-                ?? new LevelSystemGuildConfigModel()
+            var guildConfig = await _config.Get(context.Guild.Id)
+                ?? new LevelSystemConfigModel()
                 {
                     GuildId = context.Guild.Id
                 };

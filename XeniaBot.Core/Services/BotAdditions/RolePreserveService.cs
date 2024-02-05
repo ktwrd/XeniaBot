@@ -7,30 +7,30 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Core.Controllers.BotAdditions;
+namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class RolePreserveController : BaseController
+public class RolePreserveService : BaseController
 {
     private readonly DiscordSocketClient _client;
-    private readonly RolePreserveConfigController _config;
-    private readonly RolePreserveGuildConfigController _guildConfig;
+    private readonly RolePreserveRepository _config;
+    private readonly RolePreserveGuildRepository _guildConfig;
     private readonly ErrorReportController _err;
-    private readonly ServerLogConfigController _serverLogConfig;
-    public RolePreserveController(IServiceProvider services)
+    private readonly ServerLogRepository _serverLogConfig;
+    public RolePreserveService(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
-        _config = services.GetRequiredService<RolePreserveConfigController>();
+        _config = services.GetRequiredService<RolePreserveRepository>();
         _err = services.GetRequiredService<ErrorReportController>();
-        _serverLogConfig = services.GetRequiredService<ServerLogConfigController>();
-        _guildConfig = services.GetRequiredService<RolePreserveGuildConfigController>();
+        _serverLogConfig = services.GetRequiredService<ServerLogRepository>();
+        _guildConfig = services.GetRequiredService<RolePreserveGuildRepository>();
         
         _client.GuildMemberUpdated += (cacheable, user) => PreserveGuildMember(user.Guild.Id, user.Id);
         _client.UserJoined += ClientOnUserJoined;

@@ -1,18 +1,17 @@
 ﻿using System;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Controllers;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
 
-namespace XeniaBot.Core.Controllers.BotAdditions;
+namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class EconomyController : BaseController
+public class EconomyService : BaseController
 {
     private readonly DiscordSocketClient _client;
     private readonly DiscordController _discord;
-    public EconomyController(IServiceProvider services)
+    public EconomyService(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();

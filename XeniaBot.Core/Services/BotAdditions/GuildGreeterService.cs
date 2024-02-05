@@ -3,22 +3,22 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.BotAdditions;
+namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class GuildGreeterController : BaseController
+public class GuildGreeterService : BaseController
 {
-    private readonly GuildGreeterConfigController _configWelcomeController;
-    private readonly GuildGreetByeConfigController _configByeController;
+    private readonly GuildGreeterConfigRepository _configWelcomeRepository;
+    private readonly GuildGreetByeConfigRepository _configByeRepository;
     private readonly DiscordSocketClient _discord;
-    public GuildGreeterController(IServiceProvider services) : base(services)
+    public GuildGreeterService(IServiceProvider services) : base(services)
     {
-        _configWelcomeController = services.GetRequiredService<GuildGreeterConfigController>();
-        _configByeController = services.GetRequiredService<GuildGreetByeConfigController>();
+        _configWelcomeRepository = services.GetRequiredService<GuildGreeterConfigRepository>();
+        _configByeRepository = services.GetRequiredService<GuildGreetByeConfigRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
 
         _discord.UserJoined += _discord_UserJoined;
@@ -27,7 +27,7 @@ public class GuildGreeterController : BaseController
 
     private async Task _discord_UserJoined(SocketGuildUser user)
     {
-        var config = await _configWelcomeController.GetLatest(user.Guild.Id);
+        var config = await _configWelcomeRepository.GetLatest(user.Guild.Id);
         if (config == null)
             return;
         if (config.GuildId != user.Guild.Id)
@@ -50,7 +50,7 @@ public class GuildGreeterController : BaseController
 
     private async Task _discord_UserLeft(SocketGuild guild, SocketUser user)
     {
-        var config = await _configByeController.GetLatest(guild.Id);
+        var config = await _configByeRepository.GetLatest(guild.Id);
         if (config == null)
             return;
         if (config.GuildId != guild.Id)

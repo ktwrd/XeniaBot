@@ -3,7 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Noppes.E621;
-using XeniaBot.Core.Controllers.Wrappers;
+using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 using System;
@@ -22,7 +22,7 @@ namespace XeniaBot.Core.Modules
             [Discord.Interactions.Summary(description: "Select a random post from all posts on the first page of this query.")]
             bool random = false)
         {
-            var controller = Program.Core.GetRequiredService<ESixController>();
+            var controller = Program.Core.GetRequiredService<ESixService>();
             
             // Manually get current channel as text channel
             var discordClient = Program.Core.GetRequiredService<DiscordSocketClient>();

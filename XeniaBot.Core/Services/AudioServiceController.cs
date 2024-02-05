@@ -12,7 +12,7 @@ using Victoria.Player;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers;
+namespace XeniaBot.Core.Services;
 
 [XeniaController]
 public class AudioServiceController : BaseController

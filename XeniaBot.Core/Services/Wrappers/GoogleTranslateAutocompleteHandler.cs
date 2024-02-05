@@ -9,14 +9,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XeniaBot.Core.Controllers.Wrappers
+namespace XeniaBot.Core.Services.Wrappers
 {
     public class GoogleTranslateAutocompleteHandler : AutocompleteHandler
     {
         private List<Language>? languageList = null;
         public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
         {
-            var service = Program.Core.GetRequiredService<GoogleTranslate>();
+            var service = Program.Core.GetRequiredService<GoogleTranslateService>();
 
             var results = new List<AutocompleteResult>();
             var currentSearch = autocompleteInteraction.Data.Current.Value?.ToString()?.Trim().ToLower() ?? "";

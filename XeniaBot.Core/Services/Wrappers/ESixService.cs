@@ -9,15 +9,15 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace XeniaBot.Core.Controllers.Wrappers
+namespace XeniaBot.Core.Services.Wrappers
 {
     [XeniaController]
-    public class ESixController : BaseController
+    public class ESixService : BaseController
     {
         private IE621Client _client;
         private ConfigData _configData;
         private string[] Ethanol = Array.Empty<string>();
-        public ESixController(IServiceProvider services) : base (services)
+        public ESixService(IServiceProvider services) : base (services)
         {
             _configData = services.GetRequiredService<ConfigData>();
 

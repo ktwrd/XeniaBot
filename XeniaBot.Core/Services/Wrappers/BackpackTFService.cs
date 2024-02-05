@@ -10,15 +10,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.Wrappers;
+namespace XeniaBot.Core.Services.Wrappers;
 
 [XeniaController]
-public class BackpackTFController : BaseController
+public class BackpackTFService : BaseController
 {
     private readonly HttpClient _http;
     private readonly string _apiKey;
 
-    public BackpackTFController(IServiceProvider services)
+    public BackpackTFService(IServiceProvider services)
         : base(services)
     {
         _http = new HttpClient();

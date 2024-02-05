@@ -16,12 +16,11 @@ using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using XeniaBot.Data;
-using XeniaBot.Data.Controllers;
 using XeniaBot.Data.Models;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared.Controllers;
 
-namespace XeniaBot.Core.Controllers.BotAdditions
+namespace XeniaBot.Core.Services.BotAdditions
 {
     public class InternalTicketDetails
     {
@@ -34,11 +33,11 @@ namespace XeniaBot.Core.Controllers.BotAdditions
         public SocketGuildUser ClosingUser;
     }
     [XeniaController]
-    public class TicketController : BaseController
+    public class TicketService : BaseController
     {
         private readonly DiscordSocketClient _client;
         private readonly DiscordController _discord;
-        public TicketController(IServiceProvider services)
+        public TicketService(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
