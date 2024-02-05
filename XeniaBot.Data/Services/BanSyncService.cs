@@ -239,9 +239,13 @@ namespace XeniaBot.Data.Services
             Blacklisted,
             Valid
         }
-        public BanSyncGuildKind GetGuildKind(ulong guildId)
+        public async Task<BanSyncGuildKind> GetGuildKind(ulong guildId)
         {
             var guild = _client.GetGuild(guildId);
+
+            var guildConf = await _guildConfigRepo.Get(guildId);
+            if (guildConf is { State: BanSyncGuildState.Blacklisted })
+                return BanSyncGuildKind.Blacklisted;
 
             if (guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
                 return BanSyncGuildKind.TooYoung;
