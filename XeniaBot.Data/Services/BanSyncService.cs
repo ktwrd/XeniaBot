@@ -90,7 +90,7 @@ namespace XeniaBot.Data.Services
                         UserDiscriminator = i.User.Discriminator,
                         GuildId = guild.Id,
                         GuildName = guild.Name,
-                        Reason = i?.Reason ?? "null"
+                        Reason = i?.Reason ?? "<unknown>"
                     };
                     await _banInfoRepo.SetInfo(info);
                 }
@@ -98,7 +98,7 @@ namespace XeniaBot.Data.Services
                 {
                     await _err.ReportException(
                         ex,
-                        $"Failed to add ban for {i.User.Username} ({i.User.Id}) in guild {guild.Name} ({guild.Id})");
+                        $"Failed to add ban for {i?.User.Username} ({i?.User.Id}) in guild {guild.Name} ({guild.Id})");
                 }
             }
         }
@@ -123,7 +123,7 @@ namespace XeniaBot.Data.Services
                 GuildId = guild.Id,
                 GuildName = guild.Name,
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                Reason = banInfo?.Reason ?? "null",
+                Reason = banInfo?.Reason ?? "<unknown>",
             };
             await _banInfoRepo.SetInfo(info);
             await NotifyBan(info);
@@ -132,8 +132,6 @@ namespace XeniaBot.Data.Services
         /// <summary>
         /// Notify all guilds that the user is in that the user has been banned.
         /// </summary>
-        /// <param name="info"></param>
-        /// <returns></returns>
         public async Task NotifyBan(BanSyncInfoModel info)
         {
             var taskList = new List<Task>();
@@ -146,16 +144,26 @@ namespace XeniaBot.Data.Services
                 var guildConfig = await _guildConfigRepo.Get(guild.Id);
                 if (guildConfig == null || (guildConfig?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                     continue;
-                taskList.Add(new Task(async delegate
+                var guildId = guild.Id;
+                taskList.Add(new Task(delegate
                 {
-                    var textChannel = guild.GetTextChannel(guildConfig.LogChannel);
+                    var textChannel = guild.GetTextChannel(guildConfig!.LogChannel);
                     var embed = new EmbedBuilder()
                     {
                         Title = "User in your server just got banned",
                         Description = $"<@{info.UserId}> just got banned from `{info.GuildName}` at <t:{info.Timestamp}:F>",
                     };
                     embed.AddField("Reason", $"```\n{info.Reason}\n```");
-                    await textChannel.SendMessageAsync(embed: embed.Build());
+                    textChannel.SendMessageAsync(embed: embed.Build()).Wait();
+                    try
+                    { }
+                    catch (Exception ex)
+                    {
+                        var g = _client.GetGuild(guildId);
+                        _err.ReportException(
+                            ex,
+                            $"Failed to notify guild {g.Name} ({g.Id}) of user {guildUser.Username} ({guildUser.Id}) ban record.").Wait();
+                    }
                 }));
             }
             foreach (var i in taskList)
@@ -176,7 +184,7 @@ namespace XeniaBot.Data.Services
                 return;
 
             // Check if config channel has been made, if not then ignore
-            SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig.LogChannel);
+            SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig!.LogChannel);
             if (logChannel == null)
                 return;
 
@@ -203,8 +211,8 @@ namespace XeniaBot.Data.Services
                 Color = Color.Red
             };
             var name = user.Username ?? last?.UserName ?? "<Unknown Username>";
-            var discrim = user.Discriminator ?? last?.UserDiscriminator ?? "0000";
-            embed.WithDescription($"User {name}#{discrim} ({user.Id}) has been banned from {sortedData.Length} guilds.");
+            var discriminator = user.Discriminator ?? last?.UserDiscriminator ?? "0000";
+            embed.WithDescription($"User {name}#{discriminator} ({user.Id}) has been banned from {sortedData.Length} guilds.");
 
             for (int i = 0; i < Math.Min(sortedData.Length, 25); i++)
             {
