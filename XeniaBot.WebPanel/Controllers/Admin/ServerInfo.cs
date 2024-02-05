@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -29,7 +30,7 @@ public partial class AdminController
         if (!CanAccess())
             return View("NotAuthorized");
 
-        var controller = Program.Core.GetRequiredService<BanSyncController>();
+        var controller = Program.Core.GetRequiredService<BanSyncService>();
         var model = new AdminServerModel();
         await AspHelper.FillServerModel(id, model);
         await PopulateModel(model);

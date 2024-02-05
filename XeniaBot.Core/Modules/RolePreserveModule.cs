@@ -4,8 +4,8 @@ using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
@@ -18,7 +18,7 @@ public class RolePreserveModule : InteractionModuleBase
     {
         try
         {
-            var controller = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
             var data = await controller.Get(Context.Guild.Id) ?? new RolePreserveGuildModel()
             {
                 GuildId = Context.Guild.Id
@@ -48,7 +48,7 @@ public class RolePreserveModule : InteractionModuleBase
     {
         try
         {
-            var controller = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
             var data = await controller.Get(Context.Guild.Id) ?? new RolePreserveGuildModel()
             {
                 GuildId = Context.Guild.Id

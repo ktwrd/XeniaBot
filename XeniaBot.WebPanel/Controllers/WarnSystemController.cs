@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
@@ -59,7 +59,7 @@ public class WarnSystemController: BaseXeniaController
     [HttpGet("~/Warn/Info/{id}")]
     public async Task<IActionResult> WarnInfo(string id, string? messageType = null, string? message = null)
     {
-        var controller = Program.Core.GetRequiredService<GuildWarnItemConfigController>();
+        var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
         var warnData = await controller.GetItemsById(id);
         if (warnData == null)
             return View("NotFound");
@@ -144,7 +144,7 @@ public class WarnSystemController: BaseXeniaController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<GuildWarnItemConfigController>();
+            var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
             var data = new GuildWarnItemModel()
             {
                 GuildId = id,

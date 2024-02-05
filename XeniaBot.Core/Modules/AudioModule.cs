@@ -14,7 +14,7 @@ using Victoria.Node;
 using Victoria.Player;
 using Victoria.Resolvers;
 using Victoria.Responses.Search;
-using XeniaBot.Core.Controllers;
+using XeniaBot.Core.Services;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared.Helpers;
 

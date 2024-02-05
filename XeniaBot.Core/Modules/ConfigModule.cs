@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Services.BotAdditions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,9 +24,9 @@ namespace XeniaBot.Core.Modules
             [Discord.Interactions.Summary(description: "Channel where ticket states will be logged and archived.")]
             [ChannelTypes(ChannelType.Text)] ITextChannel logChannel = null)
         {
-            TicketController controller = Program.Core.GetRequiredService<TicketController>();
+            TicketService service = Program.Core.GetRequiredService<TicketService>();
 
-            ConfigGuildTicketModel? model = await controller.GetGuildConfig(Context.Guild.Id);
+            ConfigGuildTicketModel? model = await service.GetGuildConfig(Context.Guild.Id);
             if (model == null)
             {
                 model = new ConfigGuildTicketModel()
@@ -68,7 +68,7 @@ namespace XeniaBot.Core.Modules
             }
             await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
 
-            await controller.SetGuildConfig(model);
+            await service.SetGuildConfig(model);
         }
     }
 }

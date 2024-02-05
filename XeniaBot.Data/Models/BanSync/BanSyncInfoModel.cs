@@ -11,6 +11,7 @@ namespace XeniaBot.Data.Models
 {
     public class BanSyncInfoModel : BaseModel
     {
+        public static string CollectionName => "banSyncInfo";
         public string RecordId { get; set; }
         public ulong UserId { get; set; }
         public string UserName { get; set; }

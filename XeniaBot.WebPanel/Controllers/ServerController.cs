@@ -6,7 +6,7 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Extensions;
 using XeniaBot.WebPanel.Helpers;

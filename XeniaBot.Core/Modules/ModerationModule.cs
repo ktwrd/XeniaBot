@@ -7,8 +7,8 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
@@ -73,7 +73,7 @@ public class ModerationModule : InteractionModuleBase
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
         try
         {
-            var controller = Program.Core.GetRequiredService<GuildWarnItemConfigController>();
+            var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
             var data = new GuildWarnItemModel()
             {
                 GuildId = user.Guild.Id,

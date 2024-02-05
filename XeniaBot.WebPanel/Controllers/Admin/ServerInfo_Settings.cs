@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
@@ -35,8 +35,8 @@ public partial class AdminController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
-            var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
+            var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+            var data = await controller.Get(guild.Id) ?? new LevelSystemConfigModel()
             {
                 GuildId = guild.Id,
                 LevelUpChannel = targetChannelId,
@@ -90,7 +90,7 @@ public partial class AdminController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
             var data = await controller.GetGuild(id) ??
                        new ConfessionGuildModel()
                        {
@@ -149,7 +149,7 @@ public partial class AdminController
                 message: $"Failed to save Counting settings. {e.Message}");
         }
 
-        var controller = Program.Core.GetRequiredService<CounterConfigController>();
+        var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
         var counterData = await controller.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = guild.Id,

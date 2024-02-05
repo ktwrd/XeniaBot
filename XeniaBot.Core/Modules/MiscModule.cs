@@ -13,8 +13,7 @@ using System.Threading.Tasks;
 using Flurl.Util;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
-using XeniaBot.Core.Controllers;
-using XeniaBot.Data.Controllers;
+using XeniaBot.Core.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
 

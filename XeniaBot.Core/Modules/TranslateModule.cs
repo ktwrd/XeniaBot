@@ -2,7 +2,7 @@
 using Discord.Interactions;
 using Google.Cloud.Translation.V2;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.Wrappers;
+using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
@@ -25,7 +25,7 @@ namespace XeniaBot.Core.Modules
                 targetLanguage = "en";
             if (sourceLanguage == "null" || sourceLanguage?.Length < 1)
                 sourceLanguage = null;
-            var controller = Program.Core.GetRequiredService<GoogleTranslate>();
+            var controller = Program.Core.GetRequiredService<GoogleTranslateService>();
             TranslationResult result = null;
             try
             {

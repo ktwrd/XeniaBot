@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -97,7 +97,7 @@ public class ServerBanSyncController : BaseXeniaController
         } catch
         { return View("NotFound"); }
 
-        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoConfigController>();
+        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
         try
         {
             var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
@@ -143,7 +143,7 @@ public class ServerBanSyncController : BaseXeniaController
         } catch
         { return View("NotFound"); }
 
-        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoConfigController>();
+        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
         try
         {
             var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
@@ -188,7 +188,7 @@ public class ServerBanSyncController : BaseXeniaController
         } catch
         { return View("NotFound"); }
 
-        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoConfigController>();
+        var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
         try
         {
             var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);

@@ -5,7 +5,7 @@ using Discord.WebSocket;
 using IdGen;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using XeniaBot.Core.Controllers;
+using XeniaBot.Core.Services;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 using System;
@@ -20,12 +20,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using XeniaBot.Data;
-using XeniaBot.Data.Controllers;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Shared.Controllers;
 using CronNET;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+using XeniaBot.Data.Services;
 using XeniaBot.Logic.Services;
 
 namespace XeniaBot.Core
@@ -114,7 +113,7 @@ namespace XeniaBot.Core
             Core.MainAsync(args, (s) =>
             {
                 AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", s);
-                AttributeHelper.InjectControllerAttributes(typeof(BanSyncController).Assembly, s);
+                AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s);
                 AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
                 AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, s);
                 return Task.CompletedTask;

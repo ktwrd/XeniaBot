@@ -1,15 +1,16 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Controllers.BotAdditions;
+using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
+using XeniaBot.Data.Services;
 using XeniaBot.Shared.Controllers;
 
 namespace XeniaBot.Core.Modules
@@ -24,7 +25,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<BanSyncController>();
+                var controller = Program.Core.GetRequiredService<BanSyncService>();
                 await controller.RefreshBans(Context.Guild.Id);
                 
                 await FollowupAsync(
@@ -52,8 +53,8 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task UserDetails(IUser user)
         {
-            var controller = Program.Core.GetRequiredService<BanSyncController>();
-            var infoController = Program.Core.GetRequiredService<BanSyncInfoConfigController>();
+            var controller = Program.Core.GetRequiredService<BanSyncService>();
+            var infoController = Program.Core.GetRequiredService<BanSyncInfoRepository>();
             var data = await infoController.GetInfoEnumerable(user.Id);
 
             if (!data.Any())
@@ -79,7 +80,7 @@ namespace XeniaBot.Core.Modules
         {
             try
             {
-                var controller = Program.Core.GetRequiredService<BanSyncConfigController>();
+                var controller = Program.Core.GetRequiredService<BanSyncConfigRepository>();
                 var data = await controller.Get(Context.Guild.Id);
                 if (data == null)
                 {
@@ -129,7 +130,7 @@ namespace XeniaBot.Core.Modules
 
             try
             {
-                var controller = Program.Core.GetRequiredService<BanSyncController>();
+                var controller = Program.Core.GetRequiredService<BanSyncService>();
                 await controller.SetGuildState(guildId, state, reason);
             }
             catch (Exception ex)
@@ -145,8 +146,8 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task RequestGuild()
         {
-            var controller = Program.Core.GetRequiredService<BanSyncController>();
-            var kind = controller.GetGuildKind(Context.Guild.Id);
+            var controller = Program.Core.GetRequiredService<BanSyncService>();
+            var kind = await controller.GetGuildKind(Context.Guild.Id);
 
             var embed = new EmbedBuilder()
             {
@@ -154,7 +155,7 @@ namespace XeniaBot.Core.Modules
                 Color = Color.Red
             }.WithCurrentTimestamp();
 
-            if (kind != BanSyncController.BanSyncGuildKind.Valid)
+            if (kind != BanSyncService.BanSyncGuildKind.Valid)
             {
                 embed.Description = "Your server doesn't meet the requirements";
                 embed.AddField("Reason", $"`{kind}`", true);

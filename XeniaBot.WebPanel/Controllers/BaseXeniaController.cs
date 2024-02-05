@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -10,13 +10,13 @@ namespace XeniaBot.WebPanel.Controllers;
 public class BaseXeniaController : Controller
 {
     protected readonly DiscordSocketClient _discord;
-    protected readonly UserConfigController _userConfig;
+    protected readonly UserConfigRepository _userConfig;
     
     public BaseXeniaController()
         : base()
     {
         _discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        _userConfig = Program.Core.GetRequiredService<UserConfigController>();
+        _userConfig = Program.Core.GetRequiredService<UserConfigRepository>();
     }
 
     public virtual bool CanAccess(ulong guildId)
