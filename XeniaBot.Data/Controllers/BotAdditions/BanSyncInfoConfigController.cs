@@ -150,33 +150,24 @@ public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel
     }
     #endregion
 
-    public async Task SetInfo(BanSyncInfoModel data, bool atTimestamp = false)
+    public async Task SetInfo(BanSyncInfoModel data)
     {
         var collection = GetCollection();
         var filter = Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.UserId == data.UserId && v.GuildId == data.GuildId);
-        if (atTimestamp)
-        {
-            filter = Builders<BanSyncInfoModel>
-                .Filter
-                .Where(v => v.UserId == data.UserId && v.GuildId == data.GuildId && v.Timestamp == data.Timestamp);
-        }
+            .Where(v => v.RecordId == data.RecordId);
         if (await InfoExists(data))
         {
-            await collection.ReplaceOneAsync(filter, data);
+            await collection.DeleteManyAsync(filter);
         }
-        else
-        {
-            await collection.InsertOneAsync(data);
-        }
+        await collection.InsertOneAsync(data);
     }
-    public async Task RemoveInfo(ulong userId, ulong guildId)
+    public async Task RemoveInfo(string recordId)
     {
         var collection = GetCollection();
         var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.UserId == userId && v.GuildId == guildId);
+            .Where(v => v.RecordId == recordId);
 
         await collection.DeleteManyAsync(filter);
     }
