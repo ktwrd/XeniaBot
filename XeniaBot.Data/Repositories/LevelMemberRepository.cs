@@ -2,12 +2,12 @@
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class LevelMemberModelController : BaseConfigController<LevelMemberModel>
+public class LevelMemberRepository : BaseConfigController<LevelMemberModel>
 {
-    public LevelMemberModelController(IServiceProvider services)
+    public LevelMemberRepository(IServiceProvider services)
         : base(LevelMemberModel.CollectionName, services)
     {}
 

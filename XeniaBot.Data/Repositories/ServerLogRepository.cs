@@ -4,12 +4,12 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ServerLogConfigController : BaseConfigController<ServerLogModel>
+public class ServerLogRepository : BaseConfigController<ServerLogModel>
 {
-    public ServerLogConfigController(IServiceProvider services)
+    public ServerLogRepository(IServiceProvider services)
         : base("serverLogConfig", services)
     {
     }

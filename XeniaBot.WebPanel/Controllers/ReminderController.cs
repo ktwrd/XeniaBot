@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Controllers;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -21,7 +21,7 @@ public class ReminderController : BaseXeniaController
 
         var currentUserId = GetCurrentUserId();
         
-        var db = CoreContext.Instance?.GetRequiredService<ReminderConfigController>();
+        var db = CoreContext.Instance?.GetRequiredService<ReminderRepository>();
         if (currentUserId != null)
         {
             model.Reminders = await db.GetByUser((ulong)currentUserId);
@@ -65,7 +65,7 @@ public class ReminderController : BaseXeniaController
                 Message = "Please Login"
             });
 
-        var db = CoreContext.Instance?.GetRequiredService<ReminderConfigController>();
+        var db = CoreContext.Instance?.GetRequiredService<ReminderRepository>();
         var dbResult = await db.Get(id);
         if (dbResult == null || dbResult.HasReminded)
         {

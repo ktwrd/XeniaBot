@@ -4,12 +4,12 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Core.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ESixConfigController : BaseConfigController<ESixConfigModel>
+public class ESixConfigRepository : BaseConfigController<ESixConfigModel>
 {
-    public ESixConfigController(IServiceProvider services)
+    public ESixConfigRepository(IServiceProvider services)
         : base("esixGuildConfig", services)
     {
         

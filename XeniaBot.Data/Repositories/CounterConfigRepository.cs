@@ -3,14 +3,14 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class CounterConfigController : BaseConfigController<CounterGuildModel>
+public class CounterConfigRepository : BaseConfigController<CounterGuildModel>
 {
     public Dictionary<ulong, ulong> CachedItems { get; set; }
 
-    public CounterConfigController(IServiceProvider services)
+    public CounterConfigRepository(IServiceProvider services)
         : base("countingGuildModel", services)
     {
         CachedItems = new Dictionary<ulong, ulong>();

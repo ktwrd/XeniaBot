@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
@@ -18,14 +18,14 @@ public class ReminderService : BaseController
     private readonly CoreContext _core;
     private readonly ConfigData _configData;
     private readonly DiscordSocketClient _discordClient;
-    private readonly ReminderConfigController _reminderDb;
+    private readonly ReminderRepository _reminderDb;
     public ReminderService(IServiceProvider services)
         : base(services)
     {
         _core = services.GetRequiredService<CoreContext>();
         _configData = services.GetRequiredService<ConfigData>();
         _discordClient = services.GetRequiredService<DiscordSocketClient>();
-        _reminderDb = services.GetRequiredService<ReminderConfigController>();
+        _reminderDb = services.GetRequiredService<ReminderRepository>();
         CurrentReminders = new List<string>();
     }
     

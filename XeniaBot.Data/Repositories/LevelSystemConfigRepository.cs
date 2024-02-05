@@ -4,26 +4,26 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class LevelSystemGuildConfigController : BaseConfigController<LevelSystemGuildConfigModel>
+public class LevelSystemConfigRepository : BaseConfigController<LevelSystemConfigModel>
 {
-    public LevelSystemGuildConfigController(IServiceProvider services)
+    public LevelSystemConfigRepository(IServiceProvider services)
         : base("levelSystem_GuildConfig", services)
     {}
     
-    public async Task<LevelSystemGuildConfigModel?> Get(ulong guildId)
+    public async Task<LevelSystemConfigModel?> Get(ulong guildId)
     {
         var collection = GetCollection();
-        var filter = Builders<LevelSystemGuildConfigModel>
+        var filter = Builders<LevelSystemConfigModel>
             .Filter
             .Eq("GuildId", guildId);
 
         var result = await collection.FindAsync(filter);
         var first = await result.FirstOrDefaultAsync();
         if (first == null)
-            first = new LevelSystemGuildConfigModel()
+            first = new LevelSystemConfigModel()
             {
                 GuildId = guildId
             };
@@ -32,10 +32,10 @@ public class LevelSystemGuildConfigController : BaseConfigController<LevelSystem
         return first;
     }
 
-    public async Task Set(LevelSystemGuildConfigModel model)
+    public async Task Set(LevelSystemConfigModel model)
     {
         var collection = GetCollection();
-        var filter = Builders<LevelSystemGuildConfigModel>
+        var filter = Builders<LevelSystemConfigModel>
             .Filter
             .Eq("GuildId", model.GuildId);
 

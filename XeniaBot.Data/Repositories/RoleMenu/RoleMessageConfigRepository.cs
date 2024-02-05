@@ -9,13 +9,13 @@ using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 
-namespace XeniaBot.Data.Controllers.BotAdditions
+namespace XeniaBot.Data.Repositories
 {
     [XeniaController]
-    public class RoleMessageConfigController : BaseConfigController<RoleMessageConfigModel>
+    public class RoleMessageConfigRepository : BaseConfigController<RoleMessageConfigModel>
     {
         private IMongoDatabase _db;
-        public RoleMessageConfigController(IServiceProvider services)
+        public RoleMessageConfigRepository(IServiceProvider services)
             : base("roleMessageConfig", services)
         {
             _db = services.GetRequiredService<IMongoDatabase>();

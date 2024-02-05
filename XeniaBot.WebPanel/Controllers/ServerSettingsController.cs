@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
@@ -41,7 +41,7 @@ public partial class ServerController
                 message: $"Failed to save Counting settings. {e.Message}");
         }
 
-        var controller = Program.Core.GetRequiredService<CounterConfigController>();
+        var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
         var counterData = await controller.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = guild.Id,
@@ -82,7 +82,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<ServerLogConfigController>();
+            var controller = Program.Core.GetRequiredService<ServerLogRepository>();
             var currentConfig = await controller.Get(guild.Id) ?? new ServerLogModel()
             {
                 ServerId = guild.Id
@@ -123,7 +123,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
+            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
             var data = await controller.Get(id) ?? new RolePreserveGuildModel()
             {
                 GuildId = id
@@ -186,7 +186,7 @@ public partial class ServerController
         
         try
         {
-            var controller = Program.Core.GetRequiredService<GuildGreeterConfigController>();
+            var controller = Program.Core.GetRequiredService<GuildGreeterConfigRepository>();
             var data = await controller.GetLatest(id)
                 ?? new GuildGreeterConfigModel()
                 {
@@ -265,7 +265,7 @@ public partial class ServerController
         
         try
         {
-            var controller = Program.Core.GetRequiredService<GuildGreetByeConfigController>();
+            var controller = Program.Core.GetRequiredService<GuildGreetByeConfigRepository>();
             var data = await controller.GetLatest(id)
                 ?? new GuildByeGreeterConfigModel()
                 {

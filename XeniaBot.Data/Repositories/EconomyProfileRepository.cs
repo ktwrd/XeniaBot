@@ -4,12 +4,12 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class EconomyConfigController : BaseConfigController<EconProfileModel>
+public class EconomyProfileRepository : BaseConfigController<EconProfileModel>
 {
-    public EconomyConfigController(IServiceProvider services)
+    public EconomyProfileRepository(IServiceProvider services)
         : base("econData", services)
     {
     }

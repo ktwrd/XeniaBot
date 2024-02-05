@@ -2,19 +2,19 @@
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class GuildGreetByeConfigController : BaseConfigController<GuildByeGreeterConfigModel>
+public class GuildGreeterConfigRepository : BaseConfigController<GuildGreeterConfigModel>
 {
-    public GuildGreetByeConfigController(IServiceProvider services)
-        : base(GuildByeGreeterConfigModel.CollectionName, services)
+    public GuildGreeterConfigRepository(IServiceProvider services)
+        : base(GuildGreeterConfigModel.CollectionName, services)
     {}
 
-    public async Task<GuildByeGreeterConfigModel?> GetLatest(ulong guildId)
+    public async Task<GuildGreeterConfigModel?> GetLatest(ulong guildId)
     {
         var collection = GetCollection();
-        var filter = Builders<GuildByeGreeterConfigModel>
+        var filter = Builders<GuildGreeterConfigModel>
             .Filter
             .Eq("GuildId", guildId);
         var res = await collection.FindAsync(filter);
@@ -22,7 +22,7 @@ public class GuildGreetByeConfigController : BaseConfigController<GuildByeGreete
         return sorted.FirstOrDefault();
     }
 
-    public async Task Add(GuildByeGreeterConfigModel model)
+    public async Task Add(GuildGreeterConfigModel model)
     {
         model._id = default;
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

@@ -5,13 +5,13 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ConfessionConfigController : BaseConfigController<ConfessionGuildModel>
+public class ConfessionConfigRepository : BaseConfigController<ConfessionGuildModel>
 {
     private readonly DiscordSocketClient _client;
-    public ConfessionConfigController(IServiceProvider services)
+    public ConfessionConfigRepository(IServiceProvider services)
         : base("confesionGuildModel", services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();

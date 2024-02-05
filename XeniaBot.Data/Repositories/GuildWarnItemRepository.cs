@@ -2,12 +2,12 @@
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class GuildWarnItemConfigController : BaseConfigController<GuildWarnItemModel>
+public class GuildWarnItemRepository : BaseConfigController<GuildWarnItemModel>
 {
-    public GuildWarnItemConfigController(IServiceProvider services)
+    public GuildWarnItemRepository(IServiceProvider services)
         : base(GuildWarnItemModel.CollectionName, services)
     {}
 

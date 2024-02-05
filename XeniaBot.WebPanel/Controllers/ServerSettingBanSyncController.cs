@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Data;
+using XeniaBot.Data.Services;
 using XeniaBot.Shared.Controllers;
 using XeniaBot.WebPanel.Helpers;
 
@@ -23,7 +24,7 @@ public partial class ServerController
         if (guild == null)
             return View("NotFound", "Guild not found");
         
-        var controller = Program.Core.Services.GetRequiredService<BanSyncConfigController>();
+        var controller = Program.Core.Services.GetRequiredService<BanSyncConfigRepository>();
         var configData = await controller.Get(guild.Id) ?? new ConfigBanSyncModel()
         {
             GuildId = guild.Id
@@ -87,9 +88,9 @@ public partial class ServerController
                 // Request ban sync
                 try
                 {
-                    var dcon = Program.Core.Services.GetRequiredService<BanSyncController>();
+                    var dcon = Program.Core.Services.GetRequiredService<BanSyncService>();
                     if (dcon == null)
-                        throw new Exception($"Failed to get BanSyncController");
+                        throw new Exception($"Failed to get BanSyncService");
 
                     var res = await dcon.RequestGuildEnable(guild.Id);
                     return await Index(id,
@@ -131,7 +132,7 @@ public partial class ServerController
         }
         var channelId = (ulong)channelIdResult.ChannelId;
         
-        var controller = Program.Core.Services.GetRequiredService<BanSyncConfigController>();
+        var controller = Program.Core.Services.GetRequiredService<BanSyncConfigRepository>();
         var configData = await controller.Get(guild.Id) ?? new ConfigBanSyncModel()
         {
             GuildId = guild.Id,

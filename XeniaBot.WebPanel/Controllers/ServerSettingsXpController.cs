@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Controllers;
@@ -38,8 +38,8 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
-            var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
+            var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+            var data = await controller.Get(guild.Id) ?? new LevelSystemConfigModel()
             {
                 GuildId = guild.Id,
                 LevelUpChannel = targetChannelId,
@@ -89,8 +89,8 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
-            var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
+            var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+            var data = await controller.Get(guild.Id) ?? new LevelSystemConfigModel()
             {
                 GuildId = guild.Id,
             };
@@ -150,8 +150,8 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
-            var data = await controller.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
+            var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+            var data = await controller.Get(guild.Id) ?? new LevelSystemConfigModel()
             {
                 GuildId = guild.Id,
             };

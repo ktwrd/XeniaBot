@@ -10,16 +10,16 @@ using XeniaBot.Shared;
 using System.Diagnostics;
 using XeniaBot.Data.Models;
 
-namespace XeniaBot.Data.Controllers.BotAdditions
+namespace XeniaBot.Data.Repositories
 {
     [XeniaController]
-    public class BanSyncConfigController : BaseConfigController<ConfigBanSyncModel>
+    public class BanSyncConfigRepository : BaseConfigController<ConfigBanSyncModel>
     {
-        private readonly BanSyncStateHistoryConfigController _stateHistory;
-        public BanSyncConfigController(IServiceProvider services)
+        private readonly BanSyncStateHistoryRepository _stateHistory;
+        public BanSyncConfigRepository(IServiceProvider services)
             : base("banSyncGuildConfig", services)
         {
-            _stateHistory = services.GetRequiredService<BanSyncStateHistoryConfigController>();
+            _stateHistory = services.GetRequiredService<BanSyncStateHistoryRepository>();
         }
 
         public async Task<bool> Exists(ulong guildId)

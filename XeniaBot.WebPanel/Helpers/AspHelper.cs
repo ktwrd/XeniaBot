@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using Discord.WebSocket;
-using XeniaBot.Data.Controllers;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
+using XeniaBot.Data.Services;
 using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Models;
 
@@ -117,10 +117,10 @@ public static class AspHelper
         var guild = discord.GetGuild(serverId);
         data.Guild = guild;
         
-        var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoConfigController>();
+        var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoRepository>();
         data.BanSyncRecords = await banSyncRecordConfig.GetInfoAllInGuild(serverId);
 
-        var banSyncGuildConfig = Program.Core.GetRequiredService<BanSyncStateHistoryConfigController>();
+        var banSyncGuildConfig = Program.Core.GetRequiredService<BanSyncStateHistoryRepository>();
         data.BanSyncGuild = await banSyncGuildConfig.GetLatest(serverId) ?? new BanSyncStateHistoryItemModel()
         {
             GuildId = serverId
@@ -135,28 +135,28 @@ public static class AspHelper
         var guild = discord.GetGuild(serverId);
         data.Guild = guild;
 
-        var counterController = Program.Core.GetRequiredService<CounterConfigController>();
+        var counterController = Program.Core.GetRequiredService<CounterConfigRepository>();
         data.CounterConfig = await counterController.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = serverId
         };
 
-        var banSyncConfig = Program.Core.GetRequiredService<BanSyncConfigController>();
+        var banSyncConfig = Program.Core.GetRequiredService<BanSyncConfigRepository>();
         data.BanSyncConfig = await banSyncConfig.Get(guild.Id) ?? new ConfigBanSyncModel()
         {
             GuildId = guild.Id
         };
 
-        var banSyncStateHistory = Program.Core.GetRequiredService<BanSyncStateHistoryConfigController>();
+        var banSyncStateHistory = Program.Core.GetRequiredService<BanSyncStateHistoryRepository>();
         data.BanSyncStateHistory = await banSyncStateHistory.GetMany(guild.Id) ?? Array.Empty<BanSyncStateHistoryItemModel>();
 
-        var xpConfig = Program.Core.GetRequiredService<LevelSystemGuildConfigController>();
-        data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemGuildConfigModel()
+        var xpConfig = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+        data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemConfigModel()
         {
             GuildId = guild.Id
         };
 
-        var logConfig = Program.Core.GetRequiredService<ServerLogConfigController>();
+        var logConfig = Program.Core.GetRequiredService<ServerLogRepository>();
         data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
         {
             ServerId = guild.Id
@@ -170,24 +170,24 @@ public static class AspHelper
         }
         data.UsersWhoCanAccess = membersWhoCanAccess;
 
-        var greeterConfig = Program.Core.GetRequiredService<GuildGreeterConfigController>();
+        var greeterConfig = Program.Core.GetRequiredService<GuildGreeterConfigRepository>();
         data.GreeterConfig = await greeterConfig.GetLatest(guild.Id)
             ?? new GuildGreeterConfigModel()
             {
                 GuildId = guild.Id
             };
 
-        var greeterGoodbyeConfig = Program.Core.GetRequiredService<GuildGreetByeConfigController>();
+        var greeterGoodbyeConfig = Program.Core.GetRequiredService<GuildGreetByeConfigRepository>();
         data.GreeterGoodbyeConfig = await greeterGoodbyeConfig.GetLatest(guild.Id)
             ?? new GuildByeGreeterConfigModel()
             {
                 GuildId = guild.Id
             };
 
-        var warnConfig = Program.Core.GetRequiredService<GuildWarnItemConfigController>();
+        var warnConfig = Program.Core.GetRequiredService<GuildWarnItemRepository>();
         data.WarnItems = await warnConfig.GetLatestGuildItems(guild.Id) ?? new List<GuildWarnItemModel>();
 
-        var rolePreserveConfig = Program.Core.GetRequiredService<RolePreserveGuildConfigController>();
+        var rolePreserveConfig = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
         data.RolePreserve = await rolePreserveConfig.Get(guild.Id) ?? new RolePreserveGuildModel()
         {
             GuildId = guild.Id

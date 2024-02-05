@@ -3,12 +3,12 @@ using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using System.Linq;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class BanSyncStateHistoryConfigController : BaseConfigController<BanSyncStateHistoryItemModel>
+public class BanSyncStateHistoryRepository : BaseConfigController<BanSyncStateHistoryItemModel>
 {
-    public BanSyncStateHistoryConfigController(IServiceProvider services)
+    public BanSyncStateHistoryRepository(IServiceProvider services)
         : base(BanSyncStateHistoryItemModel.CollectionName, services)
     {}
 

@@ -2,12 +2,12 @@
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class RolePreserveGuildConfigController : BaseConfigController<RolePreserveGuildModel>
+public class RolePreserveGuildRepository : BaseConfigController<RolePreserveGuildModel>
 {
-    public RolePreserveGuildConfigController(IServiceProvider services)
+    public RolePreserveGuildRepository(IServiceProvider services)
         : base(RolePreserveGuildModel.CollectionName, services)
     {}
 

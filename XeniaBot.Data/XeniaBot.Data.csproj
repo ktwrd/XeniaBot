@@ -13,4 +13,8 @@
       <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Controllers\BotAdditions\" />
+    </ItemGroup>
+
 </Project>

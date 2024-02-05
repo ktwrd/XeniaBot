@@ -2,12 +2,12 @@
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class UserConfigController : BaseConfigController<UserConfigModel>
+public class UserConfigRepository : BaseConfigController<UserConfigModel>
 {
-    public UserConfigController(IServiceProvider services)
+    public UserConfigRepository(IServiceProvider services)
         : base(UserConfigModel.CollectionName, services)
     {
     }

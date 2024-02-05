@@ -4,12 +4,12 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class ReminderConfigController : BaseConfigController<ReminderModel>
+public class ReminderRepository : BaseConfigController<ReminderModel>
 {
-    public ReminderConfigController(IServiceProvider services)
+    public ReminderRepository(IServiceProvider services)
         : base("reminderConfig", services)
     {
     }

@@ -7,12 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 
-namespace XeniaBot.Data.Controllers.BotAdditions
+namespace XeniaBot.Data.Repositories
 {
     [XeniaController]
-    public class RoleConfigController : BaseConfigController<RoleConfigModel>
+    public class RoleConfigRepository : BaseConfigController<RoleConfigModel>
     {
-        public RoleConfigController(IServiceProvider services)
+        public RoleConfigRepository(IServiceProvider services)
             : base("roleConfig", services)
         {
         }

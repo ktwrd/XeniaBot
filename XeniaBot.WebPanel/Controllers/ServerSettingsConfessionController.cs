@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Controllers.BotAdditions;
+using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared.Controllers;
 
@@ -43,7 +43,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
             var data = await controller.GetGuild(id) ??
                        new ConfessionGuildModel()
                        {
@@ -88,7 +88,7 @@ public partial class ServerController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<ConfessionConfigController>();
+            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
             var data = await controller.GetGuild(id)
                 ?? new ConfessionGuildModel()
                 {

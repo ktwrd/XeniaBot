@@ -8,23 +8,21 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using XeniaBot.Data.Controllers;
-using XeniaBot.Data.Controllers.BotAdditions;
 using XeniaBot.Data.Models;
 
-namespace XeniaBot.Data.Controllers.BotAdditions;
+namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class BanSyncInfoConfigController : BaseConfigController<BanSyncInfoModel>
+public class BanSyncInfoRepository : BaseConfigController<BanSyncInfoModel>
 {
     private readonly DiscordSocketClient _discord;
-    private readonly BanSyncStateHistoryConfigController _banSyncStateController;
+    private readonly BanSyncStateHistoryRepository _banSyncStateController;
 
-    public BanSyncInfoConfigController(IServiceProvider services)
-        : base("banSyncInfo", services)
+    public BanSyncInfoRepository(IServiceProvider services)
+        : base(BanSyncInfoModel.CollectionName, services)
     {
         _discord = services.GetRequiredService<DiscordSocketClient>();
-        _banSyncStateController = services.GetRequiredService<BanSyncStateHistoryConfigController>();
+        _banSyncStateController = services.GetRequiredService<BanSyncStateHistoryRepository>();
     }
     protected async Task<ICollection<BanSyncInfoModel>> BaseInfoFind(FilterDefinition<BanSyncInfoModel> data)
     {
