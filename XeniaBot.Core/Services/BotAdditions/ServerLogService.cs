@@ -13,6 +13,7 @@ using XeniaBot.Data.Models.Archival;
 using XeniaBot.Data.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -22,12 +23,14 @@ public class ServerLogService : BaseService
     private readonly ServerLogRepository _config;
     private readonly DiscordSocketClient _discord;
     private readonly DiscordCacheService _discordCache;
+    private readonly ErrorReportService _errorService;
     public ServerLogService(IServiceProvider services)
         : base(services)
     {
         _config = services.GetRequiredService<ServerLogRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
+        _errorService = services.GetRequiredService<ErrorReportService>();
     }
 
     public override Task InitializeAsync()
@@ -100,23 +103,23 @@ public class ServerLogService : BaseService
     }
     internal async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed, string? attachmentContent = null, string? attachmentName = null)
     {
-        var data = await _config.Get(serverId);
-
-        // Server not setup for logs, aborting.
-        if (data == null)
-            return;
-
-        var targetChannel = selectChannel(data) ?? data.DefaultLogChannel;
-        if (targetChannel == null || targetChannel == 0)
-            return;
-
-        var server = _discord.GetGuild(serverId);
-        var logChannel = server.GetTextChannel(targetChannel);
-        if (logChannel == null)
-            return;
-
         try
         {
+            var data = await _config.Get(serverId);
+
+            // Server not setup for logs, aborting.
+            if (data == null)
+                return;
+
+            var targetChannel = selectChannel(data) ?? data.DefaultLogChannel;
+            if (targetChannel == null || targetChannel == 0)
+                return;
+
+            var server = _discord.GetGuild(serverId);
+            var logChannel = server.GetTextChannel(targetChannel);
+            if (logChannel == null)
+                return;
+
             if (attachmentContent == null)
             {
                 await logChannel.SendMessageAsync(embed: embed.Build());
@@ -152,47 +155,67 @@ public class ServerLogService : BaseService
     #region User Events
     private async Task Event_UserJoined(SocketGuildUser user)
     {
-        var userSafe = user.Username.Replace("`", "\\`");
-        var embed = new EmbedBuilder()
-            .WithTitle("User Joined")
-            .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
-            {
-                "```",
-                $"{userSafe}#{user.Discriminator}",
-                $"ID: {user.Id}",
-                "```",
-            }))
-            .AddField("Account Age", string.Join("\n", new string[]
-            {
-                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                $"`{user.CreatedAt}`"
-            }))
-            .WithThumbnailUrl(user.GetAvatarUrl())
-            .WithColor(Color.Green);
+        try
+        {
+            var userSafe = user.Username.Replace("`", "\\`");
+            var embed = new EmbedBuilder()
+                .WithTitle("User Joined")
+                .WithDescription(
+                    $"<@{user.Id}>" +
+                    string.Join(
+                        "\n", new string[]
+                        {
+                            "```", $"{userSafe}#{user.Discriminator}", $"ID: {user.Id}", "```",
+                        }))
+                .AddField(
+                    "Account Age", string.Join(
+                        "\n", new string[]
+                        {
+                            TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()), $"`{user.CreatedAt}`"
+                        }))
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .WithColor(Color.Green);
 
-        await EventHandle(user.Guild.Id, (v) => v.MemberJoinChannel, embed);
+            await EventHandle(user.Guild.Id, (v) => v.MemberJoinChannel, embed);
+        }
+        catch (Exception ex)
+        {
+            await _errorService.ReportException(
+                ex,
+                $"Failed to run Event_UserJoined on {user} ({user.Id}) in guild {user.Guild.Name} ({user.Guild.Id})");
+        }
     }
     private async Task Event_UserLeave(SocketGuild guild, SocketUser user)
     {
-        var userSafe = user.Username.Replace("`", "\\`");
-        var embed = new EmbedBuilder()
-            .WithTitle("User Left")
-            .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
-            {
-                "```",
-                $"{userSafe}#{user.Discriminator}",
-                $"ID: {user.Id}",
-                "```",
-            }))
-            .AddField("Account Age", string.Join("\n", new string[]
-            {
-                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                $"`{user.CreatedAt}`"
-            }))
-            .WithThumbnailUrl(user.GetAvatarUrl())
-            .WithColor(Color.Red);
+        try
+        {
+            var userSafe = user.Username.Replace("`", "\\`");
+            var embed = new EmbedBuilder()
+                .WithTitle("User Left")
+                .WithDescription(
+                    $"<@{user.Id}>" +
+                    string.Join(
+                        "\n", new string[]
+                        {
+                            "```", $"{userSafe}#{user.Discriminator}", $"ID: {user.Id}", "```",
+                        }))
+                .AddField(
+                    "Account Age", string.Join(
+                        "\n", new string[]
+                        {
+                            TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()), $"`{user.CreatedAt}`"
+                        }))
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .WithColor(Color.Red);
 
-        await EventHandle(guild.Id, (v) => v.MemberLeaveChannel, embed);
+            await EventHandle(guild.Id, (v) => v.MemberLeaveChannel, embed);
+        }
+        catch (Exception ex)
+        {
+            await _errorService.ReportException(
+                ex,
+                $"Failed to run Event_UserLeave on {user} ({user.Id}) in guild {guild.Name} ({guild.Id})");
+        }
     }
 
     private async Task Event_UserBan(SocketUser user, SocketGuild guild)
@@ -225,7 +248,7 @@ public class ServerLogService : BaseService
         catch (Exception ex)
         {
             Log.Error("Failed to run.", ex);
-            await DiscordHelper.ReportError(
+            await _errorService.ReportException(
                 ex,
                 $"Failed run ServerLogService.Event_UserBan.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
         }
@@ -234,7 +257,6 @@ public class ServerLogService : BaseService
     {
         try
         {
-            
             var userSafe = user.Username.Replace("`", "\\`");
             var embed = new EmbedBuilder()
                 .WithTitle("User Unbanned")
@@ -258,7 +280,7 @@ public class ServerLogService : BaseService
         catch (Exception ex)
         {
             Log.Error("Failed to run.", ex);
-            await DiscordHelper.ReportError(
+            await _errorService.ReportException(
                 ex,
                 $"Failed run ServerLogService.Event_UserBanRemove.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
         }
@@ -309,7 +331,7 @@ public class ServerLogService : BaseService
                         $"MessageId: {message.Value?.Id ?? 0}"
                     });
             Log.Error(msg, ex);
-            await DiscordHelper.ReportError(
+            await _errorService.ReportException(
                 ex,
                 msg);
         }
@@ -361,7 +383,7 @@ public class ServerLogService : BaseService
                     $"MessageId: {currentMessage?.Id ?? 0}"
                 });
             Log.Error(msg, ex);
-            await DiscordHelper.ReportError(
+            await _errorService.ReportException(
                 ex,
                 msg);
         }
