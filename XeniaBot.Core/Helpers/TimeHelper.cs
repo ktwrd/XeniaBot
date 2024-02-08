@@ -80,7 +80,8 @@ public static class TimeHelper
         if (result.Days < 0)
         {
             result.Months -= 1;
-            result.Days += DateTime.DaysInMonth(d1.Year, d1.Month + 1);
+            var remainder = Math.Floor(d1.Month / 12f);
+            result.Days += DateTime.DaysInMonth((int)(d1.Year + remainder), (d1.Month + 1) % 12);
         }
 
         // If the month difference is negative
