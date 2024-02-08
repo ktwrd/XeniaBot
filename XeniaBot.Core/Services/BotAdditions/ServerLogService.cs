@@ -103,22 +103,22 @@ public class ServerLogService : BaseService
     }
     internal async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed, string? attachmentContent = null, string? attachmentName = null)
     {
+        var data = await _config.Get(serverId);
+
+        // Server not setup for logs, aborting.
+        if (data == null)
+            return;
+
+        var targetChannel = selectChannel(data) ?? data.DefaultLogChannel;
+        if (targetChannel == null || targetChannel == 0)
+            return;
+
+        var server = _discord.GetGuild(serverId);
+        var logChannel = server.GetTextChannel(targetChannel);
+        if (logChannel == null)
+            return;
         try
         {
-            var data = await _config.Get(serverId);
-
-            // Server not setup for logs, aborting.
-            if (data == null)
-                return;
-
-            var targetChannel = selectChannel(data) ?? data.DefaultLogChannel;
-            if (targetChannel == null || targetChannel == 0)
-                return;
-
-            var server = _discord.GetGuild(serverId);
-            var logChannel = server.GetTextChannel(targetChannel);
-            if (logChannel == null)
-                return;
 
             if (attachmentContent == null)
             {
