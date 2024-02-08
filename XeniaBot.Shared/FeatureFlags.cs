@@ -76,6 +76,14 @@ public static class FeatureFlags
     /// Change console text/background color on logging.
     /// </summary>
     public static bool EnableLogColor => ParseBool("LOG_COLOR", true);
+
+    /// <summary>
+    /// Key: LOG_TS
+    /// Default: true
+    ///
+    /// Show timestamp in log entry.
+    /// </summary>
+    public static bool EnableLogTimestamp => ParseBool("LOG_TS", true);
     
     /// <summary>
     /// Key: DATA_DIR

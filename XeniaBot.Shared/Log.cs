@@ -148,7 +148,7 @@ public static class Log
     public static string NotePrefix = "[NOTE]";
     public static string TracePrefix = "[TRCE]";
     public static bool ShowMethodName = true;
-    public static bool ShowTimestamp = false;
+    public static bool ShowTimestamp => FeatureFlags.EnableLogTimestamp;
 
     public static void Warn(string content, [CallerMemberName] string methodname = null,
         [CallerFilePath] string methodfile = null)
