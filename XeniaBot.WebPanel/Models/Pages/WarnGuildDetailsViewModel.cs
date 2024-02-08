@@ -18,4 +18,19 @@ public class WarnGuildDetailsViewModel : BaseViewModel, IBaseServerModel
     public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }
     public ICollection<GuildWarnItemModel> WarnItems { get; set; }
     public RolePreserveGuildModel RolePreserve { get; set; }
+
+    public bool EnableNewerThanFilter { get; set; } = false;
+
+    /// <summary>
+    /// YYYY/MM/DD
+    /// </summary>
+    public string NewerThanDate { get; set; }
+
+    public WarnGuildDetailsViewModel()
+        : base()
+    {
+        var now = DateTimeOffset.UtcNow;
+        now = now.AddMonths(-1);
+        NewerThanDate = $"{now.Year}/{now.Month}/{now.Day}";
+    }
 }
