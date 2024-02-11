@@ -74,6 +74,11 @@ public static class AspHelper
         return v;
     }
 
+    public static string GetUserProfilePicture(SocketGuildUser guildUser)
+    {
+        return guildUser.GetGuildAvatarUrl() ?? GetUserProfilePicture(guildUser.Id);
+    }
+
     public static string GetGuildImage(ulong guildId)
     {
         var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
