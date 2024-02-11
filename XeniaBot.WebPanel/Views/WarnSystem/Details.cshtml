@@ -7,13 +7,16 @@
     Layout = "_Layout";
 }
 
-<div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark mb-2">
-    <img class="me-3 rounded-circle mr-3" src="@(Model.Guild.IconUrl ?? "/DebugEmpty.png")" alt="" width="48" height="48">
-    <div class="lh-1">
-        <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
-        <small>@Model.Guild.MemberCount members &bull; @Model.WarnItems.Count warns</small>
-    </div>
-</div>
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
+new List<BreadcrumbItem>()
+{
+    new BreadcrumbItem("Servers", "Server", "List"),
+    new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+    {
+        {"id", Model.Guild.Id.ToString()}
+    }),
+    new BreadcrumbItem("Warns")
+}))
 
 <a class="btn btn-outline-primary btn-sm mb-2" asp-area="" asp-route-id="@Model.Guild.Id" asp-controller="Server" asp-action="Index">Go Back</a>
 <form id="apply_filter" enctype="application/x-www-form-urlencoded" method="post" asp-controller="WarnSystem" asp-action="GuildWarns" asp-route-id="@Model.Guild.Id">

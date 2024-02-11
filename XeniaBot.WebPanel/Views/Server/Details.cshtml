@@ -6,7 +6,6 @@
     Layout = "_Layout";
 }
 
-@await Component.InvokeAsync("GuildBanner", @Model.Guild.Id)
     
 <div class="card mt-2">
     <div class="card-header p-0 border-0">
@@ -19,6 +18,12 @@
                 <a class="nav-item nav-link" id="nav-greeter-tab" data-toggle="tab" href="#nav-greeter" role="tab" aria-controls="nav-greeter" aria-selected="false">Greeter</a>
                 <a class="nav-item nav-link mr-4" id="nav-greeter-bye-tab" data-toggle="tab" href="#nav-greeter-bye" role="tab" aria-controls="nav-greeter-bye" aria-selected="false">Leave Greeter</a>
                 <a class="nav-item nav-link" aria-selected="false" asp-action="GuildWarns" asp-controller="WarnSystem" asp-route-id="@Model.Guild.Id">Warns</a>
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
+new List<BreadcrumbItem>()
+{
+    new BreadcrumbItem("Servers", "Server", "List"),
+    new BreadcrumbItem(Model.Guild.Name)
+}))
             </div>
         </nav>
     </div>

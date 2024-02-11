@@ -4,13 +4,19 @@ using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.ViewComponents;
 
+
 public class GuildBannerViewComponent : ViewComponent
 {
-    public async Task<IViewComponentResult> InvokeAsync(ulong guildId)
+    public async Task<IViewComponentResult> InvokeAsync(GuildBannerViewParameters param)
     {
         var client = Program.Core.GetRequiredService<DiscordSocketClient>();
-        var guild = client.GetGuild(guildId);
+        var guild = client.GetGuild(param.GuildId);
         var data = StrippedGuild.FromGuild(guild);
-        return View("Default", data);
+        var model = new GuildBannerViewModel()
+        {
+            Guild = data,
+            Parameters = param
+        };
+        return View("Default", model);
     }
 }

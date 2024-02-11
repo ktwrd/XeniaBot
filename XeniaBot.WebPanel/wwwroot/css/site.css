@@ -46,3 +46,14 @@ body {
     width: initial !important;
     border-radius: 50%;
 }
+
+[role=enable-breadcrumb] .guildBanner {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+[role=enable-breadcrumb] ol.breadcrumb {
+    padding-top: 0;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+}
