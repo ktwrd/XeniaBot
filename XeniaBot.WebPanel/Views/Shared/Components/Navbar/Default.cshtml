@@ -14,13 +14,7 @@
                     <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="https://github.com/ktwrd/xeniabot">Github</a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Vote">Vote</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-dark" href="https://ktwrd.github.io/XeniaBot">About</a>
                 </li>
                 
                 @if (User?.Identity?.IsAuthenticated ?? false)
