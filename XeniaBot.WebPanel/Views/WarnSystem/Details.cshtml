@@ -19,13 +19,16 @@ new List<BreadcrumbItem>()
 }))
 
 <a class="btn btn-outline-primary btn-sm mb-2" asp-area="" asp-route-id="@Model.Guild.Id" asp-controller="Server" asp-action="Index">Go Back</a>
-<form id="apply_filter" enctype="application/x-www-form-urlencoded" method="post" asp-controller="WarnSystem" asp-action="GuildWarns" asp-route-id="@Model.Guild.Id">
-    <div class="form-group form-inline">
-        <input class="form-check-input" type="checkbox" value="" id="newer_than_enable" @(Model.EnableNewerThanFilter ? "checked" : "") />
-        <label class="form-check-label mr-2" for="newer_than">Filter Results Newer than</label>
-        <input class="form-control form-control-sm" type="text" id="newer_than" value="@Model.NewerThanDate" />
-    </div>
-</form>
+@* <form id="apply_filter" enctype="application/x-www-form-urlencoded" method="get" asp-controller="WarnSystem" asp-action="GuildWarns" asp-route-id="@Model.Guild.Id"> *@
+@*     <div class="form-group form-inline"> *@
+@*         <input class="form-check-input" type="checkbox" value="" name="newer_than_enable" @(Model.EnableNewerThanFilter ? "checked" : "") /> *@
+@*         <label class="form-check-label mr-2" for="newer_than">Filter Results Newer than</label> *@
+@*         <input class="form-control form-control-sm" type="text" id="newer_than" name="newer_than" value="@Model.NewerThanDate" /> *@
+@*         <button class="ml-3 btn btn-sm btn-success" type="submit"> *@
+@*             <i class="bi bi-check"></i> *@
+@*         </button> *@
+@*     </div> *@
+@* </form> *@
 
 @if (!@Model.WarnItems.Any())
 {
@@ -79,7 +82,7 @@ else
                         </code>
                     </td>
                     <td>
-                        <a class="btn btn-secondary" asp-area="" asp-route-id="@item.WarnId" asp-controller="WarnSystem" asp-action="WarnInfo"></a>
+                        <a class="btn btn-secondary btn-sm" asp-area="" asp-route-id="@item.WarnId" asp-controller="WarnSystem" asp-action="WarnInfo"><i class="bi bi-info"></i></a>
                     </td>
                 </tr>
             }
