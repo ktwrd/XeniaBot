@@ -1,0 +1,80 @@
+﻿@using XeniaBot.Data.Models
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using XeniaBot.WebPanel.Components;
+@using Discord.WebSocket
+@using kate.shared.Helpers
+@using XeniaBot.Shared.Helpers
+@using XeniaBot.WebPanel.Models
+@model ServerDetailsViewModel
+
+
+<form id="log_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_LogSystem" asp-route-id="@Model.Guild.Id">
+    <div class="row">
+        <div class="col">
+            <div class="input-group mb-3">
+                @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+                {
+                    Channels = StrippedChannel.FromGuild(@Model.Guild),
+                    Categories = StrippedCategory.FromGuild(@Model.Guild),
+                    SelectedChannelId = @Model.LogConfig.DefaultLogChannel,
+                    ParentFormId = "log_settings",
+                    Name = "DefaultLogChannel",
+                    Id = "log_settings_channel_default",
+                    DisplayName = "Default"
+                })
+            </div>
+            @foreach (var item in GeneralHelper.GetEnumList<ServerLogEvent>().Where((v, i) => i < 7))
+            {
+                if (item == ServerLogEvent.Fallback)
+                    continue;
+                <div class="input-group mb-3">
+                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+                       {
+                           Channels = @Model.Guild.Channels.Select((v) =>
+                           {
+                               return new StrippedChannel()
+                               {
+                                   Id = v.Id,
+                                   Name = v.Name
+                               };
+                           }),
+                           Categories = StrippedCategory.FromGuild(@Model.Guild),
+                           SelectedChannelId = @Model.LogConfig.GetChannel(item),
+                           ParentFormId = "log_settings",
+                           Name = $"{item}Channel",
+                           Id = $"log_settings_channel_{item}",
+                           DisplayName = XeniaHelper.FormatPascalCase(item.ToString())
+                       })
+                </div>
+            }
+        </div>
+        <div class="col">
+            @foreach (var item in GeneralHelper.GetEnumList<ServerLogEvent>().Where((v, i) => i > 6))
+            {
+                if (item == ServerLogEvent.Fallback)
+                    continue;
+                <div class="input-group mb-3">
+                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+                       {
+                           Channels = @Model.Guild.Channels.Select((v) =>
+                           {
+                               return new StrippedChannel()
+                               {
+                                   Id = v.Id,
+                                   Name = v.Name
+                               };
+                           }),
+                           Categories = StrippedCategory.FromGuild(@Model.Guild),
+                           SelectedChannelId = @Model.LogConfig.GetChannel(item),
+                           ParentFormId = "log_settings",
+                           Name = $"{item}Channel",
+                           Id = $"log_settings_channel_{item}",
+                           DisplayName = XeniaHelper.FormatPascalCase(item.ToString())
+                       })
+                </div>
+            }
+        </div>
+    </div>
+    <hr/>
+    <input type="submit" class="btn btn-success" value="Save"></input>
+</form>

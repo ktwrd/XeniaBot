@@ -30,29 +30,29 @@ public partial class ServerController
             channelId = ulong.Parse(inputChannelId ?? "0");
             if (channelId == null)
                 throw new Exception("ChannelId is null");
+            
+            var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
+            var counterData = await controller.Get(guild) ?? new CounterGuildModel()
+            {
+                GuildId = guild.Id,
+                ChannelId = (ulong)channelId
+            };
+            counterData.ChannelId = (ulong)channelId;
+            await controller.Set(counterData);
+
+            return await CountingView(id,
+                messageType: "success",
+                message: $"Saved settings.");
         }
         catch (Exception e)
         {
             Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save counter settings");
             Log.Error(e);
-            return await Index(id,
+            return await CountingView(id,
                 messageType: "danger",
                 message: $"Failed to save Counting settings. {e.Message}");
         }
-
-        var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
-        var counterData = await controller.Get(guild) ?? new CounterGuildModel()
-        {
-            GuildId = guild.Id,
-            ChannelId = (ulong)channelId
-        };
-        counterData.ChannelId = (ulong)channelId;
-        await controller.Set(counterData);
-
-        return await Index(id,
-            messageType: "success",
-            message: $"Counting settings saved");
     }
 
     public class SettingLogSystemData
@@ -105,12 +105,12 @@ public partial class ServerController
             Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save logging settings");
             Log.Error($"Failed to save logging settings. \n{e}");
-            return await Index(id,
+            return await ModerationView(id,
                 messageType: "danger",
                 message: $"Failed to save Logging settings. {e.Message}");
         }
         
-        return await Index(id,
+        return await ModerationView(id,
             messageType: "success",
             message: $"Logging settings saved");
     }
@@ -132,7 +132,7 @@ public partial class ServerController
             data.Enable = enable;
             await controller.Set(data);
 
-            return await Index(
+            return await ModerationView(
                 id, messageType: "success", message: $"Role Preserve " + (enable ? "Enabled" : "Disabled"));
         }
         catch (Exception ex)
@@ -140,7 +140,7 @@ public partial class ServerController
             Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to save role preserve settings");
             Log.Error($"Failed to save role preserve settings\n{ex}");
-            return await Index(id,
+            return await ModerationView(id,
                 messageType: "danger",
                 message: $"Failed to save Role Preserve settings. {ex.Message}");
         }
@@ -149,17 +149,19 @@ public partial class ServerController
     [HttpPost("~/Server/{id}/Settings/Greeter")]
     public async Task<IActionResult> SaveSettings_Greeter(
         ulong id,
-        bool inputMentionUser,
-        string? inputChannelId,
-        string? inputTitle,
-        string? inputDescription,
-        string? inputImgUrl,
-        string? inputThumbUrl,
-        string? inputFooterText,
-        string? inputFooterImgUrl,
-        string? inputAuthorText,
-        string? inputAuthorImgUrl,
-        string? inputColor)
+        bool inputMentionUser = false,
+        string? inputChannelId = null,
+        string? inputTitle = null,
+        string? inputDescription = null,
+        string? inputImgUrl = null,
+        string? inputThumbUrl = null,
+        string? inputFooterText = null,
+        string? inputFooterImgUrl = null,
+        string? inputAuthorText = null,
+        string? inputAuthorImgUrl = null,
+        string? inputColor = null,
+        string? messageType = null,
+        string? message = null)
     {
         if (!CanAccess(id))
             return View("NotAuthorized");
@@ -178,9 +180,9 @@ public partial class ServerController
             }
             catch (Exception e)
             {
-                return await Index(id,
+                return await GreeterJoinView(id,
                     messageType: "danger",
-                    message: $"Failed to save Greeter settings. {e.Message}");
+                    message: $"Failed to parse Channel Id. {e.Message}");
             }
         }
         
@@ -208,7 +210,7 @@ public partial class ServerController
                 data.ChannelId = targetChannelId;
             await controller.Add(data);
         
-            return await Index(id,
+            return await GreeterJoinView(id,
                 messageType: "success",
                 message: $"Greeter settings saved");
         }
@@ -217,9 +219,9 @@ public partial class ServerController
             Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save greeter settings");
             Log.Error($"Failed to save greeter settings\n{e}");
-            return await Index(id,
+            return await GreeterJoinView(id,
                 messageType: "danger",
-                message: $"Failed to save Greeter settings. {e.Message}");
+                message: $"Failed to save. {e.Message}");
         }
     }
 
@@ -257,9 +259,9 @@ public partial class ServerController
             {
                 Program.Core.GetRequiredService<ErrorReportService>()
                     .ReportException(e, $"Failed to save goodbye settings");
-                return await Index(id,
+                return await GreeterLeaveView(id,
                     messageType: "danger",
-                    message: $"Failed to save Greeter Goodbye settings. {e.Message}");
+                    message: $"Failed to parse Channel Id. {e.Message}");
             }
         }
         
@@ -287,18 +289,18 @@ public partial class ServerController
                 data.ChannelId = targetChannelId;
             await controller.Add(data);
         
-            return await Index(id,
+            return await GreeterLeaveView(id,
                 messageType: "success",
-                message: $"Greeter Goodbye settings saved");
+                message: $"Settings Saved");
         }
         catch (Exception e)
         {
             Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save goodbye settings");
             Log.Error($"Failed to save greeter goodbye settings\n{e}");
-            return await Index(id,
+            return await GreeterLeaveView(id,
                 messageType: "danger",
-                message: $"Failed to save Greeter Goodbye settings. {e.Message}");
+                message: $"Failed to save settings. {e.Message}");
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿@using XeniaBot.Data.Models
+@using XeniaBot.WebPanel.Helpers
 @model ServerDetailsViewModel
 
 @{
@@ -6,67 +7,114 @@
     Layout = "_Layout";
 }
 
-    
-<div class="card mt-2">
-    <div class="card-header p-0 border-0">
-        <nav>
-            <div class="nav nav-tabs pt-2 px-2" id="server-details-nav-tab" role="tablist">
-                <a class="nav-item nav-link active" id="nav-details-tab" data-toggle="tab" href="#nav-details" role="tab" aria-controls="nav-details" aria-selected="true">Details</a>
-                <a class="nav-item nav-link" id="nav-mod-tab" data-toggle="tab" href="#nav-mod" role="tab" aria-controls="nav-mod" aria-selected="false">Moderation</a>
-                <a class="nav-item nav-link" id="nav-fun-tab" data-toggle="tab" href="#nav-fun" role="tab" aria-controls="nav-fun" aria-selected="false">Fun</a>
-                <a class="nav-item nav-link mr-4" id="nav-levelsys-tab" data-toggle="tab" href="#nav-levelsys" role="tab" aria-controls="nav-levelsys" aria-selected="false">Level System</a>
-                <a class="nav-item nav-link" id="nav-greeter-tab" data-toggle="tab" href="#nav-greeter" role="tab" aria-controls="nav-greeter" aria-selected="false">Greeter</a>
-                <a class="nav-item nav-link mr-4" id="nav-greeter-bye-tab" data-toggle="tab" href="#nav-greeter-bye" role="tab" aria-controls="nav-greeter-bye" aria-selected="false">Leave Greeter</a>
-                <a class="nav-item nav-link" aria-selected="false" asp-action="GuildWarns" asp-controller="WarnSystem" asp-route-id="@Model.Guild.Id">Warns</a>
 @await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
 new List<BreadcrumbItem>()
 {
     new BreadcrumbItem("Servers", "Server", "List"),
     new BreadcrumbItem(Model.Guild.Name)
 }))
-            </div>
-        </nav>
-    </div>
-    <div class="card-body">
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-details" role="tabpanel" aria-labelledby="nav-details-tab">
-                <h5>Use the tabs above to change your server settings.</h5>
                 
-                <div class="row d-flex flex-row">
-                    <div class="m-1 col-auto">
-                        <div class="card">
-                            <div class="card-header card-header-sm">
-                                <i class="bi bi-question-circle" style="color: var(--dark)"></i>
-                                Who can access this dashboard?
-                            </div>
-                            <div class="card-body p-0">
-                                <ul class="list-group m-1">
-                                    @foreach (var user in @Model.UsersWhoCanAccess)
-                                    {
-                                        <li class="list-group-item">
-                                            <img src="@(user.GetGuildAvatarUrl() ?? user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())" height="32" width="32" class="rounded-circle mx-2"/> @user.Username
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+<div class="row d-flex flex-row">
+    <div class="m-1 col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm">
+                <i class="bi bi-question-circle" style="color: var(--dark)"></i>
+                Who can access this dashboard?
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group m-1">
+                    @foreach (var user in @Model.UsersWhoCanAccess)
+                    {
+                        <li class="list-group-item">
+                            <img src="@AspHelper.GetUserProfilePicture(user)" height="32" width="32" class="rounded-circle mx-2"/> @user.DisplayName
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<hr/>
+<h3>Modules</h3>
+<div class="row d-flex flex-row">
+    <div class="m-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                Moderation
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group">
+                    <li class="list-group-item">@await Model.Guild.GetBansAsync().CountAsync() bans registered</li>
+                    <li class="list-group-item">@Model.WarnItems.Count warns stored</li>
+                    <li class="list-group-item">
+                        @if (@Model.BanSyncConfig.Enable)
+                        {
+                            <i class="bi bi-check-circle" style="color: var(--green);"></i> <span>BanSync Enabled</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-x-circle" style="color: var(--red);"></i> <span>BanSync Disabled</span>
+                        }
+                    </li>
+                </ul>
+                <div class="vertical-btn-list mt-2">
+                    <a class="btn btn-outline-info"
+                       asp-controller="WarnSystem"
+                       asp-action="GuildWarns"
+                       asp-route-id="@Model.Guild.Id">
+                        Warns
+                    </a>
+                    <a class="btn btn-outline-info"
+                       asp-action="ModerationView"
+                       asp-route-id="@Model.Guild.Id">
+                        View
+                    </a>
                 </div>
             </div>
-            <div class="tab-pane fade" id="nav-mod" role="tabpanel" aria-labelledby="nav-mod-tab">
-                @{ await Html.RenderPartialAsync("Details/Moderation"); }
+        </div>
+    </div>
+    <div class="m-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                Fun
             </div>
-            <div class="tab-pane fade" id="nav-fun" role="tabpanel" aria-labelledby="nav-fun-tab">
-                @{ await Html.RenderPartialAsync("Details/Fun"); }
+            <div class="card-body p-0">
+                <div class="vertical-btn-list">
+                    <a class="btn btn-outline-info"
+                       asp-action="CountingView"
+                       asp-route-id="@Model.Guild.Id">
+                        Counting
+                    </a>
+                    <a class="btn btn-outline-info"
+                       asp-action="ConfessionView"
+                       asp-route-id="@Model.Guild.Id">
+                        Confessions
+                    </a>
+                    <a class="btn btn-outline-info"
+                       asp-action="LevelSystemView"
+                       asp-route-id="@Model.Guild.Id">
+                        Level System
+                    </a>
+                </div>
             </div>
-            <div class="tab-pane fade" id="nav-levelsys" role="tabpanel" aria-labelledby="nav-levelsys-tab">
-                @{ await Html.RenderPartialAsync("Details/Settings/LevelSystem"); }
+        </div>
+    </div>
+    <div class="m-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                Greeter
             </div>
-            <div class="tab-pane fade" id="nav-greeter" role="tabpanel" aria-labelledby="nav-greeter-tab">
-                @{ await Html.RenderPartialAsync("Details/Settings/Greeter"); }
-            </div>
-            <div class="tab-pane fade" id="nav-greeter-bye" role="tabpanel" aria-labelledby="nav-greeter-bye-tab">
-                @{ await Html.RenderPartialAsync("Details/Settings/GreeterGoodbye"); }
+            <div class="card-body p-0">
+                <div class="vertical-btn-list">
+                    <a class="btn btn-outline-info"
+                       asp-controller="Server" asp-action="GreeterJoinView" asp-route-id="@Model.Guild.Id">
+                        On Join
+                    </a>
+                    <a class="btn btn-outline-info"
+                       asp-controller="Server" asp-action="GreeterLeaveView" asp-route-id="@Model.Guild.Id">
+                        On Leave
+                    </a>
+                </div>
             </div>
         </div>
     </div>

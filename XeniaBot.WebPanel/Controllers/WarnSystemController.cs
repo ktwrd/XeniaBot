@@ -30,7 +30,7 @@ public class WarnSystemController: BaseXeniaController
     }
     
     [HttpGet("~/Warn/Guild/{id}")]
-    public async Task<IActionResult> GuildWarns(ulong id, string? messageType = null, string? message = null)
+    public async Task<IActionResult> GuildWarns(ulong id, string? messageType = null, string? message = null, bool newer_than_enable = false, string? newer_than = null)
     {
         if (!CanAccess(id))
             return View("NotAuthorized");
@@ -52,6 +52,10 @@ public class WarnSystemController: BaseXeniaController
             data.MessageType = messageType;
         if (message != null)
             data.Message = message;
+
+        data.EnableNewerThanFilter = newer_than_enable;
+        if (newer_than != null)
+            data.NewerThanDate = newer_than;
 
         return View("Details", data);
     }

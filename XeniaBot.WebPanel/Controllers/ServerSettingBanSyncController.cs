@@ -32,7 +32,7 @@ public partial class ServerController
 
         if (configData.LogChannel == 0)
         {
-            return await Index(id,
+            return await ModerationView(id,
                 messageType: "danger",
                 message: $"Unable to request Ban Sync: Log Channel not set.");
         }
@@ -46,7 +46,7 @@ public partial class ServerController
         {
             Program.Core.Services.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to get log channel");
-            return await Index(id,
+            return await ModerationView(id,
                 messageType: "danger",
                 message: $"Unable to request Ban Sync: Failed to get log channel: {ex.Message}");
         }
@@ -54,33 +54,21 @@ public partial class ServerController
         switch (configData.State)
         {
             case BanSyncGuildState.PendingRequest:
-                return await Index(id,
+                return await ModerationView(id,
                     messageType: "danger",
                     message: "Ban Sync access has already been requested");
-                return RedirectToAction("Index", new
-                {
-                    Id = id,
-                    MessageType = "warning",
-                    Message = "Ban Sync access has already been requested"
-                });
                 break;
             case BanSyncGuildState.RequestDenied:
-                return await Index(id,
+                return await ModerationView(id,
                     messageType: "danger",
                     message: "Ban Sync access has already been requested and denied.");
             case BanSyncGuildState.Blacklisted:
-                return await Index(id,
+                return await ModerationView(id,
                     messageType: "danger",
                     message: $"Your server has been blacklisted");
-                return RedirectToAction("Index", new
-                {
-                    Id = id,
-                    MessageType = "danger",
-                    Message = "Your server has been blacklisted."
-                });
                 break;
             case BanSyncGuildState.Active:
-                return await Index(id,
+                return await ModerationView(id,
                     messageType: "danger",
                     message: $"Your server already has Ban Sync enabled");
                 break;
@@ -93,7 +81,7 @@ public partial class ServerController
                         throw new Exception($"Failed to get BanSyncService");
 
                     var res = await dcon.RequestGuildEnable(guild.Id);
-                    return await Index(id,
+                    return await ModerationView(id,
                         messageType: "success",
                         message: $"Ban Sync: Your server is pending approval");
                 }
@@ -101,13 +89,13 @@ public partial class ServerController
                 {
                     Program.Core.Services.GetRequiredService<ErrorReportService>()
                         .ReportException(ex, $"Failed to request ban sync access in guild {id}");
-                    return await Index(id,
+                    return await ModerationView(id,
                         messageType: "danger",
                         message: $"Unable to request Ban Sync: Failed to request. {ex.Message}");
                 }
                 break;
         }
-        return await Index(id,
+        return await ModerationView(id,
             messageType: "warning",
             message: $"Ban Sync Fail: Unhandled state {configData.State}");
     }
@@ -126,7 +114,7 @@ public partial class ServerController
         var channelIdResult = ParseChannelId(logChannel);
         if (channelIdResult.ErrorContent != null)
         {
-            return await Index(id,
+            return await ModerationView(id,
                 messageType: "danger",
                 message: $"Failed to parse Ban Sync Log Channel Id. {channelIdResult.ErrorContent}");
         }
@@ -141,7 +129,7 @@ public partial class ServerController
         configData.LogChannel = channelId;
         await controller.Set(configData);
 
-        return await Index(id,
+        return await ModerationView(id,
             messageType: "success",
             message: $"Successfully saved Ban Sync Log channel");
     }

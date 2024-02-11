@@ -56,4 +56,14 @@ body {
     border-top-left-radius: 0 !important;
     border-top-right-radius: 0 !important;
 }
+
+.vertical-btn-list {
+    display: block;
+}
+.vertical-btn-list .btn {
+    display: block;
+    width: 100%;
+}
+.vertical-btn-list .btn:not(:last-child) {
+    margin-bottom: .5rem !important;
 }

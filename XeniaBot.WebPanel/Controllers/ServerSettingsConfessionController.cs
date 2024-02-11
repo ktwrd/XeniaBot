@@ -20,22 +20,16 @@ public partial class ServerController
         var modalChannelIdRes = ParseChannelId(modalChannelId);
         if (modalChannelIdRes.ErrorContent != null)
         {
-            return await Index(id,
+            return await ConfessionView(id,
                 messageType: "danger",
                 message: $"Failed to parse ChannelId for confession modal. {modalChannelIdRes.ErrorContent}");
-            return RedirectToAction("Index", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to parse ChannelId for Modal. {modalChannelIdRes.ErrorContent}"
-            });
         }
         var modalId = (ulong)modalChannelIdRes.ChannelId;
         
         var msgChannelIdRes = ParseChannelId(messageChannelId);
         if (msgChannelIdRes.ErrorContent != null)
         {
-            return await Index(id,
+            return await ConfessionView(id,
                 messageType: "danger",
                 message: $"Failed to parse ChannelId for messages. {msgChannelIdRes.ErrorContent}");
         }
@@ -67,13 +61,13 @@ public partial class ServerController
         {
             Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to save confession settings");
-            return await Index(id,
+            return await ConfessionView(id,
                 messageType: "danger",
-                message: $"Failed to save confession settings. {ex.Message}");
+                message: $"Failed to save settings. {ex.Message}");
         }
-        return await Index(id,
+        return await ConfessionView(id,
             messageType: "success",
-            message: $"Successfully saved Ban Sync Log channel");
+            message: $"Saved settings");
     }
 
     [HttpGet("~/Server/{id}/Settings/Confession/Purge")]

@@ -1,5 +1,22 @@
 ﻿@model ServerDetailsViewModel
 
+@{
+    ViewBag.Title = $"Greeter Leave - {@Model.Guild.Name}";
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
+new List<BreadcrumbItem>()
+{
+    new BreadcrumbItem("Servers", "Server", "List"),
+    new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+    {
+        {"id", Model.Guild.Id.ToString()}
+    }),
+    new BreadcrumbItem("Greeter"),
+    new BreadcrumbItem("Leave"),
+}))
+
 <form id="greeter_goodbye_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_GreeterBye" asp-route-id="@Model.Guild.Id">
     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
     {
