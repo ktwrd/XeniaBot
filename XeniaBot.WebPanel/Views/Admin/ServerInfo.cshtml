@@ -10,7 +10,7 @@
     ViewData["Title"] = @Model.Guild.Name + " (Admin)";
 }
 
-@await Component.InvokeAsync("GuildBanner", @Model.Guild.Id)
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(@Model.Guild.Id))
 
 <div class="row d-flex flex-row mt-3">
     <div class="col-auto mr-1">
@@ -75,8 +75,9 @@
                         </div>
                         <input type="text" class="form-control" name="Reason" id="setting_bansync_reason" form="setting_bansync"/>
                     </div>
-                    <input class="btn btn-primary-outline" type="submit" value="Submit"/>
+                    <input class="btn btn-success" type="submit" value="Submit"/>
                 </form>
+                <a class="btn btn-info mt-2" asp-controller="Admin" asp-action="BanSync_Refresh" asp-route-id="@Model.Guild.Id">Refresh Bans</a>
             </div>
         </div>
     </div>
@@ -192,16 +193,32 @@
             <div class="card-body">
                 <form id="counter_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Counting" asp-route-id="@Model.Guild.Id">
                     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                       {
-                           Channels = StrippedChannel.FromGuild(@Model.Guild),
-                           Categories = StrippedCategory.FromGuild(@Model.Guild),
-                           SelectedChannelId = @Model.CounterConfig.ChannelId,
-                           ParentFormId = "counter_settings",
-                           Name = "inputChannelId",
-                           Id = "inputChannelId",
-                           DisplayName = "Channel"
-                       })
+                    {
+                        Channels = StrippedChannel.FromGuild(@Model.Guild),
+                        Categories = StrippedCategory.FromGuild(@Model.Guild),
+                        SelectedChannelId = @Model.CounterConfig.ChannelId,
+                        ParentFormId = "counter_settings",
+                        Name = "inputChannelId",
+                        Id = "inputChannelId",
+                        DisplayName = "Channel"
+                    })
                     <input class="btn btn-success" type="submit" value="Save"/>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="mr-1 mb-1 col-auto">
+        <div class="card card-sm">
+            <div class="card-header">
+                Role Preserve
+            </div>
+            <div class="card-body">
+                <form id="role_preserve" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_RolePreserve" asp-route-id="@Model.Guild.Id">
+                      <div class="form-check mb-3">
+                            <input class="form-check-input" name="enable" type="checkbox" value="true" id="role_preserve_enable" checked="@Model.RolePreserve.Enable" />
+                            <label class="form-check-label" for="role_preserve_enable">Enable</label>
+                      </div>
+                      <input class="btn btn-success" type="submit" value="Save"/>
                 </form>
             </div>
         </div>

@@ -1,11 +1,27 @@
 ﻿@model ServerDetailsViewModel
 
+@{
+    ViewBag.Title = $"Moderation - {@Model.Guild.Name}";
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
+new List<BreadcrumbItem>()
+{
+    new BreadcrumbItem("Servers", "Server", "List"),
+    new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+    {
+        {"id", Model.Guild.Id.ToString()}
+    }),
+    new BreadcrumbItem("Moderation")
+}))
+
 <div class="row d-flex flex-row">
     <div class="m-1 col-auto">
         <div class="card">
             <div class="card-header card-header-sm" id="bansync">Ban Sync</div>
             <div class="card-body">
-                @{ await Html.RenderPartialAsync("Details/Settings/BanSync"); }
+                @{ await Html.RenderPartialAsync("Details/ModerationView/BanSync"); }
             </div>
         </div>
     </div>
@@ -13,7 +29,7 @@
         <div class="card">
             <div class="card-header card-header-sm" id="rolePreserve">Role Preserve</div>
             <div class="card-body">
-                @{ await Html.RenderPartialAsync("Details/Settings/RolePreserve"); }
+                @{ await Html.RenderPartialAsync("Details/ModerationView/RolePreserve"); }
             </div>
         </div>
     </div>
@@ -21,7 +37,7 @@
         <div class="card">
             <div class="card-header card-header-sm" id="log">Logging</div>
             <div class="card-body">
-                @{ await Html.RenderPartialAsync("Details/Settings/Logging"); }
+                @{ await Html.RenderPartialAsync("Details/ModerationView/Logging"); }
             </div>
         </div>
     </div>

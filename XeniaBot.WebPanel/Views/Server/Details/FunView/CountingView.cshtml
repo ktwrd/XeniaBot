@@ -1,0 +1,38 @@
+﻿@using XeniaBot.Data.Models
+@model ServerDetailsViewModel
+
+@{
+    ViewBag.Title = $"Counting - {@Model.Guild.Name}";
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
+new List<BreadcrumbItem>()
+{
+    new BreadcrumbItem("Servers", "Server", "List"),
+    new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+    {
+        {"id", Model.Guild.Id.ToString()}
+    }),
+    new BreadcrumbItem("Counting")
+}))
+
+
+<div class="row d-flex flex-row">
+    <div class="m-1 col-auto">
+        <form id="counter_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_Counting" asp-route-id="@Model.Guild.Id">
+            
+            @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+               {
+                   Channels = StrippedChannel.FromGuild(@Model.Guild),
+                   Categories = StrippedCategory.FromGuild(@Model.Guild),
+                   SelectedChannelId = @Model.CounterConfig.ChannelId,
+                   ParentFormId = "counter_settings",
+                   Name = "inputChannelId",
+                   Id = "inputChannelId",
+                   DisplayName = "Channel"
+               })
+            <input class="btn btn-success" type="submit" value="Save"/>
+        </form>
+    </div>
+</div>

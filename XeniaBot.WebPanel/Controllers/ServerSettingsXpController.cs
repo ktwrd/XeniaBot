@@ -31,9 +31,9 @@ public partial class ServerController
         {
             Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(e, $"Failed to save level system settings");
-            return await Index(id,
+            return await LevelSystemView(id,
                 messageType: "danger",
-                message: $"Failed to save Level System settings. {e.Message}");
+                message: $"Failed to parse Channel Id. {e.Message}");
         }
 
         try
@@ -50,16 +50,16 @@ public partial class ServerController
             data.ShowLeveUpMessage = show;
             data.Enable = enable;
             await controller.Set(data);
-            return await Index(id,
+            return await LevelSystemView(id,
                 messageType: "success",
-                message: $"Level System Settings Saved");
+                message: $"Saved Settings");
         }
         catch (Exception e)
         {
             Log.Error($"Failed to save level system config\n{e}");
-            return await Index(id,
+            return await LevelSystemView(id,
                 messageType: "danger",
-                message: $"Failed to save Level System settings. {e.Message}");
+                message: $"Failed to save settings. {e.Message}");
         }
     }
 

@@ -1,7 +1,21 @@
 ﻿@using XeniaBot.Data.Models
 @model ServerDetailsViewModel
 
-<!DOCTYPE html>
+@{
+    ViewBag.Title = $"Level System - {@Model.Guild.Name}";
+    Layout = "_Layout";
+}
+
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
+new List<BreadcrumbItem>()
+{
+    new BreadcrumbItem("Servers", "Server", "List"),
+    new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+    {
+        {"id", Model.Guild.Id.ToString()}
+    }),
+    new BreadcrumbItem("Level System")
+}))
 
 <div class="row d-flex flex-row">
     <div class="m-1 col-auto">

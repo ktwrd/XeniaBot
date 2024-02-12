@@ -29,7 +29,7 @@ public class HomeController : BaseXeniaController
     [HttpGet("~/Privacy")]
     public IActionResult Privacy()
     {
-        return View();
+        return Redirect("https://xenia.kate.pet/p/privacy_policy");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

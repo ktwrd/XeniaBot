@@ -83,3 +83,15 @@ else
         </tbody>
     </table>
 }
+
+@section Scripts
+{
+    <script type="text/javascript">
+    $(document).ready(function () {
+      $('#bansyncGuildList').DataTable({
+        "searching": true
+      });
+      $('.dataTables_length').addClass('bs-select');
+    });
+    </script>
+}

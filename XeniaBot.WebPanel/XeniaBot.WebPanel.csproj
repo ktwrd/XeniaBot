@@ -42,13 +42,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Views\Server\Details\Settings\BanSync.cshtml" />
-      <AdditionalFiles Include="Views\Server\Details\Settings\Counting.cshtml" />
-      <AdditionalFiles Include="Views\Server\Details\Settings\LevelSystem.cshtml" />
-      <AdditionalFiles Include="Views\Server\Details\Settings\Logging.cshtml" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Folder Include="Pages\Components\" />
     </ItemGroup>
 

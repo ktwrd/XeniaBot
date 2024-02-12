@@ -52,6 +52,164 @@ public partial class ServerController : BaseXeniaController
         return View("Details", data);
     }
 
+    [HttpGet("~/Server/{id}/Moderation")]
+    public async Task<IActionResult> ModerationView(ulong id, string? messageType = null, string? message = null)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+        
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var user = _discord.GetUser((ulong)userId);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        var guildUser = guild.GetUser(user.Id);
+
+        var data = await GetDetails(guild.Id);
+        data.User = guildUser;
+        
+        await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
+        
+        return View("Details/ModerationView", data);
+    }
+    [HttpGet("~/Server/{id}/Fun/Counting")]
+    public async Task<IActionResult> CountingView(ulong id, string? messageType = null, string? message = null)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+        
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var user = _discord.GetUser((ulong)userId);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        var guildUser = guild.GetUser(user.Id);
+
+        var data = await GetDetails(guild.Id);
+        data.User = guildUser;
+        
+        await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
+        
+        return View("Details/FunView/CountingView", data);
+    }
+    [HttpGet("~/Server/{id}/Fun/Confession")]
+    public async Task<IActionResult> ConfessionView(ulong id, string? messageType = null, string? message = null)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+        
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var user = _discord.GetUser((ulong)userId);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        var guildUser = guild.GetUser(user.Id);
+
+        var data = await GetDetails(guild.Id);
+        data.User = guildUser;
+        
+        await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
+        
+        return View("Details/FunView/ConfessionView", data);
+    }
+    [HttpGet("~/Server/{id}/Fun/LevelSystem")]
+    public async Task<IActionResult> LevelSystemView(ulong id, string? messageType = null, string? message = null)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+        
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var user = _discord.GetUser((ulong)userId);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        var guildUser = guild.GetUser(user.Id);
+
+        var data = await GetDetails(guild.Id);
+        data.User = guildUser;
+        
+        await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
+        
+        return View("Details/FunView/LevelSystemView", data);
+    }
+    
+    [HttpGet("~/Server/{id}/Greeter/Join")]
+    public async Task<IActionResult> GreeterJoinView(ulong id, string? messageType = null, string? message = null)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+        
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var user = _discord.GetUser((ulong)userId);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        var guildUser = guild.GetUser(user.Id);
+
+        var data = await GetDetails(guild.Id);
+        data.User = guildUser;
+        
+        await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
+        
+        return View("Details/Settings/GreeterJoinView", data);
+    }
+    [HttpGet("~/Server/{id}/Greeter/Leave")]
+    public async Task<IActionResult> GreeterLeaveView(ulong id, string? messageType = null, string? message = null)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+        
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var user = _discord.GetUser((ulong)userId);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        var guildUser = guild.GetUser(user.Id);
+
+        var data = await GetDetails(guild.Id);
+        data.User = guildUser;
+        
+        await PopulateModel(data);
+        if (messageType != null)
+            data.MessageType = messageType;
+        if (message != null)
+            data.Message = message;
+        
+        return View("Details/Settings/GreeterLeaveView", data);
+    }
+
     
     [HttpGet("~/Server/")]
     [HttpGet("~/Server/List")]

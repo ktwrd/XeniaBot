@@ -22,14 +22,18 @@
         {
             <a class="btn btn-lg btn-primary mx-2" href="/signin?returnUrl=%2F">Sign in</a>
         }
-        <a class="btn btn-lg btn-success mx-2" href="https://r.kate.pet/xeniadiscord">Invite</a>
-        <a class="btn btn-lg btn-secondary mx-2" href="https://r.kate.pet/discord">Support</a>
-        <a class="btn btn-lg btn-secondary mx-2" asp-controller="Home" asp-action="About">About</a>
+        <a class="btn btn-lg btn-success mx-2" href="https://xenia.kate.pet/p/invite">Invite</a>
+        <a class="btn btn-lg btn-secondary mx-2" href="https://kate.pet/l/discord">Support</a>
+        <a class="btn btn-lg btn-secondary mx-2" href="https://xenia.kate.pet">About</a>
     </div>
-    @if ((User?.Identity?.IsAuthenticated ?? false) == true)
-    {
-        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-2">
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-2">
+        @if (User?.Identity?.IsAuthenticated ?? false)
+        {
             <a class="btn btn-lg btn-primary mx-2" asp-controller="Server" asp-action="List">Manage Servers</a>
-        </div>
-    }
+        }
+        @if (AspHelper.IsCurrentUserAdmin(Context))
+        {
+            <a class="btn btn-lg btn-info mx-2" asp-controller="Admin" asp-action="Index">Admin Panel</a>
+        }
+    </div>
 </div>

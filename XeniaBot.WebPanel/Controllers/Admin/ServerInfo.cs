@@ -3,6 +3,7 @@ using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Services;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -24,6 +25,37 @@ public partial class AdminController
         return View("ServerInfo", model);
     }
 
+    [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Refresh")]
+    public async Task<IActionResult> BanSync_Refresh(ulong id)
+    {
+        if (!CanAccess())
+            return View("NotAuthorized");
+
+        try
+        {
+            var controller = Program.Core.GetRequiredService<BanSyncService>();
+            await controller.RefreshBans(id);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex);
+            await Program.Core.GetRequiredService<ErrorReportService>()
+                .ReportException(ex, $"Failed to refresh bans in {id}");
+            return RedirectToAction("ServerInfo", new
+            {
+                Id = id,
+                MessageType = "danger",
+                Message = $"Failed to refresh BanSync records. {ex.Message}"
+            });
+        }
+        return RedirectToAction("ServerInfo", new
+        {
+            Id = id,
+            MessageType = "success",
+            Message = $"Refreshed BanSync records."
+        });
+    }
+    
     [HttpPost("~/Admin/Server/{id}/Setting/BanSync/State")]
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)
     {

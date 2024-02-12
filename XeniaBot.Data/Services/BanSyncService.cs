@@ -73,7 +73,7 @@ namespace XeniaBot.Data.Services
             if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                 return;
 
-            var bans = await guild.GetBansAsync().FlattenAsync().ConfigureAwait(false);
+            var bans = await guild.GetBansAsync(1000000).FlattenAsync().ConfigureAwait(false);
             foreach (var i in bans)
             {
                 try
