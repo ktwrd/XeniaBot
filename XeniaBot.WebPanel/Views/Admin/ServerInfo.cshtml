@@ -10,7 +10,7 @@
     ViewData["Title"] = @Model.Guild.Name + " (Admin)";
 }
 
-@await Component.InvokeAsync("GuildBanner", @Model.Guild.Id)
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(@Model.Guild.Id))
 
 <div class="row d-flex flex-row mt-3">
     <div class="col-auto mr-1">
@@ -192,15 +192,15 @@
             <div class="card-body">
                 <form id="counter_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Counting" asp-route-id="@Model.Guild.Id">
                     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                       {
-                           Channels = StrippedChannel.FromGuild(@Model.Guild),
-                           Categories = StrippedCategory.FromGuild(@Model.Guild),
-                           SelectedChannelId = @Model.CounterConfig.ChannelId,
-                           ParentFormId = "counter_settings",
-                           Name = "inputChannelId",
-                           Id = "inputChannelId",
-                           DisplayName = "Channel"
-                       })
+                    {
+                        Channels = StrippedChannel.FromGuild(@Model.Guild),
+                        Categories = StrippedCategory.FromGuild(@Model.Guild),
+                        SelectedChannelId = @Model.CounterConfig.ChannelId,
+                        ParentFormId = "counter_settings",
+                        Name = "inputChannelId",
+                        Id = "inputChannelId",
+                        DisplayName = "Channel"
+                    })
                     <input class="btn btn-success" type="submit" value="Save"/>
                 </form>
             </div>
