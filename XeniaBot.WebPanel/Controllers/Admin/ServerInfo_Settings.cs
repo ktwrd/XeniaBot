@@ -163,4 +163,37 @@ public partial class AdminController
             message: $"Counting settings saved");
     }
 
+    [HttpPost("~/Admin/Server/{id}/Settings/RolePreserve")]
+    public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
+    {
+        if (!CanAccess())
+            return View("NotAuthorized");
+        
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+
+        try
+        {
+            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
+            var data = await controller.Get(id) ?? new RolePreserveGuildModel()
+            {
+                GuildId = guild.Id
+            };
+            data.Enable = enable;
+            await controller.Set(data);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e);
+            return await ServerInfo(id,
+                messageType: "danger",
+                message: $"Failed to save Role Preserve settings. {e.Message}");
+        }
+
+        return await ServerInfo(id,
+            messageType: "success",
+            message: $"Role Preserve settings saved.");
+    }
+
 }
