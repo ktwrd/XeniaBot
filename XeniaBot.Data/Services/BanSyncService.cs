@@ -237,13 +237,22 @@ namespace XeniaBot.Data.Services
             TooYoung,
             NotEnoughMembers,
             Blacklisted,
-            Valid
+            Valid,
+            LogChannelMissing,
+            LogChannelCannotAccess
         }
         public async Task<BanSyncGuildKind> GetGuildKind(ulong guildId)
         {
             var guild = _client.GetGuild(guildId);
 
             var guildConf = await _guildConfigRepo.Get(guildId);
+            if ((guildConf?.LogChannel ?? 0) == 0)
+                return BanSyncGuildKind.LogChannelMissing;
+
+            try
+            { guild.GetTextChannel(guildConf?.LogChannel ?? 0); }
+            catch
+            { return BanSyncGuildKind.LogChannelCannotAccess; }
             if (guildConf is { State: BanSyncGuildState.Blacklisted })
                 return BanSyncGuildKind.Blacklisted;
 
@@ -468,6 +477,12 @@ namespace XeniaBot.Data.Services
             {
                 return config;
             }
+
+            // Ignore when log channel is missing or we can't access it.
+            var guildState = await GetGuildKind(guildId);
+            if (guildState == BanSyncGuildKind.LogChannelMissing ||
+                guildState == BanSyncGuildKind.LogChannelCannotAccess)
+                return config;
 
             config.State = BanSyncGuildState.PendingRequest;
             await _guildConfigRepo.Set(config);

@@ -21,6 +21,33 @@ public static class XeniaHelper
         var client = CoreContext.Instance.GetRequiredService<DiscordSocketClient>();
         return BaseEmbed(client, builder);
     }
+
+    public static bool ChannelExists(DiscordSocketClient client, ulong guildId, ulong channelId)
+    {
+        try
+        {
+            var guild = client.GetGuild(guildId);
+            var channel = guild.GetChannel(channelId);
+            return channel != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool ChannelExists(IGuild guild, ulong channelId)
+    {
+        try
+        {
+            var channel = guild.GetChannelAsync(channelId).Result;
+            return channel != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
     public static EmbedBuilder BaseEmbed(DiscordSocketClient client, EmbedBuilder? embed=null)
     {
         embed ??= new EmbedBuilder();

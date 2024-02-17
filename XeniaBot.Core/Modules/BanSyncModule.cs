@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Services;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules
@@ -155,6 +156,23 @@ namespace XeniaBot.Core.Modules
                 Color = Color.Red
             }.WithCurrentTimestamp();
 
+            switch (kind)
+            {
+                case BanSyncService.BanSyncGuildKind.LogChannelMissing:
+                    embed.Color = Color.Red;
+                    embed.Description = $"You must set a log channel with `/bansync setchannel`.";
+                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    return;
+                    break;
+                case BanSyncService.BanSyncGuildKind.LogChannelCannotAccess:
+                    embed.Color = Color.Red;
+                    embed.Description = $"Xenia is unable to access the log channel that was set.\n" +
+                                        $"Please double-check the permissions in that channel.";
+                    await Context.Interaction.RespondAsync(embed: embed.Build());
+                    return;
+                    break;
+            }
+
             if (kind != BanSyncService.BanSyncGuildKind.Valid)
             {
                 embed.Description = "Your server doesn't meet the requirements";
@@ -162,10 +180,12 @@ namespace XeniaBot.Core.Modules
                 await Context.Interaction.RespondAsync(embed: embed.Build());
                 return;
             }
-            ConfigBanSyncModel? response;
+            
+            ConfigBanSyncModel? guildConfig;
+            
             try
             {
-                response = await controller.RequestGuildEnable(Context.Guild.Id);
+                guildConfig = await controller.RequestGuildEnable(Context.Guild.Id);
             }
             catch (Exception ex)
             {
@@ -174,7 +194,8 @@ namespace XeniaBot.Core.Modules
                 await DiscordHelper.ReportError(ex, Context);
                 return;
             }
-            if (response.State == BanSyncGuildState.PendingRequest)
+            
+            if (guildConfig.State == BanSyncGuildState.PendingRequest)
             {
                 embed.Color = Color.Green;
                 embed.Description = "Your guild is under review for Ban Sync to be enabled.";
@@ -182,10 +203,10 @@ namespace XeniaBot.Core.Modules
                 return;
             }
 
-            embed.Description = $"Failed to request BanSync for this guild.\n`{response.State}`";
-            if (response.State == BanSyncGuildState.Blacklisted || response.State == BanSyncGuildState.RequestDenied)
+            embed.Description = $"Failed to request BanSync for this guild.\n`{guildConfig.State}`";
+            if (guildConfig.State == BanSyncGuildState.Blacklisted || guildConfig.State == BanSyncGuildState.RequestDenied)
             {
-                embed.AddField("Reason", $"```\n{response.Reason}\n```", true);
+                embed.AddField("Reason", $"```\n{guildConfig.Reason}\n```", true);
             }
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }
