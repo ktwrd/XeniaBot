@@ -112,7 +112,7 @@ public class RolePreserveService : BaseService
         }
     }
 
-    public override async Task OnReady()
+    public override async Task OnReadyDelay()
     {
         try
         {

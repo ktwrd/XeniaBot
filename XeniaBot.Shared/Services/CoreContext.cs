@@ -195,7 +195,7 @@ public class CoreContext
     {
         AllBaseServices((item) =>
         {
-            item.OnReadyDelay().Wait();
+            item.OnReadyDelay();
             return Task.CompletedTask;
         });
     }

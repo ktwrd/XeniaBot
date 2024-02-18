@@ -39,7 +39,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             _client.UserJoined += ClientOnUserJoined;
         }
 
-        public override async Task OnReady()
+        public override async Task OnReadyDelay()
         {
             try
             {
