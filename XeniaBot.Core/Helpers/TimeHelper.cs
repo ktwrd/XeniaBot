@@ -14,21 +14,21 @@ public static class TimeHelper
     {
         var past = DateTimeOffset.FromUnixTimeMilliseconds(ts);
         var current = DateTimeOffset.UtcNow;
-        var diff = DateDiff(past, current);
+        var diff = new DateTime((current - past).Ticks);
 
         var sb = new List<string>();
-        if (diff.Years > 0)
-            sb.Add($"{diff.Years} year" + (diff.Years > 1 ? "s": ""));
-        if (diff.Months > 0)
-            sb.Add($"{diff.Months} month" + (diff.Months > 1 ? "s" : ""));
-        if (diff.Days > 0)
-            sb.Add($"{diff.Days} day" + (diff.Days > 1 ? "s" : ""));
-        if (diff.Hours > 0)
-            sb.Add($"{diff.Hours} hour" + (diff.Hours > 1 ? "s" : ""));
-        if (diff.Minutes > 0)
-            sb.Add($"{diff.Minutes} minute" + (diff.Minutes > 1 ? "s" : ""));
-        if (diff.Seconds > 0)
-            sb.Add($"{diff.Seconds} second" + (diff.Seconds > 1 ? "s" : ""));
+        if (diff.Year > 0)
+            sb.Add($"{diff.Year} year" + (diff.Year > 1 ? "s": ""));
+        if (diff.Month > 0)
+            sb.Add($"{diff.Month} month" + (diff.Month > 1 ? "s" : ""));
+        if (diff.Day > 0)
+            sb.Add($"{diff.Day} day" + (diff.Day > 1 ? "s" : ""));
+        if (diff.Hour > 0)
+            sb.Add($"{diff.Hour} hour" + (diff.Hour > 1 ? "s" : ""));
+        if (diff.Minute > 0)
+            sb.Add($"{diff.Minute} minute" + (diff.Minute > 1 ? "s" : ""));
+        if (diff.Second > 0)
+            sb.Add($"{diff.Second} second" + (diff.Second > 1 ? "s" : ""));
 
         return string.Join(" ", sb);
     }
