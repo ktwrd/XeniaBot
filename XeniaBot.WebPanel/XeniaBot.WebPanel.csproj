@@ -19,6 +19,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
+      <ProjectReference Include="..\XeniaBot.Logic\XeniaBot.Logic.csproj" />
+      <ProjectReference Include="..\XeniaBot.Moderation\XeniaBot.Moderation.csproj" />
       <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     </ItemGroup>
 

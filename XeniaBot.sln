@@ -17,6 +17,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.DiscordCache", "Xe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Logic", "XeniaBot.Logic\XeniaBot.Logic.csproj", "{263ECD3B-4AA0-4741-A013-C1F13F59A551}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Moderation", "XeniaBot.Moderation\XeniaBot.Moderation.csproj", "{292B801A-65F6-4D2D-A8D7-4D52853965C8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Data.Moderation", "XeniaBot.Data.Moderation\XeniaBot.Data.Moderation.csproj", "{AA77501A-BB43-4691-BD9E-5112FB02D5FD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Moderation", "Moderation", "{9A4352B0-331B-4AF0-AACF-E8A41137FBB4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,11 +117,39 @@ Global
 		{263ECD3B-4AA0-4741-A013-C1F13F59A551}.Release|arm64.Build.0 = Release|Any CPU
 		{263ECD3B-4AA0-4741-A013-C1F13F59A551}.Release|x86.ActiveCfg = Release|Any CPU
 		{263ECD3B-4AA0-4741-A013-C1F13F59A551}.Release|x86.Build.0 = Release|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Debug|arm64.Build.0 = Debug|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Debug|x86.Build.0 = Debug|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Release|arm64.ActiveCfg = Release|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Release|arm64.Build.0 = Release|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Release|x86.ActiveCfg = Release|Any CPU
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8}.Release|x86.Build.0 = Release|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Debug|arm64.Build.0 = Debug|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Debug|x86.Build.0 = Debug|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|arm64.ActiveCfg = Release|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|arm64.Build.0 = Release|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|x86.ActiveCfg = Release|Any CPU
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8BB48EC1-3F3F-4EEE-A426-ACA07AECE046}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AA77501A-BB43-4691-BD9E-5112FB02D5FD} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
+		{292B801A-65F6-4D2D-A8D7-4D52853965C8} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
 	EndGlobalSection
 EndGlobal
