@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
+using XeniaBot.Moderation.Services;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules;
 
@@ -112,30 +114,42 @@ public class ModerationModule : InteractionModuleBase
     
     [SlashCommand("kick", "Kick member from server")]
     [RequireUserPermission(GuildPermission.KickMembers)]
-    public async Task KickMember(SocketGuildUser user, string? reason = null)
+    public async Task KickMember(
+        [Summary(name: "User", description: "User to kick. Snowflake can be used.")]
+        SocketUser user,
+        [Summary(name: "Reason", description: "Why is this user being kicked? (Optional)")]
+        string? reason = null)
     {
-        SocketGuildUser? member = await SafelyFetchUser(user.Id);
-        if (member == null)
-            return;
-
-        var embed = DiscordHelper.BaseEmbed().WithTitle("Kick Member");
+        var embed = new EmbedBuilder()
+            .WithTitle("Moderation - Kick Member")
+            .WithCurrentTimestamp();
         
         try
         {
-            await member.KickAsync(reason);
+            var guild = CoreContext.Instance?.GetRequiredService<DiscordSocketClient>().GetGuild(Context.Guild.Id)!;
+            if (guild.GetUser(user.Id) == null)
+            {
+                embed.WithDescription($"Failed to fetch user {user.Id}")
+                    .WithColor(Color.Red);
+                await Context.Interaction.RespondAsync(embed: embed.Build());
+                return;
+            }
+            var controller = CoreContext.Instance?.GetRequiredService<ModerationService>()!;
+            await controller.KickUser(guild, user.Id, Context.User.Id, reason);
         }
         catch (Exception e)
         {
-            embed.WithDescription(string.Join("\n", new string[]
+            embed.WithColor(Color.Red)
+            .WithDescription(string.Join("\n", new string[]
             {
                 "Failed to kick member, this has been reported to the developers",
                 "```",
                 e.Message,
                 "```"
             }));
-            embed.WithColor(Color.Red);
             await Context.Interaction.RespondAsync(embed: embed.Build());
             await DiscordHelper.ReportError(e, Context);
+            return;
         }
 
         embed.WithDescription($"Successfully kicked `{user.Username}#{user.DiscriminatorValue}`")
@@ -147,25 +161,77 @@ public class ModerationModule : InteractionModuleBase
             embed: embed.Build());
     }
 
-    [SlashCommand("ban", "Ban member from server")]
+    [SlashCommand("unban", "Unban a member from this server")]
     [RequireUserPermission(GuildPermission.BanMembers)]
-    public async Task BanMember(SocketGuildUser user, string? reason = null, 
-        [Discord.Interactions.Summary(description: "How many days of messages should be deleted when this member is banned")]
-        int pruneDays=0)
+    public async Task UnbanMember(
+        [Summary(name: "User", description: "User to unban. Snowflake can be used.")]
+        SocketUser user,
+        [Summary(name: "Reason", "Why is this user being unbanned? (Optional)")]
+        string? reason = null)
     {
-        var embed = DiscordHelper.BaseEmbed()
-            .WithTitle("Ban Member");
-        if (pruneDays < 0)
+        var embed = new EmbedBuilder()
+            .WithTitle("Moderation - Unban Member")
+            .WithCurrentTimestamp();
+
+        try
         {
-            embed.WithColor(Color.Red).WithDescription("Parameter `pruneDays` cannot be less than `0`");
+            var controller = CoreContext.Instance?.GetRequiredService<ModerationService>()!;
+            var guild = CoreContext.Instance?.GetRequiredService<DiscordSocketClient>().GetGuild(Context.Guild.Id)!;
+            await controller.UnbanUser(guild, user.Id, Context.User.Id, reason);
+        }
+        catch (Exception e)
+        {
+            embed.WithDescription(string.Join("\n", new string[]
+            {
+                "Failed to unban member, this has been reported to the developers.",
+                "```",
+                e.Message,
+                "```"
+            }));
+            embed.WithColor(Color.Red);
             await Context.Interaction.RespondAsync(
                 embed: embed.Build());
+            await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+
+        string description = $"Successfully unbanned `{user.Username}#{user.DiscriminatorValue} ({user.Id})`";
+
+        embed.WithDescription(description);
+        embed.WithColor(Color.Blue);
+        if (reason != null)
+            embed.AddField("Reason", reason);
+        
+        await Context.Interaction.RespondAsync(embed: embed.Build());
+    }
+
+    [SlashCommand("ban", "Ban member from server")]
+    [RequireUserPermission(GuildPermission.BanMembers)]
+    public async Task BanMember(
+        [Summary(name: "User", description: "User to unban. Snowflake can be used.")]
+        SocketGuildUser user,
+        [Summary(name: "Reason", "Why is this user being banned? (Optional)")]
+        string? reason = null, 
+        [Summary(description: "How many days of messages should be deleted when this member is banned")]
+        int pruneDays=0)
+    {
+        var embed = new EmbedBuilder()
+            .WithTitle("Moderation - Ban Member")
+            .WithCurrentTimestamp();
+        
+        if (pruneDays < 0)
+        {
+            embed.WithColor(Color.Red)
+                .WithDescription("Parameter `pruneDays` cannot be less than `0`");
+            await Context.Interaction.RespondAsync(embed: embed.Build());
             return;
         }
 
         try
         {
-            await Context.Guild.AddBanAsync(user.Id, pruneDays, reason);
+            var controller = CoreContext.Instance?.GetRequiredService<ModerationService>()!;
+            var guild = CoreContext.Instance?.GetRequiredService<DiscordSocketClient>().GetGuild(Context.Guild.Id)!;
+            await controller.BanUser(guild, user.Id, Context.User.Id, reason);
         }
         catch (Exception e)
         {
@@ -194,7 +260,7 @@ public class ModerationModule : InteractionModuleBase
         if (reason != null)
             embed.AddField("Reason", reason);
         
-        await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`");
+        await Context.Interaction.RespondAsync(embed: embed.Build());
     }
 
 
