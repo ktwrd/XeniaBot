@@ -5,7 +5,7 @@ Xenia Bot is another General-Purpose Discord Bot for the masses.
 
 The main reason for it's creation is to de-clutter the usage of unnecessary Discord Bots in a server just to use one or two features in a bot (i.e, mee6 for leveling, dyno for moderation, etc...) when you can have all of those features in a single bot.
 
-| [Invite](https://discord.com/oauth2/authorize?client_id=1067393803427790929&scope=bot&permissions=415471496311) | [Dashboard](http://xb.kate.pet) | [Blog](https://xenia.kate.pet) |
+| [Invite](https://discord.com/oauth2/authorize?client_id=1067393803427790929&scope=bot&permissions=415471496439) | [Dashboard](http://xb.kate.pet) | [Website](https://xenia.kate.pet) |
 | - | - | - |
 
 

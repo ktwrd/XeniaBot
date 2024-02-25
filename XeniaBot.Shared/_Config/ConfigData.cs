@@ -65,7 +65,7 @@ public class ConfigData
         i ??= new ConfigData();
         i.DiscordToken = "";
         i.InviteClientId = default;
-        i.InvitePermissions = default;
+        i.InvitePermissions = 415471496439;
         i.Prefix = "x.";
 
         i.Developer = DevModeConfigItem.Default();
