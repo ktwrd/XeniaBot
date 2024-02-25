@@ -218,6 +218,8 @@ public class ReminderService : BaseService
     /// <param name="reminderId"><see cref="ReminderModel.ReminderId"/></param>
     private async Task SendNotification(string reminderId)
     {
+        if (!_configData.ReminderService.Enable)
+            return;
         var model = await _reminderDb.Get(reminderId);
         if (model == null)
             return;
