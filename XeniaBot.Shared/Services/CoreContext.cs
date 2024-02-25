@@ -21,6 +21,18 @@ namespace XeniaBot.Shared.Services;
 public class CoreContext
 {
     public static CoreContext? Instance { get; private set; }
+    private static Guid? _instanceId = null;
+
+    public static Guid InstanceId
+    {
+        get
+        {
+            if (_instanceId == null)
+                _instanceId = Guid.NewGuid();
+            return (Guid)_instanceId;
+        }
+    }
+
     public CoreContext(ProgramDetails details)
     {
         if (Instance != null)
