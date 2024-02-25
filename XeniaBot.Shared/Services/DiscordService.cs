@@ -99,7 +99,6 @@ public partial class DiscordService
         {
             await _client.SetGameAsync($"{versionString} | xenia.kate.pet", null);
         }
-
     }
 
     private Task _client_Log(LogMessage arg)
