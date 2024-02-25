@@ -1,5 +1,5 @@
 # Xenia Bot
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/ktwrd/XeniaBot/publish-docker-stable) ![GitHub](https://img.shields.io/github/license/ktwrd/XeniaBot) ![GitHub repo size](https://img.shields.io/github/repo-size/ktwrd/xeniabot) ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/ktwrd/xeniabot?filter=bot-*) ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/ktwrd/xeniabot?filter=dash-*)
+![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/ktwrd/XeniaBot/publish-docker-stable) ![GitHub](https://img.shields.io/github/license/ktwrd/XeniaBot) ![GitHub repo size](https://img.shields.io/github/repo-size/ktwrd/XeniaBot) ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/ktwrd/XeniaBot?filter=bot-*) ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/ktwrd/XeniaBot?filter=dash-*)
 
 Xenia Bot is another General-Purpose Discord Bot for the masses.
 
