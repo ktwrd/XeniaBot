@@ -13,6 +13,7 @@ public class AuditLogCheckRecord
     public long Timestamp { get; set; }
     public long InsertTimestamp { get; set; }
     public ulong? LastId { get; set; }
+    public string InstanceId { get; set; }
 
     public AuditLogCheckRecord()
     {
