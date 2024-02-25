@@ -168,7 +168,7 @@ public class ReminderService : BaseService
             Log.Warn($"Reminder ${model.ReminderId} too short, ignoring.");
             return;
         }
-        var timer = new Timer(diff);
+        var timer = new Timer(diff * 1000);
         timer.Elapsed += (sender, args) =>
         {
             var data = _reminderDb.Get(model.ReminderId).Result;
