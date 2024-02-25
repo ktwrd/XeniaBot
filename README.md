@@ -12,62 +12,9 @@ The main reason for it's creation is to de-clutter the usage of unnecessary Disc
 - [Features](#features)
 - [Setup Development Environment](INSTALLING)
 - [Contributing](CONTRIBUTING)
-- [Module Demos](#module-demos)
 
 ## Features
-- Counting
-- e926/e621
-- Image Editing ([caption](#caption), speech bubble, etc...)
-- [Confession System](#confession-system)
-- Moderation
-    * [Ban Sync](#what-is-ban-sync)
-    * Ticket System
-    * [Warn System](#warn-system) (with Dashboard interface)
-    * [Server Logging](#server-logging)
-        - [Git Diff is generated for message edits!](#message-editing)
-- Reminders
-- Level System
-    * Includes Level-Up Rewards
-    * Level Up rewards get re-added to members who were in the server.
-    * Level Up rewards can also be bulk-added to users via `/xp reward-reload`
-- Music Bot
+If you would like to see what features are in Xenia, take a peek at [our website](https://xenia.kate.pet/guide/modules)
 
 ### What is "Ban Sync"
-BanSync is one of Xenia's main features. If someone joins your server and they're banned in another server that Xenia is in, it will notify your moderators in a log channel. It will also do the same thing if someone in your server was banned from a different server that Xenia is in.
-
-Note: BanSync is a feature that you must request for using the `/bansync request` command, or via the dashboard.
-
-# Module Demos
-## Confession System
-Real anonymous confessions. No commands or text-based commands are used, which means that moderators can't see who made a confession!
-
-![screen recording](https://res.kate.pet/upload/03bcb777-911d-4774-9454-523b3b238267/DiscordCanary_S5Wm6jtwOd.gif)
-## Random Animal
-![screen recording](https://res.kate.pet/upload/fd22bbc7-2ec1-4f71-9b28-bf23c0aafdca/DiscordCanary_y05soKK3fv.gif)
-
-## Caption
-![screen recording](https://xb.redfur.cloud/tOpi9/TOTiMACa80.gif/raw)
-
-## Server Logging
-### Message Editing
-Works for messages all size
-
-![screenshot](https://res.kate.pet/upload/02dbcce552f4/Discord_ET23VdAW22.png)
-
-![screenshot](https://res.kate.pet/upload/02dff6802b0f/Discord_0Tc9lUwZEX.png)
-
-### Message Deletion
-Just like Message Editing, it handles messages of all sizes.
-
-![screenshot](https://res.kate.pet/upload/0a655c4e22a7/Discord_kFlV5cLIqB.png)
-
-![screenshot](https://res.kate.pet/upload/53585dfeaec7/Discord_C7gcuklSoU.png)
-
-## Warn System
-Warn Members easily via a small command.
-
-![screen recording](https://res.kate.pet/upload/7a64954c1588/Discord_DGsLyRlOs2.gif)
-
-You can also view warns on the Dashboard.
-
-![screen recording](https://res.kate.pet/upload/973217c9dbcb/Discord_gtqh6Z0lzi.gif)
+BanSync is one of Xenia's main features, and the main reason why it was created. You can see more information about the Ban Sync module [on the Xenia Bot website](https://xenia.kate.pet/guide/about_bansync).
