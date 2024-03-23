@@ -121,25 +121,35 @@ public class RolePreserveService : BaseService
         }
     }
 
-    public override async Task OnReadyDelay()
+    public override Task OnReadyDelay()
+    {
+        PreserveAll();
+        return Task.CompletedTask;
+    }
+
+    public async Task PreserveAll()
     {
         try
         {
             var taskList = new List<Task>();
-            foreach (var item in _client.Guilds)
+            var chunkedIds = ArrayHelper.Chunk(_client.Guilds.Select(v => v.Id).ToArray(), 10);
+            foreach (var x in chunkedIds)
             {
-                var id = item.Id;
+                var outerItem = x;
                 taskList.Add(new Task(
                     delegate
                     {
-                        var guild = _client.GetGuild(id);
-                        try
+                        foreach (var i in outerItem)
                         {
-                            PreserveGuild(guild).Wait();
-                        }
-                        catch (Exception ex)
-                        {
-                            _err.ReportException(ex, $"Failed to Preserve Guild {item.Name} ({item.Id})").Wait();
+                            var guild = _client.GetGuild(i);
+                            try
+                            {
+                                PreserveGuild(guild).Wait();
+                            }
+                            catch (Exception ex)
+                            {
+                                _err.ReportException(ex, $"Failed to Preserve Guild {guild.Name} ({guild.Id})").Wait();
+                            }
                         }
                     }));
             }
@@ -150,7 +160,7 @@ public class RolePreserveService : BaseService
         }
         catch (Exception ex)
         {
-            await _err.ReportException(ex, $"Failed to run OnReady task ;w;");
+            await _err.ReportException(ex, $"Failed to preserve all guilds ;w;");
         }
     }
     
