@@ -47,6 +47,9 @@ public class RolePreserveService : BaseService
             if (model == null)
                 return;
 
+            var ourHighestRoleEnumerable = arg.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
+            var ourHighestRolePos = ourHighestRoleEnumerable.FirstOrDefault()?.Position ?? int.MinValue;
+
             var success = new List<ulong>();
             var fail = new List<ulong>();
             foreach (var item in model.Roles)
@@ -55,6 +58,12 @@ public class RolePreserveService : BaseService
                     continue;
                 try
                 {
+                    var existingRole = arg.Guild.GetRole(item);
+                    if (existingRole.Position > ourHighestRolePos)
+                    {
+                        fail.Add(item);
+                        continue;
+                    }
                     await arg.AddRoleAsync(item);
                     success.Add(item);
                 }
