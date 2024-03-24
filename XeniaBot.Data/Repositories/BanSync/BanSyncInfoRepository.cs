@@ -69,6 +69,21 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
 
         return await BaseInfoFind(filter);
     }
+
+    /// <summary>
+    /// Fetch amount of BanSync records that exist for a Guild.
+    /// </summary>
+    /// <param name="guildId"><see cref="BanSyncInfoModel.GuildId"/></param>
+    /// <param name="allowGhost">Include ghosted records.</param>
+    /// <returns>Amount of records.</returns>
+    public async Task<long> CountInGuild(ulong guildId, bool allowGhost = false)
+    {
+        var filter = Builders<BanSyncInfoModel>
+            .Filter
+            .Where(v => v.GuildId == guildId && (!allowGhost && !v.Ghost));
+        var collection = GetCollection();
+        return await collection.CountDocumentsAsync(filter);
+    }
     public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(BanSyncInfoModel data, bool allowGhost = false)
         => await GetInfoEnumerable(data.UserId, data.GuildId, allowGhost);
     public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, bool allowGhost = false)
