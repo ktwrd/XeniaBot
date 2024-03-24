@@ -44,16 +44,18 @@ new List<BreadcrumbItem>()
             </div>
             <div class="card-body p-0">
                 <ul class="list-group">
-                    <li class="list-group-item">@await Model.Guild.GetBansAsync().CountAsync() bans registered</li>
+                    <li class="list-group-item">@Model.BanSyncRecordCount bans registered</li>
                     <li class="list-group-item">@Model.WarnItems.Count warns stored</li>
                     <li class="list-group-item">
                         @if (@Model.BanSyncConfig.Enable)
                         {
-                            <i class="bi bi-check-circle" style="color: var(--green);"></i> <span>BanSync Enabled</span>
+                            <i class="bi bi-check-circle" style="color: var(--green);"></i>
+                            <span>BanSync Enabled</span>
                         }
                         else
                         {
-                            <i class="bi bi-x-circle" style="color: var(--red);"></i> <span>BanSync Disabled</span>
+                            <i class="bi bi-x-circle" style="color: var(--red);"></i>
+                            <span>BanSync Disabled</span>
                         }
                     </li>
                 </ul>

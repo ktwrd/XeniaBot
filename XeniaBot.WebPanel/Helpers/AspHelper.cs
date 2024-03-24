@@ -197,6 +197,9 @@ public static class AspHelper
         {
             GuildId = guild.Id
         };
+
+        var banSyncRecordService = Program.Core.GetRequiredService<BanSyncInfoRepository>();
+        data.BanSyncRecordCount = await banSyncRecordService.CountInGuild(guild.Id);
         
         return data;
     }

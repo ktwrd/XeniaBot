@@ -18,4 +18,5 @@ public class ServerDetailsViewModel : BaseViewModel, IBaseServerModel
     public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }
     public ICollection<GuildWarnItemModel> WarnItems { get; set; }
     public RolePreserveGuildModel RolePreserve { get; set; }
+    public long BanSyncRecordCount { get; set; }
 }
