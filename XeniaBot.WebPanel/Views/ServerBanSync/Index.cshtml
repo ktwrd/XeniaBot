@@ -60,7 +60,7 @@ else
                     @item.GuildName
                 </td>
                 <td>
-                    @(AspHelper.DateTimeFromTimestamp(item.Timestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))
+                    @(AspHelper.DateTimeFromTimestamp(item.Timestamp * 1000).ToString("yyyy/MM/dd HH:mm:ss tt"))
                 </td>
                 <td>
                     <code>
