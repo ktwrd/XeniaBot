@@ -6,8 +6,8 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     
-    <AssemblyName>XeniaBot.Shared</AssemblyName>
-    <RootNamespace>XeniaBot.Shared</RootNamespace>
+    <AssemblyName>XeniaBot.WebPanel</AssemblyName>
+    <RootNamespace>XeniaBot.WebPanel</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TransformOnBuild>true</TransformOnBuild>
