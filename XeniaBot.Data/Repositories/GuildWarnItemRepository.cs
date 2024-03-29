@@ -15,6 +15,14 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
         : base(GuildWarnItemModel.CollectionName, services)
     {}
 
+    private SortDefinition<GuildWarnItemModel> sort_createdAt
+        => Builders<GuildWarnItemModel>
+            .Sort
+            .Descending(v => v.CreatedAtTimestamp);
+    private SortDefinition<GuildWarnItemModel> sort_modifiedAt
+        => Builders<GuildWarnItemModel>
+            .Sort
+            .Descending(v => v.ModifiedAtTimestamp);
     
     public async Task<GuildWarnItemModel?> GetLatest(string id)
     {
