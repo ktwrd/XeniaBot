@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <AssemblyVersion>1.10.*</AssemblyVersion>
     <NeutralLanguage>en</NeutralLanguage>
-    <Deterministic>false</Deterministic>
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	<TransformOnBuild>true</TransformOnBuild>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
@@ -26,11 +26,23 @@
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="Properties\VersionAutoIncrement.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
     <Compile Update="MediaManipu.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>MediaManipu.resx</DependentUpon>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\VersionAutoIncrement.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="MediaManipu.resx">
@@ -42,8 +54,18 @@
     <Folder Include="Exceptions\" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Properties\VersionAutoIncrement.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="XeniaBot.Data">
       <HintPath>..\XeniaBot.WebPanel\bin\Debug\net8.0\XeniaBot.Data.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 </Project>

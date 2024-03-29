@@ -6,9 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-        
-        <AssemblyVersion>0.8.*</AssemblyVersion>
-        <Deterministic>false</Deterministic>
+
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<TransformOnBuild>true</TransformOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
@@ -48,6 +48,33 @@
     <ItemGroup>
       <None Remove="Views\Home\About.md" />
       <EmbeddedResource Include="Views\Home\About.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="Properties\VersionAutoIncrement.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Properties\VersionAutoIncrement.tt">
+        <Generator>TextTemplatingFileGenerator</Generator>
+        <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Properties\VersionAutoIncrement.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

@@ -65,9 +65,7 @@ namespace XeniaBot.Core
         {
             get
             {
-                DateTime buildDate = new DateTime(2000, 1, 1)
-                    .AddDays(VersionReallyRaw?.Build ?? 0)
-                    .AddSeconds((VersionReallyRaw?.Revision ?? 0) * 2);
+                DateTime buildDate = BuildInformation.CreatedAt.DateTime;
                 return buildDate;
             }
         }

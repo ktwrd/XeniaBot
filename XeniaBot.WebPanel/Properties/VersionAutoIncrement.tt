@@ -1,0 +1,41 @@
+﻿<#@ template hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Reflection;
+
+[assembly: AssemblyTitle("Xenia Bot Dashboard")]
+[assembly: AssemblyVersion("<#= this.Major #>.<#= this.Minor #>.<#= this.DaysSince #>.<#= this.Minutes  #>")]
+[assembly: AssemblyFileVersion("<#= this.Major #>.<#= this.Minor #>.<#= this.DaysSince #>.<#= this.Minutes  #>")]
+
+namespace XeniaBot.WebPanel
+{
+	/// <summary>
+	/// Information about this build
+	/// </summary>
+	public static class BuildInformation
+	{
+		/// <summary>
+		/// Timestamp for when this was built at (Seconds since UTC Unix Epoch)
+		/// </summary>
+		public static long CreatedAtTimestamp => <#= this.Timestamp #>;
+		/// <summary>
+		/// When this build was created.
+		/// </summary>
+		public static DateTimeOffset CreatedAt => DateTimeOffset.FromUnixTimeSeconds(<#= this.Timestamp #>);
+	}
+}
+
+<#+
+int Major = 0;
+int Minor = 8;
+
+static DateTime StartedDate = new DateTime(year: 2022, month: 1, day: 1);
+int DaysSince = (int)((DateTime.UtcNow - StartedDate).TotalDays);
+int Minutes = (int)DateTime.UtcNow.TimeOfDay.TotalMinutes;
+long Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+#>

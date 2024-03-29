@@ -81,9 +81,9 @@ false
     {
         get
         {
-            DateTime buildDate = new DateTime(2000, 1, 1)
+            DateTime buildDate = new DateTime(2022, 1, 1)
                 .AddDays(Version?.Build ?? 0)
-                .AddSeconds((Version?.Revision ?? 0) * 2);
+                .AddMinutes((Version?.Revision ?? 0));
             return buildDate;
         }
     }
