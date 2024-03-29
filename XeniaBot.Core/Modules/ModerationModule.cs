@@ -118,49 +118,67 @@ public class ModerationModule : InteractionModuleBase
     public async Task MemberWarns(SocketGuildUser user)
     {
         await DeferAsync();
-        var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
-        var config = CoreContext.Instance.GetRequiredService<ConfigData>();
-        var data = await warnService.GetActiveWarnsForUser(Context.Guild.Id, user.Id);
-
         var embed = DiscordHelper.BaseEmbed().WithTitle("Member Warns");
-        if (data?.Count < 1)
+        try
         {
-            embed.WithDescription($"No active warns found for <@{user.Id}>")
-                .WithColor(Color.Orange);
+            var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
+            var config = CoreContext.Instance.GetRequiredService<ConfigData>();
+            var data = await warnService.GetActiveWarnsForUser(Context.Guild.Id, user.Id);
+
+            if (data?.Count < 1)
+            {
+                embed.WithDescription($"No active warns found for <@{user.Id}>")
+                    .WithColor(Color.Orange);
+                await FollowupAsync(embed: embed.Build());
+                return;
+            }
+
+            string encaseWithDashboardUrl(GuildWarnItemModel item)
+            {
+                if (config?.HasDashboard ?? false)
+                {
+                    return $" ([View on Dashboard]({config.DashboardUrl}/Warn/Info/{item.WarnId}))";
+                }
+                return "";
+            }
+        
+            for (int i = 0; i < Math.Min(data!.Count, 10); i++)
+            {
+                var item = data[i];
+            
+                embed.AddField(DateTimeOffset.FromUnixTimeMilliseconds(item.CreatedAtTimestamp).ToString("yyyy MMMM dd, h:mm:ss tt"), string.Join("\n",
+                    new string[]
+                    {
+                        $"Created by <@{item.ActionedUserId}>" + encaseWithDashboardUrl(item),
+                        "```",
+                        item.Description.Length < 1
+                            ? "<no description>"
+                            : item.Description.Length > 500
+                                ? item.Description.Substring(500) + "..."
+                                : item.Description,
+                        "```"
+                    }), true);
+            }
+
+            embed.WithDescription($"{data.Count} records for <@{user.Id}> " + (data.Count > 10 ? $" (10 shown)" : ""))
+                .WithColor(Color.Blue);
             await FollowupAsync(embed: embed.Build());
+        }
+        catch (Exception ex)
+        {
+            embed.WithDescription(string.Join("\n", new string[]
+            {
+                "Failed to get warns for user.",
+                "```",
+                ex.Message,
+                "```"
+            }));
+            embed.WithColor(Color.Red);
+            await Context.Interaction.RespondAsync(
+                embed: embed.Build());
+            await DiscordHelper.ReportError(ex, Context);
             return;
         }
-
-        string encaseWithDashboardUrl(GuildWarnItemModel item)
-        {
-            if (config?.HasDashboard ?? false)
-            {
-                return $" ([View on Dashboard]({config.DashboardUrl}/Warn/Info/{item.WarnId}))";
-            }
-            return "";
-        }
-        
-        for (int i = 0; i < Math.Min(data!.Count, 10); i++)
-        {
-            var item = data[i];
-            
-            embed.AddField(DateTimeOffset.FromUnixTimeMilliseconds(item.CreatedAtTimestamp).ToString("yyyy MMMM dd, h:mm:ss tt"), string.Join("\n",
-                new string[]
-                {
-                    $"Created by <@{item.ActionedUserId}>" + encaseWithDashboardUrl(item),
-                    "```",
-                    item.Description.Length < 1
-                        ? "<no description>"
-                        : item.Description.Length > 500
-                            ? item.Description.Substring(500) + "..."
-                            : item.Description,
-                    "```"
-                }), true);
-        }
-
-        embed.WithDescription($"{data.Count} records for <@{user.Id}> " + (data.Count > 10 ? $" (10 shown)" : ""))
-            .WithColor(Color.Blue);
-        await FollowupAsync(embed: embed.Build());
     }
     
     [SlashCommand("kick", "Kick member from server")]
