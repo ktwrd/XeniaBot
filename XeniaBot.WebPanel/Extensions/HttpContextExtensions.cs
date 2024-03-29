@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace XeniaBot.WebPanel.Extensions;
 

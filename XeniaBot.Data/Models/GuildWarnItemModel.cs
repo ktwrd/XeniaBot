@@ -1,4 +1,5 @@
-﻿using kate.shared.Helpers;
+﻿using System;
+using kate.shared.Helpers;
 using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;

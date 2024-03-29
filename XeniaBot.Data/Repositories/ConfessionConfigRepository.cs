@@ -1,4 +1,6 @@
-﻿using Discord;
+﻿using System;
+using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
