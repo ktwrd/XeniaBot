@@ -1,15 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <IsTrimmable>false</IsTrimmable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
 
-    <ItemGroup>
-      <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
-      <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
-    </ItemGroup>
+    <IsTrimmable>false</IsTrimmable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
+    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+  </ItemGroup>
 
 </Project>

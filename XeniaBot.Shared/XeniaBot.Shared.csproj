@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>XeniaBot.Shared</AssemblyName>
     <RootNamespace>XeniaBot.Shared</RootNamespace>
+    
     <IsTrimmable>false</IsTrimmable>
   </PropertyGroup>
 

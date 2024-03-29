@@ -3,10 +3,14 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <NeutralLanguage>en</NeutralLanguage>
-	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-	<TransformOnBuild>true</TransformOnBuild>
+    
+
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <TransformOnBuild>true</TransformOnBuild>
+
     <IsTrimmable>false</IsTrimmable>
+    
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
