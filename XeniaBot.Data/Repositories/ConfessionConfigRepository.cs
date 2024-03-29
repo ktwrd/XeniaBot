@@ -66,7 +66,7 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
             .Eq("GuildId", model.GuildId);
 
         var existingItems = await collection.FindAsync(filter);
-        if (existingItems != null && existingItems.Any())
+        if (existingItems != null && await existingItems.AnyAsync())
             await collection.FindOneAndReplaceAsync(filter, model);
         else
             await collection.InsertOneAsync(model);

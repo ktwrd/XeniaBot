@@ -415,7 +415,7 @@ namespace XeniaBot.Core.Services.BotAdditions
                 .Filter
                 .Eq("ChannelId", model.ChannelId);
 
-            if ((await collection.FindAsync(filter)).Any())
+            if (await (await collection.FindAsync(filter)).AnyAsync())
                 await collection.FindOneAndReplaceAsync(filter, model);
             else
                 await collection.InsertOneAsync(model);
@@ -449,7 +449,7 @@ namespace XeniaBot.Core.Services.BotAdditions
                 .Filter
                 .Eq("GuildId", model.GuildId);
 
-            if ((await collection.FindAsync(filter)).Any())
+            if (await (await collection.FindAsync(filter)).AnyAsync())
                 await collection.FindOneAndReplaceAsync(filter, model);
             else
                 await collection.InsertOneAsync(model);

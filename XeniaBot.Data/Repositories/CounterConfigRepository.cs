@@ -23,13 +23,15 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
             .Filter
             .Eq("GuildId", model.GuildId);
 
-        if (collection?.Find(filter).Any() ?? false)
+        var existsRes = await collection.FindAsync(filter);
+        
+        if (await existsRes.AnyAsync())
         {
-            await collection?.ReplaceOneAsync(filter, model);
+            await collection.ReplaceOneAsync(filter, model);
         }
         else
         {
-            await collection?.InsertOneAsync(model);
+            await collection.InsertOneAsync(model);
         }
         if (!CachedItems.ContainsKey(model.ChannelId))
             CachedItems.Add(model.ChannelId, model.Count);

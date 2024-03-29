@@ -36,7 +36,7 @@ public class GuildPrefixRepository : BaseRepository<GuildPrefixConfigModel>
     {
         var collection = GetCollection();
         var result = await collection.FindAsync(new GuildPrefixConfigModel(guildId).Filter);
-        return result?.Any() ?? false;
+        return await result.AnyAsync();
     }
     public async Task Set(GuildPrefixConfigModel data)
     {
