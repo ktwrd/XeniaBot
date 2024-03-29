@@ -65,22 +65,22 @@ public class XeniaVersionService : BaseService
         {
             switch (item.Name)
             {
-                case "XeniaBot.Data":
-                    SetFlags_XeniaData(model, item).ForEach(InsertFlags);
+                case "XeniaBot.Shared":
+                    SetFlags_XeniaShared(model, item).ForEach(InsertFlags);
                     break;
             }
         }
     }
 
     /// <summary>
-    /// Set flags for the XeniaBot.Data project.
+    /// Set flags for the XeniaBot.Shared project.
     /// </summary>
-    private List<(string, object)> SetFlags_XeniaData(XeniaVersionModel model, XeniaVersionModel.XeniaVersionAssemblyItem asm)
+    private List<(string, object)> SetFlags_XeniaShared(XeniaVersionModel model, XeniaVersionModel.XeniaVersionAssemblyItem asm)
     {
         var result = new List<(string, object)>();
         var version = new Version(asm.Version);
         
-        // versions <2.* uses ObjectId for the primary key
+        // versions <2 uses ObjectId for the primary key
         result.Add(("idColumnType", version.Major < 2
                 ? "ObjectId"
                 : "Guid"));
