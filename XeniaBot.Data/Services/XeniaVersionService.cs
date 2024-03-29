@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
@@ -32,6 +33,7 @@ public class XeniaVersionService : BaseService
             Version = _details.Version,
             Name = calling.FullName?.Split(",")[0] ?? ""
         };
+        
         if (currentModel.Version.StartsWith("1.10."))
         {
             currentModel.Flags.TryAdd("idColumnType", "ObjectId");
@@ -40,13 +42,30 @@ public class XeniaVersionService : BaseService
         {
             currentModel.Flags.TryAdd("idColumnType", "Guid");
         }
+        
         if (currentModel.Name.Length < 1)
             throw new Exception("Name for executing assembly is empty?");
         await _repo.Insert(currentModel);
+        var previousModel = await _repo.GetPrevious(currentModel.Id);
+        if (currentModel.Name.StartsWith("XeniaBot.Core"))
+            await InitializeAsync_Bot(currentModel, previousModel);
+    }
+
+    private async Task InitializeAsync_Bot(XeniaVersionModel currentModel, XeniaVersionModel? previousModel)
+    {
+        if (currentModel.Flags.TryGetValue("idColumnType", out var currentColumnType) &&
+            currentColumnType.ToString() == "Guid")
+        {
+            if ((previousModel?.Flags.TryGetValue("idColumnType", out var previousColumnType) ?? false) &&
+                previousColumnType.ToString() == "ObjectId")
+            {
+                await UpgradeObjectIdToGuid();
+            }
+        }
     }
 
     private async Task UpgradeObjectIdToGuid()
     {
-        
+        // TODO
     }
 }
