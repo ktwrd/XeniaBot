@@ -19,16 +19,15 @@ namespace XeniaBot.Core.Helpers
     {
         public static EmbedBuilder BaseEmbed(EmbedBuilder? embed=null)
         {
-            if (embed == null)
-                embed = new EmbedBuilder();
-
-            var client = Program.Core.GetRequiredService<DiscordSocketClient>();
+            embed ??= new EmbedBuilder();
+            var core = CoreContext.Instance;
+            var client = core.GetRequiredService<DiscordSocketClient>();
             var icon = client.CurrentUser.GetAvatarUrl();
 
             return embed
                 .WithTimestamp(DateTimeOffset.UtcNow)
                 .WithFooter(new EmbedFooterBuilder()
-                    .WithText($"Xenia v{Program.Version}")
+                    .WithText($"Xenia v{core.Details.Version}")
                     .WithIconUrl(icon));
         }
         public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage argu)
