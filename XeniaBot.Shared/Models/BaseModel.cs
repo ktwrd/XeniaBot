@@ -9,7 +9,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace XeniaBot.Shared.Models
 {
-    [Obsolete("As of Data 2.0, all models will be using a Guid for it's primary key (_id) instead of an ObjectId. This transition is handled by XeniaVersionService")]
+    [Obsolete("As of Shared v2.0, all models will be using a Guid for it's primary key (_id) instead of an ObjectId. This transition is handled by XeniaVersionService")]
     public class BaseModel : BaseModelObjectId
     {
     }
@@ -36,11 +36,11 @@ namespace XeniaBot.Shared.Models
     }
 
     /// <summary>
-    /// <para>As of Data 2.0, all models will be using a Guid for it's primary key (_id) instead of an ObjectId.</para>
+    /// <para>As of Shared v2.0, all models will be using a Guid for it's primary key (_id) instead of an ObjectId.</para>
     ///
-    /// <para>This transition is handled by XeniaBot.Shared.Services.XeniaVersionService</para>
+    /// <para>This transition is handled by XeniaBot.Data.Services.XeniaVersionService</para>
     /// </summary>
-    [Obsolete("As of Data 2.0, all models will be using a Guid for it's primary key (_id) instead of an ObjectId. This transition is handled by XeniaVersionService")]
+    [Obsolete("As of Shared v2.0, all models will be using a Guid for it's primary key (_id) instead of an ObjectId. This transition is handled by XeniaVersionService")]
     public class BaseModelObjectId : BaseModelGeneric<ObjectId>
     {
         /// <inheritdoc/>
