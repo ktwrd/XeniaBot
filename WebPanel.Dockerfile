@@ -9,6 +9,8 @@ RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /
 USER appuser
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+RUN dotnet tool install -g dotnet-t4
+ENV PATH="/root/.dotnet/tools:${PATH}"
 WORKDIR /src
 COPY ["./XeniaBot.WebPanel/XeniaBot.WebPanel.csproj", "./"]
 RUN dotnet restore "XeniaBot.WebPanel.csproj"
