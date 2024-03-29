@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
@@ -53,5 +54,13 @@ public class BaseRepository<TH> : BaseService
     /// <returns>MongoDB Collection with assumed type of <typeparamref name="TH"/> or null if the collection doesn't exist.</returns>
     protected IMongoCollection<TH>? GetCollection(string name)
         => GetCollection<TH>(name);
-
+    
+    public Task<IAsyncCursor<TH>> BaseFind(FilterDefinition<TH> filter, SortDefinition<TH> sort = null)
+    {
+        var collection = GetCollection();
+        var opts = new FindOptions<TH, TH>();
+        if (sort != null)
+            opts.Sort = sort;
+        return collection.FindAsync(filter, opts);
+    }
 }
