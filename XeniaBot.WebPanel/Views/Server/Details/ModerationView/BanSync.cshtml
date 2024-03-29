@@ -1,33 +1,33 @@
 ﻿@using XeniaBot.Data.Models
 @model ServerDetailsViewModel
 
-<form class="mb-3" id="bansync_request" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_BanSync_Request" asp-route-id="@Model.Guild.Id">
-    @if (@Model.BanSyncConfig.State == BanSyncGuildState.Unknown)
-    {
-        <input class="btn btn-outline-primary" type="submit" value="Request" />
-    }
-    else
-    {
-        <input class="btn btn-outline-primary" type="submit" value="Request" disabled/>
-    }
-    @switch (@Model.BanSyncConfig.State)
-    {
-        case BanSyncGuildState.Active:
-            <span class="m-1">Ban Sync is already enabled</span>
-            break;
-        case BanSyncGuildState.Blacklisted:
-            <span class="m-1">Server is blacklisted. <pre><code>@Model.BanSyncConfig.Reason</code></pre></span>
-            break;
-        case BanSyncGuildState.PendingRequest:
-            <span class="m-1">Pending approval</span>
-            break;
-        case BanSyncGuildState.RequestDenied:
-            <span class="m-1">Request denied. Reason:</span> <pre><code>@Model.BanSyncConfig.Reason</code></pre>
-            break;
-    }
-</form>
 @if (@Model.BanSyncConfig.State != BanSyncGuildState.Active)
 {
+    <form class="mb-3" id="bansync_request" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_BanSync_Request" asp-route-id="@Model.Guild.Id">
+        @if (@Model.BanSyncConfig.State == BanSyncGuildState.Unknown)
+        {
+            <input class="btn btn-outline-primary" type="submit" value="Request" />
+        }
+        else
+        {
+            <input class="btn btn-outline-primary" type="submit" value="Request" disabled/>
+        }
+        @switch (@Model.BanSyncConfig.State)
+        {
+            case BanSyncGuildState.Active:
+                <span class="m-1">Ban Sync is already enabled</span>
+                break;
+            case BanSyncGuildState.Blacklisted:
+                <span class="m-1">Server is blacklisted. <pre><code>@Model.BanSyncConfig.Reason</code></pre></span>
+                break;
+            case BanSyncGuildState.PendingRequest:
+                <span class="m-1">Pending approval</span>
+                break;
+            case BanSyncGuildState.RequestDenied:
+                <span class="m-1">Request denied. Reason:</span> <pre><code>@Model.BanSyncConfig.Reason</code></pre>
+                break;
+        }
+    </form>
     <ul class="list-group mb-3">
         <li class="list-group-item">
             @if (@Model.Guild.MemberCount < 35)
