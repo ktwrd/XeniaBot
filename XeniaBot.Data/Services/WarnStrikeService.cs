@@ -60,6 +60,19 @@ public class WarnStrikeService : BaseService
     }
 
     /// <summary>
+    /// <para>Is the Warn provided considered "active" with the Guild Configuration provided?</para>
+    ///
+    /// <para>Will always return true when <see cref="GuildConfigWarnStrikeModel.EnableStrikeSystem"/> is false</para>
+    /// </summary>
+    public static bool IsWarnActive(GuildWarnItemModel model, GuildConfigWarnStrikeModel config)
+    {
+        if (!config.EnableStrikeSystem)
+            return true;
+        var minimumCreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - (config.StrikeWindow * 1000);
+        return model.CreatedAtTimestamp > minimumCreatedAt;
+    }
+
+    /// <summary>
     /// <para>Has the User reached the Warn Limit in the Guild Provided?</para>
     ///
     /// <para>When the Strike System is disabled, it will return (false, null)</para>
