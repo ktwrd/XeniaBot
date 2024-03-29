@@ -65,6 +65,22 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
 
         return resultDict.Select(v => v.Value).ToList();
     }
+
+    public async Task<ICollection<GuildWarnItemModel>?> GetLatestGuildMemberItems(ulong guildId, ulong userId, long createdAfter = 0)
+    {
+        var filter = Builders<GuildWarnItemModel>
+            .Filter
+            .Where(v => v.GuildId == guildId && v.TargetUserId == userId);
+        var workingRes = await BaseFind(filter);
+        var data = workingRes.ToList()
+            .OrderByDescending(v => v.CreatedAtTimestamp)
+            .ThenBy(v => v.WarnId)
+            .ThenByDescending(v => v.ModifiedAtTimestamp)
+            .GroupBy(v => v.WarnId)
+            .Select(v => v.First())
+            .Where(v => v.CreatedAtTimestamp > createdAfter);
+        return data.ToList();
+    }
     
     public async Task Add(GuildWarnItemModel model)
     {
