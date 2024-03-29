@@ -251,6 +251,51 @@ namespace XeniaBot.Core.Modules
                 return;
             }
         }
+
+        [SlashCommand("strike", "Get current config for Warn Strikes")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
+        public async Task WarnStrikeConfigGet()
+        {
+            await DeferAsync();
+            var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Strikes - Config");
+            try
+            {
+                string booleanToEmoji(bool value)
+                {
+                    return value ? "<:greencheck:1223209950617014325>" : "<:redcross:1223209928634925087>";
+                }
+                var strikeService = _core.GetRequiredService<WarnStrikeService>();
+                var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
+                embed.WithDescription(string.Join("\n", new string[]
+                {
+                    $"{booleanToEmoji(data.EnableStrikeSystem)} Enabled",
+                    $":exclamation: Maximum Strikes: {data.MaxStrike}",
+                    #if DEBUG
+                    $"{booleanToEmoji(data.AutoKickWhenMaxStrikeReached)} Kick when Max Strikes reached",
+                    $"{booleanToEmoji(data.RequestForKickWhenMaxStrikeReached)} Prompt for Kick when Max Strikes reached",
+                    #endif
+                    $":alarm_clock: Strike Window: {data.FormatStrikeWindow()}",
+                    "",
+                    $"Last Updated: <t:{data.UpdatedAt}:F>"
+                }));
+                await FollowupAsync(embed: embed.Build());
+            }
+            catch (Exception ex)
+            {
+                embed.WithDescription(string.Join("\n", new string[]
+                {
+                    "Failed to get config",
+                    "```",
+                    ex.Message,
+                    "```"
+                }));
+                embed.WithColor(Color.Red);
+                await FollowupAsync(
+                    embed: embed.Build());
+                await DiscordHelper.ReportError(ex, Context);
+                return;
+            }
+        }
         #endregion
     }
 }
