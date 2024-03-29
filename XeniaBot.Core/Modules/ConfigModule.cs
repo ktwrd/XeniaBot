@@ -231,7 +231,7 @@ namespace XeniaBot.Core.Modules
                     embed.Description += "\n**NOTE:** Strike System is currently disabled";
                 }
                 
-                embed.WithColor(Color.Blue);
+                embed.WithColor(data.EnableStrikeSystem ? Color.Blue : Color.DarkOrange);
                 await FollowupAsync(embed: embed.Build());
             }
             catch (Exception ex)
