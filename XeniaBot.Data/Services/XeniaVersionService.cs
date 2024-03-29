@@ -50,16 +50,41 @@ public class XeniaVersionService : BaseService
     /// </summary>
     private void SetFlags(XeniaVersionModel model)
     {
-        var version = new Version(model.Version);
-        if (version.Major <= 1 && version.Minor <= 10)
+        // Insert flags safely into model.Flags
+        void InsertFlags((string, object) pair)
         {
-            model.Flags.TryAdd("idColumnType", "ObjectId");
+            var (key, value) = pair;
+            model.Flags.TryAdd(key, value);
+            model.Flags[key] = value;
         }
-        else
+
+        foreach (var item in model.Assemblies)
         {
-            model.Flags.TryAdd("idColumnType", "Guid");
+            switch (item.Name)
+            {
+                case "XeniaBot.Data":
+                    SetFlags_XeniaData(model, item).ForEach(InsertFlags);
+                    break;
+            }
         }
     }
+
+    /// <summary>
+    /// Set flags for the XeniaBot.Data project.
+    /// </summary>
+    private List<(string, object)> SetFlags_XeniaData(XeniaVersionModel model, XeniaVersionModel.XeniaVersionAssemblyItem asm)
+    {
+        var result = new List<(string, object)>();
+        var version = new Version(asm.Version);
+        
+        // versions <2.* uses ObjectId for the primary key
+        result.Add(("idColumnType", version.Major < 2
+                ? "ObjectId"
+                : "Guid"));
+
+        return result;
+    }
+
     private async Task InitializeAsync_Bot(XeniaVersionModel currentModel, XeniaVersionModel? previousModel)
     {
         if (currentModel.Flags.TryGetValue("idColumnType", out var currentColumnType) &&
