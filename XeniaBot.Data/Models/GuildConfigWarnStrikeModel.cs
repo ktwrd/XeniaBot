@@ -24,9 +24,9 @@ public class GuildConfigWarnStrikeModel : BaseModelGuid
     /// </summary>
     public bool RequestForKickWhenMaxStrikeReached { get; set; }
     /// <summary>
-    /// How long we should check for warns to account for strikes.
+    /// How long we should check for warns to account for strikes. Measured in seconds.
     /// </summary>
-    public TimeSpan StrikeWindow { get; set; }
+    public double StrikeWindow { get; set; }
     /// <summary>
     /// Unix Timestamp (UTC, Seconds)
     /// </summary>
@@ -39,7 +39,7 @@ public class GuildConfigWarnStrikeModel : BaseModelGuid
         MaxStrike = 3;
         AutoKickWhenMaxStrikeReached = false;
         RequestForKickWhenMaxStrikeReached = true;
-        StrikeWindow = TimeSpan.FromDays(31);
+        StrikeWindow = TimeSpan.FromDays(31).TotalSeconds;
         UpdatedAt = 0;
     }
 }
