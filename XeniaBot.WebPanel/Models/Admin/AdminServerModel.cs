@@ -19,4 +19,5 @@ public class AdminServerModel : BaseViewModel, IBaseServerModel
     public ICollection<GuildWarnItemModel> WarnItems { get; set; }
     public RolePreserveGuildModel RolePreserve { get; set; }
     public long BanSyncRecordCount { get; set; }
+    public GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
 }

@@ -205,6 +205,9 @@ public static class AspHelper
 
         var banSyncRecordService = Program.Core.GetRequiredService<BanSyncInfoRepository>();
         data.BanSyncRecordCount = await banSyncRecordService.CountInGuild(guild.Id);
+
+        var warnStrikeService = Program.Core.GetRequiredService<WarnStrikeService>();
+        data.WarnStrikeConfig = await warnStrikeService.GetStrikeConfig(guild.Id);
         
         return data;
     }
