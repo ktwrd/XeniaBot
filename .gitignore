@@ -405,3 +405,5 @@ config.json
 XeniaBot.WebPanel/Properties/launchSettings.json
 test_backup.ps1
 run_backup.ps1
+XeniaBot.Core/Properties/VersionAutoIncrement.cs
+XeniaBot.WebPanel/Properties/VersionAutoIncrement.cs
