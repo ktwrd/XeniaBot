@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+    
+    <AssemblyName>XeniaBot.Logic</AssemblyName>
+    <RootNamespace>XeniaBot.Logic</RootNamespace>
 
     <IsTrimmable>false</IsTrimmable>
   </PropertyGroup>

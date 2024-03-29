@@ -4,6 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     
+    <AssemblyName>XeniaBot.Core</AssemblyName>
+    <RootNamespace>XeniaBot.Core</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TransformOnBuild>true</TransformOnBuild>
