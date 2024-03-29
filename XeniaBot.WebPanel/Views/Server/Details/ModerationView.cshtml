@@ -35,6 +35,14 @@ new List<BreadcrumbItem>()
     </div>
     <div class="m-1 col-auto">
         <div class="card">
+            <div class="card-header card-header-sm" id="warnStrike">Warn Strike</div>
+            <div class="card-body">
+                @{ await Html.RenderPartialAsync("Details/ModerationView/WarnStrike"); }
+            </div>
+        </div>
+    </div>
+    <div class="m-1 col-auto">
+        <div class="card">
             <div class="card-header card-header-sm" id="log">Logging</div>
             <div class="card-body">
                 @{ await Html.RenderPartialAsync("Details/ModerationView/Logging"); }
