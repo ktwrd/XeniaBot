@@ -57,7 +57,7 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
     public async Task Add(GuildWarnItemModel model)
     {
         var collection = GetCollection();
-        model._id = default;
+        model.Id = default;
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await collection.InsertOneAsync(model);
     }
