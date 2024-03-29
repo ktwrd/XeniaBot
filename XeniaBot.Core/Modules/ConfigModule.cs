@@ -203,6 +203,7 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("strike-limit", "Set the amount Warns before action should be taken.")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task WarnStrikeConfigSetLimit(
             [Summary(description: "Maximum amount of warns before action should be taken")]
             int limit)
