@@ -140,7 +140,8 @@ public class ModerationModule : InteractionModuleBase
         {
             var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
             var config = CoreContext.Instance.GetRequiredService<ConfigData>();
-            var data = await warnService.GetActiveWarnsForUser(Context.Guild.Id, user.Id);
+            var warnStrikeConfig = await warnService.GetStrikeConfig(Context.Guild.Id);
+            var (reachedWarnLimit, data) = await warnService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
 
             if (data?.Count < 1)
             {
@@ -178,7 +179,13 @@ public class ModerationModule : InteractionModuleBase
             }
 
             embed.WithDescription($"{data.Count} records for <@{user.Id}> " + (data.Count > 10 ? $" (10 shown)" : ""))
-                .WithColor(Color.Blue);
+                .WithColor(reachedWarnLimit ? Color.Red : Color.Blue);
+            if (reachedWarnLimit)
+            {
+                embed.Description +=
+                    $"\n\n**Member has {data.Count} active warn{(data.Count > 1 ? 's'.ToString() : string.Empty)}**, but the limit is {warnStrikeConfig.MaxStrike}!\n" +
+                    $"Action immediately or ignore this notification.";
+            }
             await FollowupAsync(embed: embed.Build());
         }
         catch (Exception ex)
@@ -191,7 +198,7 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await Context.Interaction.RespondAsync(
+            await FollowupAsync(
                 embed: embed.Build());
             await DiscordHelper.ReportError(ex, Context);
             return;
