@@ -27,6 +27,25 @@ public class GuildConfigWarnStrikeModel : BaseModelGuid
     /// How long we should check for warns to account for strikes. Measured in seconds.
     /// </summary>
     public double StrikeWindow { get; set; }
+
+    /// <summary>
+    /// Format <see cref="StrikeWindow"/> to Years/Days
+    /// </summary>
+    public string FormatStrikeWindow()
+    {
+        var years = Math.Floor(StrikeWindow / 365f);
+        var days = StrikeWindow % 365;
+        var result = "";
+        if (years > 0)
+            result += $"{years} year";
+        result += years > 1 ? "s " : "";
+
+        if (days > 0)
+            result += $"{days} day";
+        if (days > 1)
+            result += "s";
+        return result;
+    }
     /// <summary>
     /// Unix Timestamp (UTC, Seconds)
     /// </summary>
