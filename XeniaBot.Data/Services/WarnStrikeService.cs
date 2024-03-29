@@ -59,6 +59,27 @@ public class WarnStrikeService : BaseService
         return data?.ToList();
     }
 
+    /// <summary>
+    /// <para>Has the User reached the Warn Limit in the Guild Provided?</para>
+    ///
+    /// <para>When the Strike System is disabled, it will return (false, null)</para>
+    /// </summary>
+    /// <returns>
+    /// <para><b>Item1:</b> Has the user reached the Warn Limit?</para>
+    /// <para><b>Item2:</b> Output of <see cref="GetActiveWarnsForUser"/></para>
+    /// </returns>
+    public async Task<(bool, List<GuildWarnItemModel>?)> UserReachedWarnLimit(ulong guildId, ulong userId)
+    {
+        var config = await GetStrikeConfig(guildId);
+        if (!config.EnableStrikeSystem)
+        {
+            return (false, null);
+        }
+
+        var data = await GetActiveWarnsForUser(guildId, userId);
+        return (data?.Count >= config.MaxStrike, data);
+    }
+
     /// <inheritdoc cref="GuildConfigWarnStrikeRepository.GetLatestGuildMemberItems(ulong, ulong, long)"/>
     public async Task<List<GuildWarnItemModel>?> GetAllWarnsForUser(ulong guildId, ulong userId)
     {
