@@ -27,6 +27,7 @@ public class XeniaVersionService : BaseService
     public override async Task InitializeAsync()
     {
         var calling = Assembly.GetEntryAssembly();
+        var allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
         var currentModel = new XeniaVersionModel()
         {
             ParsedVersionTimestamp = new DateTimeOffset(_details.VersionDate).ToUnixTimeSeconds(),
@@ -42,6 +43,7 @@ public class XeniaVersionService : BaseService
         {
             currentModel.Flags.TryAdd("idColumnType", "Guid");
         }
+        currentModel.FillAssemblies(allAssemblies);
         
         if (currentModel.Name.Length < 1)
             throw new Exception("Name for executing assembly is empty?");
