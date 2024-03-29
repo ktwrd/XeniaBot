@@ -101,8 +101,14 @@ public class XeniaVersionService : BaseService
         }
     }
 
+    /// <summary>
+    /// <para>Replace all `_id` fields with a Guid instead of an ObjectId in all collections in the current database</para>
+    ///
+    /// <para>This only applies when the previous XeniaBot.Shared version is &lt;2.0.0.0 and the current version is &gt;=2.0.0.0</para>
+    /// </summary>
     private async Task UpgradeObjectIdToGuid()
     {
+        Log.WriteLine("Converting the type of _id in all documents from ObjectId to Guid");
         // TODO
     }
 }
