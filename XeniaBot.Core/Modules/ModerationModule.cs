@@ -81,6 +81,7 @@ public class ModerationModule : InteractionModuleBase
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
         try
         {
+            var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
             var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
             var data = new GuildWarnItemModel()
             {
@@ -91,14 +92,25 @@ public class ModerationModule : InteractionModuleBase
                 Description = reason
             };
             await controller.Add(data);
-            embed.WithDescription($"Warned member <@{user.Id}>. Warn Id `{data.WarnId}`.");
+            embed.WithDescription($"Warned member <@{user.Id}>");
+            embed.WithFooter($"{data.WarnId}");
+
+            var warnStrikeConfig = await warnService.GetStrikeConfig(Context.Guild.Id);
+            var (reachedWarnLimit, activeWarns) = await warnService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
+            if (reachedWarnLimit)
+            {
+                embed.AddField(
+                    "User Reached Warn Limit",
+                    $"Has {activeWarns!.Count} active warns (limit is {warnStrikeConfig.MaxStrike})\nAction immediately or ignore this message.");
+            }
+            
             if (Program.Core.Config.Data.HasDashboard)
             {
                 embed.Description +=
                     $"\n[View on Dashboard]({Program.Core.Config.Data.DashboardUrl}/Warn/Info/{data.WarnId})";
             }
 
-            embed.WithColor(Color.Blue);
+            embed.WithColor(reachedWarnLimit ? Color.Red : Color.Blue);
 
             await FollowupAsync(embed: embed.Build());
         }
