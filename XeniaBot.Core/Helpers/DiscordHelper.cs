@@ -30,13 +30,13 @@ namespace XeniaBot.Core.Helpers
                     .WithText($"Xenia v{core.Details.Version}")
                     .WithIconUrl(icon));
         }
-        public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage argu)
+        public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage arg)
         {
-            if (!(argu is SocketUserMessage message))
+            if (!(arg is SocketUserMessage message))
                 return;
             var context = new SocketCommandContext(client, message);
-            var guild = context.Guild.GetTextChannel(argu.Channel.Id);
-            var msg = await guild.GetMessageAsync(argu.Id);
+            var guild = context.Guild.GetTextChannel(arg.Channel.Id);
+            var msg = await guild.GetMessageAsync(arg.Id);
 
             if (msg != null)
                 await msg.DeleteAsync();
