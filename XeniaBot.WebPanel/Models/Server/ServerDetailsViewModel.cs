@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Discord.WebSocket;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Services;
 
 namespace XeniaBot.WebPanel.Models;
 
@@ -21,4 +22,9 @@ public class ServerDetailsViewModel : BaseViewModel, IBaseServerModel
     public RolePreserveGuildModel RolePreserve { get; set; }
     public long BanSyncRecordCount { get; set; }
     public GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
+
+    public bool IsWarnActive(GuildWarnItemModel model)
+    {
+        return WarnStrikeService.IsWarnActive(model, WarnStrikeConfig);
+    }
 }
