@@ -1,4 +1,5 @@
-﻿using XeniaBot.Data.Models;
+﻿using System.Collections.Generic;
+using XeniaBot.Data.Models;
 
 namespace XeniaBot.WebPanel.Models;
 

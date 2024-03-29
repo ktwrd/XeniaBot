@@ -21,10 +21,11 @@ namespace XeniaBot.Core.Modules
 {
     public class MiscModule : InteractionModuleBase
     {
+        private CoreContext _core => CoreContext.Instance!;
         [SlashCommand("info", "Information about Xenia")]
         public async Task Info()
         {
-            var client = Program.Core.GetRequiredService<DiscordSocketClient>();
+            var client = _core.GetRequiredService<DiscordSocketClient>();
             var embed = DiscordHelper.BaseEmbed()
                 .WithDescription(string.Join(" ", new string[]
                 {
@@ -37,8 +38,8 @@ namespace XeniaBot.Core.Modules
                     $"Guilds:     {client.Guilds.Count}",
                     $"Latency:    {client.Latency}ms",
                     $"Uptime:     {DiscordHelper.GetUptimeString()}",
-                    $"Version:    {Program.Version}",
-                    $"Build Date: {Program.VersionDate}",
+                    $"Version:    {_core.Details.Version}",
+                    $"Build Date: {_core.Details.VersionDate}",
                     "```"
                 }))
                 .WithColor(new Color(255, 255, 255));
@@ -48,11 +49,11 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("dashboard", "Fetch Dashboard information")]
         public async Task Dashboard()
         {
-            if (Program.Core.Config.Data.HasDashboard)
+            if (_core.Config.Data.HasDashboard)
             {
                 await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                     .WithTitle("Xenia Dashboard")
-                    .WithDescription($"The dashboard is publicly accessible at {Program.Core.Config.Data.DashboardUrl}")
+                    .WithDescription($"The dashboard is publicly accessible at {_core.Config.Data.DashboardUrl}")
                     .WithColor(Color.Blue)
                     .WithCurrentTimestamp()
                     .Build());
@@ -71,12 +72,12 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("metricreload", "Reload Prometheus Metrics")]
         public async Task ReloadMetrics()
         {
-            if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
+            if (!_core.Config.Data.UserWhitelist.Contains(Context.User.Id))
             {
                 await Context.Interaction.FollowupAsync("You do not have permission to access this command");
                 return;
             }
-            var config = Program.Core.GetRequiredService<ConfigData>();
+            var config = _core.GetRequiredService<ConfigData>();
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Reload Prometheus Metrics");
             
@@ -87,7 +88,7 @@ namespace XeniaBot.Core.Modules
                 return;
             }
 
-            var prom = Program.Core.GetRequiredService<PrometheusService>();
+            var prom = _core.GetRequiredService<PrometheusService>();
             if (prom == null)
             {
                 await Context.Interaction.RespondAsync(
@@ -116,7 +117,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("invite", "Get invite link for Xenia")]
         public async Task Invite()
         {
-            var config = Program.Core.GetRequiredService<ConfigData>();
+            var config = _core.GetRequiredService<ConfigData>();
             var inviteLink =
                 $"https://discord.com/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&scope=bot&permissions={config.InvitePermissions}";
             await Context.Interaction.RespondAsync(embed: DiscordHelper.BaseEmbed()
@@ -131,12 +132,12 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("fetch_config", "Fetch data from config file")]
         public async Task FetchConfig()
         {
-            if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
+            if (!_core.Config.Data.UserWhitelist.Contains(Context.User.Id))
             {
                 await Context.Interaction.FollowupAsync("You do not have permission to access this command");
                 return;
             }
-            var config = Program.Core.GetRequiredService<ConfigData>();
+            var config = _core.GetRequiredService<ConfigData>();
             var fileContent = JsonSerializer.Serialize(config, Program.SerializerOptions);
             await Context.Interaction.RespondWithFileAsync(
                 new MemoryStream(Encoding.UTF8.GetBytes(fileContent)), 
@@ -164,13 +165,13 @@ namespace XeniaBot.Core.Modules
                 else
                 {
                     await FollowupAsync("`Failed to get dad joke ;w;`");
-                    await Program.Core.GetRequiredService<ErrorReportService>().ReportError(response, Context);
+                    await _core.GetRequiredService<ErrorReportService>().ReportError(response, Context);
                 }
             }
             catch (Exception ex)
             {
                 await FollowupAsync($"`Failed to get dad joke ;w; ({ex.Message})`");
-                await Program.Core.GetRequiredService<ErrorReportService>().ReportError(ex, Context);
+                await _core.GetRequiredService<ErrorReportService>().ReportError(ex, Context);
             }
         }
     }

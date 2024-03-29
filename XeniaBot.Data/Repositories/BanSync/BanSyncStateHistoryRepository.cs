@@ -1,7 +1,10 @@
-﻿using MongoDB.Driver;
+﻿using System;
+using System.Collections.Generic;
+using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace XeniaBot.Data.Repositories;
 
@@ -14,7 +17,7 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
 
     public async Task Add(BanSyncStateHistoryItemModel model)
     {
-        model._id = default;
+        model.Id = default;
         model.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);

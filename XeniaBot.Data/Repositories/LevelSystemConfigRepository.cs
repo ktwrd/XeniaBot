@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -40,7 +41,7 @@ public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel
             .Eq("GuildId", model.GuildId);
 
         var existResult = await collection.FindAsync(filter);
-        var exists = existResult.Any();
+        var exists = await existResult.AnyAsync();
 
         if (exists)
         {

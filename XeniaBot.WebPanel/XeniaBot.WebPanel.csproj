@@ -1,99 +1,102 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    
+    <AssemblyName>XeniaBot.WebPanel</AssemblyName>
+    <RootNamespace>XeniaBot.WebPanel</RootNamespace>
 
-		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-		<TransformOnBuild>true</TransformOnBuild>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <TransformOnBuild>true</TransformOnBuild>
 
-        <IsTrimmable>false</IsTrimmable>
-    </PropertyGroup>
+    <IsTrimmable>false</IsTrimmable>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
-    </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\.dockerignore">
+      <Link>.dockerignore</Link>
+    </Content>
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
-      <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
+    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.0.0" />
-      <PackageReference Include="Markdig" Version="0.34.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0" />
-      <PackageReference Include="Microsoft.IdentityModel.Logging" Version="7.1.0-preview" />
-      <PackageReference Include="Serilog" Version="3.1.1" />
-      <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
-      <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00972" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.0.0" />
+    <PackageReference Include="Markdig" Version="0.34.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Logging" Version="7.1.0-preview" />
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00972" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="Views\Server\Settings\BanSync.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Server\Settings\Counting.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Server\Settings\LevelSystem.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Server\Settings\Logging.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Server\Details\BanSync\Index.cshtml" />
-    </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Views\Server\Settings\BanSync.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Server\Settings\Counting.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Server\Settings\LevelSystem.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Server\Settings\Logging.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Server\Details\BanSync\Index.cshtml" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Pages\Components\" />
-    </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Components\" />
+    <Folder Include="Pages\Components\" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <None Remove="Views\Home\About.md" />
-      <EmbeddedResource Include="Views\Home\About.md" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Remove="Views\Home\About.md" />
+    <EmbeddedResource Include="Views\Home\About.md" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <None Include="Properties\VersionAutoIncrement.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
-      </None>
-    </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\VersionAutoIncrement.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+    </None>
+  </ItemGroup>
 
-    <ItemGroup>
-      <None Update="Properties\VersionAutoIncrement.tt">
-        <Generator>TextTemplatingFileGenerator</Generator>
-        <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
-      </None>
-    </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\VersionAutoIncrement.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
 
-    <ItemGroup>
-      <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-    </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <Compile Update="Properties\VersionAutoIncrement.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
-      </Compile>
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\VersionAutoIncrement.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
 
-    <!-- T4 build support for .NET Core (End) -->
+  <!-- T4 build support for .NET Core (End) -->
 
-    <!-- T4 build support for Visual Studio (Begin) -->
+  <!-- T4 build support for Visual Studio (Begin) -->
 
-    <PropertyGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
-        <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-        <TransformOnBuild>true</TransformOnBuild>
-        <!--Other properties can be inserted here-->
-        <!--Set to true to force overwriting of read-only output files, e.g. if they're not checked out (default is false)-->
-        <OverwriteReadOnlyOutputFiles>true</OverwriteReadOnlyOutputFiles>
-        <!--Set to false to transform files even if the output appears to be up-to-date (default is true)-->
-        <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
+      <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+      <TransformOnBuild>true</TransformOnBuild>
+      <!--Other properties can be inserted here-->
+      <!--Set to true to force overwriting of read-only output files, e.g. if they're not checked out (default is false)-->
+      <OverwriteReadOnlyOutputFiles>true</OverwriteReadOnlyOutputFiles>
+      <!--Set to false to transform files even if the output appears to be up-to-date (default is true)-->
+      <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
+  </PropertyGroup>
 
-    <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" Condition="'$(MSBuildRuntimeType)'=='Full'" />
+  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" Condition="'$(MSBuildRuntimeType)'=='Full'" />
 
-    <!-- T4 build support for Visual Studio (End) -->
+  <!-- T4 build support for Visual Studio (End) -->
 </Project>

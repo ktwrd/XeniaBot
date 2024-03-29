@@ -1,4 +1,8 @@
-﻿using MongoDB.Driver;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
@@ -11,6 +15,14 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
         : base(GuildWarnItemModel.CollectionName, services)
     {}
 
+    private SortDefinition<GuildWarnItemModel> sort_createdAt
+        => Builders<GuildWarnItemModel>
+            .Sort
+            .Descending(v => v.CreatedAtTimestamp);
+    private SortDefinition<GuildWarnItemModel> sort_modifiedAt
+        => Builders<GuildWarnItemModel>
+            .Sort
+            .Descending(v => v.ModifiedAtTimestamp);
     
     public async Task<GuildWarnItemModel?> GetLatest(string id)
     {
@@ -53,11 +65,27 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
 
         return resultDict.Select(v => v.Value).ToList();
     }
+
+    public async Task<ICollection<GuildWarnItemModel>?> GetLatestGuildMemberItems(ulong guildId, ulong userId, long createdAfter = 0)
+    {
+        var filter = Builders<GuildWarnItemModel>
+            .Filter
+            .Where(v => v.GuildId == guildId && v.TargetUserId == userId);
+        var workingRes = await BaseFind(filter);
+        var data = workingRes.ToList()
+            .OrderByDescending(v => v.CreatedAtTimestamp)
+            .ThenBy(v => v.WarnId)
+            .ThenByDescending(v => v.ModifiedAtTimestamp)
+            .GroupBy(v => v.WarnId)
+            .Select(v => v.First())
+            .Where(v => v.CreatedAtTimestamp > createdAfter);
+        return data.ToList();
+    }
     
     public async Task Add(GuildWarnItemModel model)
     {
         var collection = GetCollection();
-        model._id = default;
+        model.Id = default;
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await collection.InsertOneAsync(model);
     }

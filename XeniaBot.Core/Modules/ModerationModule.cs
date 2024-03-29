@@ -9,6 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
+using XeniaBot.Data.Services;
+using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules;
 
@@ -68,11 +71,17 @@ public class ModerationModule : InteractionModuleBase
     {
         SocketGuildUser? member = await SafelyFetchUser(user.Id);
         if (member == null)
+        {
+            await RespondAsync("Failed to fetch user provided");
             return;
+        }
+
+        await DeferAsync();
 
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
         try
         {
+            var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
             var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
             var data = new GuildWarnItemModel()
             {
@@ -83,16 +92,27 @@ public class ModerationModule : InteractionModuleBase
                 Description = reason
             };
             await controller.Add(data);
-            embed.WithDescription($"Warned member <@{user.Id}>. Warn Id `{data.WarnId}`.");
+            embed.WithDescription($"Warned member <@{user.Id}>");
+            embed.WithFooter($"{data.WarnId}");
+
+            var warnStrikeConfig = await warnService.GetStrikeConfig(Context.Guild.Id);
+            var (reachedWarnLimit, activeWarns) = await warnService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
+            if (reachedWarnLimit)
+            {
+                embed.AddField(
+                    "User Reached Warn Limit",
+                    $"Has {activeWarns!.Count} active warns (limit is {warnStrikeConfig.MaxStrike})\nAction immediately or ignore this message.");
+            }
+            
             if (Program.Core.Config.Data.HasDashboard)
             {
                 embed.Description +=
                     $"\n[View on Dashboard]({Program.Core.Config.Data.DashboardUrl}/Warn/Info/{data.WarnId})";
             }
 
-            embed.WithColor(Color.Blue);
+            embed.WithColor(reachedWarnLimit ? Color.Red : Color.Blue);
 
-            await RespondAsync(embed: embed.Build());
+            await FollowupAsync(embed: embed.Build());
         }
         catch (Exception e)
         {
@@ -104,8 +124,83 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await Context.Interaction.RespondAsync(embed: embed.Build());
+            await FollowupAsync(embed: embed.Build());
             await DiscordHelper.ReportError(e, Context);
+            return;
+        }
+    }
+
+    [SlashCommand("warns", "Get all warns for user. Only top 10")]
+    [RequireUserPermission(GuildPermission.ManageMessages)]
+    public async Task MemberWarns(SocketGuildUser user)
+    {
+        await DeferAsync();
+        var embed = DiscordHelper.BaseEmbed().WithTitle("Member Warns");
+        try
+        {
+            var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
+            var config = CoreContext.Instance.GetRequiredService<ConfigData>();
+            var warnStrikeConfig = await warnService.GetStrikeConfig(Context.Guild.Id);
+            var (reachedWarnLimit, data) = await warnService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
+
+            if (data?.Count < 1)
+            {
+                embed.WithDescription($"No active warns found for <@{user.Id}>")
+                    .WithColor(Color.Orange);
+                await FollowupAsync(embed: embed.Build());
+                return;
+            }
+
+            string encaseWithDashboardUrl(GuildWarnItemModel item)
+            {
+                if (config?.HasDashboard ?? false)
+                {
+                    return $" ([View on Dashboard]({config.DashboardUrl}/Warn/Info/{item.WarnId}))";
+                }
+                return "";
+            }
+        
+            for (int i = 0; i < Math.Min(data!.Count, 10); i++)
+            {
+                var item = data[i];
+            
+                embed.AddField(DateTimeOffset.FromUnixTimeMilliseconds(item.CreatedAtTimestamp).ToString("yyyy MMMM dd, h:mm:ss tt"), string.Join("\n",
+                    new string[]
+                    {
+                        $"Created by <@{item.ActionedUserId}>" + encaseWithDashboardUrl(item),
+                        "```",
+                        item.Description.Length < 1
+                            ? "<no description>"
+                            : item.Description.Length > 500
+                                ? item.Description.Substring(500) + "..."
+                                : item.Description,
+                        "```"
+                    }), true);
+            }
+
+            embed.WithDescription($"{data.Count} records for <@{user.Id}> " + (data.Count > 10 ? $" (10 shown)" : ""))
+                .WithColor(reachedWarnLimit ? Color.Red : Color.Blue);
+            if (reachedWarnLimit)
+            {
+                embed.Description +=
+                    $"\n\n**Member has {data.Count} active warn{(data.Count > 1 ? 's'.ToString() : string.Empty)}**, but the limit is {warnStrikeConfig.MaxStrike}!\n" +
+                    $"Action immediately or ignore this notification.";
+            }
+            await FollowupAsync(embed: embed.Build());
+        }
+        catch (Exception ex)
+        {
+            embed.WithDescription(string.Join("\n", new string[]
+            {
+                "Failed to get warns for user.",
+                "```",
+                ex.Message,
+                "```"
+            }));
+            embed.WithColor(Color.Red);
+            await FollowupAsync(
+                embed: embed.Build());
+            await DiscordHelper.ReportError(ex, Context);
             return;
         }
     }

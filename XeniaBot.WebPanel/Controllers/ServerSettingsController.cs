@@ -1,7 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
@@ -146,6 +149,50 @@ public partial class ServerController
         }
     }
 
+    [HttpPost("~/Server/{id}/Settings/WarnStrike")]
+    public async Task<IActionResult> SaveSettings_WarnStrike(ulong id, bool enable, int maxStrike, int strikeWindow)
+    {
+        if (!CanAccess(id))
+            return View("NotAuthorized");
+
+        try
+        {
+            if (maxStrike < 1)
+            {
+                return await ModerationView(id,
+                    messageType: "danger",
+                    message: $"Failed to save Warn Strike settings. Max Strike must be greater than one");
+            }
+
+            if (strikeWindow < 1)
+            {
+                return await ModerationView(id,
+                    messageType: "danger",
+                    message: $"Failed to save Warn Strike settings. Strike Window must be greater than one");
+            }
+            var warnStrikeService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
+            var configRepo = CoreContext.Instance.GetRequiredService<GuildConfigWarnStrikeRepository>();
+            var model = await warnStrikeService.GetStrikeConfig(id);
+
+            model.EnableStrikeSystem = enable;
+            model.MaxStrike = maxStrike;
+            model.StrikeWindow = TimeSpan.FromDays(strikeWindow).TotalSeconds;
+
+            await configRepo.InsertOrUpdate(model);
+            return await ModerationView(
+                id, messageType: "success", message: $"Warn Strike settings saved");
+        }
+        catch (Exception ex)
+        {
+            Program.Core.GetRequiredService<ErrorReportService>()
+                .ReportException(ex, $"Failed to save Warn Strike settings");
+            Log.Error($"Failed to save Warn Strike settings\n{ex}");
+            return await ModerationView(id,
+                messageType: "danger",
+                message: $"Failed to save Warn Strike settings. {ex.Message}");
+        }
+    }
+    
     [HttpPost("~/Server/{id}/Settings/Greeter")]
     public async Task<IActionResult> SaveSettings_Greeter(
         ulong id,

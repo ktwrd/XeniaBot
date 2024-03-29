@@ -1,11 +1,16 @@
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;

@@ -1,4 +1,5 @@
-﻿using kate.shared.Helpers;
+﻿using System;
+using kate.shared.Helpers;
 using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;
@@ -17,7 +18,13 @@ public class GuildWarnItemModel : BaseModel
     /// User Id for who warned <see cref="TargetUserId"/>
     /// </summary>
     public ulong ActionedUserId { get; set; }
+    /// <summary>
+    /// Unix Timestamp (UTC, Milliseconds)
+    /// </summary>
     public long ModifiedAtTimestamp { get; set; }
+    /// <summary>
+    /// Unix Timestamp (UTC, Milliseconds)
+    /// </summary>
     public long CreatedAtTimestamp { get; set; }
     public string Description { get; set; }
 

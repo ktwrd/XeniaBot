@@ -1,4 +1,5 @@
-﻿using kate.shared.Helpers;
+﻿using System;
+using kate.shared.Helpers;
 using MongoDB.Bson.Serialization.Serializers;
 using XeniaBot.Shared.Models;
 

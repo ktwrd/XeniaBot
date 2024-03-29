@@ -26,7 +26,7 @@ namespace XeniaBot.Data.Repositories
         {
             var collection = GetCollection();
             var result = await collection.FindAsync(GetFilter(guildId));
-            return result.Any();
+            return await result.AnyAsync();
         }
         public async Task<ConfigBanSyncModel?> Get(ulong guildId)
         {

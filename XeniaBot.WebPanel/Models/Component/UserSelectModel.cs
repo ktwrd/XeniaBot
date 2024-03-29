@@ -1,4 +1,6 @@
-﻿namespace XeniaBot.WebPanel.Models;
+﻿using System.Collections.Generic;
+
+namespace XeniaBot.WebPanel.Models;
 
 public class UserSelectModel : BaseFormItemModel
 {

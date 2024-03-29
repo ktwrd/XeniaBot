@@ -1,4 +1,5 @@
-﻿using XeniaBot.Shared.Models;
+﻿using System.Collections.Generic;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;
 

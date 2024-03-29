@@ -3,9 +3,14 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+
     <AssemblyName>XeniaBot.Shared</AssemblyName>
     <RootNamespace>XeniaBot.Shared</RootNamespace>
+
     <IsTrimmable>false</IsTrimmable>
+    
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

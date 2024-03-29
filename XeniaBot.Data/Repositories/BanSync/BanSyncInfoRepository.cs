@@ -36,7 +36,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         var collection = GetCollection();
         var result = await collection.FindAsync(data);
 
-        return result.Any();
+        return await result.AnyAsync();
     }
     protected async Task<BanSyncInfoModel?> BaseInfoFirstOrDefault(FilterDefinition<BanSyncInfoModel> data)
     {

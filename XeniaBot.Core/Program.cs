@@ -59,17 +59,6 @@ namespace XeniaBot.Core
             }
         }
 
-        public static string VersionFull => $"{Version} ({VersionDate})";
-
-        public static DateTime VersionDate
-        {
-            get
-            {
-                DateTime buildDate = BuildInformation.CreatedAt.DateTime;
-                return buildDate;
-            }
-        }
-
         private static string? VersionRaw
         {
             get

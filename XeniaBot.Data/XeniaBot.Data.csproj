@@ -1,21 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <AssemblyName>XeniaBot.Data</AssemblyName>
-        <RootNamespace>XeniaBot.Data</RootNamespace>
-        <IsTrimmable>false</IsTrimmable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    
+    <AssemblyName>XeniaBot.Data</AssemblyName>
+    <RootNamespace>XeniaBot.Data</RootNamespace>
 
-    <ItemGroup>
-      <ProjectReference Include="..\XeniaBot.DiscordCache\XeniaBot.DiscordCache.csproj" />
-      <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
-    </ItemGroup>
+    <IsTrimmable>false</IsTrimmable>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <Folder Include="Controllers\BotAdditions\" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\XeniaBot.DiscordCache\XeniaBot.DiscordCache.csproj" />
+    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\BotAdditions\" />
+  </ItemGroup>
 
 </Project>

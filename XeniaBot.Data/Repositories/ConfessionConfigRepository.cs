@@ -1,4 +1,6 @@
-﻿using Discord;
+﻿using System;
+using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
@@ -66,7 +68,7 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
             .Eq("GuildId", model.GuildId);
 
         var existingItems = await collection.FindAsync(filter);
-        if (existingItems != null && existingItems.Any())
+        if (existingItems != null && await existingItems.AnyAsync())
             await collection.FindOneAndReplaceAsync(filter, model);
         else
             await collection.InsertOneAsync(model);

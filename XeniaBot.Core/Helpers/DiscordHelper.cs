@@ -19,25 +19,24 @@ namespace XeniaBot.Core.Helpers
     {
         public static EmbedBuilder BaseEmbed(EmbedBuilder? embed=null)
         {
-            if (embed == null)
-                embed = new EmbedBuilder();
-
-            var client = Program.Core.GetRequiredService<DiscordSocketClient>();
+            embed ??= new EmbedBuilder();
+            var core = CoreContext.Instance;
+            var client = core.GetRequiredService<DiscordSocketClient>();
             var icon = client.CurrentUser.GetAvatarUrl();
 
             return embed
                 .WithTimestamp(DateTimeOffset.UtcNow)
                 .WithFooter(new EmbedFooterBuilder()
-                    .WithText($"Xenia v{Program.Version}")
+                    .WithText($"Xenia v{core.Details.Version}")
                     .WithIconUrl(icon));
         }
-        public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage argu)
+        public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage arg)
         {
-            if (!(argu is SocketUserMessage message))
+            if (!(arg is SocketUserMessage message))
                 return;
             var context = new SocketCommandContext(client, message);
-            var guild = context.Guild.GetTextChannel(argu.Channel.Id);
-            var msg = await guild.GetMessageAsync(argu.Id);
+            var guild = context.Guild.GetTextChannel(arg.Channel.Id);
+            var msg = await guild.GetMessageAsync(arg.Id);
 
             if (msg != null)
                 await msg.DeleteAsync();

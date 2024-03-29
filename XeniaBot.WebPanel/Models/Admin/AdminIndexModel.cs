@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using System.Collections.Generic;
+using Discord.WebSocket;
 
 namespace XeniaBot.WebPanel.Models;
 

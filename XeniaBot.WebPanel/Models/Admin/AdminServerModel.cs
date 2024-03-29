@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using System.Collections.Generic;
+using Discord.WebSocket;
 using XeniaBot.Data.Models;
 
 namespace XeniaBot.WebPanel.Models;
@@ -18,4 +19,5 @@ public class AdminServerModel : BaseViewModel, IBaseServerModel
     public ICollection<GuildWarnItemModel> WarnItems { get; set; }
     public RolePreserveGuildModel RolePreserve { get; set; }
     public long BanSyncRecordCount { get; set; }
+    public GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
 }

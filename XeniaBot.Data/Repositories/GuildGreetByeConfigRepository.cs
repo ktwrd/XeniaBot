@@ -1,4 +1,7 @@
-﻿using MongoDB.Driver;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
@@ -24,7 +27,7 @@ public class GuildGreetByeConfigRepository : BaseRepository<GuildByeGreeterConfi
 
     public async Task Add(GuildByeGreeterConfigModel model)
     {
-        model._id = default;
+        model.Id = default;
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);

@@ -1,5 +1,8 @@
-﻿using Discord.WebSocket;
+﻿using System;
+using System.Collections.Generic;
+using Discord.WebSocket;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Services;
 
 namespace XeniaBot.WebPanel.Models;
 
@@ -19,6 +22,7 @@ public class WarnGuildDetailsViewModel : BaseViewModel, IBaseServerModel
     public ICollection<GuildWarnItemModel> WarnItems { get; set; }
     public RolePreserveGuildModel RolePreserve { get; set; }
     public long BanSyncRecordCount { get; set; }
+    public GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
 
     public bool EnableNewerThanFilter { get; set; } = false;
 
@@ -27,6 +31,11 @@ public class WarnGuildDetailsViewModel : BaseViewModel, IBaseServerModel
     /// </summary>
     public string NewerThanDate { get; set; }
 
+    public bool IsWarnActive(GuildWarnItemModel model)
+    {
+        return WarnStrikeService.IsWarnActive(model, WarnStrikeConfig);
+    }
+    
     public WarnGuildDetailsViewModel()
         : base()
     {
