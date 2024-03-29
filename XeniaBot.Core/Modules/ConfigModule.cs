@@ -153,6 +153,13 @@ namespace XeniaBot.Core.Modules
             var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Strikes - Config");
             try
             {
+                if (days < 1)
+                {
+                    embed.WithDescription($"Days must be a positive number!")
+                        .WithColor(Color.Red);
+                    await FollowupAsync(embed: embed.Build());
+                    return;
+                }
                 var strikeService = _core.GetRequiredService<WarnStrikeService>();
                 var configRepo = _core.GetRequiredService<GuildConfigWarnStrikeRepository>();
                 var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
