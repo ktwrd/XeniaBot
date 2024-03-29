@@ -9,6 +9,8 @@
 
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<TransformOnBuild>true</TransformOnBuild>
+
+        <IsTrimmable>false</IsTrimmable>
     </PropertyGroup>
 
     <ItemGroup>
