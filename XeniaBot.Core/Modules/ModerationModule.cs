@@ -71,7 +71,12 @@ public class ModerationModule : InteractionModuleBase
     {
         SocketGuildUser? member = await SafelyFetchUser(user.Id);
         if (member == null)
+        {
+            await RespondAsync("Failed to fetch user provided");
             return;
+        }
+
+        await DeferAsync();
 
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
         try
@@ -95,7 +100,7 @@ public class ModerationModule : InteractionModuleBase
 
             embed.WithColor(Color.Blue);
 
-            await RespondAsync(embed: embed.Build());
+            await FollowupAsync(embed: embed.Build());
         }
         catch (Exception e)
         {
@@ -107,7 +112,7 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await Context.Interaction.RespondAsync(embed: embed.Build());
+            await FollowupAsync(embed: embed.Build());
             await DiscordHelper.ReportError(e, Context);
             return;
         }
