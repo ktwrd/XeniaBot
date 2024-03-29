@@ -57,6 +57,12 @@ namespace XeniaBot.Data.Models
             Assemblies = new List<XeniaVersionAssemblyItem>();
             Flags = new Dictionary<string, object>();
         }
+
+        public void FillAssemblies()
+        {
+            FillAssemblies(AppDomain.CurrentDomain.GetAssemblies().ToArray());
+        }
+        
         public void FillAssemblies(Assembly[] assemblyArray)
         {
             var result = new XeniaVersionAssemblyItem[assemblyArray.Length];
