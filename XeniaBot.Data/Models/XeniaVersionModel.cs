@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Models;
@@ -12,14 +13,25 @@ namespace XeniaBot.Data.Models
     {
         public static string CollectionName => "xenia_versions";
 
+        /// <summary>
+        /// <inheritdoc cref="XeniaVersionAssemblyItem.Name"/>
+        /// </summary>
         public string Name { get; set; }
+        /// <summary>
+        /// <inheritdoc cref="XeniaVersionAssemblyItem.Version"/>
+        /// </summary>
         public string Version { get; set; }
+        /// <summary>
+        /// Build Timestamp parsed from the Version.
+        /// </summary>
         public long ParsedVersionTimestamp { get; set; }
         /// <summary>
         /// Unix Timestamp (UTC, Seconds)
         /// </summary>
         public long CreatedAt { get; set; }
-
+        /// <summary>
+        /// List of all loaded assemblies
+        /// </summary>
         public List<XeniaVersionAssemblyItem> Assemblies { get; set; }
         public Dictionary<string, object> Flags { get; set; }
 
@@ -58,11 +70,20 @@ namespace XeniaBot.Data.Models
             Flags = new Dictionary<string, object>();
         }
 
+        /// <summary>
+        /// <inheritdoc cref="FillAssemblies(Assembly[])"/>
+        ///
+        /// <para>Uses <see cref="AppDomain.GetAssemblies()"/> from <see cref="AppDomain.CurrentDomain"/></para>
+        /// </summary>
         public void FillAssemblies()
         {
             FillAssemblies(AppDomain.CurrentDomain.GetAssemblies().ToArray());
         }
         
+        /// <summary>
+        /// Fill the contents of <see cref="Assemblies"/> based off <paramref name="assemblyArray"/>
+        /// </summary>
+        /// <param name="assemblyArray">Assemblies to load</param>
         public void FillAssemblies(Assembly[] assemblyArray)
         {
             var result = new XeniaVersionAssemblyItem[assemblyArray.Length];
