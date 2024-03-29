@@ -4,15 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models
 {
-    public class XeniaVersionModel
+    public class XeniaVersionModel : BaseModelGuid
     {
         public static string CollectionName => "xenia_versions";
-        
-        [BsonElement("_id")]
-        public string Id { get; set; }
 
         public string Name { get; set; }
         public string Version { get; set; }
