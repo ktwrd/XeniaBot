@@ -176,7 +176,7 @@ public partial class ServerController
 
             model.EnableStrikeSystem = enable;
             model.MaxStrike = maxStrike;
-            model.StrikeWindow = strikeWindow;
+            model.StrikeWindow = TimeSpan.FromDays(strikeWindow).TotalSeconds;
 
             await configRepo.InsertOrUpdate(model);
             return await ModerationView(

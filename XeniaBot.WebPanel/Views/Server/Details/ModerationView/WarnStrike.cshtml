@@ -18,7 +18,7 @@
     </div>
     <div class="form-group mb-3">
         <label for="warn_strike_window">Strike Window (days)</label>
-        <input aria-describedby="warn_strike_window_help" class="form-control" name="strikeWindow" type="number" min="2" id="warn_strike_window" value="@Model.WarnStrikeConfig.StrikeWindow" />
+        <input aria-describedby="warn_strike_window_help" class="form-control" name="strikeWindow" type="number" min="2" id="warn_strike_window" value="@(TimeSpan.FromSeconds(Model.WarnStrikeConfig.StrikeWindow).TotalDays)" />
         <small id="warn_strike_window_help" class="form-text text-muted">Maximum age for a Warn to count as an Active Strike</small>
     </div>
     <input class="btn btn-success" type="submit" value="Save"/>

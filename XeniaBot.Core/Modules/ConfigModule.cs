@@ -163,7 +163,7 @@ namespace XeniaBot.Core.Modules
                 var strikeService = _core.GetRequiredService<WarnStrikeService>();
                 var configRepo = _core.GetRequiredService<GuildConfigWarnStrikeRepository>();
                 var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
-                data.StrikeWindow = days;
+                data.StrikeWindow = TimeSpan.FromDays(days).TotalSeconds;
                 await configRepo.InsertOrUpdate(data);
                 var years = Math.Floor(days / 365f);
                 var daysFormatted = days % 365;
