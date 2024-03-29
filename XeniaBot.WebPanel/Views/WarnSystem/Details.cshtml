@@ -45,7 +45,7 @@ new List<BreadcrumbItem>()
 }
 else
 {
-    <table class="table" id="warnSystemGuildList">
+    <table class="table" id="warnSystemGuildList" data-order='[[ 2, "dec" ]]'>
         <thead>
         <tr>
             <th>Target User</th>
@@ -60,16 +60,16 @@ else
         </tr>
         </thead>
         <tbody>
-            @foreach (var item in @Model.WarnItems.OrderByDescending(v => v.ModifiedAtTimestamp))
+            @foreach (var item in @Model.WarnItems.OrderBy(v => v.CreatedAtTimestamp))
             {
                 <tr>
                     <td>
-                        <img src="@(Model.Client.GetUser(item.TargetUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.TargetUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
-                        @Model.Client.GetUser(item.TargetUserId).ToString()
+                        <img src="@(AspHelper.GetUserProfilePicture(item.TargetUserId))" class="card-img-top smallUserIcon" />
+                        @(Model.Client.GetUser(item.TargetUserId)?.ToString() ?? "unknown")
                     </td>
                     <td>
-                        <img src="@(Model.Client.GetUser(item.ActionedUserId).GetAvatarUrl() ?? Model.Client.GetUser(item.ActionedUserId).GetDefaultAvatarUrl())" class="card-img-top smallUserIcon" />
-                        @Model.Client.GetUser(item.ActionedUserId).ToString()
+                        <img src="@(AspHelper.GetUserProfilePicture(item.ActionedUserId))" class="card-img-top smallUserIcon" />
+                        @(Model.Client.GetUser(item.ActionedUserId)?.ToString() ?? "unknown")
                     </td>
                     <td>
                         @(AspHelper.DateTimeFromTimestamp(item.CreatedAtTimestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))
@@ -85,6 +85,11 @@ else
                     </td>
                     <td>
                         <a class="btn btn-secondary btn-sm" asp-area="" asp-route-id="@item.WarnId" asp-controller="WarnSystem" asp-action="WarnInfo"><i class="bi bi-info"></i></a>
+                        @if (!Model.IsWarnActive(item))
+                        {
+                            <br>
+                            <small class="text-muted">Inactive</small>
+                        }
                     </td>
                 </tr>
             }
