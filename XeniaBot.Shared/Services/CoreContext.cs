@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -205,6 +206,7 @@ public class CoreContext
     public void AllBaseServices(Func<BaseService, Task> func)
     {
         var taskList = new List<Task>();
+        var ins = new List<BaseService>();
         foreach (var service in RegisteredBaseControllers)
         {
             var svc = Services.GetServices(service);
@@ -212,12 +214,18 @@ public class CoreContext
             {
                 if (item != null && item.GetType().IsAssignableTo(typeof(BaseService)))
                 {
-                    taskList.Add(new Task(delegate
-                    {
-                        func((BaseService)item).Wait();
-                    }));
+                    ins.Add((BaseService)item);
                 }
             }
+        }
+        ins = ins.OrderBy(v => v.Priority)
+            .ThenBy(v => v.GetType().AssemblyQualifiedName).ToList();
+        foreach (var item in ins)
+        {
+            taskList.Add(new Task(delegate
+            {
+                func((BaseService)item).Wait();
+            }));
         }
         foreach (var i in taskList)
             i.Start();

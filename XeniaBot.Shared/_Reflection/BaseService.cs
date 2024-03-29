@@ -1,13 +1,16 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace XeniaBot.Shared
 {
     public abstract class BaseService
     {
+        public int Priority { get; protected set; }
         protected IServiceProvider _services;
         protected BaseService(IServiceProvider services)
         {
+            Priority = Int32.MaxValue;
             _services = services;
         }
 
