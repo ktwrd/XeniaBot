@@ -34,16 +34,8 @@ public class XeniaVersionService : BaseService
             Version = _details.Version,
             Name = calling.FullName?.Split(",")[0] ?? ""
         };
-        
-        if (currentModel.Version.StartsWith("1.10."))
-        {
-            currentModel.Flags.TryAdd("idColumnType", "ObjectId");
-        }
-        else if (currentModel.Version.StartsWith("1.11.0"))
-        {
-            currentModel.Flags.TryAdd("idColumnType", "Guid");
-        }
         currentModel.FillAssemblies(allAssemblies);
+        SetFlags(currentModel);
         
         if (currentModel.Name.Length < 1)
             throw new Exception("Name for executing assembly is empty?");
@@ -53,6 +45,21 @@ public class XeniaVersionService : BaseService
             await InitializeAsync_Bot(currentModel, previousModel);
     }
 
+    /// <summary>
+    /// Set <see cref="XeniaVersionModel.Flags"/> based off what version is being used.
+    /// </summary>
+    private void SetFlags(XeniaVersionModel model)
+    {
+        var version = new Version(model.Version);
+        if (version.Major <= 1 && version.Minor <= 10)
+        {
+            model.Flags.TryAdd("idColumnType", "ObjectId");
+        }
+        else
+        {
+            model.Flags.TryAdd("idColumnType", "Guid");
+        }
+    }
     private async Task InitializeAsync_Bot(XeniaVersionModel currentModel, XeniaVersionModel? previousModel)
     {
         if (currentModel.Flags.TryGetValue("idColumnType", out var currentColumnType) &&
