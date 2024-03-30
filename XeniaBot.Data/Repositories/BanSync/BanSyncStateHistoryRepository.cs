@@ -17,7 +17,7 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
 
     public async Task Add(BanSyncStateHistoryItemModel model)
     {
-        model.Id = default;
+        model.ResetId();
         model.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);

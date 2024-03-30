@@ -27,7 +27,7 @@ public class GuildGreetByeConfigRepository : BaseRepository<GuildByeGreeterConfi
 
     public async Task Add(GuildByeGreeterConfigModel model)
     {
-        model.Id = default;
+        model.ResetId();
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);
