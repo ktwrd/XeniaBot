@@ -31,10 +31,26 @@ public class GuildWarnItemModel : BaseModel
     /// </summary>
     public long CreatedAtTimestamp { get; set; }
     public string Description { get; set; }
+    
+    /// <summary>
+    /// <para>Related Message Ids. Could be the reason why they were warned.</para>
+    ///
+    /// <para>Foreign Key (Many to Many) to <see cref="XeniaBot.DiscordCache.Models.CacheMessageModel.Snowflake"/></para>
+    /// </summary>
+    public ulong[] RelatedMessageIds { get; set; }
+    /// <summary>
+    /// <para>Attached media. Could be screenshots of evidence</para>
+    /// 
+    /// <para>Foreign Key to <see cref="ArchivedAttachmentModel.Id"/></para>
+    /// </summary>
+    public string[] RelatedAttachmentGuids { get; set; }
 
     public GuildWarnItemModel()
         : base()
     {
         WarnId = Guid.NewGuid().ToString();
+
+        RelatedMessageIds = Array.Empty<ulong>();
+        RelatedAttachmentGuids = Array.Empty<string>();
     }
 }
