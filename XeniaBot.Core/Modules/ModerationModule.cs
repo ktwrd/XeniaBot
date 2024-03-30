@@ -81,22 +81,18 @@ public class ModerationModule : InteractionModuleBase
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
         try
         {
-            var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
-            var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
-            var data = new GuildWarnItemModel()
-            {
-                GuildId = user.Guild.Id,
-                TargetUserId = user.Id,
-                ActionedUserId = Context.User.Id,
-                CreatedAtTimestamp  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                Description = reason
-            };
-            await controller.Add(data);
+            var strikeService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
+            var warnService = CoreContext.Instance.GetRequiredService<WarnService>();
+            
+            var data = await warnService.CreateWarnAsync(
+                user, 
+                Context.User, 
+                reason);
             embed.WithDescription($"Warned member <@{user.Id}>");
             embed.WithFooter($"{data.WarnId}");
 
-            var warnStrikeConfig = await warnService.GetStrikeConfig(Context.Guild.Id);
-            var (reachedWarnLimit, activeWarns) = await warnService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
+            var warnStrikeConfig = await strikeService.GetStrikeConfig(Context.Guild.Id);
+            var (reachedWarnLimit, activeWarns) = await strikeService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
             if (reachedWarnLimit)
             {
                 embed.AddField(

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -153,16 +154,12 @@ public class WarnSystemController: BaseXeniaController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
-            var data = new GuildWarnItemModel()
-            {
-                GuildId = id,
-                TargetUserId = userId,
-                ActionedUserId = AspHelper.GetUserId(HttpContext) ?? 0,
-                CreatedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                Description = reason
-            };
-            await controller.Add(data);
+            var controller = Program.Core.GetRequiredService<WarnService>();
+            var data = await controller.CreateWarnAsync(
+                id, 
+                userId, 
+                AspHelper.GetUserId(HttpContext) ?? 0,
+                reason);
             return RedirectToAction(
                 "WarnInfo", new Dictionary<string, object>()
                 {
