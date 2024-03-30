@@ -19,6 +19,10 @@ public class GuildWarnItemModel : BaseModel
     /// </summary>
     public ulong ActionedUserId { get; set; }
     /// <summary>
+    /// User Id for who last updated this model.
+    /// </summary>
+    public ulong UpdatedByUserId { get; set; }
+    /// <summary>
     /// Unix Timestamp (UTC, Milliseconds)
     /// </summary>
     public long ModifiedAtTimestamp { get; set; }
