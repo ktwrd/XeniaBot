@@ -57,6 +57,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Properties\VersionAutoIncrement.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\VersionAutoIncrement.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\VersionAutoIncrement.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Properties\VersionAutoIncrement.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -65,22 +86,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Properties\VersionAutoIncrement.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Properties\VersionAutoIncrement.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
-    </Compile>
   </ItemGroup>
 
   <!-- T4 build support for .NET Core (End) -->
