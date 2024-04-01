@@ -71,6 +71,17 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         return final;
     }
 
+    /// <summary>
+    /// Get all documents
+    /// </summary>
+    public async Task<IAsyncCursor<ReminderModel>?> GetAll()
+    {
+        var filter = Builders<ReminderModel>
+            .Filter
+            .Empty;
+        return await BaseFind(filter);
+    }
+
     public async Task Set(ReminderModel model)
     {
         var filter = Builders<ReminderModel>
