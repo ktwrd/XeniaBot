@@ -21,21 +21,21 @@ public class ReminderModel : BaseModel
     /// </summary>
     public ulong ChannelId { get; set; }
     /// <summary>
-    /// Timestamp that this reminder was created at.
+    /// <para>Timestamp that this reminder was created at.</para>
     ///
-    /// Milliseconds since Unix Epoch (UTC)
+    /// <para>Unix Timestamp (Milliseconds, UTC)</para>
     /// </summary>
     public long CreatedAt { get; set; }
     /// <summary>
-    /// Timestamp when we should notify the user at.
+    /// <para>Timestamp when we should notify the user at.</para>
     ///
-    /// Seconds since Unix Epoch (UTC)
+    /// <para>Unix Timestamp (Seconds, UTC)</para>
     /// </summary>
     public long ReminderTimestamp { get; set; }
     /// <summary>
-    /// Have we notified the user of this reminder?
+    /// <para>Have we notified the user of this reminder?</para>
     ///
-    /// Ignore sending notification/showing user when this is `true`.
+    /// <para>Ignore sending notification/showing user when this is `true`.</para>
     /// </summary>
     public bool HasReminded { get; set; }
     /// <summary>
@@ -43,9 +43,9 @@ public class ReminderModel : BaseModel
     /// </summary>
     public string Note { get; set; }
     /// <summary>
-    /// Timestamp when we notified the user of this reminder.
+    /// <para>Timestamp when we notified the user of this reminder.</para>
     ///
-    /// Milliseconds since Unix Epoch (UTC)
+    /// <para>Milliseconds since Unix Epoch (UTC)</para>
     /// </summary>
     public long RemindedAt { get; set; }
     /// <summary>

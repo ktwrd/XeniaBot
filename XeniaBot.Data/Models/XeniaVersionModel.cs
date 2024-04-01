@@ -22,7 +22,9 @@ namespace XeniaBot.Data.Models
         /// </summary>
         public string Version { get; set; }
         /// <summary>
-        /// Build Timestamp parsed from the Version.
+        /// <para>Build Timestamp parsed from the Version.</para>
+        ///
+        /// <para>Unix Timestamp (Seconds, UTC)</para>
         /// </summary>
         public long ParsedVersionTimestamp { get; set; }
 
