@@ -48,7 +48,7 @@ namespace XeniaBot.Data.Models
         /// </summary>
         public XeniaVersionAssemblyItem? GetAssemblyByName(string name)
         {
-            return Assemblies.FirstOrDefault(v => v.Name == Name);
+            return Assemblies.FirstOrDefault(v => v.Name == name);
         }
         
         public class XeniaVersionAssemblyItem
