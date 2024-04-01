@@ -33,7 +33,7 @@ public class ReminderService : BaseService
     }
     
     /// <summary>
-    /// Seconds since Unix Epoch (UTC)
+    /// Unix Timestamp (Seconds, UTC)
     /// </summary>
     public long InitTimestamp { get; private set; }
     
