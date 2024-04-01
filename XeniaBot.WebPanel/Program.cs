@@ -59,7 +59,7 @@ public static class Program
     public static void Main(string[] args)
     {
         StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
+        Log.WriteLine($"Running version {Details.VersionRaw}");
         Core = new CoreContext(Details);
         Core.StartTimestamp = StartTimestamp;
         Core.AlternativeMain = async (a) =>
