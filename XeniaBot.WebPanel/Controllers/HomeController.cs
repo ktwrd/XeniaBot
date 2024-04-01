@@ -57,7 +57,7 @@ public class HomeController : BaseXeniaController
         return View("About", await PopulateModel());
     }
 
-    [AuthRequired(ShowLoginButton = true)]
+    [AuthRequired]
     [HttpGet("~/Preferences")]
     public async Task<IActionResult> Preferences()
     {
@@ -65,7 +65,7 @@ public class HomeController : BaseXeniaController
         return View("Preferences", data);
     }
 
-    [AuthRequired(ShowLoginButton = true)]
+    [AuthRequired]
     [HttpPost("~/Preferences/Save")]
     public async Task<IActionResult> PreferencesSave(ListViewStyle listViewStyle, bool enableProfileTracking)
     {

@@ -36,11 +36,9 @@ public class WarnSystemController: BaseXeniaController
     }
     
     [HttpGet("~/Warn/Guild/{id}")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> GuildWarns(ulong id, string? messageType = null, string? message = null, bool newer_than_enable = false, string? newer_than = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -67,6 +65,7 @@ public class WarnSystemController: BaseXeniaController
     }
     
     [HttpGet("~/Warn/Info/{id}")]
+    [AuthRequired]
     public async Task<IActionResult> WarnInfo(string id, string? messageType = null, string? message = null)
     {
         var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
@@ -75,8 +74,6 @@ public class WarnSystemController: BaseXeniaController
             return View("NotFound");
 
         var latestWarnData = warnData.FirstOrDefault();
-        if (!CanAccess(latestWarnData?.GuildId ?? (ulong)0))
-            return View("NotAuthorized");
         
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
@@ -101,11 +98,9 @@ public class WarnSystemController: BaseXeniaController
     }
 
     [HttpGet("~/Warn/Guid/{id}/CreateWizard")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> CreateWarnWizard(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -128,11 +123,9 @@ public class WarnSystemController: BaseXeniaController
     }
 
     [HttpPost("~/Warn/Guid/{id}/Create")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> CreateWarn(ulong id, string user, string reason)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");

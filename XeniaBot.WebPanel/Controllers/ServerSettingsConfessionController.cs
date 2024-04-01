@@ -10,11 +10,9 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController
 {
     [HttpPost("~/Server/{id}/Settings/Confession")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_Confession(ulong id, string? modalChannelId, string? messageChannelId)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -73,11 +71,9 @@ public partial class ServerController
     }
 
     [HttpGet("~/Server/{id}/Settings/Confession/Purge")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_Confession_Purge(ulong id)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");

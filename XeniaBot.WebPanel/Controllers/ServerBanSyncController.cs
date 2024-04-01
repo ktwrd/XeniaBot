@@ -30,26 +30,12 @@ public class ServerBanSyncController : BaseXeniaController
     }
     
     [HttpGet("~/Server/{id}/BanSync")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> Index(ulong id, string? messageType = null, string? message = null, ulong? targetUserId = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
-        var userId = AspHelper.GetUserId(HttpContext);
-        if (userId == null)
-            return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
-        if (!guildUser.GuildPermissions.ManageGuild)
-        {
-            return View("NotAuthorized", new NotAuthorizedViewModel()
-            {
-                Message = "You are missing the Manage Server permission."
-            });
-        }
 
         var data = await GetDetails(guild.Id);
         await PopulateModel(data);
@@ -82,6 +68,7 @@ public class ServerBanSyncController : BaseXeniaController
     }
 
     [HttpGet("~/BanSync/Record/{id}/Ghost/True")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> GhostEnable(string id)
     {
         if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
@@ -128,6 +115,7 @@ public class ServerBanSyncController : BaseXeniaController
         }
     }
     [HttpGet("~/BanSync/Record/{id}/Ghost/False")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> GhostDisable(string id)
     {
         if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))

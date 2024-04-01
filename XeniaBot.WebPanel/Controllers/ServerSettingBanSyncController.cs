@@ -14,11 +14,9 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController
 {
     [HttpPost("~/Server/{id}/Settings/BanSync/Request")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_BanSync_Request(ulong id)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -103,13 +101,11 @@ public partial class ServerController
             message: $"Ban Sync Fail: Unhandled state {configData.State}");
     }
     [HttpPost("~/Server/{id}/Settings/BanSync")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_BanSync(
         ulong id,
         string? logChannel = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");

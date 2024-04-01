@@ -7,10 +7,9 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpGet("~/Admin")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> Index()
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
         var model = new AdminIndexModel
         {
             Guilds = _client.Guilds

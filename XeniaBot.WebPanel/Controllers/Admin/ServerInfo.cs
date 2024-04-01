@@ -14,11 +14,9 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpGet("~/Admin/Server/{id}")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> ServerInfo(ulong id, string? message, string? messageType)
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
-
         var model = new AdminServerModel();
         await AspHelper.FillServerModel(id, model);
         model.Message = message;
@@ -28,11 +26,9 @@ public partial class AdminController
     }
 
     [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Refresh")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> BanSync_Refresh(ulong id)
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
-
         try
         {
             var controller = Program.Core.GetRequiredService<BanSyncService>();
@@ -59,11 +55,9 @@ public partial class AdminController
     }
     
     [HttpPost("~/Admin/Server/{id}/Setting/BanSync/State")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
-
         var controller = Program.Core.GetRequiredService<BanSyncService>();
         var model = new AdminServerModel();
         await AspHelper.FillServerModel(id, model);
@@ -74,14 +68,14 @@ public partial class AdminController
             if (res == null)
                 throw new Exception("Server Config not found");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Log.Error(e);
+            Log.Error(ex);
             return RedirectToAction("ServerInfo", new
             {
                 Id = id,
                 MessageType = "danger",
-                Message = $"Failed to set BanSync state. {e.Message}"
+                Message = $"Failed to set BanSync state. {ex.Message}"
             });
         }
         return RedirectToAction("ServerInfo", new

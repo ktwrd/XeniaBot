@@ -14,11 +14,9 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController
 {
     [HttpPost("~/Server/{id}/Settings/Counting")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_Counting(ulong id, string? inputChannelId)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -47,14 +45,14 @@ public partial class ServerController
                 messageType: "success",
                 message: $"Saved settings.");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(e, $"Failed to save counter settings");
-            Log.Error(e);
+                .ReportException(ex, $"Failed to save counter settings");
+            Log.Error(ex);
             return await CountingView(id,
                 messageType: "danger",
-                message: $"Failed to save Counting settings. {e.Message}");
+                message: $"Failed to save Counting settings. {ex.Message}");
         }
     }
 
@@ -74,11 +72,9 @@ public partial class ServerController
     }
     
     [HttpPost("~/Server/{id}/Settings/Log")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_LogSystem(ulong id, SettingLogSystemData data)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -103,14 +99,14 @@ public partial class ServerController
             currentConfig.SetChannel(ServerLogEvent.MemberVoiceChange, data.MemberVoiceChangeChannel);
             await controller.Set(currentConfig);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(e, $"Failed to save logging settings");
-            Log.Error($"Failed to save logging settings. \n{e}");
+                .ReportException(ex, $"Failed to save logging settings");
+            Log.Error($"Failed to save logging settings. \n{ex}");
             return await ModerationView(id,
                 messageType: "danger",
-                message: $"Failed to save Logging settings. {e.Message}");
+                message: $"Failed to save Logging settings. {ex.Message}");
         }
         
         return await ModerationView(id,
@@ -119,11 +115,9 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/RolePreserve")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-
         try
         {
             var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
@@ -150,11 +144,9 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/WarnStrike")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_WarnStrike(ulong id, bool enable, int maxStrike, int strikeWindow)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-
         try
         {
             if (maxStrike < 1)
@@ -194,6 +186,7 @@ public partial class ServerController
     }
     
     [HttpPost("~/Server/{id}/Settings/Greeter")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_Greeter(
         ulong id,
         bool inputMentionUser = false,
@@ -210,10 +203,6 @@ public partial class ServerController
         string? messageType = null,
         string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-
-        
         ulong targetChannelId = 0;
         if (inputChannelId == null || inputChannelId?.Length < 1)
             targetChannelId = 0;
@@ -225,11 +214,11 @@ public partial class ServerController
                 if (targetChannelId == null)
                     throw new Exception("ChannelId is null");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 return await GreeterJoinView(id,
                     messageType: "danger",
-                    message: $"Failed to parse Channel Id. {e.Message}");
+                    message: $"Failed to parse Channel Id. {ex.Message}");
             }
         }
         
@@ -261,18 +250,19 @@ public partial class ServerController
                 messageType: "success",
                 message: $"Greeter settings saved");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(e, $"Failed to save greeter settings");
-            Log.Error($"Failed to save greeter settings\n{e}");
+                .ReportException(ex, $"Failed to save greeter settings");
+            Log.Error($"Failed to save greeter settings\n{ex}");
             return await GreeterJoinView(id,
                 messageType: "danger",
-                message: $"Failed to save. {e.Message}");
+                message: $"Failed to save. {ex.Message}");
         }
     }
 
     [HttpPost("~/Server/{id}/Settings/GreeterBye")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_GreeterBye(
         ulong id,
         bool inputMentionUser,
@@ -287,10 +277,6 @@ public partial class ServerController
         string? inputAuthorImgUrl,
         string? inputColor)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-
-        
         ulong targetChannelId = 0;
         if (inputChannelId == null || inputChannelId?.Length < 1)
             targetChannelId = 0;
@@ -302,13 +288,13 @@ public partial class ServerController
                 if (targetChannelId == null)
                     throw new Exception("ChannelId is null");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 Program.Core.GetRequiredService<ErrorReportService>()
-                    .ReportException(e, $"Failed to save goodbye settings");
+                    .ReportException(ex, $"Failed to save goodbye settings");
                 return await GreeterLeaveView(id,
                     messageType: "danger",
-                    message: $"Failed to parse Channel Id. {e.Message}");
+                    message: $"Failed to parse Channel Id. {ex.Message}");
             }
         }
         
@@ -340,14 +326,14 @@ public partial class ServerController
                 messageType: "success",
                 message: $"Settings Saved");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(e, $"Failed to save goodbye settings");
-            Log.Error($"Failed to save greeter goodbye settings\n{e}");
+                .ReportException(ex, $"Failed to save goodbye settings");
+            Log.Error($"Failed to save greeter goodbye settings\n{ex}");
             return await GreeterLeaveView(id,
                 messageType: "danger",
-                message: $"Failed to save settings. {e.Message}");
+                message: $"Failed to save settings. {ex.Message}");
         }
     }
 }

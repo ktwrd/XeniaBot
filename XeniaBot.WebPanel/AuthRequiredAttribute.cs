@@ -53,7 +53,8 @@ public class AuthRequiredAttribute : ActionFilterAttribute
                 {
                     Model = new NotAuthorizedViewModel()
                     {
-                        ShowLoginButton = true
+                        ShowLoginButton = true,
+                        Message = "Please Login"
                     }
                 }
             };
@@ -67,7 +68,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
             {
                 context.Result = new ViewResult
                 {
-                    ViewName = "NotAuthorized"
+                    ViewName = "NotAuthorized",
                 };
                 return;
             }
@@ -121,7 +122,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
                     {
                         Model = new NotAuthorizedViewModel()
                         {
-                            Message = "Missing permission Manage Guild"
+                            Message = "Missing permission Manage Server"
                         }
                     }
                 };

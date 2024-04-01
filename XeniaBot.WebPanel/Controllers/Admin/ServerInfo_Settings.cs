@@ -11,11 +11,9 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpPost("~/Admin/Server/{id}/Settings/Xp")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Level System: Guild not found");
@@ -28,11 +26,11 @@ public partial class AdminController
             else
                 targetChannelId = ulong.Parse(channelId);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             return await ServerInfo(id,
                 messageType: "danger",
-                message: $"Failed to save Level System settings. {e.Message}");
+                message: $"Failed to save Level System settings. {ex.Message}");
         }
 
         try
@@ -53,21 +51,19 @@ public partial class AdminController
                 messageType: "success",
                 message: $"Level System Settings Saved");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Log.Error($"Failed to save level system config\n{e}");
+            Log.Error($"Failed to save level system config\n{ex}");
             return await ServerInfo(id,
                 messageType: "danger",
-                message: $"Failed to save Level System settings. {e.Message}");
+                message: $"Failed to save Level System settings. {ex.Message}");
         }
     }
     
     [HttpPost("~/Admin/Server/{id}/Settings/Confession")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> SaveSettings_Confession(ulong id, string? modalChannelId, string? messageChannelId)
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -124,11 +120,9 @@ public partial class AdminController
     }
     
     [HttpPost("~/Admin/Server/{id}/Settings/Counting")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> SaveSettings_Counting(ulong id, string? inputChannelId)
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -143,12 +137,12 @@ public partial class AdminController
             if (channelId == null)
                 throw new Exception("ChannelId is null");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Log.Error(e);
+            Log.Error(ex);
             return await ServerInfo(id,
                 messageType: "danger",
-                message: $"Failed to save Counting settings. {e.Message}");
+                message: $"Failed to save Counting settings. {ex.Message}");
         }
 
         var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
@@ -166,11 +160,9 @@ public partial class AdminController
     }
 
     [HttpPost("~/Admin/Server/{id}/Settings/RolePreserve")]
+    [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
     {
-        if (!CanAccess())
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -185,17 +177,16 @@ public partial class AdminController
             data.Enable = enable;
             await controller.Set(data);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Log.Error(e);
+            Log.Error(ex);
             return await ServerInfo(id,
                 messageType: "danger",
-                message: $"Failed to save Role Preserve settings. {e.Message}");
+                message: $"Failed to save Role Preserve settings. {ex.Message}");
         }
 
         return await ServerInfo(id,
             messageType: "success",
             message: $"Role Preserve settings saved.");
     }
-
 }

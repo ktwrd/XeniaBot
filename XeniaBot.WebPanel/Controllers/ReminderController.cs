@@ -38,38 +38,25 @@ public class ReminderController : BaseXeniaController
     }
     
     [HttpGet("~/Reminders")]
+    [AuthRequired]
     public async Task<IActionResult> Index(string? message = null, string? messageType = null)
     {
-        if (GetCurrentUserId() == null)
-            return View("NotAuthorized", new NotAuthorizedViewModel()
-            {
-                Message = "Please Login"
-            });
-
         var model = await PopulateModel();
         
         return View("Default", model);
     }
 
+    [HttpPost("~/Reminders/Create")]
+    [AuthRequired]
     public IActionResult CreatePage()
     {
-        if (GetCurrentUserId() == null)
-            return View("NotAuthorized", new NotAuthorizedViewModel()
-            {
-                Message = "Please Login"
-            });
         throw new NotImplementedException();
     }
 
     [HttpGet("~/Reminders/{id}/Remove")]
+    [AuthRequired]
     public async Task<IActionResult> Remove(string id)
     {
-        if (GetCurrentUserId() == null)
-            return View("NotAuthorized", new NotAuthorizedViewModel()
-            {
-                Message = "Please Login"
-            });
-
         var db = CoreContext.Instance?.GetRequiredService<ReminderRepository>();
         var dbResult = await db.Get(id);
         if (dbResult == null || dbResult.HasReminded)

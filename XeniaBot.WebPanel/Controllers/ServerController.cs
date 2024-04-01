@@ -29,11 +29,9 @@ public partial class ServerController : BaseXeniaController
     }
 
     [HttpGet("~/Server/{id}")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> Index(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -56,11 +54,9 @@ public partial class ServerController : BaseXeniaController
     }
 
     [HttpGet("~/Server/{id}/Moderation")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> ModerationView(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -82,11 +78,9 @@ public partial class ServerController : BaseXeniaController
         return View("Details/ModerationView", data);
     }
     [HttpGet("~/Server/{id}/Fun/Counting")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> CountingView(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -108,11 +102,9 @@ public partial class ServerController : BaseXeniaController
         return View("Details/FunView/CountingView", data);
     }
     [HttpGet("~/Server/{id}/Fun/Confession")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> ConfessionView(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -134,11 +126,9 @@ public partial class ServerController : BaseXeniaController
         return View("Details/FunView/ConfessionView", data);
     }
     [HttpGet("~/Server/{id}/Fun/LevelSystem")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> LevelSystemView(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -161,11 +151,9 @@ public partial class ServerController : BaseXeniaController
     }
     
     [HttpGet("~/Server/{id}/Greeter/Join")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> GreeterJoinView(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -187,11 +175,9 @@ public partial class ServerController : BaseXeniaController
         return View("Details/Settings/GreeterJoinView", data);
     }
     [HttpGet("~/Server/{id}/Greeter/Leave")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> GreeterLeaveView(ulong id, string? messageType = null, string? message = null)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -216,12 +202,9 @@ public partial class ServerController : BaseXeniaController
     
     [HttpGet("~/Server/")]
     [HttpGet("~/Server/List")]
+    [AuthRequired]
     public async Task<IActionResult> List(ListViewStyle style = ListViewStyle.List)
     {
-        bool isAuth = User?.Identity?.IsAuthenticated ?? false;
-        if (!isAuth)
-            return View("NotAuthorized");
-
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
         {

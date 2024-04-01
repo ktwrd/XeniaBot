@@ -13,11 +13,9 @@ public partial class ServerController
 {
 
     [HttpPost("~/Server/{id}/Settings/Xp/Save")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -30,13 +28,13 @@ public partial class ServerController
             else
                 targetChannelId = ulong.Parse(channelId);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(e, $"Failed to save level system settings");
+                .ReportException(ex, $"Failed to save level system settings");
             return await LevelSystemView(id,
                 messageType: "danger",
-                message: $"Failed to parse Channel Id. {e.Message}");
+                message: $"Failed to parse Channel Id. {ex.Message}");
         }
 
         try
@@ -57,21 +55,19 @@ public partial class ServerController
                 messageType: "success",
                 message: $"Saved Settings");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Log.Error($"Failed to save level system config\n{e}");
+            Log.Error($"Failed to save level system config\n{ex}");
             return await LevelSystemView(id,
                 messageType: "danger",
-                message: $"Failed to save settings. {e.Message}");
+                message: $"Failed to save settings. {ex.Message}");
         }
     }
 
     [HttpPost("~/Server/{id}/Settings/Xp/RoleGrant/Remove")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_Xp_RoleGrant_Remove(ulong id, string roleId)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -118,11 +114,9 @@ public partial class ServerController
 
 
     [HttpPost("~/Server/{id}/Settings/Xp/RoleGrant/Add")]
+    [AuthRequired(GuildIdRouteDataName = "id")]
     public async Task<IActionResult> SaveSettings_Xp_RoleGrant_Add(ulong id, string roleId, string requiredLevel)
     {
-        if (!CanAccess(id))
-            return View("NotAuthorized");
-        
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
