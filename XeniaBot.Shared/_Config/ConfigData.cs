@@ -13,11 +13,12 @@ public class ConfigData
     /// 2: New schema version. Requires total transformation.
     /// 3: Move MongoDB connection URL from MongoDBConnectionUrl to MongoDB.ConnectionUrl
     /// 4: Add property ReminderService. No upgrade required.
+    /// 5: Add property IsUpgradeAgent. No upgrade required.
     /// </summary>
     public uint Version
     {
-        get => 4;
-        set { value = 4; }
+        get => 5;
+        set { value = 5; }
     }
 
     /// <summary>
@@ -52,6 +53,12 @@ public class ConfigData
     public string? SupportServerUrl { get; set; }
     public bool HasDashboard { get; set; }
     public string? DashboardUrl { get; set; }
+    /// <summary>
+    /// <para>Is this instance responsible for upgrading database schema?</para>
+    ///
+    /// <para>Should be enabled on Dashboard when deployed</para>
+    /// </summary>
+    public bool IsUpgradeAgent { get; set; }
 
     public ConfigData()
     {
@@ -77,6 +84,7 @@ public class ConfigData
         i.GoogleCloud = null;
         i.MongoDB = MongoDBConfigItem.Default();
         i.ReminderService = ReminderServiceConfigItem.Default();
+        i.IsUpgradeAgent = false;
 
         i.SupportServerUrl = null;
         i.HasDashboard = false;
