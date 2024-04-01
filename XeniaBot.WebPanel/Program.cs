@@ -55,13 +55,6 @@ false
     public static CoreContext Core { get; private set; }
     public static void Main(string[] args)
     {
-        /*var fo = File.Open("log.txt", FileMode.OpenOrCreate);
-        var efo = File.Open("log.error.txt", FileMode.OpenOrCreate);
-        var so = new StreamWriter(fo);
-        var eso = new StreamWriter(efo);
-        Console.SetOut(so);
-        Console.SetError(eso);*/
-        
         StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         Core = new CoreContext(Details);
