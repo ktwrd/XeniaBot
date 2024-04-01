@@ -189,7 +189,7 @@ public class BaseXeniaController : Controller
     public class ParseChannelIdResult
     {
         public string? ErrorContent { get; set; }
-        public ulong? ChannelId { get; set; }
+        public ulong ChannelId { get; set; }
     }
     
     public bool ParseChannelId(string? inputChannel, out ParseChannelIdResult result)
