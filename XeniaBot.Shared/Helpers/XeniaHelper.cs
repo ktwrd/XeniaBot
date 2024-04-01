@@ -22,6 +22,43 @@ public static class XeniaHelper
         return BaseEmbed(client, builder);
     }
 
+    /// <summary>
+    /// Format a Start and End timestamp into a string.
+    /// </summary>
+    /// <returns>HH hour(s) MM minute(s) SS second(s)</returns>
+    public static string FormatDuration(DateTimeOffset start, DateTimeOffset end)
+    {
+        var result = new List<string>();
+        var span = end - start;
+
+        string pluralize(int c)
+        {
+            return c > 1 ? "s" : "";
+        }
+
+        if (span.TotalSeconds < 1)
+        {
+            return $"{span.TotalMilliseconds}ms";
+        }
+        
+        if (span.Hours > 0)
+            result.Add($"{span.Hours} hour" + pluralize(span.Hours));
+        if (span.Minutes > 0)
+            result.Add($"{span.Minutes} minute" + pluralize(span.Minutes));
+        if (span.Seconds > 0)
+            result.Add($"{span.Seconds} second" + pluralize(span.Seconds));
+        return string.Join(" ", result);
+    }
+    /// <summary>
+    /// <inheritdoc cref="FormatDuration(System.DateTimeOffset,System.DateTimeOffset)"/>
+    ///
+    /// <para>Assumes that <paramref name="start"/> was created with <see cref="DateTimeOffset.UtcNow"/></para>
+    /// </summary>
+    public static string FormatDuration(DateTimeOffset start)
+    {
+        return FormatDuration(start, DateTimeOffset.UtcNow);
+    }
+    
     public static bool ChannelExists(DiscordSocketClient client, ulong guildId, ulong channelId)
     {
         try
