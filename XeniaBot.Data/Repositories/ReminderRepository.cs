@@ -50,7 +50,7 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     //     return final;
     // }
 
-    public async Task<ReminderModel[]?> GetMany(
+    public async Task<List<ReminderModel>?> GetMany(
         long beforeTimestamp = long.MaxValue,
         long afterTimestamp = long.MinValue,
         bool hasReminded = false)
@@ -58,7 +58,8 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         var filter = Builders<ReminderModel>
             .Filter
             .Where((v) => v.ReminderTimestamp < beforeTimestamp && v.ReminderTimestamp > afterTimestamp && v.HasReminded == hasReminded);
-        return await InternalFindMany(filter);
+        var res = await BaseFind(filter);
+        return res.ToList();
     }
 
     private async Task<ReminderModel[]?> InternalFindMany(FilterDefinition<ReminderModel> filter)
