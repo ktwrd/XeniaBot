@@ -43,6 +43,14 @@ namespace XeniaBot.Data.Models
         public List<XeniaVersionAssemblyItem> Assemblies { get; set; }
         public Dictionary<string, object> Flags { get; set; }
 
+        /// <summary>
+        /// Get an item in <see cref="Assemblies"/> where <see cref="XeniaVersionAssemblyItem.Name"/> is equal to the <paramref name="name"/> provided.
+        /// </summary>
+        public XeniaVersionAssemblyItem? GetAssemblyByName(string name)
+        {
+            return Assemblies.FirstOrDefault(v => v.Name == Name);
+        }
+        
         public class XeniaVersionAssemblyItem
         {
             /// <summary>
