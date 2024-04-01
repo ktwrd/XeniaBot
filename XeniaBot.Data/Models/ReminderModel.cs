@@ -63,6 +63,7 @@ public class ReminderModel : BaseModel
     }
 
     public ReminderModel()
+        : base()
     {
         ReminderId = GeneralHelper.GenerateUID();
         HasReminded = false;
