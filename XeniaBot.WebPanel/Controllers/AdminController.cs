@@ -23,20 +23,34 @@ public partial class AdminController : BaseXeniaController
         _config = _services.GetRequiredService<ConfigData>();
     }
     
-    public bool CanAccess()
+    public override bool CanAccess(out IActionResult? result)
     {
         bool isAuth = User?.Identity?.IsAuthenticated ?? false;
         if (!isAuth)
+        {
+            result = View("NotAuthorized", new NotAuthorizedViewModel()
+            {
+                ShowLoginButton = true
+            });
             return false;
+        }
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
         {
+            result = View("NotAuthorized");
             return false;
         }
 
-        return _config.UserWhitelist.Contains((ulong)userId);
+        if (!_config.UserWhitelist.Contains((ulong)userId))
+        {
+            result = View("NotAuthorized");
+            return false;
+        }
+
+        result = null;
+        return true;
     }
 
-    public override bool CanAccess(ulong guildId) => CanAccess();
-    public override bool CanAccess(ulong guildId, ulong userId) => CanAccess();
+    public override bool CanAccess(ulong guildId, out IActionResult? result) => CanAccess(out result);
+    public override bool CanAccess(ulong guildId, ulong userId, out IActionResult? result) => CanAccess(out result);
 }
