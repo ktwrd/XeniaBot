@@ -100,9 +100,9 @@ namespace XeniaBot.Core
             Core.MainAsync(args, (s) =>
             {
                 AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", s);
-                AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s);
+                AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
                 AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
-                AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, s);
+                AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, s); // XeniaBot.Logic
                 return Task.CompletedTask;
             }).Wait();
         }
