@@ -110,14 +110,13 @@ public partial class ServerController
         if (guild == null)
             return View("NotFound", "Guild not found");
 
-        var channelIdResult = ParseChannelId(logChannel);
-        if (channelIdResult.ErrorContent != null)
+        if (!ParseChannelId(logChannel, out var logResult))
         {
             return await ModerationView(id,
                 messageType: "danger",
-                message: $"Failed to parse Ban Sync Log Channel Id. {channelIdResult.ErrorContent}");
+                message: $"Failed to parse Ban Sync Log Channel Id. {logResult.ErrorContent}");
         }
-        var channelId = (ulong)channelIdResult.ChannelId;
+        var channelId = (ulong)logResult.ChannelId;
         
         var controller = Program.Core.Services.GetRequiredService<BanSyncConfigRepository>();
         var configData = await controller.Get(guild.Id) ?? new ConfigBanSyncModel()

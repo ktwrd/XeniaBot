@@ -192,7 +192,7 @@ public class BaseXeniaController : Controller
         public ulong? ChannelId { get; set; }
     }
     
-    public ParseChannelIdResult ParseChannelId(string? inputChannel)
+    public bool ParseChannelId(string? inputChannel, out ParseChannelIdResult result)
     {
         ulong? channelId = null;
         try
@@ -205,14 +205,16 @@ public class BaseXeniaController : Controller
         }
         catch (Exception e)
         {
-            return new ParseChannelIdResult()
+            result = new ParseChannelIdResult()
             {
                 ErrorContent = e.Message
             };
+            return false;
         }
-        return new ParseChannelIdResult()
+        result = new ParseChannelIdResult()
         {
             ChannelId = (ulong)channelId
         };
+        return false;
     }
 }

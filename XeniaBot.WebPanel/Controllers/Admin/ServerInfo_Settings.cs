@@ -68,23 +68,21 @@ public partial class AdminController
         if (guild == null)
             return View("NotFound", "Guild not found");
         
-        var modalChannelIdRes = ParseChannelId(modalChannelId);
-        if (modalChannelIdRes.ErrorContent != null)
+        if (!ParseChannelId(modalChannelId, out var modalResult))
         {
             return await ServerInfo(id,
                 messageType: "danger",
-                message: $"Failed to parse ChannelId for confession modal. {modalChannelIdRes.ErrorContent}");
+                message: $"Failed to parse ChannelId for confession modal. {modalResult.ErrorContent}");
         }
-        var modalId = (ulong)modalChannelIdRes.ChannelId;
+        var modalId = (ulong)modalResult.ChannelId;
         
-        var msgChannelIdRes = ParseChannelId(messageChannelId);
-        if (msgChannelIdRes.ErrorContent != null)
+        if (!ParseChannelId(messageChannelId, out var channelResult))
         {
             return await ServerInfo(id,
                 messageType: "danger",
-                message: $"Failed to parse ChannelId for messages. {msgChannelIdRes.ErrorContent}");
+                message: $"Failed to parse ChannelId for messages. {channelResult.ErrorContent}");
         }
-        var msgId = (ulong)msgChannelIdRes.ChannelId;
+        var msgId = (ulong)channelResult.ChannelId;
 
         try
         {
