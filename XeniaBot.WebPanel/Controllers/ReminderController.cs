@@ -71,8 +71,7 @@ public class ReminderController : BaseXeniaController
             });
         }
 
-        dbResult.HasReminded = true;
-        dbResult.RemindedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        dbResult.MarkAsComplete();
         await db.Set(dbResult);
         
         return RedirectToAction("Index", new Dictionary<string, object>()

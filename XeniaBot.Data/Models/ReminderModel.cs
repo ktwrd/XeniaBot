@@ -53,6 +53,15 @@ public class ReminderModel : BaseModel
     /// </summary>
     public RemindSource Source { get; set; }
 
+    /// <summary>
+    /// Mark this reminder as complete
+    /// </summary>
+    public void MarkAsComplete()
+    {
+        RemindedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        HasReminded = true;
+    }
+
     public ReminderModel()
     {
         ReminderId = GeneralHelper.GenerateUID();

@@ -238,8 +238,7 @@ public class ReminderService : BaseService
 
         await channel.SendMessageAsync($"<@{model.UserId}>", embed: embed.Build());
 
-        model.HasReminded = true;
-        model.RemindedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        model.MarkAsComplete();
         await _reminderDb.Set(model);
     }
 }
