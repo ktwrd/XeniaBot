@@ -77,7 +77,7 @@ public class ReminderModel : BaseModel
         long timestamp,
         RemindSource source,
         string? note = null)
-    : base()
+    : this()
     {
         ReminderId = GeneralHelper.GenerateUID();
         UserId = userId;
