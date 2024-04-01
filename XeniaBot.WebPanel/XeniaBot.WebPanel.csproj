@@ -85,7 +85,6 @@
   <!-- T4 build support for .NET Core (End) -->
 
   <!-- T4 build support for Visual Studio (Begin) -->
-
   <PropertyGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
       <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
       <TransformOnBuild>true</TransformOnBuild>
@@ -95,8 +94,7 @@
       <!--Set to false to transform files even if the output appears to be up-to-date (default is true)-->
       <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
   </PropertyGroup>
-
-  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" Condition="'$(MSBuildRuntimeType)'=='Full'" />
+  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" Condition="'$(Configuration)'!='Debug' And '$(MSBuildRuntimeType)'=='Full'" />
 
   <!-- T4 build support for Visual Studio (End) -->
 </Project>
