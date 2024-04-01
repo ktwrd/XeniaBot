@@ -23,7 +23,7 @@ public class ReminderModel : BaseModel
     /// <summary>
     /// <para>Timestamp that this reminder was created at.</para>
     ///
-    /// <para>Unix Timestamp (Milliseconds, UTC)</para>
+    /// <para>Unix Timestamp (Seconds, UTC)</para>
     /// </summary>
     public long CreatedAt { get; set; }
     /// <summary>
@@ -45,7 +45,7 @@ public class ReminderModel : BaseModel
     /// <summary>
     /// <para>Timestamp when we notified the user of this reminder.</para>
     ///
-    /// <para>Milliseconds since Unix Epoch (UTC)</para>
+    /// <para>Unix Timestamp (Seconds, UTC)</para>
     /// </summary>
     public long RemindedAt { get; set; }
     /// <summary>
@@ -58,7 +58,7 @@ public class ReminderModel : BaseModel
     /// </summary>
     public void MarkAsComplete()
     {
-        RemindedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        RemindedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         HasReminded = true;
     }
 
@@ -68,7 +68,7 @@ public class ReminderModel : BaseModel
         ReminderId = GeneralHelper.GenerateUID();
         HasReminded = false;
         Note = "";
-        CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     }
 
     public ReminderModel(
@@ -80,13 +80,11 @@ public class ReminderModel : BaseModel
         string? note = null)
     : this()
     {
-        ReminderId = GeneralHelper.GenerateUID();
         UserId = userId;
         ChannelId = channelId;
         GuildId = guildId;
         ReminderTimestamp = timestamp;
         Note = note ?? "";
-        HasReminded = false;
         Source = source;
     }
 }

@@ -49,7 +49,7 @@ public class XeniaVersionService : BaseService
         await _repo.Insert(currentModel);
         var previousModel = await _repo.GetPrevious(currentModel.Id);
         
-        if (_configData.IsUpgradeAgent)
+        if (_configData.IsUpgradeAgent && currentModel.Name.StartsWith("XeniaBot.Core"))
         {
             Log.Debug("Initializing Upgrades");
             await InitializeUpgrade(currentModel, previousModel);
@@ -114,6 +114,8 @@ public class XeniaVersionService : BaseService
                 await UpgradeObjectIdToGuid();
             }
         }
+
+        await UpgradeReminder_MillisecondsToSeconds(currentModel, previousModel);
     }
 
     /// <summary>
@@ -130,5 +132,111 @@ public class XeniaVersionService : BaseService
         }
         Log.WriteLine("Converting the type of _id in all documents from ObjectId to Guid");
         // TODO
+    }
+
+    /// <summary>
+    /// <para><b>Change was made in Data v1.1</b></para>
+    /// 
+    /// <para>Convert all of <see cref="ReminderModel.CreatedAt"/> and <see cref="ReminderModel.RemindedAt"/> from Milliseconds to Seconds</para>
+    /// </summary>
+    public async Task UpgradeReminder_MillisecondsToSeconds(XeniaVersionModel currentModel, XeniaVersionModel previousModel)
+    {
+        if (previousModel == null)
+        {
+            Log.Warn("Ignoring. Previous model is null");
+            return;
+        }
+        var currentDataAsm = currentModel?.GetAssemblyByName("XeniaBot.Data");
+        var previousDataAsm = previousModel?.GetAssemblyByName("XeniaBot.Data");
+        if (currentDataAsm == null)
+            throw new Exception($"Couldn't get XeniaBot.Data version info from {nameof(currentModel)}");
+        if (previousDataAsm == null)
+            throw new Exception($"Couldn't get XeniaBot.Data version info from {nameof(previousModel)}");
+
+        var changedAtVersion = new Version("1.1.0.0");
+        
+        var parsedCurrentVersion = new Version(currentDataAsm.Version);
+        var parsedPreviousVersion = new Version(previousDataAsm.Version);
+
+        // Ignore when current version is <1.1
+        if (parsedCurrentVersion < changedAtVersion)
+        {
+            Log.Warn("Not Eligible. Current version is <1.1");
+            return;
+        }
+
+        // Ignore when previous version is >=1.1
+        if (parsedPreviousVersion >= changedAtVersion)
+        {
+            Log.Warn("Not Eligible. Previous version is >=1.1");
+            return;
+        }
+
+        var reminderRepo = _services.GetRequiredService<ReminderRepository>();
+        if (reminderRepo == null)
+            throw new NoNullAllowedException("ReminderRepository is null");
+
+        Log.WriteLine($"Running Upgrade (current {parsedCurrentVersion}, previous {parsedPreviousVersion}");
+        
+        var start = DateTimeOffset.UtcNow;
+        
+        var allItems = (await reminderRepo.GetAll()).ToList();
+        
+        var taskBuckets = new List<Task>[4];
+        for (int i = 0; i < taskBuckets.Length; i++)
+            taskBuckets[i] = new List<Task>();
+
+        // remove last 3 char of timestamp (the millisecond part)
+        long adjustToSeconds(long value)
+        {
+            var s = value.ToString();
+            if (s.Length > 3)
+                s = s.Substring(0, s.Length - 3);
+            else
+                s = "0";
+            return long.Parse(s);
+        }
+        
+        for (int i = 0; i < allItems.Count; i++)
+        {
+            allItems[i].CreatedAt = adjustToSeconds(allItems[i].CreatedAt);
+            allItems[i].RemindedAt = adjustToSeconds(allItems[i].RemindedAt);
+        }
+
+        // set the new model in 4 task lists
+        for (int i = 0; i < allItems.Count; i++)
+        {
+            var bucket = i % 4;
+            var index = i;
+            taskBuckets[bucket].Add(new Task(
+                delegate
+                {
+                    reminderRepo.Set(allItems[index]).Wait();
+                }));
+        }
+
+        // run all tasks in 4 threads
+        // each thread processes it's tasks synchronously
+        // then waits for those 4 threads to finish.
+        var taskList = new List<Task>();
+        for (int i = 0; i < taskBuckets.Length; i++)
+        {
+            var index = i;
+            taskList.Add(new Task(delegate
+            {
+                var bucketStart = DateTimeOffset.UtcNow;
+                foreach (var item in taskBuckets[index])
+                {
+                    item.Start();
+                    item.Wait();
+                };
+                Log.Debug($"bucket[{index}] took {XeniaHelper.FormatDuration(bucketStart)}");
+            }));
+        }
+
+        foreach (var i in taskList)
+            i.Start();
+        await Task.WhenAll(taskList);
+        Log.Debug($"Upgrade took {XeniaHelper.FormatDuration(start)}");
     }
 }
