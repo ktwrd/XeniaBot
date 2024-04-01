@@ -228,15 +228,19 @@ public class ReminderService : BaseService
         if (model.HasReminded)
             return;
         
-        var guild = _discordClient.GetGuild(model.GuildId);
-        var channel = guild.GetTextChannel(model.ChannelId);
+        var channel = _discordClient.GetChannel(model.ChannelId);
+        if (!(channel is ITextChannel textChannel))
+        {
+            Log.Error($"Channel for Reminder {reminderId} isn't a text channel");
+            return;
+        }
 
         var embed = XeniaHelper.BaseEmbed()
             .WithTitle("Reminder")
             .WithDescription(model.Note)
             .WithColor(Color.Blue);
 
-        await channel.SendMessageAsync($"<@{model.UserId}>", embed: embed.Build());
+        await textChannel.SendMessageAsync($"<@{model.UserId}>", embed: embed.Build());
 
         model.MarkAsComplete();
         await _reminderDb.Set(model);
