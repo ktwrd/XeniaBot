@@ -25,6 +25,12 @@ namespace XeniaBot.Data.Models
         /// Build Timestamp parsed from the Version.
         /// </summary>
         public long ParsedVersionTimestamp { get; set; }
+
+        /// <summary>
+        /// DateTimeOffset parsed from <see cref="ParsedVersionTimestamp"/>
+        /// </summary>
+        [BsonIgnore]
+        public DateTimeOffset ParsedVersionTime => DateTimeOffset.FromUnixTimeSeconds(ParsedVersionTimestamp);
         /// <summary>
         /// Unix Timestamp (UTC, Seconds)
         /// </summary>
