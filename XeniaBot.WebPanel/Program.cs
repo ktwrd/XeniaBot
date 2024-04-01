@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -44,12 +45,14 @@ public static class Program
     #endregion
     public static ProgramDetails Details => new ProgramDetails()
     {
-        VersionRaw = typeof(Program).Assembly.GetName()?.Version,
+        VersionRaw = Version,
+        StartTimestamp = StartTimestamp,
+        Platform = XeniaPlatform.WebPanel,
         Debug = 
 #if DEBUG
-true
+            true
 #else
-false
+            false
 #endif
     };
     public static CoreContext Core { get; private set; }
@@ -66,14 +69,14 @@ false
         };
         Core.MainAsync(args, (s) =>
         {
-            AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, s);
-            AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s);
+            AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, s); // XeniaBot.Shared
+            AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
             AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", s);
             return Task.CompletedTask;
         }).Wait();
     }
 
-    public static Version? Version => typeof(Program).Assembly.GetName().Version;
+    public static Version? Version => Assembly.GetAssembly(typeof(Program))?.GetName().Version;
     public static string VersionFull => $"v{Version?.Major}.{Version?.Minor} ({VersionDate})";
     public static DateTime VersionDate
     {
