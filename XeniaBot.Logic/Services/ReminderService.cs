@@ -93,7 +93,7 @@ public class ReminderService : BaseService
         }
         var notCalled = await _reminderDb.GetMany(
             beforeTimestamp: InitTimestamp,
-            hasReminded: false) ?? Array.Empty<ReminderModel>();
+            hasReminded: false) ?? [];
 
         var taskList = new List<Task>();
         foreach (var item in notCalled)
@@ -131,7 +131,7 @@ public class ReminderService : BaseService
         ignoreItems ??= Array.Empty<string>();
         var targets = await _reminderDb.GetMany(
             afterTimestamp: InitTimestamp,
-            hasReminded: false) ?? Array.Empty<ReminderModel>();
+            hasReminded: false) ?? [];
 
         var taskList = new List<Task>();
         foreach (var i in targets)
