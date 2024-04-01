@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -9,6 +10,7 @@ using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Data.Services;
 
@@ -16,12 +18,14 @@ namespace XeniaBot.Data.Services;
 public class XeniaVersionService : BaseService
 {
     private readonly ProgramDetails _details;
+    private readonly ConfigData _configData;
     private readonly XeniaVersionRepository _repo;
     private readonly IMongoDatabase _mongoDb;
     public XeniaVersionService(IServiceProvider services)
         : base(services)
     {
         Priority = 11;
+        _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
         _repo = services.GetRequiredService<XeniaVersionRepository>();
         _mongoDb = services.GetRequiredService<IMongoDatabase>();
@@ -44,8 +48,16 @@ public class XeniaVersionService : BaseService
             throw new Exception("Name for executing assembly is empty?");
         await _repo.Insert(currentModel);
         var previousModel = await _repo.GetPrevious(currentModel.Id);
-        if (currentModel.Name.StartsWith("XeniaBot.Core"))
-            await InitializeAsync_Bot(currentModel, previousModel);
+        
+        if (_configData.IsUpgradeAgent)
+        {
+            Log.Debug("Initializing Upgrades");
+            await InitializeUpgrade(currentModel, previousModel);
+        }
+        else
+        {
+            Log.Warn("Ignoring DB Upgrade (Config.IsUpgradeAgent is false)");
+        }
     }
 
     /// <summary>
@@ -88,7 +100,10 @@ public class XeniaVersionService : BaseService
         return result;
     }
 
-    private async Task InitializeAsync_Bot(XeniaVersionModel currentModel, XeniaVersionModel? previousModel)
+    /// <summary>
+    /// Initialize Database Upgrades.
+    /// </summary>
+    private async Task InitializeUpgrade(XeniaVersionModel currentModel, XeniaVersionModel? previousModel)
     {
         if (currentModel.Flags.TryGetValue("idColumnType", out var currentColumnType) &&
             currentColumnType.ToString() == "Guid")
@@ -102,12 +117,17 @@ public class XeniaVersionService : BaseService
     }
 
     /// <summary>
+    /// <para><b>Change was made in Shared v2.0</b></para>
+    /// 
     /// <para>Replace all `_id` fields with a Guid instead of an ObjectId in all collections in the current database</para>
-    ///
-    /// <para>This only applies when the previous XeniaBot.Shared version is &lt;2.0.0.0 and the current version is &gt;=2.0.0.0</para>
     /// </summary>
     private async Task UpgradeObjectIdToGuid()
     {
+        if (!_configData.IsUpgradeAgent)
+        {
+            Log.Warn($"Not Upgrade Agent. Ignoring");
+            return;
+        }
         Log.WriteLine("Converting the type of _id in all documents from ObjectId to Guid");
         // TODO
     }
