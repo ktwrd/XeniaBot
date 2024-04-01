@@ -93,7 +93,7 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     {
         var notCalled = await GetMany(
             beforeTimestamp: initTimestamp,
-            hasReminded: false) ?? Array.Empty<ReminderModel>();
+            hasReminded: false) ?? [];
 
         var results = new List<ReminderModel>();
         foreach (var i in notCalled)
