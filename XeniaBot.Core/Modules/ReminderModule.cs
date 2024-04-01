@@ -62,7 +62,7 @@ public class ReminderModule : InteractionModuleBase
                 timestamp,
                 Context.User.Id,
                 Context.Channel.Id,
-                Context.Guild.Id,
+                Context.Guild?.Id ?? 0,
                 note,
                 RemindSource.Bot);
         }
