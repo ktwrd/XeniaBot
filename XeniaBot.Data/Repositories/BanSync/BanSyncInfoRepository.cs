@@ -103,8 +103,28 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         return res.FirstOrDefault();
     }
     public async Task<BanSyncInfoModel?> GetInfo(BanSyncInfoModel data, bool allowGhost = false)
-        => await GetInfo(data.UserId, data.GuildId, allowGhost);
+        => await GetInfo(data.RecordId, allowGhost);
 
+    /// <summary>
+    /// Fetch a document by <see cref="BanSyncInfoModel.RecordId"/>
+    /// </summary>
+    /// <param name="id"><see cref="BanSyncInfoModel.RecordId"/></param>
+    /// <param name="allowGhost">When `true`, the result will include records that have <see cref="BanSyncInfoModel.Ghost"/> set to `true`</param>
+    /// <returns>`null` when not found or ghosted.</returns>
+    public async Task<BanSyncInfoModel?> GetInfo(string id, bool allowGhost = false)
+    {
+        var filter = Builders<BanSyncInfoModel>
+            .Filter
+            .Where(v => v.RecordId == id);
+        if (allowGhost == false)
+        {
+            filter &= Builders<BanSyncInfoModel>.Filter.Where(v => v.Ghost == false);
+        }
+
+        var res = await BaseFind(filter, sort_timestamp);
+        return res.FirstOrDefault();
+    }
+    
     public async Task<List<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = true, bool allowGhost = false)
     {
         var result = new List<BanSyncInfoModel>();
