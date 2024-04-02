@@ -8,7 +8,7 @@
 
 <div class="container">
     <h1 class="mb-0">BanSync Record Details</h1>
-    <sup>@Model.Record.GuildId@Model.Record.UserId</sup>
+    <sup>@Model.Record.RecordId</sup>
     <p>
         <img src="@(AspHelper.GetUserProfilePicture(Model.Record.UserId))"
              class="smallUserIcon" />
@@ -25,8 +25,8 @@
         <hr/>
         <label for="ghost-record">Set Ghost State</label>
         <div class="btn-group" id="host-record" role="group" aria-label="Ghost Record">
-            <a class="btn btn-sm btn-outline-dark" asp-controller="ServerBanSync" asp-action="GhostEnable" asp-route-id="@(Model.Record.UserId + "_" + Model.Record.GuildId)">True</a>
-            <a class="btn btn-sm btn-outline-dark" asp-controller="ServerBanSync" asp-action="GhostDisable" asp-route-id="@(Model.Record.UserId+'_'+Model.Record.GuildId)">False</a>
+            <a class="btn btn-sm btn-outline-dark" asp-controller="ServerBanSync" asp-action="GhostEnable" asp-route-id="@(Model.Record.RecordId)">True</a>
+            <a class="btn btn-sm btn-outline-dark" asp-controller="ServerBanSync" asp-action="GhostDisable" asp-route-id="@(Model.Record.RecordId)">False</a>
         </div>
     }
 </div>
