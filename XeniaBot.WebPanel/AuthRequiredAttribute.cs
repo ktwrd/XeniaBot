@@ -43,23 +43,8 @@ public class AuthRequiredAttribute : ActionFilterAttribute
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         // Only allow authenticated users.
-        var isAuth = context.HttpContext.User?.Identity?.IsAuthenticated ?? false;
-        if (!isAuth)
-        {
-            context.Result = new ViewResult
-            {
-                ViewName = "NotAuthorized",
-                ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), context.ModelState)
-                {
-                    Model = new NotAuthorizedViewModel()
-                    {
-                        ShowLoginButton = true,
-                        Message = "Please Login"
-                    }
-                }
-            };
+        if (!AuthAttributeHelper.HandleAuth(context))
             return;
-        }
 
         if (RequireWhitelist)
         {
