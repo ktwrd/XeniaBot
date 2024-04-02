@@ -29,6 +29,12 @@ namespace XeniaBot.Data.Models
         /// Display Name for the User that was banned
         /// </summary>
         public string UserDisplayName { get; set; }
+        /// <summary>
+        /// <para>Snowflake for the User that banned this user. Fetched by checking the Audit Log.</para>
+        ///
+        /// <para>TODO</para>
+        /// </summary>
+        public ulong? BannedByUserId { get; set; }
         public ulong GuildId { get; set; }
         public string GuildName { get; set; }
         /// <summary>
