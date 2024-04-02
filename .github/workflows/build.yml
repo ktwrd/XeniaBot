@@ -13,12 +13,15 @@ jobs:
     strategy:
       matrix:
         configuration: [Debug, Release]
+        projectName: [XeniaBot.Core, XeniaBot.WebPanel]
 
     runs-on: windows-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
     env:
       Solution_Name: XeniaBot
+      Target_Configuration: ${{ matrix.configuration }}
+      Target_Project: ${{ matrix.projectName }}
 
     steps:
     - name: Checkout
@@ -39,50 +42,27 @@ jobs:
     - run: dotnet tool install -g dotnet-t4
 
     - name: Clean
-      run: dotnet clean ./XeniaBot.sln --configuration $env:Configuration && dotnet nuget locals all --clear     
-      env:
-        Configuration: ${{ matrix.configuration }}
+      run: dotnet clean ./XeniaBot.sln --configuration $env:Target_Configuration && dotnet nuget locals all --clear
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
       run: dotnet restore ./XeniaBot.sln
-      env:
-        Configuration: ${{ matrix.configuration }}
 
-    - name: Publish Bot
+    - name: Publish
       run: |
-        dotnet publish XeniaBot.Core --self-contained true -c $env:Configuration --runtime win-x64
-        dotnet publish XeniaBot.Core --self-contained true -c $env:Configuration --runtime linux-x64
-      env:
-        Configuration: ${{ matrix.configuration }}
-
-    - name: Publish Web Panel
-      run: |
-        dotnet publish XeniaBot.WebPanel --self-contained true -c $env:Configuration --runtime win-x64
-        dotnet publish XeniaBot.WebPanel --self-contained true -c $env:Configuration --runtime linux-x64
-      env:
-        Configuration: ${{ matrix.configuration }}
+        dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime win-x64
+        dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime linux-x64
 
     - name: Create Archive
       run: |
-        zip XeniaBot.Core.win-x64.zip ./XeniaBot.Core/bin/Release/net8.0/win-x64/publish/*
-        zip XeniaBot.WebPanel.win-x64.zip ./XeniaBot.WebPanel/bin/Release/net8.0/win-x64/publish/*
-        zip XeniaBot.Core.linux-x64.zip ./XeniaBot.Core/bin/Release/net8.0/linux-x64/publish/*
-        zip XeniaBot.WebPanel.linux-x64.zip ./XeniaBot.WebPanel/bin/Release/net8.0/linux-x64/publish/*
+        zip ${{ matrix.projectName }}.win-x64.zip ./XeniaBot.Core/bin/${{ matrix.configuration }}/net8.0/win-x64/publish/*
+        zip ${{ matrix.projectName }}.linux-x64.zip ./XeniaBot.Core/bin/${{ matrix.configuration }}/net8.0/linux-x64/publish/*
 
-    - name: Upload build artifacts (Windows)
+    - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: Windows
+        name: ${{ matrix.projectName }} (${{ matrix.configuration }})
         path: |
-          ./XeniaBot.Core.win-x64.zip
-          ./XeniaBot.WebPanel.win-x64.zip
-
-    - name: Upload build artifacts (Linux)
-      uses: actions/upload-artifact@v3
-      with:
-        name: Linux
-        path: |
-          ./XeniaBot.Core.linux-x64.zip
-          ./XeniaBot.WebPanel.linux-x64.zip
+          ./${{ matrix.projectName }}.win-x64.zip
+          ./${{ matrix.projectName }}.linux-x64.zip
 
