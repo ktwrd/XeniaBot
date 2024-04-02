@@ -14,14 +14,15 @@ jobs:
       matrix:
         configuration: [Debug, Release]
         projectName: [XeniaBot.Core, XeniaBot.WebPanel]
+        platform: [windows-latest, ubuntu-latest]
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: ${{ matrix.platform }}
 
     env:
       Solution_Name: XeniaBot
       Target_Configuration: ${{ matrix.configuration }}
       Target_Project: ${{ matrix.projectName }}
+      Dotnet_Runtime_Name: "${{ matrix.platform == 'windows-latest' && 'linux-x64' || 'win-x64' }}"
 
     steps:
     - name: Checkout
@@ -34,33 +35,23 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v2
     
     - run: dotnet tool install -g dotnet-t4
 
     - name: Clean
+      shell: powershell
       run: dotnet clean ./XeniaBot.sln --configuration $env:Target_Configuration && dotnet nuget locals all --clear
 
     - name: Publish Windows
+      shell: powershell
       run: |
-        dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime win-x64
-        Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/win-x64/publish/* -Destination ${{ matrix.projectName }}.win-x64.zip
-
-    - name: Publish Linux
-      run: |
-        Remove-Item ./${{ matrix.projectName }}/bin/ -Recurse
-        Remove-Item ./${{ matrix.projectName }}/obj/ -Recurse
-        dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime linux-x64
-        Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/linux-x64/publish/* -Destination ${{ matrix.projectName }}.linux-x64.zip
+        dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime $env:Dotnet_Runtime_Name
+        Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/$env:Dotnet_Runtime_Name/publish/* -Destination ${{ matrix.projectName }}.zip
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.projectName }} (${{ matrix.configuration }})
+        name: ${{ matrix.projectName }} (${{ matrix.configuration }}, ${{ matrix.platform }})
         path: |
-          ./${{ matrix.projectName }}.win-x64.zip
-          ./${{ matrix.projectName }}.linux-x64.zip
+          ./${{ matrix.projectName }}.zip
 
