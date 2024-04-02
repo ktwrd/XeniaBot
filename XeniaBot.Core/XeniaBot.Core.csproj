@@ -8,12 +8,21 @@
     <RootNamespace>XeniaBot.Core</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <TransformOnBuild>true</TransformOnBuild>
+
+    <PublishSingleFile>true</PublishSingleFile>
 
     <IsTrimmable>false</IsTrimmable>
     
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="obj\**" />
+    <Content Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="obj\**" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
     <PackageReference Include="Discord.Net" Version="3.13.0" />
