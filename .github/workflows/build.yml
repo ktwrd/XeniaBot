@@ -14,15 +14,9 @@ jobs:
       matrix:
         configuration: [Debug, Release]
         projectName: [XeniaBot.Core, XeniaBot.WebPanel]
-        platform: [windows-latest, ubuntu-latest]
+        runtime: [win-x64, linux-x64]
 
-    runs-on: ${{ matrix.platform }}
-
-    env:
-      Solution_Name: XeniaBot
-      Target_Configuration: ${{ matrix.configuration }}
-      Target_Project: ${{ matrix.projectName }}
-      Dotnet_Runtime_Name: "${{ matrix.platform == 'windows-latest' && 'linux-x64' || 'win-x64' }}"
+    runs-on: windows-latest
 
     steps:
     - name: Checkout
@@ -39,19 +33,17 @@ jobs:
     - run: dotnet tool install -g dotnet-t4
 
     - name: Clean
-      shell: powershell
-      run: dotnet clean ./XeniaBot.sln --configuration $env:Target_Configuration && dotnet nuget locals all --clear
+      run: dotnet clean ./XeniaBot.sln --configuration ${{ matrix.configuration }} && dotnet nuget locals all --clear
 
     - name: Publish Windows
-      shell: powershell
       run: |
-        dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime $env:Dotnet_Runtime_Name
-        Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/$env:Dotnet_Runtime_Name/publish/* -Destination ${{ matrix.projectName }}.zip
+        dotnet publish ${{ matrix.projectName }} --self-contained true -c ${{ matrix.configuration }} --runtime ${{ matrix.runtime }}
+        Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/${{ matrix.runtime }}/publish/* -Destination ${{ matrix.projectName }}.zip
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.projectName }} (${{ matrix.configuration }}, ${{ matrix.platform }})
+        name: ${{ matrix.projectName }} (${{ matrix.configuration }}, ${{ matrix.runtime }})
         path: |
           ./${{ matrix.projectName }}.zip
 
