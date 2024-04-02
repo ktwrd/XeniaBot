@@ -36,9 +36,11 @@ public class AuthRequiredAttribute : ActionFilterAttribute
     [DefaultValue(null)]
     public string? GuildIdRouteDataName { get; set; }
     /// <summary>
+    /// <para><b>Will be removed in a later update. Use <see cref="RequireSuperuserAttribute"/> instead.</b></para>
     /// Require the requesting user to be in <see cref="ConfigData.UserWhitelist"/>. Used for bot owner-only sections.
     /// </summary>
     [DefaultValue(false)]
+    [Obsolete("Will be removed in a later update. Use RequireSuperuserAttribute instead.")]
     public bool RequireWhitelist { get; set; }
     public override void OnActionExecuting(ActionExecutingContext context)
     {
