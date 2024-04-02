@@ -25,6 +25,10 @@ namespace XeniaBot.Data.Models
         /// Discriminator for the User that was banned
         /// </summary>
         public string? UserDiscriminator { get; set; }
+        /// <summary>
+        /// Display Name for the User that was banned
+        /// </summary>
+        public string UserDisplayName { get; set; }
         public ulong GuildId { get; set; }
         public string GuildName { get; set; }
         /// <summary>

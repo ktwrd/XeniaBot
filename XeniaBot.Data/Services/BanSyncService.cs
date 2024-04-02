@@ -88,6 +88,7 @@ namespace XeniaBot.Data.Services
                         UserId = i.User.Id,
                         UserName = i.User.Username,
                         UserDiscriminator = i.User.Discriminator,
+                        UserDisplayName = i.User.GlobalName,
                         GuildId = guild.Id,
                         GuildName = guild.Name,
                         Reason = i?.Reason ?? "<unknown>"
@@ -119,7 +120,8 @@ namespace XeniaBot.Data.Services
             {
                 UserId = user.Id,
                 UserName = user.Username,
-                UserDiscriminator = user.Discriminator.ToString(),
+                UserDiscriminator = user.Discriminator,
+                UserDisplayName = user.GlobalName,
                 GuildId = guild.Id,
                 GuildName = guild.Name,
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
