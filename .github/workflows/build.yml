@@ -48,9 +48,12 @@ jobs:
     - name: Restore the application
       run: dotnet restore ./XeniaBot.sln
 
-    - name: Publish
+    - name: Publish Windows
+      run: dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime win-x64
+    - name: Publish Linux
       run: |
-        dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime win-x64
+        Remove-Item ./${{ matrix.projectName }}/bin/ -Recurse
+        Remove-Item ./${{ matrix.projectName }}/obj/ -Recurse
         dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime linux-x64
 
     - name: Create Archive
