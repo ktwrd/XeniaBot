@@ -1,0 +1,79 @@
+name: .NET Core Desktop
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+
+  build:
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    runs-on: windows-latest  # For a list of available runner types, refer to
+                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+
+    env:
+      Solution_Name: XeniaBot
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v2
+    
+    - run: dotnet tool install -g dotnet-t4
+
+    # Restore the application to populate the obj folder with RuntimeIdentifiers
+    - name: Restore the application
+      run: dotnet restore
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    - name: Publish Bot
+      run: |
+        dotnet publish XeniaBot.Core --self-contained true -c $env:Configuration --runtime win-x64
+        dotnet publish XeniaBot.Core --self-contained true -c $env:Configuration --runtime linux-x64
+
+    - name: Publish Web Panel
+      run: |
+        dotnet publish XeniaBot.WebPanel --self-contained true -c $env:Configuration --runtime win-x64
+        dotnet publish XeniaBot.WebPanel --self-contained true -c $env:Configuration --runtime linux-x64
+
+    - name: Create Archive
+      run: |
+        zip XeniaBot.Core.win-x64.zip ./XeniaBot.Core/bin/Release/net8.0/win-x64/publish/*
+        zip XeniaBot.WebPanel.win-x64.zip ./XeniaBot.WebPanel/bin/Release/net8.0/win-x64/publish/*
+        zip XeniaBot.Core.linux-x64.zip ./XeniaBot.Core/bin/Release/net8.0/linux-x64/publish/*
+        zip XeniaBot.WebPanel.linux-x64.zip ./XeniaBot.WebPanel/bin/Release/net8.0/linux-x64/publish/*
+
+    - name: Upload build artifacts (Windows)
+      uses: actions/upload-artifact@v3
+      with:
+        name: Windows
+        path: |
+          ./XeniaBot.Core.win-x64.zip
+          ./XeniaBot.WebPanel.win-x64.zip
+
+    - name: Upload build artifacts (Linux)
+      uses: actions/upload-artifact@v3
+      with:
+        name: Linux
+        path: |
+          ./XeniaBot.Core.linux-x64.zip
+          ./XeniaBot.WebPanel.linux-x64.zip
+
