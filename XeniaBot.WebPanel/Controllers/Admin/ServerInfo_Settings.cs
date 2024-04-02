@@ -10,6 +10,13 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public partial class AdminController
 {
+    /// <summary>
+    /// Save Level System settings for Guild provided.
+    /// </summary>
+    /// <param name="id">Guild Id</param>
+    /// <param name="channelId">Channel Id for Level Up notifications</param>
+    /// <param name="show">Notify users when they Level Up</param>
+    /// <param name="enable">Enable tracking of messages for XP</param>
     [HttpPost("~/Admin/Server/{id}/Settings/Xp")]
     [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)

@@ -13,6 +13,12 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public partial class AdminController
 {
+    /// <summary>
+    /// Get information about a Guild
+    /// </summary>
+    /// <param name="id">Guild Id</param>
+    /// <param name="message">Banner message</param>
+    /// <param name="messageType">Banner message type</param>
     [HttpGet("~/Admin/Server/{id}")]
     [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> ServerInfo(ulong id, string? message, string? messageType)
@@ -25,6 +31,10 @@ public partial class AdminController
         return View("ServerInfo", model);
     }
 
+    /// <summary>
+    /// Refresh stored bans in the Guild provided
+    /// </summary>
+    /// <param name="id">Guild Id</param>
     [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Refresh")]
     [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> BanSync_Refresh(ulong id)
@@ -54,6 +64,12 @@ public partial class AdminController
         });
     }
     
+    /// <summary>
+    /// Save BanSync State
+    /// </summary>
+    /// <param name="id">Guild Id</param>
+    /// <param name="state">State</param>
+    /// <param name="reason">Reason</param>
     [HttpPost("~/Admin/Server/{id}/Setting/BanSync/State")]
     [AuthRequired(RequireWhitelist = true)]
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)

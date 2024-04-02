@@ -13,16 +13,31 @@ namespace XeniaBot.Data.Models
     {
         public static string CollectionName => "banSyncInfo";
         public string RecordId { get; set; }
+        /// <summary>
+        /// Snowflake for the User that was banned
+        /// </summary>
         public ulong UserId { get; set; }
+        /// <summary>
+        /// Username for the User that was banned
+        /// </summary>
         public string UserName { get; set; }
-        public string UserDiscriminator { get; set; }
+        /// <summary>
+        /// Discriminator for the User that was banned
+        /// </summary>
+        public string? UserDiscriminator { get; set; }
         public ulong GuildId { get; set; }
         public string GuildName { get; set; }
         /// <summary>
         /// Unix Epoch in UTC Seconds
         /// </summary>
         public long Timestamp { get; set; }
+        /// <summary>
+        /// Reason why this User was banned.
+        /// </summary>
         public string Reason { get; set; }
+        /// <summary>
+        /// Pretend that this record doesn't exist when `true`.
+        /// </summary>
         public bool Ghost { get; set; }
         public BanSyncInfoModel()
         {
