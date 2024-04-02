@@ -46,8 +46,6 @@ jobs:
 
     - name: Publish Windows
       run: |
-        Remove-Item ./${{ matrix.projectName }}/bin/ -Recurse
-        Remove-Item ./${{ matrix.projectName }}/obj/ -Recurse
         dotnet publish $env:Target_Project --self-contained true -c $env:Target_Configuration --runtime win-x64
         Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/win-x64/publish/* -Destination ${{ matrix.projectName }}.win-x64.zip
 
