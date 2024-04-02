@@ -13,6 +13,8 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <TransformOnBuild>true</TransformOnBuild>
 
+    <PublishSingleFile>true</PublishSingleFile>
+
     <IsTrimmable>false</IsTrimmable>
   </PropertyGroup>
 
