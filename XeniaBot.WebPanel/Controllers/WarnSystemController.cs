@@ -36,7 +36,8 @@ public class WarnSystemController: BaseXeniaController
     }
     
     [HttpGet("~/Warn/Guild/{id}")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> GuildWarns(ulong id, string? messageType = null, string? message = null, bool newer_than_enable = false, string? newer_than = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -98,7 +99,8 @@ public class WarnSystemController: BaseXeniaController
     }
 
     [HttpGet("~/Warn/Guid/{id}/CreateWizard")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> CreateWarnWizard(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -123,7 +125,8 @@ public class WarnSystemController: BaseXeniaController
     }
 
     [HttpPost("~/Warn/Guid/{id}/Create")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> CreateWarn(ulong id, string user, string reason)
     {
         var guild = _discord.GetGuild(id);

@@ -30,7 +30,8 @@ public class ServerBanSyncController : BaseXeniaController
     }
     
     [HttpGet("~/Server/{id}/BanSync")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> Index(ulong id, string? messageType = null, string? message = null, ulong? targetUserId = null)
     {
         var guild = _discord.GetGuild(id);
@@ -68,7 +69,8 @@ public class ServerBanSyncController : BaseXeniaController
     }
 
     [HttpGet("~/BanSync/Record/{id}/Ghost/True")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> GhostEnable(string id)
     {
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
@@ -97,7 +99,8 @@ public class ServerBanSyncController : BaseXeniaController
         }
     }
     [HttpGet("~/BanSync/Record/{id}/Ghost/False")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> GhostDisable(string id)
     {
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
@@ -127,6 +130,7 @@ public class ServerBanSyncController : BaseXeniaController
     }
     
     [HttpGet("~/BanSync/Record/{id}")]
+    [AuthRequired]
     public async Task<IActionResult> RecordInfo(string id)
     {
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();

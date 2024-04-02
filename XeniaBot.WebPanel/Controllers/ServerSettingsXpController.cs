@@ -13,7 +13,8 @@ public partial class ServerController
 {
 
     [HttpPost("~/Server/{id}/Settings/Xp/Save")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
         var guild = _discord.GetGuild(id);
@@ -65,7 +66,8 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/Xp/RoleGrant/Remove")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Xp_RoleGrant_Remove(ulong id, string roleId)
     {
         var guild = _discord.GetGuild(id);
@@ -114,7 +116,8 @@ public partial class ServerController
 
 
     [HttpPost("~/Server/{id}/Settings/Xp/RoleGrant/Add")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Xp_RoleGrant_Add(ulong id, string roleId, string requiredLevel)
     {
         var guild = _discord.GetGuild(id);

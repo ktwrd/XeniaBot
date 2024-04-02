@@ -18,13 +18,10 @@ public partial class AdminController
     /// <param name="show">Notify users when they Level Up</param>
     /// <param name="enable">Enable tracking of messages for XP</param>
     [HttpPost("~/Admin/Server/{id}/Settings/Xp")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
-        var guild = _discord.GetGuild(id);
-        if (guild == null)
-            return View("NotFound", "Level System: Guild not found");
-
         ulong? targetChannelId = null;
         try
         {
@@ -43,9 +40,9 @@ public partial class AdminController
         try
         {
             var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
-            var data = await controller.Get(guild.Id) ?? new LevelSystemConfigModel()
+            var data = await controller.Get(id) ?? new LevelSystemConfigModel()
             {
-                GuildId = guild.Id,
+                GuildId = id,
                 LevelUpChannel = targetChannelId,
                 ShowLeveUpMessage = show,
                 Enable = enable
@@ -68,7 +65,8 @@ public partial class AdminController
     }
     
     [HttpPost("~/Admin/Server/{id}/Settings/Confession")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_Confession(ulong id, string? modalChannelId, string? messageChannelId)
     {
         var guild = _discord.GetGuild(id);
@@ -125,7 +123,8 @@ public partial class AdminController
     }
     
     [HttpPost("~/Admin/Server/{id}/Settings/Counting")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_Counting(ulong id, string? inputChannelId)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -165,7 +164,8 @@ public partial class AdminController
     }
 
     [HttpPost("~/Admin/Server/{id}/Settings/RolePreserve")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
     {
         var guild = _discord.GetGuild(id);

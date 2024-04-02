@@ -29,7 +29,8 @@ public partial class ServerController : BaseXeniaController
     }
 
     [HttpGet("~/Server/{id}")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> Index(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -54,7 +55,8 @@ public partial class ServerController : BaseXeniaController
     }
 
     [HttpGet("~/Server/{id}/Moderation")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> ModerationView(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -78,7 +80,8 @@ public partial class ServerController : BaseXeniaController
         return View("Details/ModerationView", data);
     }
     [HttpGet("~/Server/{id}/Fun/Counting")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> CountingView(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -102,7 +105,8 @@ public partial class ServerController : BaseXeniaController
         return View("Details/FunView/CountingView", data);
     }
     [HttpGet("~/Server/{id}/Fun/Confession")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> ConfessionView(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -126,7 +130,8 @@ public partial class ServerController : BaseXeniaController
         return View("Details/FunView/ConfessionView", data);
     }
     [HttpGet("~/Server/{id}/Fun/LevelSystem")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> LevelSystemView(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -151,7 +156,8 @@ public partial class ServerController : BaseXeniaController
     }
     
     [HttpGet("~/Server/{id}/Greeter/Join")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> GreeterJoinView(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -175,7 +181,8 @@ public partial class ServerController : BaseXeniaController
         return View("Details/Settings/GreeterJoinView", data);
     }
     [HttpGet("~/Server/{id}/Greeter/Leave")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> GreeterLeaveView(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);

@@ -20,7 +20,8 @@ public partial class AdminController
     /// <param name="message">Banner message</param>
     /// <param name="messageType">Banner message type</param>
     [HttpGet("~/Admin/Server/{id}")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> ServerInfo(ulong id, string? message, string? messageType)
     {
         var model = new AdminServerModel();
@@ -36,7 +37,8 @@ public partial class AdminController
     /// </summary>
     /// <param name="id">Guild Id</param>
     [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Refresh")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> BanSync_Refresh(ulong id)
     {
         try
@@ -71,7 +73,8 @@ public partial class AdminController
     /// <param name="state">State</param>
     /// <param name="reason">Reason</param>
     [HttpPost("~/Admin/Server/{id}/Setting/BanSync/State")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)
     {
         var controller = Program.Core.GetRequiredService<BanSyncService>();

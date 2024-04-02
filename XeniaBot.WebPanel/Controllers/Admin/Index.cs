@@ -7,7 +7,8 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpGet("~/Admin")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> Index()
     {
         var model = new AdminIndexModel

@@ -14,7 +14,8 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController
 {
     [HttpPost("~/Server/{id}/Settings/Counting")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Counting(ulong id, string? inputChannelId)
     {
         var userId = AspHelper.GetUserId(HttpContext);
@@ -72,7 +73,8 @@ public partial class ServerController
     }
     
     [HttpPost("~/Server/{id}/Settings/Log")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_LogSystem(ulong id, SettingLogSystemData data)
     {
         var guild = _discord.GetGuild(id);
@@ -115,7 +117,8 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/RolePreserve")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
     {
         try
@@ -144,7 +147,8 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/WarnStrike")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_WarnStrike(ulong id, bool enable, int maxStrike, int strikeWindow)
     {
         try
@@ -186,7 +190,8 @@ public partial class ServerController
     }
     
     [HttpPost("~/Server/{id}/Settings/Greeter")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Greeter(
         ulong id,
         bool inputMentionUser = false,
@@ -262,7 +267,8 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/GreeterBye")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_GreeterBye(
         ulong id,
         bool inputMentionUser,

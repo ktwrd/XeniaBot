@@ -10,7 +10,8 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController
 {
     [HttpPost("~/Server/{id}/Settings/Confession")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Confession(ulong id, string? modalChannelId, string? messageChannelId)
     {
         var guild = _discord.GetGuild(id);
@@ -69,7 +70,8 @@ public partial class ServerController
     }
 
     [HttpGet("~/Server/{id}/Settings/Confession/Purge")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Confession_Purge(ulong id)
     {
         var guild = _discord.GetGuild(id);
