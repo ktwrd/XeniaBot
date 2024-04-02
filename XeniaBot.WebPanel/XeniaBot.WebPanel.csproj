@@ -11,6 +11,7 @@
     <RootNamespace>XeniaBot.WebPanel</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <TransformOnBuild>true</TransformOnBuild>
 
     <PublishSingleFile>true</PublishSingleFile>
