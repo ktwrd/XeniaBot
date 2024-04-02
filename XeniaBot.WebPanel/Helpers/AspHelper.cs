@@ -4,11 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Services;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.Helpers;
@@ -39,22 +42,35 @@ public static class AspHelper
         return Program.Core.Config.Data.UserWhitelist.Contains(userId);
     }
 
-    public static bool CanAccessGuild(ulong guildId, ulong userId)
+    public static bool CanAccessGuild(
+        ulong guildId,
+        ulong userId,
+        GuildPermission permissionRequired = GuildPermission.ManageGuild)
     {
         var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        
-        var user = discord.GetUser(userId);
-        if (user == null)
-            return false;
+        var errorReport = Program.Core.GetRequiredService<ErrorReportService>();
+        try
+        {
+            var user = discord.GetUser(userId);
+            if (user == null)
+                return false;
 
-        var guild = discord.GetGuild(guildId);
-        var guildUser = guild.GetUser(user.Id);
-        if (guildUser == null)
-            return false;
-        if (!guildUser.GuildPermissions.ManageGuild)
-            return false;
+            var guild = discord.GetGuild(guildId);
+            var guildUser = guild.GetUser(user.Id);
+            if (guildUser == null)
+                return false;
+            if (!guildUser.GuildPermissions.Has(permissionRequired))
+                return false;
 
-        return true;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to run {guildId}, {userId}, {permissionRequired}\n{ex}");
+            errorReport.ReportException(
+                ex, $"Failed to run AspHelper.CanAccessGuild ({guildId}, {userId}, {permissionRequired})");
+            return false;
+        }
     }
     public static string[] ValidMessageTypes = new string[]
     {
