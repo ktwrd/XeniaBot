@@ -38,9 +38,14 @@ jobs:
     
     - run: dotnet tool install -g dotnet-t4
 
+    - name: Clean
+      run: dotnet clean ./XeniaBot.sln --configuration $env:Configuration && dotnet nuget locals all --clear     
+      env:
+        Configuration: ${{ matrix.configuration }}
+
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
-      run: dotnet restore
+      run: dotnet restore ./XeniaBot.sln
       env:
         Configuration: ${{ matrix.configuration }}
 
@@ -48,11 +53,15 @@ jobs:
       run: |
         dotnet publish XeniaBot.Core --self-contained true -c $env:Configuration --runtime win-x64
         dotnet publish XeniaBot.Core --self-contained true -c $env:Configuration --runtime linux-x64
+      env:
+        Configuration: ${{ matrix.configuration }}
 
     - name: Publish Web Panel
       run: |
         dotnet publish XeniaBot.WebPanel --self-contained true -c $env:Configuration --runtime win-x64
         dotnet publish XeniaBot.WebPanel --self-contained true -c $env:Configuration --runtime linux-x64
+      env:
+        Configuration: ${{ matrix.configuration }}
 
     - name: Create Archive
       run: |
