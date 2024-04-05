@@ -67,6 +67,8 @@ If you wish to fetch the configuration from an Environment Variable then you wil
 | `CONFIG_READONLY` | boolean | `false` | Disable writing of config. Will always be `false` if `CONFIG_USE_ENV` is `true` |
 | `DATA_DIR` | string | `./data/` | Data Directory |
 | `DATA_DIR_FONTCACHE` | string | `./data/fontcache` | Font cache for MediaManu commands |
+| `LOG_LAVALINK_DEBUG` | boolean | `false` | Enable Debug Logging for Lavalink |
+| `LOG_LAVALINK_TRACE` | boolean | `false` | Enable Trace Logging for Lavalink |
 
 # Config Description
 | Key                        | Required           | Default Value | Description |

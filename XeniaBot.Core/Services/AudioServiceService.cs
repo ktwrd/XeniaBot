@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Victoria.Node;
 using Victoria.Node.EventArgs;
 using Victoria.Player;
+using Victoria.WebSocket;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 
@@ -51,7 +52,11 @@ public class AudioServiceService : BaseService
             Port = _configData.Lavalink.Port,
             Authorization = _configData.Lavalink.Auth,
             IsSecure = _configData.Lavalink.Secure,
-            EnableResume = true
+            EnableResume = true,
+            SocketConfiguration = new WebSocketConfiguration()
+            {
+                BufferSize = ushort.MaxValue
+            }
         };
         LavaNode = new LavaNode(_client, config, new LoggerPolyfillT<LavaNode>());
         
@@ -82,6 +87,7 @@ public class AudioServiceService : BaseService
         }
         catch (Exception ex)
         {
+            Log.Error($"Failed to run LavaNode.ConnectAsync()\n{ex}");
             await DiscordHelper.ReportError(ex, "Failed to run LavaNode.ConnectAsync()");
         }
     }

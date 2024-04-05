@@ -5,52 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace XeniaBot.Shared;
 
-public class LoggerPolyfill : ILogger
+public class LoggerPolyfill : LoggerPolyfillT<object>
 {
-    public void Log<TState>(LogLevel logLevel,
-        EventId eventId,
-        TState state,
-        Exception? exception,
-        Func<TState, Exception?, string> formatter)
-    {
-        string data = formatter(state, exception);
-        data = $"[{eventId}] {data}";
-        switch (logLevel)
-        {
-            case LogLevel.Trace:
-                XeniaBot.Shared.Log.Trace(data);
-                break;
-            case LogLevel.Debug:
-                Shared.Log.Debug(data);
-                break;
-            case LogLevel.Information:
-                Shared.Log.WriteLine(data);
-                break;
-            case LogLevel.Warning:
-                Shared.Log.Warn(data);
-                break;
-            case LogLevel.Error:
-                Shared.Log.Error(data);
-                break;
-            case LogLevel.Critical:
-                Shared.Log.Critical(data);
-                break;
-        }
-    }
-
-    public bool IsEnabled(LogLevel logLevel)
-    {
-        return true;
-    }
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-    {
-        return null;
-    }
 }
 
 public class LoggerPolyfillT<T> : ILogger<T>
@@ -63,25 +25,33 @@ public class LoggerPolyfillT<T> : ILogger<T>
     {
         string data = formatter(state, exception);
         data = $"[{eventId}] {data}";
+        if (exception != null)
+            data += $"\n======= Exception ========\n{exception}";
         switch (logLevel)
         {
-            // case LogLevel.Trace:
-            //     XeniaBot.Shared.Log.Trace(data);
-            //     break;
-            // case LogLevel.Debug:
-            //     Shared.Log.Debug(data);
-            //     break;
+            case LogLevel.Trace:
+                if (FeatureFlags.EnableLavalinkTraceLog)
+                {
+                    XeniaBot.Shared.Log.Trace(data, methodname: null, methodfile: "LavaLink");
+                }
+                break;
+             case LogLevel.Debug:
+                if (FeatureFlags.EnableLavalinkDebugLog)
+                {
+                    Shared.Log.Debug(data, methodname: null, methodfile: "LavaLink");
+                }
+                break;
             case LogLevel.Information:
-                Shared.Log.WriteLine(data);
+                Shared.Log.WriteLine(data, methodname: null, methodfile: "LavaLink");
                 break;
             case LogLevel.Warning:
-                Shared.Log.Warn(data);
+                Shared.Log.Warn(data, methodname: null, methodfile: "LavaLink");
                 break;
             case LogLevel.Error:
-                Shared.Log.Error(data);
+                Shared.Log.Error(data, methodname: null, methodfile: "LavaLink");
                 break;
             case LogLevel.Critical:
-                Shared.Log.Critical(data);
+                Shared.Log.Critical(data, methodname: null, methodfile: "LavaLink");
                 break;
         }
     }

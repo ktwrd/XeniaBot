@@ -153,4 +153,19 @@ public static class FeatureFlags
     /// Disable writing of config file. Will always be `true` when <see cref="ConfigFromEnvironment"/> is set.
     /// </summary>
     public static bool ConfigReadOnly => ParseBool("CONFIG_READONLY", false) || ConfigFromEnvironment;
+
+    /// <summary>
+    /// <para><b>Key:</b> LOG_LAVALINK_DEBUG</para>
+    /// <para><b>Default:</b> false</para>
+    ///
+    /// <para>Enable debug logging for Lavalink</para>
+    /// </summary>
+    public static bool EnableLavalinkDebugLog => ParseBool("LOG_LAVALINK_DEBUG", false);
+    /// <summary>
+    /// <para><b>Key:</b> LOG_LAVALINK_TRACE</para>
+    /// <para><b>Default:</b> false</para>
+    ///
+    /// <para>Enable trace logging for Lavalink</para>
+    /// </summary>
+    public static bool EnableLavalinkTraceLog => ParseBool("LOG_LAVALINK_TRACE", false);
 }
