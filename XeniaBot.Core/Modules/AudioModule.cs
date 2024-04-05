@@ -125,6 +125,11 @@ public class AudioModule : InteractionModuleBase
                 return;
             }
 
+            if (!_lavaNode.IsConnected)
+            {
+                await _lavaNode.ConnectAsync();
+            }
+
             if (!_lavaNode.TryGetPlayer(Context.Guild, out var player))
             {
                 var voiceState = Context.User as IVoiceState;
