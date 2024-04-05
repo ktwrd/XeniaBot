@@ -82,6 +82,7 @@ public class AudioServiceService : BaseService
         }
         catch (Exception ex)
         {
+            Log.Error($"Failed to run LavaNode.ConnectAsync()\n{ex}");
             await DiscordHelper.ReportError(ex, "Failed to run LavaNode.ConnectAsync()");
         }
     }
