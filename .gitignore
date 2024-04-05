@@ -408,3 +408,4 @@ run_backup.ps1
 XeniaBot.Core/Properties/VersionAutoIncrement.cs
 XeniaBot.WebPanel/Properties/VersionAutoIncrement.cs
 /XeniaBot.Core/Modules/ManualTesting
+docker-compose.yml
