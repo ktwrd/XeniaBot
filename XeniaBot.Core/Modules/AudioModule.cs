@@ -182,13 +182,25 @@ public class AudioModule : InteractionModuleBase
             }
             else
             {
-                var track = searchResponse.Tracks.FirstOrDefault();
-                player.Vueue.Enqueue(track);
+                try
+                {
+                    var track = searchResponse.Tracks.FirstOrDefault();
+                    player.Vueue.Enqueue(track);
 
-                await FollowupAsync(
-                    embed: BaseEmbed()
-                        .WithDescription($"Added {track?.Title} to queue.")
-                        .Build());
+                    await FollowupAsync(
+                        embed: BaseEmbed()
+                            .WithDescription($"Added {track?.Title} to queue.")
+                            .Build());
+                }
+                catch (Exception ex)
+                {
+                    await FollowupAsync(
+                        embed: BaseEmbed()
+                            .WithDescription($"Failed to add track to the queue.\n```\n{ex.Message}\n```")
+                            .Build());
+                    await DiscordHelper.ReportError(ex, Context);
+                    return;
+                }
             }
 
             if (player.PlayerState is PlayerState.Playing or PlayerState.Paused)
@@ -203,7 +215,7 @@ public class AudioModule : InteractionModuleBase
         {
             await ReplyAsync(
                 embed: BaseEmbed()
-                    .WithDescription($"Failed to play track.\n`{ex.Message}`").WithColor(Color.Red)
+                    .WithDescription($"Failed to play track.\n```\n{ex.Message}\n```").WithColor(Color.Red)
                     .Build());
             await DiscordHelper.ReportError(ex, Context);
         }
