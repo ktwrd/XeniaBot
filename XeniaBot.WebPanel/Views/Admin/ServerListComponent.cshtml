@@ -5,7 +5,7 @@
 @foreach (var guild in @Model.Guilds)
 {
     <tr 
-        @{ if (Model.IsLast == false && @Model.IsGuildLast(guild))
+        @{ if (Model.IsLastPage == false && @Model.IsGuildLast(guild))
             {
                 <text>
                     hx-get="/Admin/Components/ServerList?cursor=@(Model.Cursor + 1)"

@@ -32,7 +32,7 @@ public partial class AdminController
     {
         var model = new AdminServerListViewModel
         {
-            Guilds = PaginateGuild(_client.Guilds, cursor, 3),
+            Guilds = PaginateGuild(_client.Guilds, cursor, AdminServerListViewModel.PageSize),
             Cursor = cursor
         };
         await Task.Delay(1000);

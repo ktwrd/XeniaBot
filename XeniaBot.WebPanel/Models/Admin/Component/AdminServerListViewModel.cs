@@ -8,7 +8,8 @@ public class AdminServerListViewModel
 {
     public IEnumerable<SocketGuild> Guilds { get; set; }
     public int Cursor { get; set; }
-    public bool IsLast => Guilds.Count() < 3;
+    public bool IsLastPage => Guilds.Count() < PageSize;
+    public const int PageSize = 10;
 
     public bool IsGuildLast(SocketGuild guild)
     {
