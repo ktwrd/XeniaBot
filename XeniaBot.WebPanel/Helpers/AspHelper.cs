@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
@@ -35,12 +36,13 @@ public static class AspHelper
 
         return target;
     }
-
+    
     public static bool IsCurrentUserAdmin(HttpContext context)
     {
         var userId = GetUserId(context) ?? 0;
         return Program.Core.Config.Data.UserWhitelist.Contains(userId);
     }
+    
 
     public static bool CanAccessGuild(
         ulong guildId,
@@ -252,6 +254,14 @@ public static class AspHelper
                 return reader.ReadToEnd();
             }
         }
+    }
+    
 
+    public static List<TSource> Paginate<TSource, TKey>(IEnumerable<TSource> data, Func<TSource, TKey> keySelector, int page = 1, int pageSize = 10)
+    {
+        return data.OrderBy(keySelector)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
     }
 }
