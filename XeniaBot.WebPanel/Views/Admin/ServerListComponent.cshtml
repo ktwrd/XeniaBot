@@ -1,0 +1,32 @@
+﻿@using XeniaBot.WebPanel.Models.Component
+@model AdminServerListViewModel
+
+
+@foreach (var guild in @Model.Guilds)
+{
+    <tr 
+        @{ if (Model.IsLast == false && @Model.IsGuildLast(guild))
+            {
+                <text>
+                    hx-get="/Admin/Components/ServerList?cursor=@(Model.Cursor + 1)"
+                    hx-trigger="revealed"
+                    hx-target="#serverListContainer"
+                    hx-swap="beforeend"</text>
+            } }>
+        <td>
+            <img src="@(guild.IconUrl ?? "/DebugEmpty.png")" class="serverListIcon mr-2" />
+            @guild.Name
+        </td>
+        <td>
+            @guild.MemberCount
+        </td>
+        <td style="font-family: monospace">
+            @guild.Id
+        </td>
+        <td>
+            <a class="btn btn-primary" asp-controller="Admin" asp-action="ServerInfo" asp-route-id="@guild.Id">
+                <i class="bi bi-person-fill"></i>
+            </a>
+        </td>
+    </tr>
+}

@@ -9,47 +9,28 @@
 <table id="adminServerSelect" class="table table-bordered table-sm" style="width: 100%">
     <thead>
     <tr>
-        <th class="th-sm">Icon</th>
         <th class="th-sm">Name</th>
         <th class="th-sm">Member Count</th>
         <th class="th-sm">Id</th>
         <th></th>
     </tr>
     </thead>
-    <tbody>
-    @foreach (var guild in @Model.Guilds)
-    {
-        <tr>
-            <td>
-                <img src="@(guild.IconUrl ?? "/DebugEmpty.png")" class="rounded-circle" style="width: 2.5rem; height: 2.5rem;" />
-            </td>
-            <td>
-                @guild.Name
-            </td>
-            <td>
-                @guild.MemberCount
-            </td>
-            <td style="font-family: monospace">
-                @guild.Id
-            </td>
-            <td>
-                <a class="btn btn-primary" asp-controller="Admin" asp-action="ServerInfo" asp-route-id="@guild.Id">
-                    <i class="bi bi-person-fill"></i>
-                </a>
-            </td>
-        </tr>
-    }
+    <tbody hx-get="/Admin/Components/ServerList"
+           hx-target="this"
+           hx-swap="innerHTML"
+           hx-trigger="load"
+           id="serverListContainer">
     </tbody>
 </table>
 
-@section Scripts
-{
-    <script type="text/javascript">
-    $(document).ready(function () {
-      $('#adminServerSelect').DataTable({
-        "searching": true
-      });
-      $('.dataTables_length').addClass('bs-select');
-    });
-    </script>
-}
+@* @section Scripts *@
+@* { *@
+@*     <script type="text/javascript"> *@
+@*     $(document).ready(function () { *@
+@*       $('#adminServerSelect').DataTable({ *@
+@*         "searching": true *@
+@*       }); *@
+@*       $('.dataTables_length').addClass('bs-select'); *@
+@*     }); *@
+@*     </script> *@
+@* } *@
