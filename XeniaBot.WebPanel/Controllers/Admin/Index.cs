@@ -35,7 +35,6 @@ public partial class AdminController
             Guilds = PaginateGuild(_client.Guilds, cursor, AdminServerListViewModel.PageSize),
             Cursor = cursor
         };
-        await Task.Delay(1000);
         return PartialView("ServerListComponent", model);
     }
 
