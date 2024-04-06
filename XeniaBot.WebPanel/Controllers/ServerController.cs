@@ -227,6 +227,7 @@ public partial class ServerController : BaseXeniaController
             UserAvatar = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()
         };
 
+        data.Items = FilterGuildsForUser(user).ToArray();
         data.ListStyle = style;
         await PopulateModel(data);
         return View("List", data);
