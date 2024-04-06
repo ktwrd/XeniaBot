@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +16,7 @@ using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Extensions;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
+using XeniaBot.WebPanel.Models.Component;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -223,10 +226,46 @@ public partial class ServerController : BaseXeniaController
             UserId = (ulong)userId,
             UserAvatar = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()
         };
+
+        data.Items = FilterGuildsForUser(user).ToArray();
+        data.ListStyle = style;
+        await PopulateModel(data);
+        return View("List", data);
+    }
+
+    [HttpGet("~/Server/Components/ServerList")]
+    [AuthRequired]
+    public async Task<IActionResult> ListComponent(int cursor = 1, ListViewStyle style = ListViewStyle.List)
+    {
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+        {
+            return View("NotFound", "User could not be found.");
+        }
+        var user = _discord.GetUser((ulong)userId);
+        var data = FilterGuildsForUser(user)
+            .OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id)
+            .ThenByDescending(v => v.GuildUser.GuildPermissions.Has(GuildPermission.Administrator))
+            .Skip((cursor - 1) * ServerListComponentViewModel.PageSize)
+            .Take(ServerListComponentViewModel.PageSize)
+            .ToList();
+        var model = new ServerListComponentViewModel()
+        {
+            Items = data,
+            Cursor = cursor,
+            ListStyle = style
+        };
+        await PopulateModel(model);
+        await Task.Delay(1000);
+        return PartialView("ServerListComponent", model);
+    }
+
+    public List<ServerListViewModelItem> FilterGuildsForUser(SocketUser user)
+    {
         var dataItems = new List<ServerListViewModelItem>();
         foreach (var item in _discord.Guilds)
         {
-            var guildUser = item.GetUser((ulong)userId);
+            var guildUser = item.GetUser(user.Id);
             if (guildUser == null)
                 continue;
             if (!guildUser.GuildPermissions.ManageGuild)
@@ -238,9 +277,6 @@ public partial class ServerController : BaseXeniaController
             });
         }
 
-        data.Items = dataItems.ToArray();
-        data.ListStyle = style;
-        await PopulateModel(data);
-        return View("List", data);
+        return dataItems;
     }
 }

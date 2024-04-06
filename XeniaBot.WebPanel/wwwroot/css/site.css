@@ -51,6 +51,24 @@ body {
     height:  2.5rem;
     border-radius: 50%;
 }
+.serverListIcon.card-img-top {
+    width: 4rem;
+    height: 4rem;
+    border-radius: .25rem 0 0 .25rem;
+}
+#serverListContainer .card {
+    height: fit-content;
+}
+#serverListContainer .card-body {
+    padding: 0 !important;
+    line-height: 4rem;
+    height: 4rem;
+}
+#serverListContainer .card-body span {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1.15;
+}
 .table.server-listing td {
     vertical-align: middle;
     line-height: 2.5rem;
