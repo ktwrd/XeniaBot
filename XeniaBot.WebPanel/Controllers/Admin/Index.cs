@@ -28,13 +28,14 @@ public partial class AdminController
     [HttpGet("~/Admin/Components/ServerList")]
     [AuthRequired]
     [RequireSuperuser]
-    public IActionResult ServerListComponent(int cursor = 1)
+    public async Task<IActionResult> ServerListComponent(int cursor = 1)
     {
         var model = new AdminServerListViewModel
         {
             Guilds = PaginateGuild(_client.Guilds, cursor, 3),
             Cursor = cursor
         };
+        await Task.Delay(1000);
         return PartialView("ServerListComponent", model);
     }
 

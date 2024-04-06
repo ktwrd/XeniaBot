@@ -56,6 +56,18 @@ body {
     line-height: 2.5rem;
 }
 
+.htmx-indicator {
+    opacity:0;
+}
+.htmx-request .htmx-indicator {
+    opacity:1;
+    transition: opacity 200ms ease-in;
+}
+.htmx-request.htmx-indicator {
+    opacity:1;
+    transition: opacity 200ms ease-in;
+}
+
 [role=enable-breadcrumb] .guildBanner {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;

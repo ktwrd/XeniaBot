@@ -11,7 +11,8 @@
                     hx-get="/Admin/Components/ServerList?cursor=@(Model.Cursor + 1)"
                     hx-trigger="revealed"
                     hx-target="#serverListContainer"
-                    hx-swap="beforeend"</text>
+                    hx-swap="beforeend"
+                    hx-indicator=".htmx-indicator"</text>
             } }>
         <td>
             <img src="@(guild.IconUrl ?? "/DebugEmpty.png")" class="serverListIcon mr-2" />
