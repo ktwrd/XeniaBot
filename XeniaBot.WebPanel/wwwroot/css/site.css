@@ -51,6 +51,10 @@ body {
     height:  2.5rem;
     border-radius: 50%;
 }
+.table.server-listing td {
+    vertical-align: middle;
+    line-height: 2.5rem;
+}
 
 [role=enable-breadcrumb] .guildBanner {
     border-bottom-left-radius: 0 !important;

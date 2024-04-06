@@ -66,10 +66,9 @@ else
         </div>
     } else
     {
-        <table class="table">
+        <table class="table table-bordered table-sm server-listing">
             <thead>
             <tr>
-                <th></th>
                 <th>Name</th>
                 <th>Members</th>
                 <th></th>
@@ -79,8 +78,8 @@ else
                 @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
                 {
                     <tr>
-                        <td><img src="@(item.Guild.IconUrl ?? "/DebugEmpty.png")" class="card-img-top serverListIcon"/></td>
                         <td>
+                            <img src="@(item.Guild.IconUrl ?? "/DebugEmpty.png")" class="serverListIcon"/>
                             @if (@item.Guild.OwnerId == @item.GuildUser.Id)
                             {
                                 <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
