@@ -46,6 +46,11 @@ body {
     width: initial !important;
     border-radius: 50%;
 }
+.serverListIcon {
+    width:  2.5rem;
+    height:  2.5rem;
+    border-radius: 50%;
+}
 
 [role=enable-breadcrumb] .guildBanner {
     border-bottom-left-radius: 0 !important;
