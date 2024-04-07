@@ -37,7 +37,7 @@ public partial class AdminController
     /// Refresh stored bans in the Guild provided
     /// </summary>
     /// <param name="id">Guild Id</param>
-    [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Refresh")]
+    [HttpGet("~/Admin/Server/{id}/Settings/BanSync/Refresh")]
     [AuthRequired]
     [RequireSuperuser]
     public async Task<IActionResult> BanSync_Refresh(ulong id)
@@ -73,7 +73,7 @@ public partial class AdminController
     /// <param name="id">Guild Id</param>
     /// <param name="state">State</param>
     /// <param name="reason">Reason</param>
-    [HttpPost("~/Admin/Server/{id}/Setting/BanSync/State")]
+    [HttpPost("~/Admin/Server/{id}/Settings/BanSync/State")]
     [AuthRequired]
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)
