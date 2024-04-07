@@ -10,7 +10,7 @@ using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Models.Component;
 
-public class AdminBanSyncComponentViewModel : IGuildViewModel, IBanSyncViewModel
+public class AdminBanSyncComponentViewModel : IGuildViewModel, IBanSyncViewModel, IAlertViewModel
 {
     public SocketGuild Guild { get; set; }
     public ConfigBanSyncModel BanSyncConfig { get; set; }
@@ -18,7 +18,6 @@ public class AdminBanSyncComponentViewModel : IGuildViewModel, IBanSyncViewModel
     
     public string? Message { get; set; }
     public string? MessageType { get; set; }
-    public string MessageClass => MessageType == null ? "alert " : $"alert alert-{MessageType}";
 
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
