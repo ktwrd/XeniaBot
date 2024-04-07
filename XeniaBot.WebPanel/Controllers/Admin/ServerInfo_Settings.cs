@@ -23,7 +23,7 @@ public partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
-        var model = new LevelSystemComponentViewModel();
+        var model = new AdminLevelSystemComponentViewModel();
         await model.PopulateModel(HttpContext, id);
         ulong? targetChannelId = null;
         try

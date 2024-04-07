@@ -9,7 +9,7 @@ public partial class AdminController
     [HttpGet("~/Admin/Server/{id}/Settings/LevelSystem/Component")]
     public async Task<IActionResult> LevelSystemComponent(ulong id)
     {
-        var model = new LevelSystemComponentViewModel();
+        var model = new AdminLevelSystemComponentViewModel();
         await model.PopulateModel(HttpContext, id);
         return PartialView("ServerInfo/LevelSystemComponent", model);
     }
