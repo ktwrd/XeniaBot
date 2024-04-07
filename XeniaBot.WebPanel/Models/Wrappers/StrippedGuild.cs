@@ -9,6 +9,7 @@ public class StrippedGuild : IEquatable<StrippedGuild>
     {
         return other?.Id == Id;
     }
+    public ulong Id { get; set; }
     /// <summary>
     /// Name of the guild
     /// </summary>
@@ -40,6 +41,7 @@ public class StrippedGuild : IEquatable<StrippedGuild>
         {
             return new StrippedGuild()
             {
+                Id = 0,
                 Name = "<unknown>",
                 MemberCount = -1,
                 OwnerId = 0,
@@ -50,6 +52,7 @@ public class StrippedGuild : IEquatable<StrippedGuild>
         else
         {
             var instance = new StrippedGuild();
+            instance.Id = guild.Id;
             instance.Name = guild.Name;
             instance.MemberCount = guild.MemberCount;
             instance.OwnerId = guild.OwnerId;
