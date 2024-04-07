@@ -7,7 +7,7 @@ using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Models.Component;
 
-public class AdminLevelSystemComponentViewModel : IGuildViewModel, ILevelSystemViewModel, IAlertViewModel
+public class AdminLevelSystemComponentViewModel : IGuildViewModel, IAlertViewModel, ILevelSystemViewModel
 {
     public SocketGuild Guild { get; set; }
     public LevelSystemConfigModel XpConfig { get; set; }
