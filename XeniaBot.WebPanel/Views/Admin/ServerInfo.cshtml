@@ -44,7 +44,7 @@
                 Ban Sync
             </div>
             <div class="card-body" id="settingsBanSync-body"
-                 hx-get="/Admin/Server/@Model.Guild.Id/Setting/BanSync/Component"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/BanSync/Component"
                  hx-target="this"
                  hx-trigger="load"
                  hx-swap="innerHTML"
@@ -64,7 +64,7 @@
             </div>
             <div class="card-body"
                  id="banSyncHistory-body"
-                 hx-get="/Admin/Server/@Model.Guild.Id/Setting/BanSyncHistory/Component"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/BanSyncHistory/Component"
                  hx-target="this"
                  hx-trigger="load"
                  hx-swap="innerHTML"
@@ -82,32 +82,18 @@
             <div class="card-header">
                 Xp System
             </div>
-            <div class="card-body">
-                <form id="xp_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Xp" asp-route-id="@Model.Guild.Id">
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_enable" name="enable" checked="@Model.XpConfig.Enable" />
-                        <label class="form-check-label" for="xp_settings_enable">
-                            Enable
-                        </label>
+            <div class="card-body"
+                 id="levelSystem-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/LevelSystem/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#levelSystem-body .htmx-indicator">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border htmx-indicator" role="status">
+                        <span class="sr-only">Loading...</span>
                     </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_show" name="show" checked="@Model.XpConfig.ShowLeveUpMessage"/>
-                        <label class="form-check-label" for="xp_settings_show">
-                            Show Level Up Message
-                        </label>
-                    </div>
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                           {
-                               Channels = StrippedChannel.FromGuild(@Model.Guild),
-                               Categories = StrippedCategory.FromGuild(@Model.Guild),
-                               SelectedChannelId = @Model.XpConfig.LevelUpChannel,
-                               ParentFormId = "xp_settings",
-                               Name = "channelId",
-                               Id = "xp_settings_channel",
-                               DisplayName = "Notification Channel"
-                           })
-                    <input class="btn btn-success" type="submit" value="Save"/>
-                </form>
+                </div>
             </div>
         </div>
     </div>

@@ -6,7 +6,15 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public partial class AdminController
 {
-    [HttpGet("~/Admin/Server/{id}/Setting/BanSyncHistory/Component")]
+    [HttpGet("~/Admin/Server/{id}/Settings/LevelSystem/Component")]
+    public async Task<IActionResult> LevelSystemComponent(ulong id)
+    {
+        var model = new LevelSystemComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        return PartialView("ServerInfo/LevelSystemComponent", model);
+    }
+
+    [HttpGet("~/Admin/Server/{id}/Settings/BanSyncHistory/Component")]
     [AuthRequired]
     [RequireSuperuser]
     public async Task<IActionResult> BanSyncStateHistory(ulong id)

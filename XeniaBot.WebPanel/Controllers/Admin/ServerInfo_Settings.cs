@@ -5,6 +5,7 @@ using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
+using XeniaBot.WebPanel.Models.Component;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -22,6 +23,8 @@ public partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
+        var model = new LevelSystemComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         ulong? targetChannelId = null;
         try
         {
@@ -32,9 +35,9 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Level System settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = $"Invalid Channel Id ({ex.Message})";
+            return PartialView("ServerInfo/LevelSystemComponent", model);
         }
 
         try
@@ -50,17 +53,17 @@ public partial class AdminController
             data.LevelUpChannel = targetChannelId;
             data.ShowLeveUpMessage = show;
             data.Enable = enable;
-            await controller.Set(data);
-            return await ServerInfo(id,
-                messageType: "success",
-                message: $"Level System Settings Saved");
+            model.XpConfig = data;
+            model.MessageType = "success";
+            model.Message = "Saved!";
+            return PartialView("ServerInfo/LevelSystemComponent", model);
         }
         catch (Exception ex)
         {
             Log.Error($"Failed to save level system config\n{ex}");
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Level System settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/LevelSystemComponent", model);
         }
     }
     
