@@ -8,6 +8,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
+using XeniaBot.WebPanel.Models.Component;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -65,6 +66,16 @@ public partial class AdminController
             Message = $"Refreshed BanSync records."
         });
     }
+
+    [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Component")]
+    [AuthRequired]
+    [RequireSuperuser]
+    public async Task<IActionResult> Settings_BanSyncState(ulong id)
+    {
+        var model = new AdminBanSyncComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        return PartialView("ServerInfo/BanSyncComponent", model);
+    }
     
     /// <summary>
     /// Save BanSync State
@@ -78,9 +89,8 @@ public partial class AdminController
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)
     {
         var controller = Program.Core.GetRequiredService<BanSyncService>();
-        var model = new AdminServerModel();
-        await AspHelper.FillServerModel(id, model);
-        await PopulateModel(model);
+        var model = new AdminBanSyncComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
             var res = await controller.SetGuildState(id, state, reason);
@@ -90,18 +100,12 @@ public partial class AdminController
         catch (Exception ex)
         {
             Log.Error(ex);
-            return RedirectToAction("ServerInfo", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to set BanSync state. {ex.Message}"
-            });
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/BanSyncComponent", model);
         }
-        return RedirectToAction("ServerInfo", new
-        {
-            Id = id,
-            MessageType = "success",
-            Message = $"BanSync: State updated to {state}"
-        });
+        model.MessageType = "success";
+        model.Message = $"Updated state to {state}";
+        return PartialView("ServerInfo/BanSyncComponent", model);
     }
 }
