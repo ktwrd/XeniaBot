@@ -75,7 +75,7 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
         var model = new AdminConfessionComponentViewModel();
         await model.PopulateModel(HttpContext, id);
@@ -132,7 +132,7 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
         var model = new AdminConfessionComponentViewModel();
         await model.PopulateModel(HttpContext, id);
@@ -166,10 +166,10 @@ public partial class AdminController
     {
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
-            return View("NotFound", "User not found");
+            return PartialView("NotFound", "User not found");
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
         var model = new AdminCountingComponentViewModel();
         await model.PopulateModel(HttpContext, id);
