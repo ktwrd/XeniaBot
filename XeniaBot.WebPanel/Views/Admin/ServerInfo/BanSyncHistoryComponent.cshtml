@@ -1,6 +1,7 @@
 ﻿@using XeniaBot.WebPanel.Helpers
 @model XeniaBot.WebPanel.Models.Component.AdminBanSyncComponentViewModel
 
+@await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
 
 @if (!@Model.BanSyncStateHistory.Any())
 {

@@ -75,7 +75,7 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
         var model = new AdminConfessionComponentViewModel();
         await model.PopulateModel(HttpContext, id);
@@ -132,7 +132,7 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
         var model = new AdminConfessionComponentViewModel();
         await model.PopulateModel(HttpContext, id);
@@ -166,11 +166,14 @@ public partial class AdminController
     {
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
-            return View("NotFound", "User not found");
+            return PartialView("NotFound", "User not found");
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
+        var model = new AdminCountingComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        
         ulong? channelId = null;
         try
         {
@@ -180,10 +183,10 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
+            model.MessageType = "danger";
+            model.Message = ex.Message;
             Log.Error(ex);
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Counting settings. {ex.Message}");
+            return PartialView("ServerInfo/CountingComponent", model);
         }
 
         var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
@@ -195,9 +198,9 @@ public partial class AdminController
         counterData.ChannelId = (ulong)channelId;
         await controller.Set(counterData);
 
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Counting settings saved");
+        model.MessageType = "success";
+        model.Message = "Saved";
+        return PartialView("ServerInfo/CountingComponent", model);
     }
 
     [HttpPost("~/Admin/Server/{id}/Settings/RolePreserve")]
@@ -207,8 +210,10 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
+        var model = new AdminRolePreserveComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
             var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
@@ -218,17 +223,16 @@ public partial class AdminController
             };
             data.Enable = enable;
             await controller.Set(data);
+            model.MessageType = "success";
+            model.Message = "Saved!";
+            return PartialView("ServerInfo/RolePreserveComponent", model);
         }
         catch (Exception ex)
         {
             Log.Error(ex);
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Role Preserve settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/RolePreserveComponent", model);
         }
-
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Role Preserve settings saved.");
     }
 }

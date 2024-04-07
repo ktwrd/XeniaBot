@@ -7,20 +7,20 @@ using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Models.Component;
 
-public class AdminLevelSystemComponentViewModel : IGuildViewModel, IAlertViewModel, ILevelSystemViewModel
+public class AdminCountingComponentViewModel : IGuildViewModel, IAlertViewModel, ICountingViewModel
 {
     public SocketGuild Guild { get; set; }
-    public LevelSystemConfigModel XpConfig { get; set; }
-    
+    public CounterGuildModel CounterConfig { get; set; }
     public string? Message { get; set; }
     public string? MessageType { get; set; }
+    
     
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
         var discord = CoreContext.Instance!.GetRequiredService<DiscordSocketClient>();
         Guild = discord.GetGuild(guildId);
-        var xpConfig = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
-        XpConfig = await xpConfig.Get(Guild.Id) ?? new LevelSystemConfigModel()
+        var repo = CoreContext.Instance!.GetRequiredService<CounterConfigRepository>();
+        CounterConfig = await repo.Get(Guild) ?? new CounterGuildModel()
         {
             GuildId = Guild.Id
         };
