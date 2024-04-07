@@ -1,9 +1,14 @@
-﻿using Discord.WebSocket;
+﻿using System;
+using Discord.WebSocket;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class StrippedGuild
+public class StrippedGuild : IEquatable<StrippedGuild>
 {
+    public bool Equals(StrippedGuild? other)
+    {
+        return other?.Id == Id;
+    }
     /// <summary>
     /// Name of the guild
     /// </summary>
