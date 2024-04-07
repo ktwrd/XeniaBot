@@ -29,6 +29,16 @@ public partial class AdminController
         await model.PopulateModel(HttpContext, id);
         return PartialView("ServerInfo/CountingComponent", model);
     }
+    
+    [HttpGet("~/Admin/Server/{id}/Settings/RolePreserve/Component")]
+    [AuthRequired]
+    [RequireSuperuser]
+    public async Task<IActionResult> RolePreserveComponent(ulong id)
+    {
+        var model = new AdminRolePreserveComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        return PartialView("ServerInfo/RolePreserveComponent", model);
+    }
 
     [HttpGet("~/Admin/Server/{id}/Settings/BanSyncHistory/Component")]
     [AuthRequired]

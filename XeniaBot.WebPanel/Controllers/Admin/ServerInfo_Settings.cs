@@ -210,8 +210,10 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
+        var model = new AdminRolePreserveComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
             var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
@@ -221,17 +223,16 @@ public partial class AdminController
             };
             data.Enable = enable;
             await controller.Set(data);
+            model.MessageType = "success";
+            model.Message = "Saved!";
+            return PartialView("ServerInfo/RolePreserveComponent", model);
         }
         catch (Exception ex)
         {
             Log.Error(ex);
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Role Preserve settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/RolePreserveComponent", model);
         }
-
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Role Preserve settings saved.");
     }
 }

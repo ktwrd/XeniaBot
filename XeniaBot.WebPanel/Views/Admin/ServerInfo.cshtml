@@ -142,14 +142,18 @@
             <div class="card-header">
                 Role Preserve
             </div>
-            <div class="card-body">
-                <form id="role_preserve" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_RolePreserve" asp-route-id="@Model.Guild.Id">
-                      <div class="form-check mb-3">
-                            <input class="form-check-input" name="enable" type="checkbox" value="true" id="role_preserve_enable" checked="@Model.RolePreserve.Enable" />
-                            <label class="form-check-label" for="role_preserve_enable">Enable</label>
-                      </div>
-                      <input class="btn btn-success" type="submit" value="Save"/>
-                </form>
+            <div class="card-body"
+                 id="rolePreserve-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/RolePreserve/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#rolePreserve-body .htmx-indicator">
+                 <div class="d-flex justify-content-center">
+                     <div class="spinner-border htmx-indicator" role="status">
+                         <span class="sr-only">Loading...</span>
+                     </div>
+                 </div>
             </div>
         </div>
     </div>
