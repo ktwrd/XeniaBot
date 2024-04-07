@@ -2,10 +2,10 @@
 @model AdminServerListViewModel
 
 
-@foreach (var guild in @Model.Guilds)
+@foreach (var guild in @Model.Items)
 {
     <tr 
-        @{ if (Model.IsLastPage == false && @Model.IsGuildLast(guild))
+        @{ if (Model.IsLastPage == false && @Model.IsItemLast(guild))
             {
                 <text>
                     hx-get="/Admin/Components/ServerList?cursor=@(Model.Cursor + 1)"
