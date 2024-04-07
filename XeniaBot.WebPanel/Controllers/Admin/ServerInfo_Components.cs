@@ -15,7 +15,7 @@ public partial class AdminController
     }
 
     [HttpGet("~/Admin/Server/{id}/Settings/Confession/Component")]
-    public async Task<IActionResult> Confession(ulong id)
+    public async Task<IActionResult> ConfessionComponent(ulong id)
     {
         var model = new AdminConfessionComponentViewModel();
         await model.PopulateModel(HttpContext, id);
@@ -23,7 +23,7 @@ public partial class AdminController
     }
 
     [HttpGet("~/Admin/Server/{id}/Settings/Counting/Component")]
-    public async Task<IActionResult> Counting(ulong id)
+    public async Task<IActionResult> CountingComponent(ulong id)
     {
         var model = new AdminCountingComponentViewModel();
         await model.PopulateModel(HttpContext, id);
@@ -43,7 +43,7 @@ public partial class AdminController
     [HttpGet("~/Admin/Server/{id}/Settings/BanSyncHistory/Component")]
     [AuthRequired]
     [RequireSuperuser]
-    public async Task<IActionResult> BanSyncStateHistory(ulong id)
+    public async Task<IActionResult> BanSyncStateHistoryComponent(ulong id)
     {
         var model = new AdminBanSyncComponentViewModel();
         await model.PopulateModel(HttpContext, id);
@@ -53,7 +53,7 @@ public partial class AdminController
     [HttpGet("~/Admin/Server/{id}/Settings/BanSync/Component")]
     [AuthRequired]
     [RequireSuperuser]
-    public async Task<IActionResult> Settings_BanSyncState(ulong id)
+    public async Task<IActionResult> BanSyncStateComponent(ulong id)
     {
         var model = new AdminBanSyncComponentViewModel();
         await model.PopulateModel(HttpContext, id);
