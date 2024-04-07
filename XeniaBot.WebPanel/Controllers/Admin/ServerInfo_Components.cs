@@ -16,7 +16,7 @@ public partial class AdminController
         return PartialView("ServerInfo/BanSyncHistoryComponent", model);
     }
 
-    [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Component")]
+    [HttpGet("~/Admin/Server/{id}/Settings/BanSync/Component")]
     [AuthRequired]
     [RequireSuperuser]
     public async Task<IActionResult> Settings_BanSyncState(ulong id)
