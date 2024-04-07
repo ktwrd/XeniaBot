@@ -54,41 +54,6 @@
                         <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-                @* @{ await Html.RenderPartialAsync("ServerInfo/BanSyncComponent"); } *@
-                @* @if (@Model.BanSyncConfig.LogChannel == 0) *@
-                @* { *@
-                @*     <div class="alert alert-sm alert-warning mb-2" role="alert"> *@
-                @*         Log Channel isn't set. *@
-                @*     </div> *@
-                @* } *@
-                @* <form id="setting_bansync" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_BanSyncState" asp-route-id="@Model.Guild.Id"> *@
-                @*     <div class="input-group mb-2"> *@
-                @*         <div class="input-group-prepend"> *@
-                @*             <label class="input-group-text" for="setting_bansync_state" style="width: 6rem">State</label> *@
-                @*         </div> *@
-                @*         <select class="custom-select" name="State" id="setting_bansync_state" form="setting_bansync"> *@
-                @*             @foreach (var item in GeneralHelper.GetEnumList<BanSyncGuildState>()) *@
-                @*             { *@
-                @*                 if (@item == @Model.BanSyncConfig.State) *@
-                @*                 { *@
-                @*                     <option value="@item" selected>@item</option> *@
-                @*                 } *@
-                @*                 else *@
-                @*                 { *@
-                @*                     <option value="@item">@item</option> *@
-                @*                 } *@
-                @*             } *@
-                @*         </select> *@
-                @*     </div> *@
-                @*     <div class="input-group mb-3"> *@
-                @*         <div class="input-group-prepend"> *@
-                @*             <label class="input-group-text" for="setting_bansync_reason" style="width: 6rem">Reason</label> *@
-                @*         </div> *@
-                @*         <input type="text" class="form-control" name="Reason" id="setting_bansync_reason" form="setting_bansync"/> *@
-                @*     </div> *@
-                @*     <input class="btn btn-success" type="submit" value="Submit"/> *@
-                @* </form> *@
-                @* <a class="btn btn-info mt-2" asp-controller="Admin" asp-action="BanSync_Refresh" asp-route-id="@Model.Guild.Id">Refresh Bans</a> *@
             </div>
         </div>
     </div>
@@ -97,35 +62,18 @@
             <div class="card-header">
                 BanSync State History
             </div>
-            <div class="card-body">
-                @if (@Model.BanSyncStateHistory.Count() < 1)
-                {
-                    <i>No records</i>
-                }
-                else
-                {
-                    <table class="table table-responsive" id="banSyncStateHistory">
-                        <thead>
-                        <tr>
-                            <th>Timestamp</th>
-                            <td>Enable</td>
-                            <td>State</td>
-                            <td>Reason</td>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach (var item in @Model.BanSyncStateHistory.OrderBy(v => v.Timestamp))
-                        {
-                            <tr>
-                                <th>@(AspHelper.DateTimeFromTimestamp(@item.Timestamp).ToString())</th>
-                                <td>@item.Enable</td>
-                                <td>@item.State</td>
-                                <td><code>@item.Reason</code></td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                }
+            <div class="card-body"
+                 id="banSyncHistory-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Setting/BanSyncHistory/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#banSyncHistory-body .htmx-indicator">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border htmx-indicator" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
