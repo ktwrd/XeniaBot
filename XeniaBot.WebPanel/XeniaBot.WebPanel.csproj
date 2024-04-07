@@ -1,20 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     
+    <AssemblyVersion>0.9.*</AssemblyVersion>
+    <Deterministic>false</Deterministic>
+    
     <AssemblyName>XeniaBot.WebPanel</AssemblyName>
     <RootNamespace>XeniaBot.WebPanel</RootNamespace>
-
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-    <TransformOnBuild>true</TransformOnBuild>
-
-    <IsTrimmable>false</IsTrimmable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -57,7 +53,7 @@
     <EmbeddedResource Include="Views\Home\About.md" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <Compile Update="Properties\VersionAutoIncrement.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -84,14 +80,14 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
     </None>
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
   <!-- T4 build support for .NET Core (Begin) -->
 
-  <ItemGroup Condition="'$(MSBuildRuntimeType)'=='Core'">
+  <!--<ItemGroup Condition="'$(MSBuildRuntimeType)'=='Core'">
     <TextTemplate Include="**\*.tt" />
   </ItemGroup>
 
@@ -105,19 +101,19 @@
     </ItemGroup>
   </Target>
 
-  <!-- T4 build support for .NET Core (End) -->
+  &lt;!&ndash; T4 build support for .NET Core (End) &ndash;&gt;
 
-  <!-- T4 build support for Visual Studio (Begin) -->
+  &lt;!&ndash; T4 build support for Visual Studio (Begin) &ndash;&gt;
   <PropertyGroup Condition="'$(Configuration)'=='Release' And '$(MSBuildRuntimeType)'=='Full'">
       <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
       <TransformOnBuild>true</TransformOnBuild>
-      <!--Other properties can be inserted here-->
-      <!--Set to true to force overwriting of read-only output files, e.g. if they're not checked out (default is false)-->
+      &lt;!&ndash;Other properties can be inserted here&ndash;&gt;
+      &lt;!&ndash;Set to true to force overwriting of read-only output files, e.g. if they're not checked out (default is false)&ndash;&gt;
       <OverwriteReadOnlyOutputFiles>true</OverwriteReadOnlyOutputFiles>
-      <!--Set to false to transform files even if the output appears to be up-to-date (default is true)-->
+      &lt;!&ndash;Set to false to transform files even if the output appears to be up-to-date (default is true)&ndash;&gt;
       <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
   </PropertyGroup>
   <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" Condition="'$(Configuration)'=='Release' And '$(MSBuildRuntimeType)'=='Full'" />
 
-  <!-- T4 build support for Visual Studio (End) -->
+  &lt;!&ndash; T4 build support for Visual Studio (End) &ndash;&gt;-->
 </Project>

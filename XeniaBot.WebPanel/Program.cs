@@ -76,15 +76,26 @@ public static class Program
         }).Wait();
     }
 
-    public static Version? Version => Assembly.GetAssembly(typeof(Program))?.GetName().Version;
+    public static Version? Version
+    {
+        get
+        {
+            var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
+            if (v == null)
+                return null;
+
+            return new Version(v.Major, v.Minor, v.Build, (v.Revision * 2) / 60);
+        }
+    }
     public static string VersionFull => $"v{Version?.Major}.{Version?.Minor} ({VersionDate})";
     public static DateTime VersionDate
     {
         get
         {
-            DateTime buildDate = new DateTime(2022, 1, 1)
-                .AddDays(Version?.Build ?? 0)
-                .AddMinutes((Version?.Revision ?? 0));
+            var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
+            DateTime buildDate = new DateTime(2000, 1, 1)
+                .AddDays(v?.Build ?? 0)
+                .AddSeconds((v?.Revision ?? 0) * 2);
             return buildDate;
         }
     }
