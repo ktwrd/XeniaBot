@@ -7,6 +7,8 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class AdminController
 {
     [HttpGet("~/Admin/Server/{id}/Settings/LevelSystem/Component")]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> LevelSystemComponent(ulong id)
     {
         var model = new AdminLevelSystemComponentViewModel();
@@ -15,6 +17,8 @@ public partial class AdminController
     }
 
     [HttpGet("~/Admin/Server/{id}/Settings/Confession/Component")]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> ConfessionComponent(ulong id)
     {
         var model = new AdminConfessionComponentViewModel();
@@ -23,6 +27,8 @@ public partial class AdminController
     }
 
     [HttpGet("~/Admin/Server/{id}/Settings/Counting/Component")]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> CountingComponent(ulong id)
     {
         var model = new AdminCountingComponentViewModel();
