@@ -171,6 +171,9 @@ public partial class AdminController
         if (guild == null)
             return View("NotFound", "Guild not found");
 
+        var model = new AdminCountingComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        
         ulong? channelId = null;
         try
         {
@@ -180,10 +183,10 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
+            model.MessageType = "danger";
+            model.Message = ex.Message;
             Log.Error(ex);
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Counting settings. {ex.Message}");
+            return PartialView("ServerInfo/CountingComponent", model);
         }
 
         var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
@@ -195,9 +198,9 @@ public partial class AdminController
         counterData.ChannelId = (ulong)channelId;
         await controller.Set(counterData);
 
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Counting settings saved");
+        model.MessageType = "success";
+        model.Message = "Saved";
+        return PartialView("ServerInfo/CountingComponent", model);
     }
 
     [HttpPost("~/Admin/Server/{id}/Settings/RolePreserve")]

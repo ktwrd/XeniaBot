@@ -22,6 +22,14 @@ public partial class AdminController
         return PartialView("ServerInfo/ConfessionComponent", model);
     }
 
+    [HttpGet("~/Admin/Server/{id}/Settings/Counting/Component")]
+    public async Task<IActionResult> Counting(ulong id)
+    {
+        var model = new AdminCountingComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        return PartialView("ServerInfo/CountingComponent", model);
+    }
+
     [HttpGet("~/Admin/Server/{id}/Settings/BanSyncHistory/Component")]
     [AuthRequired]
     [RequireSuperuser]
