@@ -66,16 +66,6 @@ public partial class AdminController
             Message = $"Refreshed BanSync records."
         });
     }
-
-    [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Component")]
-    [AuthRequired]
-    [RequireSuperuser]
-    public async Task<IActionResult> Settings_BanSyncState(ulong id)
-    {
-        var model = new AdminBanSyncComponentViewModel();
-        await model.PopulateModel(HttpContext, id);
-        return PartialView("ServerInfo/BanSyncComponent", model);
-    }
     
     /// <summary>
     /// Save BanSync State
