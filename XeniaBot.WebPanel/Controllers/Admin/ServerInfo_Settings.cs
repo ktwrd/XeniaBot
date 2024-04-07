@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models.Component;
 
@@ -75,31 +76,29 @@ public partial class AdminController
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
-        
-        if (!ParseChannelId(modalChannelId, out var modalResult))
-        {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to parse ChannelId for confession modal. {modalResult.ErrorContent}");
-        }
-        var modalId = (ulong)modalResult.ChannelId;
-        
-        if (!ParseChannelId(messageChannelId, out var channelResult))
-        {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to parse ChannelId for messages. {channelResult.ErrorContent}");
-        }
-        var msgId = (ulong)channelResult.ChannelId;
 
+        var model = new AdminConfessionComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
+            if (!ParseChannelId(modalChannelId, out var modalResult))
+            {
+                model.MessageType = "danger";
+                model.Message = $"Failed to parse ChannelId for confession modal. ({modalResult.ErrorContent})";
+                return PartialView("ServerInfo/ConfessionComponent", model);
+            }
+            var modalId = (ulong)modalResult.ChannelId;
+        
+            if (!ParseChannelId(messageChannelId, out var channelResult))
+            {
+                model.MessageType = "danger";
+                model.Message = $"Failed to parse Message ChannelId. ({channelResult.ErrorContent})";
+                return PartialView("ServerInfo/ConfessionComponent", model);
+            }
+            var msgId = (ulong)channelResult.ChannelId;
+            
             var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
-            var data = await controller.GetGuild(id) ??
-                       new ConfessionGuildModel()
-                       {
-                           GuildId = id
-                       };
+            var data = model.ConfessionModel;
             if (data.ModalChannelId != modalId)
             {
                 await controller.InitializeModal(id, msgId, modalId);
@@ -112,17 +111,52 @@ public partial class AdminController
                    };
             data.ModalChannelId = modalId;
             data.ChannelId = msgId;
+            model.ConfessionModel = data;
             await controller.Set(data);
+            model.MessageType = "success";
+            model.Message = "Saved!";
+            return PartialView("ServerInfo/ConfessionComponent", model);
         }
         catch (Exception ex)
         {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save confession settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/ConfessionComponent", model);
         }
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Successfully saved Ban Sync Log channel");
+    }
+
+    [HttpPost("~/Admin/Server/{id}/Settings/Confession/Purge")]
+    [AuthRequired]
+    [RequireSuperuser]
+    public async Task<IActionResult> Confession_Purge(ulong id)
+    {
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+
+        var model = new AdminConfessionComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        try
+        {
+            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
+            var data = await controller.GetGuild(id)
+                       ?? new ConfessionGuildModel()
+                       {
+                           GuildId = id
+                       };
+            await controller.Delete(data);
+            model.MessageType = "success";
+            model.Message = "Purged all confession messages";
+            return PartialView("ServerInfo/ConfessionComponent", model);
+        }
+        catch (Exception ex)
+        {
+            Program.Core.GetRequiredService<ErrorReportService>()
+                .ReportException(ex, $"Failed to purge confession messages");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/ConfessionComponent", model);
+        }
     }
     
     [HttpPost("~/Admin/Server/{id}/Settings/Counting")]

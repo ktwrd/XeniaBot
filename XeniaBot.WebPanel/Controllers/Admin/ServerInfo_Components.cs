@@ -14,6 +14,14 @@ public partial class AdminController
         return PartialView("ServerInfo/LevelSystemComponent", model);
     }
 
+    [HttpGet("~/Admin/Server/{id}/Settings/Confession/Component")]
+    public async Task<IActionResult> Confession(ulong id)
+    {
+        var model = new AdminConfessionComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        return PartialView("ServerInfo/ConfessionComponent", model);
+    }
+
     [HttpGet("~/Admin/Server/{id}/Settings/BanSyncHistory/Component")]
     [AuthRequired]
     [RequireSuperuser]

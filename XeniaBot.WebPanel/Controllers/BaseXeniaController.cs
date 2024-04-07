@@ -215,6 +215,6 @@ public class BaseXeniaController : Controller
         {
             ChannelId = (ulong)channelId
         };
-        return false;
+        return true;
     }
 }
