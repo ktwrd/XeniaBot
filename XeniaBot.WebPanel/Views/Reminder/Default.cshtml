@@ -25,31 +25,17 @@ else
         <th>Notes</th>
         <th></th>
         </thead>
-        <tbody>
-        @foreach (var item in Model.Reminders)
-        {
-            <tr>
-                <th>
-                    <img src="@(AspHelper.GetGuildImage(item.GuildId))"
-                         class="card-img-top smallUserIcon" />
-                    @(AspHelper.GetGuildName(item.GuildId))
-                </th>
-                <th>
-                    @(AspHelper.GetChannelName(item.GuildId, item.ChannelId))
-                </th>
-                <td>
-                    @(AspHelper.DateTimeFromTimestamp(item.ReminderTimestamp * 1000).ToString("yyyy/MM/dd HH:mm:ss tt"))
-                </td>
-                <td>
-                    <pre><code>@item.Note</code></pre>
-                </td>
-                <td>
-                    <a asp-controller="Reminder" asp-action="Remove" asp-route-id="@item.ReminderId" class="btn btn-danger btn-sm">
-                        <i class="bi bi-trash"></i>
-                    </a>
-                </td>
-            </tr>
-        }
+        <tbody id="reminderListContainer"
+               hx-get="/Reminders/Component"
+               hx-target="this"
+               hx-swap="innerHTML"
+               hx-trigger="load"
+               hx-indicator=".htmx-indicator">
         </tbody>
     </table>
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border htmx-indicator" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
 }

@@ -1,0 +1,38 @@
+﻿@using XeniaBot.WebPanel.Helpers
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model ReminderListComponentViewModel
+
+
+@foreach (var item in @Model.Items)
+{
+    <tr 
+        @{ if (Model.IsLastPage == false && @Model.IsItemLast(item))
+           {
+               <text>
+                   hx-get="/Reminders/Component?cursor=@(Model.Cursor + 1)"
+                   hx-trigger="revealed"
+                   hx-target="#reminderListContainer"
+                   hx-swap="beforeend"
+                   hx-indicator=".htmx-indicator"</text>
+           } }>
+            <th>
+                <img src="@(AspHelper.GetGuildImage(item.GuildId))"
+                     class="card-img-top smallUserIcon" />
+                @(AspHelper.GetGuildName(item.GuildId))
+            </th>
+            <th>
+                @(AspHelper.GetChannelName(item.GuildId, item.ChannelId))
+            </th>
+            <td>
+                @(AspHelper.DateTimeFromTimestamp(item.ReminderTimestamp * 1000).ToString("yyyy/MM/dd HH:mm:ss tt"))
+            </td>
+            <td>
+                <pre><code>@item.Note</code></pre>
+            </td>
+            <td>
+                <a asp-controller="Reminder" asp-action="Remove" asp-route-id="@item.ReminderId" class="btn btn-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </td>
+    </tr>
+}
