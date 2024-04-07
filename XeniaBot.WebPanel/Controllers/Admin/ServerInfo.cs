@@ -42,29 +42,25 @@ public partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> BanSync_Refresh(ulong id)
     {
+        var model = new AdminBanSyncComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
             var controller = Program.Core.GetRequiredService<BanSyncService>();
             await controller.RefreshBans(id);
+            model.MessageType = "success";
+            model.Message = "Refreshed Ban Records";
+            return PartialView("ServerInfo/BanSyncComponent", model);
         }
         catch (Exception ex)
         {
             Log.Error(ex);
             await Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to refresh bans in {id}");
-            return RedirectToAction("ServerInfo", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to refresh BanSync records. {ex.Message}"
-            });
+            model.MessageType = "danger";
+            model.Message = $"Failed to refresh. {ex.Message}";
+            return PartialView("ServerInfo/BanSyncComponent", model);
         }
-        return RedirectToAction("ServerInfo", new
-        {
-            Id = id,
-            MessageType = "success",
-            Message = $"Refreshed BanSync records."
-        });
     }
     
     /// <summary>

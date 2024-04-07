@@ -15,9 +15,8 @@
     hx-post="/Admin/Server/@Model.Guild.Id/Settings/BanSync/State"
     hx-target="#settingsBanSync-body"
     hx-swap="innerHTML"
-    hx-indicator="#settingsBanSync-body .htmx-indicator"
+    hx-indicator="#settingsBanSync-body [type=submit] .htmx-indicator"
     id="settingsBanSync">
-@* <form id="setting_bansync" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_BanSyncState" asp-route-id="@Model.Guild.Id"> *@
     <div class="input-group mb-2">
         <div class="input-group-prepend">
             <label class="input-group-text" for="setting_bansync_state" style="width: 6rem">State</label>
@@ -42,11 +41,18 @@
         </div>
         <input type="text" class="form-control" name="Reason" id="setting_bansync_reason" form="settingsBanSync"/>
     </div>
-    <input class="btn btn-success" type="submit" value="Submit" form="settingsBanSync"/>
+    <button class="btn btn-success" type="submit" form="settingsBanSync">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Submit
+    </button>
 </form>
-<a class="btn btn-info mt-2" asp-controller="Admin" asp-action="BanSync_Refresh" asp-route-id="@Model.Guild.Id">Refresh Bans</a>
-<div class="d-flex justify-content-center">
-    <div class="spinner-border htmx-indicator" role="status">
-        <span class="sr-only">Loading...</span>
-    </div>
-</div>
+<a class="btn btn-info mt-2"
+   id="refresh"
+   href="#"
+   hx-get="/Admin/Server/@Model.Guild.Id/Settings/BanSync/Refresh"
+   hx-target="#settingsBanSync-body"
+   hx-swap="innerHTML"
+   hx-indicator="#settingsBanSync-body #refresh .htmx-indicator">
+    <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+    Refresh Bans
+</a>

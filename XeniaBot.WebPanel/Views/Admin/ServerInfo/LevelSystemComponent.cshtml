@@ -6,7 +6,7 @@
     hx-post="/Admin/Server/@Model.Guild.Id/Settings/Xp"
     hx-target="#levelSystem-body"
     hx-swap="innerHTML"
-    hx-indicator="#levelSystem-body .htmx-indicator"
+    hx-indicator="#levelSystem-body [type=submit] .htmx-indicator"
     id="levelSystem">
     <div class="form-check mb-3">
         <input class="form-check-input" type="checkbox" value="true" id="xp_settings_enable" form="levelSystem" name="enable" checked="@Model.XpConfig.Enable" />
@@ -30,5 +30,8 @@
         Id = "xp_settings_channel",
         DisplayName = "Notification Channel"
     })
-    <input class="btn btn-success" type="submit" value="Save"/>
+    <button type="submit" class="btn btn-success">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Save
+    </button>
 </form>
