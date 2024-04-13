@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XeniaBot.Data.Repositories;
+using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -76,10 +77,10 @@ public class ServerBanSyncController : BaseXeniaController
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
         try
         {
-            var record = await banSyncInfoController.GetInfo(id);
+            var record = await banSyncInfoController.GetInfo(id, true);
             if (record == null)
             {
-                return View("NotFound");
+                return PartialView("NotFound");
             }
 
             record.Ghost = true;
@@ -91,11 +92,11 @@ public class ServerBanSyncController : BaseXeniaController
             };
             await PopulateModel(data);
 
-            return View("Details", data);
+            return PartialView("DetailsComponent", data);
         }
         catch (Exception ex)
         {
-            return View("Error");
+            return PartialView("Error");
         }
     }
     [HttpGet("~/BanSync/Record/{id}/Ghost/False")]
@@ -106,10 +107,10 @@ public class ServerBanSyncController : BaseXeniaController
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
         try
         {
-            var record = await banSyncInfoController.GetInfo(id);
+            var record = await banSyncInfoController.GetInfo(id, true);
             if (record == null)
             {
-                return View("NotFound");
+                return PartialView("NotFound");
             }
 
             record.Ghost = true;
@@ -121,11 +122,11 @@ public class ServerBanSyncController : BaseXeniaController
             };
             await PopulateModel(data);
 
-            return View("Details", data);
+            return PartialView("DetailsComponent", data);
         }
         catch (Exception ex)
         {
-            return View("Error");
+            return PartialView("Error");
         }
     }
     
@@ -134,30 +135,23 @@ public class ServerBanSyncController : BaseXeniaController
     public async Task<IActionResult> RecordInfo(string id)
     {
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
-        try
+        var record = await banSyncInfoController.GetInfo(id, true);
+        if (record == null)
         {
-            var record = await banSyncInfoController.GetInfo(id);
-            if (record == null)
-            {
-                return View("NotFound");
-            }
-
-            if (!AspHelper.IsCurrentUserAdmin(this.HttpContext) && record.Ghost)
-            {
-                return View("NotFound");
-            }
-
-            var data = new BanSyncRecordViewModel()
-            {
-                Record = record
-            };
-            await PopulateModel(data);
-
-            return View("Details", data);
+            return View("NotFound");
         }
-        catch (Exception ex)
+
+        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext) && record.Ghost)
         {
-            return View("Error");
+            return View("NotFound");
         }
+
+        var data = new BanSyncRecordViewModel()
+        {
+            Record = record
+        };
+        await PopulateModel(data);
+
+        return View("Details", data);
     }
 }
