@@ -16,7 +16,7 @@
         was banned in 
         <code alt="@Model.Record.GuildId">@Model.Record.GuildName</code>
         at
-        <code>@(AspHelper.DateTimeFromTimestamp(Model.Record.Timestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))</code>
+        <code>@(AspHelper.DateTimeFromTimestamp(Model.Record.Timestamp, true).ToString("yyyy/MM/dd HH:mm:ss tt"))</code>
     </p>
     <h4>Reason</h4>
     <textarea class="form-control" readonly>@Model.Record.Reason</textarea>
