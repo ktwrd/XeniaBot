@@ -218,7 +218,6 @@ public static class AspHelper
         DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         if (timestamp < 1)
             return dateTime;
-        Log.Debug(timestamp);
         if (seconds)
         {
             dateTime = dateTime.AddSeconds(timestamp).ToLocalTime();
