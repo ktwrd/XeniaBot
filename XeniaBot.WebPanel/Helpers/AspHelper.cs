@@ -227,6 +227,12 @@ public static class AspHelper
 
         var warnStrikeService = Program.Core.GetRequiredService<WarnStrikeService>();
         data.WarnStrikeConfig = await warnStrikeService.GetStrikeConfig(guild.Id);
+
+        var confessionRepo = Program.Core.GetRequiredService<ConfessionConfigRepository>();
+        data.ConfessionConfig = await confessionRepo.GetGuild(guild.Id) ?? new ConfessionGuildModel()
+        {
+            GuildId = guild.Id
+        };
         
         return data;
     }

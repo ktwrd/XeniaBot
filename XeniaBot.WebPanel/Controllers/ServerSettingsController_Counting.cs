@@ -54,4 +54,40 @@ public partial class ServerController
                 message: $"Failed to save Counting settings. {ex.Message}");
         }
     }
+    
+    
+    [HttpPost("~/Server/{id}/Settings/Counting/Component")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
+    public async Task<IActionResult> SaveSettings_CountingComponent(ulong id, string? inputChannelId)
+    {
+        var model = await GetDetails(id);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+        {
+            model.MessageType = "danger";
+            model.Message = $"Guild not found.";
+            return PartialView("Details/FunView/CountingComponentView", model);
+        }
+        
+        if (!ParseChannelId(inputChannelId, out var modalResult))
+        {
+            model.MessageType = "danger";
+            model.Message = $"Failed to parse ChannelId. {modalResult.ErrorContent}";
+            return PartialView("Details/FunView/CountingComponentView", model);
+        }
+        
+        var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
+        var counterData = await controller.Get(guild) ?? new CounterGuildModel()
+        {
+            GuildId = guild.Id,
+            ChannelId = (ulong)modalResult.ChannelId
+        };
+        counterData.ChannelId = (ulong)modalResult.ChannelId;
+        await controller.Set(counterData);
+
+        model.MessageType = "success";
+        model.Message = "Saved settings.";
+        return PartialView("Details/FunView/CountingComponentView", model);
+    }
 }

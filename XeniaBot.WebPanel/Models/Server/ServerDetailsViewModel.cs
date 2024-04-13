@@ -22,6 +22,7 @@ public class ServerDetailsViewModel : BaseViewModel, IBaseServerModel
     public RolePreserveGuildModel RolePreserve { get; set; }
     public long BanSyncRecordCount { get; set; }
     public GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
+    public ConfessionGuildModel ConfessionConfig { get; set; }
 
     public bool IsWarnActive(GuildWarnItemModel model)
     {

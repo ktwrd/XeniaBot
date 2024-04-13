@@ -82,6 +82,27 @@ public partial class ServerController : BaseXeniaController
         
         return View("Details/ModerationView", data);
     }
+    [HttpGet("~/Server/{id}/Fun")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
+    public async Task<IActionResult> FunView(ulong id)
+    {
+        var userId = AspHelper.GetUserId(HttpContext);
+        if (userId == null)
+            return View("NotFound", "User not found");
+        var user = _discord.GetUser((ulong)userId);
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return View("NotFound", "Guild not found");
+        var guildUser = guild.GetUser(user.Id);
+
+        var data = await GetDetails(guild.Id);
+        data.User = guildUser;
+        
+        await PopulateModel(data);
+        
+        return View("Details/FunView", data);
+    }
     [HttpGet("~/Server/{id}/Fun/Counting")]
     [AuthRequired]
     [RestrictToGuild(GuildIdRouteKey = "id")]

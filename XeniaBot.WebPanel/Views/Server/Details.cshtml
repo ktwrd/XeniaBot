@@ -81,16 +81,48 @@ new List<BreadcrumbItem>()
                 Fun
             </div>
             <div class="card-body p-0">
+                <span>Counting</span>
+                <ul class="list-group">
+                    @if (@Model.CounterConfig.ChannelId == 0)
+                    {
+                        <li class="list-group-item">❌ Counting</li>
+                    }
+                    else
+                    {
+                        <li class="list-group-item">✔️ Counting (@Model.CounterConfig.Count)</li>
+                    }
+                    @if (Model.ConfessionConfig.ModalMessageId == 0)
+                    {
+                        <li class="list-group-item">❌ Confession</li>
+                    }
+                    else
+                    {
+                        <li class="list-group-item">✔️ Confession</li>
+                    }
+                    @if (Model.XpConfig.Enable)
+                    {
+                        <hr />
+                        <li class="list-group-item">✔️ Level System</li>
+                        @if (Model.XpConfig.ShowLeveUpMessage)
+                        {
+                            <li class="list-group-item">✔️ Show Level Up Message</li>
+                        }
+                        else
+                        {
+                            <li class="list-group-item">❌ Show Level Up Message</li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="list-group-item">❌ Level System</li>
+                    }
+                </ul>
+                <hr/>
                 <div class="vertical-btn-list">
                     <a class="btn btn-outline-info"
-                       asp-action="CountingView"
+                       asp-action="FunView"
                        asp-route-id="@Model.Guild.Id">
-                        Counting
-                    </a>
-                    <a class="btn btn-outline-info"
-                       asp-action="ConfessionView"
-                       asp-route-id="@Model.Guild.Id">
-                        Confessions
+                        View
                     </a>
                     <a class="btn btn-outline-info"
                        asp-action="LevelSystemView"
