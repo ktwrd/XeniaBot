@@ -11,6 +11,10 @@ html {
     }
 }
 
+#adminServerSelect.table {
+    width: 100%;
+}
+
 .btn:focus,
 .btn:active:focus,
 .btn-link.nav-link:focus,
