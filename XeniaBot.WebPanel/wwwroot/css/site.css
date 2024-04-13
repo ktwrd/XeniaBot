@@ -11,7 +11,7 @@ html {
     }
 }
 
-#adminServerSelect.table {
+.table-fs-listing {
     width: 100%;
 }
 
