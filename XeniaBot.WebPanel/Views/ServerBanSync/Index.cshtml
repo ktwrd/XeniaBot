@@ -45,8 +45,14 @@ else
             <th></th>
         </tr>
         </thead>
-        <tbody>
-        @foreach (var item in @Model.BanSyncRecords.OrderByDescending(v => v.Timestamp))
+        <tbody
+            hx-get="/Server/@Model.Guild.Id/BanSync/ListComponent"
+            hx-target="this"
+            hx-swap="innerHTML"
+            hx-trigger="load"
+            hx-indicator=".htmx-indicator"
+            id="banSyncRecordContainer">
+        @*@foreach (var item in @Model.BanSyncRecords.OrderByDescending(v => v.Timestamp))
         {
             <tr>
                 <td>
@@ -79,7 +85,7 @@ else
                        asp-action="RecordInfo"></a>
                 </td>
             </tr>
-        }
+        }*@
         </tbody>
     </table>
 }

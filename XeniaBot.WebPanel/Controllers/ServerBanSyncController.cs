@@ -69,6 +69,47 @@ public class ServerBanSyncController : BaseXeniaController
         return View("Index", data);
     }
 
+    [HttpGet("~/Server/{id}/BanSync/ListComponent")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
+    public async Task<IActionResult> ListComponent(ulong id, int cursor = 1, ulong? targetUserId = null)
+    {
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return PartialView("NotFound", "Guild not found");
+
+        var data = await GetDetails(guild.Id);
+        await PopulateModel(data);
+
+        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
+        {
+            data.BanSyncRecords = data.BanSyncRecords.Where(v => !v.Ghost).ToList();
+        }
+        var c = data.BanSyncRecords
+            .OrderByDescending(v => v.Timestamp)
+            .Skip((cursor - 1) * ServerBanSyncViewModel.PageSize)
+            .Take(ServerBanSyncViewModel.PageSize)
+            .ToList();
+        data.BanSyncRecords = c;
+        data.Cursor = cursor;
+
+        if (!data.BanSyncGuild.Enable)
+        {
+            return PartialView("NotAuthorized", new NotAuthorizedViewModel()
+            {
+                Message = "BanSync is not enabled on your server. <a href=\"https://xenia.kate.pet/guide/about_bansync\">More Information</a>"
+            });
+        }
+        
+        if (targetUserId != null)
+        {
+            data.FilterRecordsByUserId = targetUserId;
+            data.BanSyncRecords = data.BanSyncRecords.Where(v => v.UserId == targetUserId).ToList();
+        }
+
+        return PartialView("IndexComponent", data);
+    }
+
     [HttpGet("~/BanSync/Record/{id}/Ghost/True")]
     [AuthRequired]
     [RequireSuperuser]
