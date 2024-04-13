@@ -79,11 +79,12 @@ namespace XeniaBot.Data.Services
             {
                 try
                 {
+                    string? parsedReason = i?.Reason ?? "<unknown>";
                     // only ignore when everything matches and ignoreExisting is true
                     var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id, allowGhost: true);
                     if (ignoreExisting)
                     {
-                        if (existing != null && existing.Reason == i.Reason)
+                        if (existing != null && existing.Reason == parsedReason)
                             continue;
                     }
                 
@@ -95,7 +96,7 @@ namespace XeniaBot.Data.Services
                         UserDisplayName = i.User.GlobalName,
                         GuildId = guild.Id,
                         GuildName = guild.Name,
-                        Reason = i?.Reason ?? "<unknown>"
+                        Reason = i?.Reason ?? parsedReason
                     };
                     await _banInfoRepo.SetInfo(info);
                 }
