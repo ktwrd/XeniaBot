@@ -231,11 +231,20 @@ public static class AspHelper
         return data;
     }
 
-    public static DateTime DateTimeFromTimestamp(long timestamp)
+    public static DateTime DateTimeFromTimestamp(long timestamp, bool seconds = false)
     {
         // Unix timestamp is seconds past epoch
         DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-        dateTime = dateTime.AddMilliseconds( timestamp ).ToLocalTime();
+        if (timestamp < 1)
+            return dateTime;
+        if (seconds)
+        {
+            dateTime = dateTime.AddSeconds(timestamp).ToLocalTime();
+        }
+        else
+        {
+            dateTime = dateTime.AddMilliseconds(timestamp).ToLocalTime();
+        }
         return dateTime;
     }
 
