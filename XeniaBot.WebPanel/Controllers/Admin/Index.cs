@@ -31,10 +31,10 @@ public partial class AdminController
     public async Task<IActionResult> ServerListComponent(int cursor = 1)
     {
         var model = new AdminServerListViewModel();
-        model.Paginate(
+        model.Items = model.Paginate(
             _client.Guilds.Select(StrippedGuild.FromGuild),
             v => v.Name,
             cursor);
-        return PartialView("ServerListComponent", model);
+        return PartialView("AdminServerListComponent", model);
     }
 }
