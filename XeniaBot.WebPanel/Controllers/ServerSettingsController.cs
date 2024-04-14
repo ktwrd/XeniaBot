@@ -13,7 +13,6 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public partial class ServerController
 {
-
     public class SettingLogSystemData
     {
         public ulong? DefaultLogChannel { get; set; }
