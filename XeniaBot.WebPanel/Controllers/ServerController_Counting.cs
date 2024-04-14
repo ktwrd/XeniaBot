@@ -50,6 +50,7 @@ public partial class ServerController
         
         var model = (componentResult.Item3 as ServerCountingComponentViewModel)!;
 
+        inputChannelId ??= "0";
         if (!ParseChannelId(inputChannelId, out var parsedChannel))
         {
             model.MessageType = "danger";
