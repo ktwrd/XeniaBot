@@ -8,6 +8,7 @@ namespace XeniaBot.WebPanel.Models;
 
 public class ServerDetailsViewModel : BaseViewModel,
     IBaseServerModel,
+    IServerCountingComponentViewModel,
     IServerConfessionComponentViewModel
 {
     public SocketGuildUser User { get; set; }
