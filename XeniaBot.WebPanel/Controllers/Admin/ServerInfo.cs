@@ -37,44 +37,30 @@ public partial class AdminController
     /// Refresh stored bans in the Guild provided
     /// </summary>
     /// <param name="id">Guild Id</param>
-    [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Refresh")]
+    [HttpGet("~/Admin/Server/{id}/Settings/BanSync/Refresh")]
     [AuthRequired]
     [RequireSuperuser]
     public async Task<IActionResult> BanSync_Refresh(ulong id)
     {
+        var model = new AdminBanSyncComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
             var controller = Program.Core.GetRequiredService<BanSyncService>();
             await controller.RefreshBans(id);
+            model.MessageType = "success";
+            model.Message = "Refreshed Ban Records";
+            return PartialView("ServerInfo/BanSyncComponent", model);
         }
         catch (Exception ex)
         {
             Log.Error(ex);
             await Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to refresh bans in {id}");
-            return RedirectToAction("ServerInfo", new
-            {
-                Id = id,
-                MessageType = "danger",
-                Message = $"Failed to refresh BanSync records. {ex.Message}"
-            });
+            model.MessageType = "danger";
+            model.Message = $"Failed to refresh. {ex.Message}";
+            return PartialView("ServerInfo/BanSyncComponent", model);
         }
-        return RedirectToAction("ServerInfo", new
-        {
-            Id = id,
-            MessageType = "success",
-            Message = $"Refreshed BanSync records."
-        });
-    }
-
-    [HttpGet("~/Admin/Server/{id}/Setting/BanSync/Component")]
-    [AuthRequired]
-    [RequireSuperuser]
-    public async Task<IActionResult> Settings_BanSyncState(ulong id)
-    {
-        var model = new AdminBanSyncComponentViewModel();
-        await model.PopulateModel(HttpContext, id);
-        return PartialView("ServerInfo/BanSyncComponent", model);
     }
     
     /// <summary>
@@ -83,7 +69,7 @@ public partial class AdminController
     /// <param name="id">Guild Id</param>
     /// <param name="state">State</param>
     /// <param name="reason">Reason</param>
-    [HttpPost("~/Admin/Server/{id}/Setting/BanSync/State")]
+    [HttpPost("~/Admin/Server/{id}/Settings/BanSync/State")]
     [AuthRequired]
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)

@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
+using XeniaBot.WebPanel.Models.Component;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -22,6 +24,8 @@ public partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_Xp(ulong id, string? channelId, bool show, bool enable)
     {
+        var model = new AdminLevelSystemComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         ulong? targetChannelId = null;
         try
         {
@@ -32,9 +36,9 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Level System settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = $"Invalid Channel Id ({ex.Message})";
+            return PartialView("ServerInfo/LevelSystemComponent", model);
         }
 
         try
@@ -50,17 +54,17 @@ public partial class AdminController
             data.LevelUpChannel = targetChannelId;
             data.ShowLeveUpMessage = show;
             data.Enable = enable;
-            await controller.Set(data);
-            return await ServerInfo(id,
-                messageType: "success",
-                message: $"Level System Settings Saved");
+            model.XpConfig = data;
+            model.MessageType = "success";
+            model.Message = "Saved!";
+            return PartialView("ServerInfo/LevelSystemComponent", model);
         }
         catch (Exception ex)
         {
             Log.Error($"Failed to save level system config\n{ex}");
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Level System settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/LevelSystemComponent", model);
         }
     }
     
@@ -71,32 +75,30 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
-        
-        if (!ParseChannelId(modalChannelId, out var modalResult))
-        {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to parse ChannelId for confession modal. {modalResult.ErrorContent}");
-        }
-        var modalId = (ulong)modalResult.ChannelId;
-        
-        if (!ParseChannelId(messageChannelId, out var channelResult))
-        {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to parse ChannelId for messages. {channelResult.ErrorContent}");
-        }
-        var msgId = (ulong)channelResult.ChannelId;
+            return PartialView("NotFound", "Guild not found");
 
+        var model = new AdminConfessionComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
+            if (!ParseChannelId(modalChannelId, out var modalResult))
+            {
+                model.MessageType = "danger";
+                model.Message = $"Failed to parse ChannelId for confession modal. ({modalResult.ErrorContent})";
+                return PartialView("ServerInfo/ConfessionComponent", model);
+            }
+            var modalId = (ulong)modalResult.ChannelId;
+        
+            if (!ParseChannelId(messageChannelId, out var channelResult))
+            {
+                model.MessageType = "danger";
+                model.Message = $"Failed to parse Message ChannelId. ({channelResult.ErrorContent})";
+                return PartialView("ServerInfo/ConfessionComponent", model);
+            }
+            var msgId = (ulong)channelResult.ChannelId;
+            
             var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
-            var data = await controller.GetGuild(id) ??
-                       new ConfessionGuildModel()
-                       {
-                           GuildId = id
-                       };
+            var data = model.ConfessionModel;
             if (data.ModalChannelId != modalId)
             {
                 await controller.InitializeModal(id, msgId, modalId);
@@ -109,17 +111,52 @@ public partial class AdminController
                    };
             data.ModalChannelId = modalId;
             data.ChannelId = msgId;
+            model.ConfessionModel = data;
             await controller.Set(data);
+            model.MessageType = "success";
+            model.Message = "Saved!";
+            return PartialView("ServerInfo/ConfessionComponent", model);
         }
         catch (Exception ex)
         {
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save confession settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/ConfessionComponent", model);
         }
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Successfully saved Ban Sync Log channel");
+    }
+
+    [HttpPost("~/Admin/Server/{id}/Settings/Confession/Purge")]
+    [AuthRequired]
+    [RequireSuperuser]
+    public async Task<IActionResult> Confession_Purge(ulong id)
+    {
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return PartialView("NotFound", "Guild not found");
+
+        var model = new AdminConfessionComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        try
+        {
+            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
+            var data = await controller.GetGuild(id)
+                       ?? new ConfessionGuildModel()
+                       {
+                           GuildId = id
+                       };
+            await controller.Delete(data);
+            model.MessageType = "success";
+            model.Message = "Purged all confession messages";
+            return PartialView("ServerInfo/ConfessionComponent", model);
+        }
+        catch (Exception ex)
+        {
+            Program.Core.GetRequiredService<ErrorReportService>()
+                .ReportException(ex, $"Failed to purge confession messages");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/ConfessionComponent", model);
+        }
     }
     
     [HttpPost("~/Admin/Server/{id}/Settings/Counting")]
@@ -129,11 +166,14 @@ public partial class AdminController
     {
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
-            return View("NotFound", "User not found");
+            return PartialView("NotFound", "User not found");
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
+        var model = new AdminCountingComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
+        
         ulong? channelId = null;
         try
         {
@@ -143,10 +183,10 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
+            model.MessageType = "danger";
+            model.Message = ex.Message;
             Log.Error(ex);
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Counting settings. {ex.Message}");
+            return PartialView("ServerInfo/CountingComponent", model);
         }
 
         var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
@@ -158,9 +198,9 @@ public partial class AdminController
         counterData.ChannelId = (ulong)channelId;
         await controller.Set(counterData);
 
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Counting settings saved");
+        model.MessageType = "success";
+        model.Message = "Saved";
+        return PartialView("ServerInfo/CountingComponent", model);
     }
 
     [HttpPost("~/Admin/Server/{id}/Settings/RolePreserve")]
@@ -170,8 +210,10 @@ public partial class AdminController
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
-            return View("NotFound", "Guild not found");
+            return PartialView("NotFound", "Guild not found");
 
+        var model = new AdminRolePreserveComponentViewModel();
+        await model.PopulateModel(HttpContext, id);
         try
         {
             var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
@@ -181,17 +223,16 @@ public partial class AdminController
             };
             data.Enable = enable;
             await controller.Set(data);
+            model.MessageType = "success";
+            model.Message = "Saved!";
+            return PartialView("ServerInfo/RolePreserveComponent", model);
         }
         catch (Exception ex)
         {
             Log.Error(ex);
-            return await ServerInfo(id,
-                messageType: "danger",
-                message: $"Failed to save Role Preserve settings. {ex.Message}");
+            model.MessageType = "danger";
+            model.Message = ex.Message;
+            return PartialView("ServerInfo/RolePreserveComponent", model);
         }
-
-        return await ServerInfo(id,
-            messageType: "success",
-            message: $"Role Preserve settings saved.");
     }
 }

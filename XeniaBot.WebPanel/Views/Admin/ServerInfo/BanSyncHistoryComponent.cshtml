@@ -1,0 +1,56 @@
+﻿@using XeniaBot.WebPanel.Helpers
+@model XeniaBot.WebPanel.Models.Component.AdminBanSyncComponentViewModel
+
+@await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
+
+@if (!@Model.BanSyncStateHistory.Any())
+{
+    <i>No records</i>
+}
+<button class="btn btn-primary btn-sm mb-1" href="#" id="banSyncHistory-refresh"
+        hx-get="/Admin/Server/@Model.Guild.Id/Settings/BanSyncHistory/Component"
+        hx-target="#banSyncHistory-body"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+        hx-indicator="#banSyncHistory-refresh .htmx-indicator">
+    <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+    Refresh
+</button>
+@if (Model.BanSyncStateHistory.Any())
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border htmx-indicator" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <table class="table table-responsive" id="banSyncStateHistory">
+        <thead>
+        <tr>
+            <th>Timestamp</th>
+            <td>Enable</td>
+            <td>State</td>
+            <td>Reason</td>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in @Model.BanSyncStateHistory.OrderBy(v => v.Timestamp))
+        {
+            <tr>
+                <th>@(AspHelper.DateTimeFromTimestamp(@item.Timestamp).ToString())</th>
+                <td>@item.Enable</td>
+                <td>@item.State</td>
+                <td><code>@item.Reason</code></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+<script type="text/javascript">
+$(document).ready(function () {
+    $('#banSyncStateHistory').DataTable({
+        "searching": true
+    });
+    $('.dataTables_length').addClass('bs-select');
+});
+</script>

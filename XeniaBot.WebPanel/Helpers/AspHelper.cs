@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -226,15 +227,30 @@ public static class AspHelper
 
         var warnStrikeService = Program.Core.GetRequiredService<WarnStrikeService>();
         data.WarnStrikeConfig = await warnStrikeService.GetStrikeConfig(guild.Id);
+
+        var confessionRepo = Program.Core.GetRequiredService<ConfessionConfigRepository>();
+        data.ConfessionConfig = await confessionRepo.GetGuild(guild.Id) ?? new ConfessionGuildModel()
+        {
+            GuildId = guild.Id
+        };
         
         return data;
     }
 
-    public static DateTime DateTimeFromTimestamp(long timestamp)
+    public static DateTime DateTimeFromTimestamp(long timestamp, bool seconds = false)
     {
         // Unix timestamp is seconds past epoch
         DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-        dateTime = dateTime.AddMilliseconds( timestamp ).ToLocalTime();
+        if (timestamp < 1)
+            return dateTime;
+        if (seconds)
+        {
+            dateTime = dateTime.AddSeconds(timestamp).ToLocalTime();
+        }
+        else
+        {
+            dateTime = dateTime.AddMilliseconds(timestamp).ToLocalTime();
+        }
         return dateTime;
     }
 
@@ -259,7 +275,15 @@ public static class AspHelper
 
     public static List<TSource> Paginate<TSource, TKey>(IEnumerable<TSource> data, Func<TSource, TKey> keySelector, int page = 1, int pageSize = 10)
     {
-        return data.OrderBy(keySelector)
+        return Paginate(data, v => v.OrderBy(keySelector), page, pageSize);
+    }
+
+    public static List<TSource> Paginate<TSource>(IEnumerable<TSource> data,
+        Func<IEnumerable<TSource>, IEnumerable<TSource>> logic,
+        int page = 1,
+        int pageSize = 10)
+    {
+        return logic(data)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();

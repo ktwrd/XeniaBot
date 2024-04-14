@@ -1,0 +1,47 @@
+﻿@using XeniaBot.Data
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model BaseViewModel
+
+@await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
+
+<form
+    id="user_config"
+    hx-post="/Preferences/Save"
+    hx-target="#userConfig-body"
+    hx-swap="innerHTML"
+    hx-indicator="#userConfig-body [type=submit] .htmx-indicator">
+    @await Component.InvokeAsync("FormCheckbox", new FormCheckboxViewModel()
+    {
+        ParentFormId = "user_config",
+        Name = "EnableProfileTracking",
+        Id = "EnableProfileTracking",
+        Label = "Enable Profile Tracking",
+        Margin = false,
+        State = @Model.UserConfig.EnableProfileTracking
+    })
+    This feature will detect and log changes for the following data in your profile;
+    <ul>
+        <li>Avatar</li>
+        <li>Profile Background</li>
+        <li>"About Me" section</li>
+    </ul>
+    <hr class="my-2" />
+    @await Component.InvokeAsync("FormSelect", new FormSelectViewModel()
+    {
+        ParentFormId = "user_config",
+        Name = "ListViewStyle",
+        Id = "ListViewStyle",
+        Label = "Default List Display Style",
+        Data = new List<(object, string)>()
+        {
+            ((int)ListViewStyle.List, "List (default)"),
+            ((int)ListViewStyle.Grid, "Grid")
+        },
+        Selected = (int)@Model.UserConfig.ListViewStyle
+    })
+    <hr class="my-2" />
+    <button type="submit" class="btn btn-success">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Save
+    </button>
+</form>

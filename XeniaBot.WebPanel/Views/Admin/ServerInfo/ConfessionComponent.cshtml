@@ -1,0 +1,46 @@
+﻿@model XeniaBot.WebPanel.Models.Component.AdminConfessionComponentViewModel
+
+@await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
+
+<form
+    hx-post="/Admin/Server/@Model.Guild.Id/Settings/Confession"
+    hx-target="#confession-body"
+    hx-swap="innerHTML"
+    hx-indicator="#confession-body [type=submit] .htmx-indicator"
+    id="confession">
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+           {
+               Channels = StrippedChannel.FromGuild(@Model.Guild),
+               Categories = StrippedCategory.FromGuild(@Model.Guild),
+               SelectedChannelId = @Model.ConfessionModel.ChannelId,
+               ParentFormId = "confession",
+               Name = "MessageChannelId",
+               Id = "confession_settings_channel_out",
+               DisplayName = "Message Channel"
+           })
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+           {
+               Channels = StrippedChannel.FromGuild(@Model.Guild),
+               Categories = StrippedCategory.FromGuild(@Model.Guild),
+               SelectedChannelId = @Model.ConfessionModel.ModalChannelId,
+               ParentFormId = "confession",
+               Name = "ModalChannelId",
+               Id = "confession_settings_channel_modal",
+               DisplayName = "Modal Channel"
+           })
+    <a class="btn btn-danger mr-2"
+       href="#"
+       id="purge"
+       hx-post="/Admin/Server/@Model.Guild.Id/Settings/Confession/Purge"
+       hx-target="#confession-body"
+       hx-swap="innerHTML"
+       hx-indicator="#confession-body #purge .htmx-indicator">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Purge
+    </a>
+    <button type="submit" class="btn btn-success">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Save
+    </button>
+</form>
+

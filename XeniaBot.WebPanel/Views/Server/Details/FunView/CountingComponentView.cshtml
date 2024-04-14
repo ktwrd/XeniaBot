@@ -1,0 +1,26 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model XeniaBot.WebPanel.Models.Component.FunView.IServerCountingComponentViewModel
+
+@await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
+
+<form
+    hx-post="/Server/@Model.Guild.Id/Settings/Counting/Component"
+    hx-swap="innerHTML"
+    hx-indicator="#counting-body [type=submit] .htmx-indicator"
+    hx-target="#counting-body"
+    id="counting-form">
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+    {
+        Channels = StrippedChannel.FromGuild(@Model.Guild),
+        Categories = StrippedCategory.FromGuild(@Model.Guild),
+        SelectedChannelId = @Model.CounterConfig.ChannelId,
+        ParentFormId = "counting-form",
+        Name = "inputChannelId",
+        Id = "inputChannelId",
+        DisplayName = "Channel"
+    })
+    <button type="submit" class="btn btn-success">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Save
+    </button>
+</form>

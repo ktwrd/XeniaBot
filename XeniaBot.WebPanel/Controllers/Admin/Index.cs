@@ -30,17 +30,11 @@ public partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> ServerListComponent(int cursor = 1)
     {
-        var model = new AdminServerListViewModel
-        {
-            Guilds = PaginateGuild(_client.Guilds, cursor, AdminServerListViewModel.PageSize),
-            Cursor = cursor
-        };
-        return PartialView("ServerListComponent", model);
-    }
-
-
-    public List<SocketGuild> PaginateGuild(IEnumerable<SocketGuild> data, int page, int pageSize = 10)
-    {
-        return AspHelper.Paginate<SocketGuild, string>(data, v => v.Name, page, pageSize);
+        var model = new AdminServerListViewModel();
+        model.Items = model.Paginate(
+            _client.Guilds.Select(StrippedGuild.FromGuild),
+            v => v.Name,
+            cursor);
+        return PartialView("AdminServerListComponent", model);
     }
 }

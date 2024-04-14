@@ -127,4 +127,18 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         var results = await collection.FindAsync(filter);
         return results.ToList();
     }
+
+    public async Task<ICollection<ReminderModel>> GetByUserPaginate(ulong userId, int page, int pageSize)
+    {
+        var filter = Builders<ReminderModel>
+            .Filter
+            .Where(v => v.UserId == userId && v.HasReminded == false);
+        var collection = GetCollection();
+        var result = await collection.Find(filter)
+            .SortByDescending(v => v.ReminderTimestamp)
+            .Skip((page - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync();
+        return result;
+    }
 }

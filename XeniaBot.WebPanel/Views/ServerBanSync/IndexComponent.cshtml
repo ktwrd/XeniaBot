@@ -1,0 +1,48 @@
+﻿@using XeniaBot.WebPanel.Helpers
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model ServerBanSyncViewModel
+
+@foreach (var item in @Model.BanSyncRecords)
+{
+    <tr
+        @{
+            if (Model.IsLastPage == false && Model.IsItemLast(item))
+            {
+                <text>
+                    hx-get="/Server/@Model.Guild.Id/BanSync/ListComponent?cursor=@(Model.Cursor + 1)"
+                    hx-trigger="revealed"
+                    hx-target="#banSyncRecordContainer"
+                    hx-swap="beforeend"
+                    hx-indicator=".htmx-indicator"</text>
+        } }>
+        <td>
+            <img src="@(AspHelper.GetUserProfilePicture(item.UserId))"
+                 class="card-img-top smallUserIcon" />
+            @item.UserName#@item.UserDiscriminator
+        </td>
+        <td>
+            <img src="@(AspHelper.GetGuildImage(item.GuildId))"
+                 class="card-img-top smallUserIcon" />
+            @item.GuildName
+        </td>
+        <td>
+            @(AspHelper.DateTimeFromTimestamp(item.Timestamp, true).ToString("yyyy/MM/dd HH:mm:ss tt"))
+        </td>
+        <td>
+            <code>
+                @item.Reason.Substring(0, Math.Min(50, item.Reason.Length))
+                @if (@item.Reason.Length > 50)
+                {
+                    <span>...</span>
+                }
+            </code>
+        </td>
+        <td>
+            <a class="btn btn-secondary"
+               asp-area=""
+               asp-route-id="@(item.RecordId)"
+               asp-controller="ServerBanSync"
+               asp-action="RecordInfo"></a>
+        </td>
+    </tr>
+}

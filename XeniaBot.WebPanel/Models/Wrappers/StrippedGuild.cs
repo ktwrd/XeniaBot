@@ -1,9 +1,15 @@
-﻿using Discord.WebSocket;
+﻿using System;
+using Discord.WebSocket;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class StrippedGuild
+public class StrippedGuild : IEquatable<StrippedGuild>
 {
+    public bool Equals(StrippedGuild? other)
+    {
+        return other?.Id == Id;
+    }
+    public ulong Id { get; set; }
     /// <summary>
     /// Name of the guild
     /// </summary>
@@ -35,6 +41,7 @@ public class StrippedGuild
         {
             return new StrippedGuild()
             {
+                Id = 0,
                 Name = "<unknown>",
                 MemberCount = -1,
                 OwnerId = 0,
@@ -45,6 +52,7 @@ public class StrippedGuild
         else
         {
             var instance = new StrippedGuild();
+            instance.Id = guild.Id;
             instance.Name = guild.Name;
             instance.MemberCount = guild.MemberCount;
             instance.OwnerId = guild.OwnerId;

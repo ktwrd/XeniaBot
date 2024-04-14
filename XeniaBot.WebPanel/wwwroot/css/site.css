@@ -1,3 +1,5 @@
+@import "site-layout.css";
+
 html {
     font-size: 14px;
 }
@@ -9,6 +11,10 @@ html {
     html {
         font-size: 16px;
     }
+}
+
+.table-fs-listing {
+    width: 100%;
 }
 
 .btn:focus,
@@ -80,12 +86,12 @@ body {
     transition: 200ms ease-in;
 }
 .htmx-request .htmx-indicator {
-    display: block;
+    display: inherit;
     opacity:1;
     transition: 200ms ease-in;
 }
 .htmx-request.htmx-indicator {
-    display: block;
+    display: inherit;
     opacity:1;
     transition: 200ms ease-in;
 }

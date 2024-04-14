@@ -44,7 +44,7 @@
                 Ban Sync
             </div>
             <div class="card-body" id="settingsBanSync-body"
-                 hx-get="/Admin/Server/@Model.Guild.Id/Setting/BanSync/Component"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/BanSync/Component"
                  hx-target="this"
                  hx-trigger="load"
                  hx-swap="innerHTML"
@@ -54,41 +54,6 @@
                         <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-                @* @{ await Html.RenderPartialAsync("ServerInfo/BanSyncComponent"); } *@
-                @* @if (@Model.BanSyncConfig.LogChannel == 0) *@
-                @* { *@
-                @*     <div class="alert alert-sm alert-warning mb-2" role="alert"> *@
-                @*         Log Channel isn't set. *@
-                @*     </div> *@
-                @* } *@
-                @* <form id="setting_bansync" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_BanSyncState" asp-route-id="@Model.Guild.Id"> *@
-                @*     <div class="input-group mb-2"> *@
-                @*         <div class="input-group-prepend"> *@
-                @*             <label class="input-group-text" for="setting_bansync_state" style="width: 6rem">State</label> *@
-                @*         </div> *@
-                @*         <select class="custom-select" name="State" id="setting_bansync_state" form="setting_bansync"> *@
-                @*             @foreach (var item in GeneralHelper.GetEnumList<BanSyncGuildState>()) *@
-                @*             { *@
-                @*                 if (@item == @Model.BanSyncConfig.State) *@
-                @*                 { *@
-                @*                     <option value="@item" selected>@item</option> *@
-                @*                 } *@
-                @*                 else *@
-                @*                 { *@
-                @*                     <option value="@item">@item</option> *@
-                @*                 } *@
-                @*             } *@
-                @*         </select> *@
-                @*     </div> *@
-                @*     <div class="input-group mb-3"> *@
-                @*         <div class="input-group-prepend"> *@
-                @*             <label class="input-group-text" for="setting_bansync_reason" style="width: 6rem">Reason</label> *@
-                @*         </div> *@
-                @*         <input type="text" class="form-control" name="Reason" id="setting_bansync_reason" form="setting_bansync"/> *@
-                @*     </div> *@
-                @*     <input class="btn btn-success" type="submit" value="Submit"/> *@
-                @* </form> *@
-                @* <a class="btn btn-info mt-2" asp-controller="Admin" asp-action="BanSync_Refresh" asp-route-id="@Model.Guild.Id">Refresh Bans</a> *@
             </div>
         </div>
     </div>
@@ -97,35 +62,18 @@
             <div class="card-header">
                 BanSync State History
             </div>
-            <div class="card-body">
-                @if (@Model.BanSyncStateHistory.Count() < 1)
-                {
-                    <i>No records</i>
-                }
-                else
-                {
-                    <table class="table table-responsive" id="banSyncStateHistory">
-                        <thead>
-                        <tr>
-                            <th>Timestamp</th>
-                            <td>Enable</td>
-                            <td>State</td>
-                            <td>Reason</td>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach (var item in @Model.BanSyncStateHistory.OrderBy(v => v.Timestamp))
-                        {
-                            <tr>
-                                <th>@(AspHelper.DateTimeFromTimestamp(@item.Timestamp).ToString())</th>
-                                <td>@item.Enable</td>
-                                <td>@item.State</td>
-                                <td><code>@item.Reason</code></td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                }
+            <div class="card-body"
+                 id="banSyncHistory-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/BanSyncHistory/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#banSyncHistory-body .htmx-indicator">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border htmx-indicator" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -134,32 +82,18 @@
             <div class="card-header">
                 Xp System
             </div>
-            <div class="card-body">
-                <form id="xp_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Xp" asp-route-id="@Model.Guild.Id">
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_enable" name="enable" checked="@Model.XpConfig.Enable" />
-                        <label class="form-check-label" for="xp_settings_enable">
-                            Enable
-                        </label>
+            <div class="card-body"
+                 id="levelSystem-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/LevelSystem/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#levelSystem-body .htmx-indicator">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border htmx-indicator" role="status">
+                        <span class="sr-only">Loading...</span>
                     </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_show" name="show" checked="@Model.XpConfig.ShowLeveUpMessage"/>
-                        <label class="form-check-label" for="xp_settings_show">
-                            Show Level Up Message
-                        </label>
-                    </div>
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                           {
-                               Channels = StrippedChannel.FromGuild(@Model.Guild),
-                               Categories = StrippedCategory.FromGuild(@Model.Guild),
-                               SelectedChannelId = @Model.XpConfig.LevelUpChannel,
-                               ParentFormId = "xp_settings",
-                               Name = "channelId",
-                               Id = "xp_settings_channel",
-                               DisplayName = "Notification Channel"
-                           })
-                    <input class="btn btn-success" type="submit" value="Save"/>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -168,31 +102,18 @@
             <div class="card-header">
                 Confession
             </div>
-            <div class="card-body">
-                <form id="confession_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Confession" asp-route-id="@Model.Guild.Id">
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                           {
-                               Channels = StrippedChannel.FromGuild(@Model.Guild),
-                               Categories = StrippedCategory.FromGuild(@Model.Guild),
-                               SelectedChannelId = @Model.CounterConfig.ChannelId,
-                               ParentFormId = "confession_settings",
-                               Name = "MessageChannelId",
-                               Id = "confession_settings_channel_out",
-                               DisplayName = "Message Channel"
-                           })
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                           {
-                               Channels = StrippedChannel.FromGuild(@Model.Guild),
-                               Categories = StrippedCategory.FromGuild(@Model.Guild),
-                               SelectedChannelId = @Model.CounterConfig.ChannelId,
-                               ParentFormId = "confession_settings",
-                               Name = "ModalChannelId",
-                               Id = "confession_settings_channel_modal",
-                               DisplayName = "Modal Channel"
-                           })
-                    <a class="btn btn-danger mr-2" asp-controller="Server" asp-action="SaveSettings_Confession_Purge" asp-route-id="@Model.Guild.Id">Purge</a>
-                    <input class="btn btn-success" type="submit" value="Save"/>
-                </form>
+            <div class="card-body"
+                 id="confession-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/Confession/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#confession-body .htmx-indicator">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border htmx-indicator" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -201,20 +122,18 @@
             <div class="card-header">
                 Counting
             </div>
-            <div class="card-body">
-                <form id="counter_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_Counting" asp-route-id="@Model.Guild.Id">
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                    {
-                        Channels = StrippedChannel.FromGuild(@Model.Guild),
-                        Categories = StrippedCategory.FromGuild(@Model.Guild),
-                        SelectedChannelId = @Model.CounterConfig.ChannelId,
-                        ParentFormId = "counter_settings",
-                        Name = "inputChannelId",
-                        Id = "inputChannelId",
-                        DisplayName = "Channel"
-                    })
-                    <input class="btn btn-success" type="submit" value="Save"/>
-                </form>
+            <div class="card-body"
+                 id="counting-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/Counting/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#counting-body .htmx-indicator">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border htmx-indicator" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -223,27 +142,19 @@
             <div class="card-header">
                 Role Preserve
             </div>
-            <div class="card-body">
-                <form id="role_preserve" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Admin" asp-action="SaveSettings_RolePreserve" asp-route-id="@Model.Guild.Id">
-                      <div class="form-check mb-3">
-                            <input class="form-check-input" name="enable" type="checkbox" value="true" id="role_preserve_enable" checked="@Model.RolePreserve.Enable" />
-                            <label class="form-check-label" for="role_preserve_enable">Enable</label>
-                      </div>
-                      <input class="btn btn-success" type="submit" value="Save"/>
-                </form>
+            <div class="card-body"
+                 id="rolePreserve-body"
+                 hx-get="/Admin/Server/@Model.Guild.Id/Settings/RolePreserve/Component"
+                 hx-target="this"
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#rolePreserve-body .htmx-indicator">
+                 <div class="d-flex justify-content-center">
+                     <div class="spinner-border htmx-indicator" role="status">
+                         <span class="sr-only">Loading...</span>
+                     </div>
+                 </div>
             </div>
         </div>
     </div>
 </div>
-
-@section Scripts
-{
-    <script type="text/javascript">
-    $(document).ready(function () {
-      $('#banSyncStateHistory').DataTable({
-        "searching": true
-      });
-      $('.dataTables_length').addClass('bs-select');
-    });
-    </script>
-}

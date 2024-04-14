@@ -46,6 +46,15 @@ public class ReminderController : BaseXeniaController
         return View("Default", model);
     }
 
+    [HttpGet("~/Reminders/Component")]
+    [AuthRequired]
+    public async Task<IActionResult> ListComponent(int cursor = 1)
+    {
+        var model = new ReminderListComponentViewModel();
+        await model.PopulateModel((ulong)AspHelper.GetUserId(HttpContext)!, cursor);
+        return View("ReminderListComponent", model);
+    }
+
     [HttpPost("~/Reminders/Create")]
     [AuthRequired]
     public IActionResult CreatePage()
