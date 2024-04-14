@@ -103,31 +103,6 @@ public partial class ServerController : BaseXeniaController
         
         return View("Details/FunView", data);
     }
-    [HttpGet("~/Server/{id}/Fun/Counting")]
-    [AuthRequired]
-    [RestrictToGuild(GuildIdRouteKey = "id")]
-    public async Task<IActionResult> CountingView(ulong id, string? messageType = null, string? message = null)
-    {
-        var userId = AspHelper.GetUserId(HttpContext);
-        if (userId == null)
-            return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
-        var guild = _discord.GetGuild(id);
-        if (guild == null)
-            return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
-
-        var data = await GetDetails(guild.Id);
-        data.User = guildUser;
-        
-        await PopulateModel(data);
-        if (messageType != null)
-            data.MessageType = messageType;
-        if (message != null)
-            data.Message = message;
-        
-        return View("Details/FunView/CountingView", data);
-    }
     [HttpGet("~/Server/{id}/Fun/LevelSystem")]
     [AuthRequired]
     [RestrictToGuild(GuildIdRouteKey = "id")]
@@ -204,7 +179,6 @@ public partial class ServerController : BaseXeniaController
         
         return View("Details/Settings/GreeterLeaveView", data);
     }
-
     
     [HttpGet("~/Server/")]
     [HttpGet("~/Server/List")]

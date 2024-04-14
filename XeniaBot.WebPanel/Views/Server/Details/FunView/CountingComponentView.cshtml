@@ -1,4 +1,5 @@
-﻿@model ServerDetailsViewModel
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model XeniaBot.WebPanel.Models.Component.FunView.ServerCountingComponentViewModel
 
 @await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
 
