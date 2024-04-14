@@ -17,6 +17,7 @@ new List<BreadcrumbItem>()
     new BreadcrumbItem("Leave"),
 }))
 
+<p>Configure a "Goodbye message" to let other members know that someone left.</p>
 <form id="greeter_goodbye_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_GreeterBye" asp-route-id="@Model.Guild.Id">
     @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
     {
@@ -28,7 +29,6 @@ new List<BreadcrumbItem>()
         Id = "inputChannelId",
         DisplayName = "Channel"
     })
-    <p><strong>The opposite of a greeter, but this message is sent when someone leaves the server.</strong></p>
     <div class="form-check">
         <input class="form-check-input" name="inputMentionUser" type="checkbox" value="true" id="inputMentionUser" checked="@Model.GreeterGoodbyeConfig.MentionNewUser">
         <label class="form-check-label" for="inputMentionUser">
@@ -37,58 +37,56 @@ new List<BreadcrumbItem>()
     </div>
     <hr/>
     <h4>Embed Style</h4>
-    <table>
-        <tr>
-            <td style="width: 60%" class="pr-4">
-                <div class="form-group">
-                    <label for="embed_example_title">Title</label>
-                    <input class="form-control" type="text" name="inputTitle" id="embed_example_title" embed-field="title" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_Title" />
-                </div>
-                <div class="form-group">
-                    <label for="embed_example_desc">Description</label>
-                    <textarea class="form-control" name="inputDescription" id="embed_example_desc" embed-field="description" embed-id="greeter_goodbye_settings">@Model.GreeterGoodbyeConfig.T_Description</textarea>
-                </div>
-                <hr/>
-                <div class="form-group">
-                    <label for="embed_example_img">Image Url</label>
-                    <input class="form-control" type="text" name="inputImgUrl" id="embed_example_img" embed-field="image" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_ImageUrl"/>
-                </div>
-                <div class="form-group">
-                    <label for="embed_example_thumb">Thumbnail Url</label>
-                    <input class="form-control" type="text" name="inputThumbUrl" id="embed_example_thumb" embed-field="thumbnail" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_ThumbnailUrl" />
-                </div>
-                <hr/>
-                <div class="form-group">
-                    <label for="embed_example_footer_text">Footer Text</label>
-                    <input class="form-control" type="text" name="inputFooterText" id="embed_example_footer_text" embed-field="footer-text" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_FooterText"/>
-                </div>
-                <div class="form-group">
-                    <label for="embed_example_footer_img">Footer Image Url</label>
-                    <input class="form-control" type="text" name="inputFooterImgUrl" id="embed_example_footer_img" embed-field="footer-img" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_FooterImgUrl"/>
-                </div>
-                <hr/>
-                <div class="form-group">
-                    <label for="embed_example_author_name">Author Text</label>
-                    <input class="form-control" type="text" name="inputAuthorText" id="embed_example_author_name" embed-field="author-text" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_AuthorName"/>
-                </div>
-                <div class="form-group">
-                    <label for="embed_example_author_img">Author Image Url</label>
-                    <input class="form-control" type="text" name="inputAuthorImgUrl" id="embed_example_author_img" embed-field="author-img" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_AuthorIconUrl"/>
-                </div>
-                <hr/>
-                <div class="form-group">
-                    <label for="embed_example_color">Color</label>
-                    <input class="form-control" type="color" name="inputColor" id="embed_example_color" embed-field="color" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_Color_Hex"/>
-                </div>
-            </td>
-            <td>
-                @await Component.InvokeAsync("EmbedViewer", new EmbedViewerModel("greeter_goodbye_settings")
-                {
-                    ShowExportButton = true,
-                    ShowImportButton = true
-                })
-            </td>
-        </tr>
-    </table>
+    <div class="row align-items-start mt-4">
+        <div class="col is-60 is-full-mobile">
+            <div class="form-group">
+                <label for="embed_example_title">Title</label>
+                <input class="form-control" type="text" name="inputTitle" id="embed_example_title" embed-field="title" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_Title" />
+            </div>
+            <div class="form-group">
+                <label for="embed_example_desc">Description</label>
+                <textarea class="form-control" name="inputDescription" id="embed_example_desc" embed-field="description" embed-id="greeter_goodbye_settings">@Model.GreeterGoodbyeConfig.T_Description</textarea>
+            </div>
+            <hr/>
+            <div class="form-group">
+                <label for="embed_example_img">Image Url</label>
+                <input class="form-control" type="text" name="inputImgUrl" id="embed_example_img" embed-field="image" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_ImageUrl"/>
+            </div>
+            <div class="form-group">
+                <label for="embed_example_thumb">Thumbnail Url</label>
+                <input class="form-control" type="text" name="inputThumbUrl" id="embed_example_thumb" embed-field="thumbnail" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_ThumbnailUrl" />
+            </div>
+            <hr/>
+            <div class="form-group">
+                <label for="embed_example_footer_text">Footer Text</label>
+                <input class="form-control" type="text" name="inputFooterText" id="embed_example_footer_text" embed-field="footer-text" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_FooterText"/>
+            </div>
+            <div class="form-group">
+                <label for="embed_example_footer_img">Footer Image Url</label>
+                <input class="form-control" type="text" name="inputFooterImgUrl" id="embed_example_footer_img" embed-field="footer-img" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_FooterImgUrl"/>
+            </div>
+            <hr/>
+            <div class="form-group">
+                <label for="embed_example_author_name">Author Text</label>
+                <input class="form-control" type="text" name="inputAuthorText" id="embed_example_author_name" embed-field="author-text" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_AuthorName"/>
+            </div>
+            <div class="form-group">
+                <label for="embed_example_author_img">Author Image Url</label>
+                <input class="form-control" type="text" name="inputAuthorImgUrl" id="embed_example_author_img" embed-field="author-img" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_AuthorIconUrl"/>
+            </div>
+            <hr/>
+            <div class="form-group">
+                <label for="embed_example_color">Color</label>
+                <input class="form-control" type="color" name="inputColor" id="embed_example_color" embed-field="color" embed-id="greeter_goodbye_settings" value="@Model.GreeterGoodbyeConfig.T_Color_Hex"/>
+            </div>
+        </div>
+        <div class="col is-40 is-full-mobile">
+            @await Component.InvokeAsync("EmbedViewer", new EmbedViewerModel("greeter_goodbye_settings")
+            {
+                ShowExportButton = true,
+                ShowImportButton = true
+            })
+        </div>
+    </div>
     <input class="btn btn-success" type="submit" value="Save"/>
 </form>
