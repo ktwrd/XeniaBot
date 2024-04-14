@@ -2,10 +2,13 @@
 using Discord.WebSocket;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Services;
+using XeniaBot.WebPanel.Models.Component.FunView;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class ServerDetailsViewModel : BaseViewModel, IBaseServerModel
+public class ServerDetailsViewModel : BaseViewModel,
+    IBaseServerModel,
+    IServerConfessionComponentViewModel
 {
     public SocketGuildUser User { get; set; }
     public SocketGuild Guild { get; set; }
