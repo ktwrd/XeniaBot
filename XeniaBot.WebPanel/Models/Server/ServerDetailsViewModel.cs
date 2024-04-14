@@ -8,6 +8,7 @@ namespace XeniaBot.WebPanel.Models;
 
 public class ServerDetailsViewModel : BaseViewModel,
     IBaseServerModel,
+    IServerLevelSystemComponentViewModel,
     IServerCountingComponentViewModel,
     IServerConfessionComponentViewModel
 {
@@ -18,6 +19,14 @@ public class ServerDetailsViewModel : BaseViewModel,
     public CounterGuildModel CounterConfig { get; set; }
     public ConfigBanSyncModel BanSyncConfig { get; set; }
     public LevelSystemConfigModel XpConfig { get; set; }
+    public LevelSystemConfigModel LevelSystemConfig
+    {
+        get => XpConfig;
+        set
+        {
+            XpConfig = value;
+        }
+    }
     public ServerLogModel LogConfig { get; set; }
     public ICollection<BanSyncStateHistoryItemModel> BanSyncStateHistory { get; set; }
     public GuildGreeterConfigModel GreeterConfig { get; set; }
