@@ -67,7 +67,8 @@ namespace XeniaBot.Data.Services
         }
 
         public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
-        public async Task RefreshBans(SocketGuild guild)
+        
+        public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
         {
             var config = await _guildConfigRepo.Get(guild.Id);
             if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
@@ -78,19 +79,24 @@ namespace XeniaBot.Data.Services
             {
                 try
                 {
-                    // dont add existing ban to db, even if the existing one is ghosted.
+                    string? parsedReason = i?.Reason ?? "<unknown>";
+                    // only ignore when everything matches and ignoreExisting is true
                     var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id, allowGhost: true);
-                    if (existing != null)
-                        continue;
+                    if (ignoreExisting)
+                    {
+                        if (existing != null && existing.Reason == parsedReason)
+                            continue;
+                    }
                 
                     var info = new BanSyncInfoModel()
                     {
                         UserId = i.User.Id,
                         UserName = i.User.Username,
                         UserDiscriminator = i.User.Discriminator,
+                        UserDisplayName = i.User.GlobalName,
                         GuildId = guild.Id,
                         GuildName = guild.Name,
-                        Reason = i?.Reason ?? "<unknown>"
+                        Reason = i?.Reason ?? parsedReason
                     };
                     await _banInfoRepo.SetInfo(info);
                 }
@@ -119,7 +125,8 @@ namespace XeniaBot.Data.Services
             {
                 UserId = user.Id,
                 UserName = user.Username,
-                UserDiscriminator = user.Discriminator.ToString(),
+                UserDiscriminator = user.Discriminator,
+                UserDisplayName = user.GlobalName,
                 GuildId = guild.Id,
                 GuildName = guild.Name,
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),

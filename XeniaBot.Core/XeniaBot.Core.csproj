@@ -8,12 +8,19 @@
     <RootNamespace>XeniaBot.Core</RootNamespace>
 
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <TransformOnBuild>true</TransformOnBuild>
 
     <IsTrimmable>false</IsTrimmable>
     
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="obj\**" />
+    <Content Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="obj\**" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
     <PackageReference Include="Discord.Net" Version="3.14.1" />
@@ -22,7 +29,7 @@
     <PackageReference Include="kate.shared" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="MimeTypesMap" Version="1.0.8" />
-    <PackageReference Include="MongoDB.Driver" Version="2.23.1" />
+    <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
     <PackageReference Include="Noppes.E621Client" Version="0.8.2" />
     <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
     <PackageReference Include="Victoria" Version="6.0.1026" />

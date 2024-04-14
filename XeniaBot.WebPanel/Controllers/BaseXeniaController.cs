@@ -191,6 +191,12 @@ public class BaseXeniaController : Controller
         public string? ErrorContent { get; set; }
         public ulong ChannelId { get; set; }
     }
+
+    public class ParseIdResult<T>
+    {
+        public string? ErrorContent { get; set; }
+        public T Value { get; set; }
+    }
     
     public bool ParseChannelId(string? inputChannel, out ParseChannelIdResult result)
     {
@@ -215,6 +221,34 @@ public class BaseXeniaController : Controller
         {
             ChannelId = (ulong)channelId
         };
-        return false;
+        return true;
+    }
+
+    public bool ParseUlong(string? inputNumber, out ParseIdResult<ulong> result)
+    {
+        ulong? id = null;
+        try
+        {
+            if (inputNumber == null)
+                throw new Exception("Input value is null");
+
+            id = ulong.Parse(inputNumber);
+            if (id == null)
+                throw new Exception("Failed to cast as ulong");
+        }
+        catch (Exception ex)
+        {
+            result = new ParseIdResult<ulong>()
+            {
+                ErrorContent = ex.Message
+            };
+            return false;
+        }
+
+        result = new ParseIdResult<ulong>()
+        {
+            Value = (ulong)id
+        };
+        return true;
     }
 }

@@ -1,0 +1,58 @@
+﻿@using kate.shared.Helpers
+@using XeniaBot.Data.Models
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model XeniaBot.WebPanel.Models.Component.AdminBanSyncComponentViewModel
+
+@await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
+
+@if (@Model.BanSyncConfig.LogChannel == 0)
+{
+    <div class="alert alert-sm alert-warning mb-2" role="alert">
+        Log Channel isn't set.
+    </div>
+}
+<form
+    hx-post="/Admin/Server/@Model.Guild.Id/Settings/BanSync/State"
+    hx-target="#settingsBanSync-body"
+    hx-swap="innerHTML"
+    hx-indicator="#settingsBanSync-body [type=submit] .htmx-indicator"
+    id="settingsBanSync">
+    <div class="input-group mb-2">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="setting_bansync_state" style="width: 6rem">State</label>
+        </div>
+        <select class="custom-select" name="state" id="setting_bansync_state" form="settingsBanSync">
+            @foreach (var item in GeneralHelper.GetEnumList<BanSyncGuildState>())
+            {
+                if (@item == @Model.BanSyncConfig.State)
+                {
+                    <option value="@item" selected>@item</option>
+                }
+                else
+                {
+                    <option value="@item">@item</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="setting_bansync_reason" style="width: 6rem">Reason</label>
+        </div>
+        <input type="text" class="form-control" name="Reason" id="setting_bansync_reason" form="settingsBanSync"/>
+    </div>
+    <button class="btn btn-success" type="submit" form="settingsBanSync">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Submit
+    </button>
+</form>
+<a class="btn btn-info mt-2"
+   id="refresh"
+   href="#"
+   hx-get="/Admin/Server/@Model.Guild.Id/Settings/BanSync/Refresh"
+   hx-target="#settingsBanSync-body"
+   hx-swap="innerHTML"
+   hx-indicator="#settingsBanSync-body #refresh .htmx-indicator">
+    <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+    Refresh Bans
+</a>

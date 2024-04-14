@@ -35,7 +35,7 @@
 }
 else
 {
-    <table class="table" id="bansyncGuildList">
+    <table class="table table-bordered table-sm table-fs-listing" id="bansyncGuildList">
         <thead>
         <tr>
             <th>User</th>
@@ -45,53 +45,13 @@ else
             <th></th>
         </tr>
         </thead>
-        <tbody>
-        @foreach (var item in @Model.BanSyncRecords.OrderByDescending(v => v.Timestamp))
-        {
-            <tr>
-                <td>
-                    <img src="@(AspHelper.GetUserProfilePicture(item.UserId))"
-                         class="card-img-top smallUserIcon" />
-                    @item.UserName#@item.UserDiscriminator
-                </td>
-                <td>
-                    <img src="@(AspHelper.GetGuildImage(item.GuildId))"
-                         class="card-img-top smallUserIcon" />
-                    @item.GuildName
-                </td>
-                <td>
-                    @(AspHelper.DateTimeFromTimestamp(item.Timestamp, true).ToString("yyyy/MM/dd HH:mm:ss tt"))
-                </td>
-                <td>
-                    <code>
-                        @item.Reason.Substring(0, Math.Min(50, item.Reason.Length))
-                        @if (@item.Reason.Length > 50)
-                        {
-                            <span>...</span>
-                        }
-                    </code>
-                </td>
-                <td>
-                    <a class="btn btn-secondary"
-                       asp-area=""
-                       asp-route-id="@(item.UserId + "_" + item.GuildId)"
-                       asp-controller="ServerBanSync"
-                       asp-action="RecordInfo"></a>
-                </td>
-            </tr>
-        }
+        <tbody
+            hx-get="/Server/@Model.Guild.Id/BanSync/ListComponent"
+            hx-target="this"
+            hx-swap="innerHTML"
+            hx-trigger="load"
+            hx-indicator=".htmx-indicator"
+            id="banSyncRecordContainer">
         </tbody>
     </table>
-}
-
-@section Scripts
-{
-    <script type="text/javascript">
-    $(document).ready(function () {
-      $('#bansyncGuildList').DataTable({
-        "searching": true
-      });
-      $('.dataTables_length').addClass('bs-select');
-    });
-    </script>
 }

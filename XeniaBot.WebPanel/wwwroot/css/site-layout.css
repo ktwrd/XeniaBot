@@ -1,0 +1,22 @@
+﻿
+
+@media screen and (max-width: 991px) {
+    .col.is-full-mobile {
+        flex: none;
+        width: 100%;
+    }
+}
+@media screen and (min-width: 992px), print {
+    .col.is-half, .col.is-half-tablet {
+        flex: none;
+        width: 50%;
+    }
+    .col.is-40, .col.is-40-tablet {
+        flex: none;
+        width: 40%;
+    }
+    .col.is-60, .col.is-60-tablet {
+        flex: none;
+        width: 60%;
+    }
+}

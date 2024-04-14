@@ -1,0 +1,60 @@
+﻿@model ServerDetailsViewModel
+
+@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
+new List<BreadcrumbItem>()
+{
+    new BreadcrumbItem("Servers", "Server", "List"),
+    new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+    {
+        {"id", Model.Guild.Id.ToString()}
+    }),
+    new BreadcrumbItem("Fun")
+}))
+
+<div class="row d-flex flex-row">
+    <div class="m-1 col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm">
+                Confession
+            </div>
+            <div class="card-body" id="confession-body">
+                @{ await Html.RenderPartialAsync("Details/FunView/ConfessionComponentView"); }
+            </div>
+        </div>
+    </div>
+    <div class="m-1 col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm">
+                Counting
+            </div>
+            <div class="card-body" id="counting-body">
+                @{ await Html.RenderPartialAsync("Details/FunView/CountingComponentView"); }
+            </div>
+        </div>
+    </div>
+</div>
+<hr/>
+<h3>Level System</h3>
+<div class="row d-flex flex-row">
+    <div class="m-1 col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm">
+                Settings
+            </div>
+            <div class="card-body" id="level-general-content">
+                @{ await Html.RenderPartialAsync("Details/FunView/LevelSystem/GeneralComponentView"); }
+            </div>
+        </div>
+    </div>
+    <div class="m-1 col-auto">
+        <div class="card">
+            <div class="card-header card-header-sm">
+                Role Rewards
+            </div>
+            <div class="card-body" id="level-reward-content">
+                @{ await Html.RenderPartialAsync("Details/FunView/LevelSystem/RewardComponentView"); }
+            </div>
+        </div>
+    </div>
+</div>
+

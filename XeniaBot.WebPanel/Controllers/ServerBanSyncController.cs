@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XeniaBot.Data.Repositories;
+using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -30,7 +31,8 @@ public class ServerBanSyncController : BaseXeniaController
     }
     
     [HttpGet("~/Server/{id}/BanSync")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> Index(ulong id, string? messageType = null, string? message = null, ulong? targetUserId = null)
     {
         var guild = _discord.GetGuild(id);
@@ -67,35 +69,59 @@ public class ServerBanSyncController : BaseXeniaController
         return View("Index", data);
     }
 
+    [HttpGet("~/Server/{id}/BanSync/ListComponent")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
+    public async Task<IActionResult> ListComponent(ulong id, int cursor = 1, ulong? targetUserId = null)
+    {
+        var guild = _discord.GetGuild(id);
+        if (guild == null)
+            return PartialView("NotFound", "Guild not found");
+
+        var data = await GetDetails(guild.Id);
+        await PopulateModel(data);
+
+        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
+        {
+            data.BanSyncRecords = data.BanSyncRecords.Where(v => !v.Ghost).ToList();
+        }
+        var c = data.BanSyncRecords
+            .OrderByDescending(v => v.Timestamp)
+            .Skip((cursor - 1) * ServerBanSyncViewModel.PageSize)
+            .Take(ServerBanSyncViewModel.PageSize)
+            .ToList();
+        data.BanSyncRecords = c;
+        data.Cursor = cursor;
+
+        if (!data.BanSyncGuild.Enable)
+        {
+            return PartialView("NotAuthorized", new NotAuthorizedViewModel()
+            {
+                Message = "BanSync is not enabled on your server. <a href=\"https://xenia.kate.pet/guide/about_bansync\">More Information</a>"
+            });
+        }
+        
+        if (targetUserId != null)
+        {
+            data.FilterRecordsByUserId = targetUserId;
+            data.BanSyncRecords = data.BanSyncRecords.Where(v => v.UserId == targetUserId).ToList();
+        }
+
+        return PartialView("IndexComponent", data);
+    }
+
     [HttpGet("~/BanSync/Record/{id}/Ghost/True")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> GhostEnable(string id)
     {
-        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
-            return View("NotFound");
-        var idSplit = id.Split("_");
-        if (idSplit.Length < 2)
-            return View("NotFound");
-
-        ulong targetUserId = 0;
-        try
-        { targetUserId = ulong.Parse(idSplit[0]);
-        } catch
-        { return View("NotFound"); }
-
-        ulong targetGuildId = 0;
-        try
-        { targetGuildId = ulong.Parse(idSplit[1]);
-        } catch
-        { return View("NotFound"); }
-
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
         try
         {
-            var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
+            var record = await banSyncInfoController.GetInfo(id, true);
             if (record == null)
             {
-                return View("NotFound");
+                return PartialView("NotFound");
             }
 
             record.Ghost = true;
@@ -107,42 +133,25 @@ public class ServerBanSyncController : BaseXeniaController
             };
             await PopulateModel(data);
 
-            return View("Details", data);
+            return PartialView("DetailsComponent", data);
         }
         catch (Exception ex)
         {
-            return View("Error");
+            return PartialView("Error");
         }
     }
     [HttpGet("~/BanSync/Record/{id}/Ghost/False")]
-    [AuthRequired(RequireWhitelist = true)]
+    [AuthRequired]
+    [RequireSuperuser]
     public async Task<IActionResult> GhostDisable(string id)
     {
-        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
-            return View("NotFound");
-        var idSplit = id.Split("_");
-        if (idSplit.Length < 2)
-            return View("NotFound");
-
-        ulong targetUserId = 0;
-        try
-        { targetUserId = ulong.Parse(idSplit[0]);
-        } catch
-        { return View("NotFound"); }
-
-        ulong targetGuildId = 0;
-        try
-        { targetGuildId = ulong.Parse(idSplit[1]);
-        } catch
-        { return View("NotFound"); }
-
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
         try
         {
-            var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
+            var record = await banSyncInfoController.GetInfo(id, true);
             if (record == null)
             {
-                return View("NotFound");
+                return PartialView("NotFound");
             }
 
             record.Ghost = true;
@@ -154,58 +163,36 @@ public class ServerBanSyncController : BaseXeniaController
             };
             await PopulateModel(data);
 
-            return View("Details", data);
+            return PartialView("DetailsComponent", data);
         }
         catch (Exception ex)
         {
-            return View("Error");
+            return PartialView("Error");
         }
     }
     
     [HttpGet("~/BanSync/Record/{id}")]
+    [AuthRequired]
     public async Task<IActionResult> RecordInfo(string id)
     {
-        var idSplit = id.Split("_");
-        if (idSplit.Length < 2)
-            return View("NotFound");
-
-        ulong targetUserId = 0;
-        try
-        { targetUserId = ulong.Parse(idSplit[0]);
-        } catch
-        { return View("NotFound"); }
-
-        ulong targetGuildId = 0;
-        try
-        { targetGuildId = ulong.Parse(idSplit[1]);
-        } catch
-        { return View("NotFound"); }
-
         var banSyncInfoController = Program.Core.Services.GetRequiredService<BanSyncInfoRepository>();
-        try
+        var record = await banSyncInfoController.GetInfo(id, true);
+        if (record == null)
         {
-            var record = await banSyncInfoController.GetInfo(targetUserId, targetGuildId);
-            if (record == null)
-            {
-                return View("NotFound");
-            }
-
-            if (!AspHelper.IsCurrentUserAdmin(this.HttpContext) && record.Ghost)
-            {
-                return View("NotFound");
-            }
-
-            var data = new BanSyncRecordViewModel()
-            {
-                Record = record
-            };
-            await PopulateModel(data);
-
-            return View("Details", data);
+            return View("NotFound");
         }
-        catch (Exception ex)
+
+        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext) && record.Ghost)
         {
-            return View("Error");
+            return View("NotFound");
         }
+
+        var data = new BanSyncRecordViewModel()
+        {
+            Record = record
+        };
+        await PopulateModel(data);
+
+        return View("Details", data);
     }
 }

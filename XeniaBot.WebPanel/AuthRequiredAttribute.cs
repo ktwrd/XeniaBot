@@ -21,46 +21,41 @@ namespace XeniaBot.WebPanel;
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
 public class AuthRequiredAttribute : ActionFilterAttribute
 {
+    #region Obsolete
     /// <summary>
+    /// <para><b>Will be removed in a later update</b></para>
     /// <para>Optional: Requesting User Id must be in the provided guild and must have the Manage Server permission.</para>
     /// </summary>
     [DefaultValue(null)]
+    [Obsolete("Will be removed in a later update.")]
     public ulong? RequireGuildId { get; set; }
     /// <summary>
+    /// <para><b>Will be removed in a later update. Use <see cref="RestrictToGuildAttribute"/> instead.</b></para>
+    /// 
     /// <para>Route/Parameter name where the Guild Id is set.</para>
     ///
     /// <para>Requesting User must have the Manage Server permission</para>
     ///
-    /// <para><b>Overrides <see cref="RequireGuildId"/></b></para>
+    /// <para>Note: This overrides <see cref="RequireGuildId"/></para>
     /// </summary>
     [DefaultValue(null)]
+    [Obsolete("Will be removed in a later update. Use RestrictToGuildAttribute instead.")]
     public string? GuildIdRouteDataName { get; set; }
     /// <summary>
+    /// <para><b>Will be removed in a later update. Use <see cref="RequireSuperuserAttribute"/> instead.</b></para>
     /// Require the requesting user to be in <see cref="ConfigData.UserWhitelist"/>. Used for bot owner-only sections.
     /// </summary>
     [DefaultValue(false)]
+    [Obsolete("Will be removed in a later update. Use RequireSuperuserAttribute instead.")]
     public bool RequireWhitelist { get; set; }
+    #endregion
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         // Only allow authenticated users.
-        var isAuth = context.HttpContext.User?.Identity?.IsAuthenticated ?? false;
-        if (!isAuth)
-        {
-            context.Result = new ViewResult
-            {
-                ViewName = "NotAuthorized",
-                ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), context.ModelState)
-                {
-                    Model = new NotAuthorizedViewModel()
-                    {
-                        ShowLoginButton = true,
-                        Message = "Please Login"
-                    }
-                }
-            };
+        if (!AuthAttributeHelper.HandleAuth(context))
             return;
-        }
 
+        #region Obsolete
         if (RequireWhitelist)
         {
             var userId = AspHelper.GetUserId(context.HttpContext) ?? 0;
@@ -129,6 +124,8 @@ public class AuthRequiredAttribute : ActionFilterAttribute
                 return;
             }
         }
+        #endregion
+        
         base.OnActionExecuting(context);
     }
 

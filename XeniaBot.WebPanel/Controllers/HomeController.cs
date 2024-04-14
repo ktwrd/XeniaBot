@@ -66,9 +66,18 @@ public class HomeController : BaseXeniaController
     }
 
     [AuthRequired]
+    [HttpPost("~/Preferences/Component")]
+    public async Task<IActionResult> PreferencesComponent()
+    {
+        var data = await PopulateModel();
+        return PartialView("Components/UserConfigComponent", data);
+    }
+    
+    [AuthRequired]
     [HttpPost("~/Preferences/Save")]
     public async Task<IActionResult> PreferencesSave(ListViewStyle listViewStyle, bool enableProfileTracking)
     {
+        var model = await PopulateModel();
         try
         {
             var userId = (ulong)GetCurrentUserId();
@@ -76,20 +85,17 @@ public class HomeController : BaseXeniaController
             data.ListViewStyle = listViewStyle;
             data.EnableProfileTracking = enableProfileTracking;
             await _userConfig.Add(data);
+            model.UserConfig = data;
         }
         catch (Exception e)
         {
             Log.Error(e);
-            return RedirectToAction("Preferences", new
-            {
-                MessageType = "danger",
-                Message = $"Failed to save preferences. {e.Message}"
-            });
+            model.MessageType = "danger";
+            model.Message = $"Failed to save preferences. {e.Message}";
+            return PartialView("Components/UserConfigComponent", model);
         }
-        return RedirectToAction("Preferences", new
-        {
-            MessageType = "success",
-            Message = $"Preferences Saved"
-        });
+        model.MessageType = "success";
+        model.Message = $"Preferences Saved";
+        return PartialView("Components/UserConfigComponent", model);
     }
 }

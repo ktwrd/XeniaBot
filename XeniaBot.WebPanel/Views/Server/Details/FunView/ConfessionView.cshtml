@@ -1,4 +1,4 @@
-﻿@model ServerDetailsViewModel
+﻿@model XeniaBot.WebPanel.Models.Component.FunView.IServerConfessionComponentViewModel
 
 @{
     ViewBag.Title = $"Confession - {@Model.Guild.Name}";
@@ -17,37 +17,8 @@ new List<BreadcrumbItem>()
 }))
 
 <div class="row d-flex flex-row">
-    <div class="m-1 col-auto">
-        <form id="confession_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_Confession" asp-route-id="@Model.Guild.Id">
-        
-            <div class="row d-flex flex-row">
-                <div class="m-1 col-auto">
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                    {
-                        Channels = StrippedChannel.FromGuild(@Model.Guild),
-                        Categories = StrippedCategory.FromGuild(@Model.Guild),
-                        SelectedChannelId = @Model.CounterConfig.ChannelId,
-                        ParentFormId = "confession_settings",
-                        Name = "MessageChannelId",
-                        Id = "confession_settings_channel_out",
-                        DisplayName = "Message Channel"
-                    })
-                </div>
-                <div class="m-1 col-auto">
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                    {
-                        Channels = StrippedChannel.FromGuild(@Model.Guild),
-                        Categories = StrippedCategory.FromGuild(@Model.Guild),
-                        SelectedChannelId = @Model.CounterConfig.ChannelId,
-                        ParentFormId = "confession_settings",
-                        Name = "ModalChannelId",
-                        Id = "confession_settings_channel_modal",
-                        DisplayName = "Modal Channel"
-                    })
-                </div>
-            </div>
-            <a class="btn btn-danger mr-2" asp-controller="Server" asp-action="SaveSettings_Confession_Purge" asp-route-id="@Model.Guild.Id">Purge</a>
-            <input class="btn btn-success" type="submit" value="Save"/>
-        </form>
+    <div class="m-1 col-auto"
+         id="confession-body">
+        @{ await Html.RenderPartialAsync("ConfessionComponentView"); }
     </div>
 </div>

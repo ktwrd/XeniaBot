@@ -1,0 +1,37 @@
+﻿@model XeniaBot.WebPanel.Models.Component.AdminLevelSystemComponentViewModel
+
+@await Component.InvokeAsync("Alert", AlertComponentViewModel.FromExisting(Model, true))
+
+<form 
+    hx-post="/Admin/Server/@Model.Guild.Id/Settings/Xp"
+    hx-target="#levelSystem-body"
+    hx-swap="innerHTML"
+    hx-indicator="#levelSystem-body [type=submit] .htmx-indicator"
+    id="levelSystem">
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_enable" form="levelSystem" name="enable" checked="@Model.XpConfig.Enable" />
+        <label class="form-check-label" for="xp_settings_enable">
+            Enable
+        </label>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" value="true" id="xp_settings_show" form="levelSystem" name="show" checked="@Model.XpConfig.ShowLeveUpMessage"/>
+        <label class="form-check-label" for="xp_settings_show">
+            Show Level Up Message
+        </label>
+    </div>
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+    {
+        Channels = StrippedChannel.FromGuild(@Model.Guild),
+        Categories = StrippedCategory.FromGuild(@Model.Guild),
+        SelectedChannelId = @Model.XpConfig.LevelUpChannel,
+        ParentFormId = "levelSystem",
+        Name = "channelId",
+        Id = "xp_settings_channel",
+        DisplayName = "Notification Channel"
+    })
+    <button type="submit" class="btn btn-success">
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        Save
+    </button>
+</form>

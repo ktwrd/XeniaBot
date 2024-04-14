@@ -16,5 +16,13 @@ namespace XeniaBot.Data.Models
         public ulong GuildId { get; set; }
         public ulong ModalMessageId { get; set; }
         public ulong ModalChannelId { get; set; }
+
+        public ConfessionGuildModel()
+        {
+            ChannelId = 0;
+            GuildId = 0;
+            ModalMessageId = 0;
+            ModalChannelId = 0;
+        }
     }
 }

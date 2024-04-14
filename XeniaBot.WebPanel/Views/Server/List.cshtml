@@ -5,14 +5,6 @@
     ViewBag.Title = "Servers";
     Layout = "_Layout";
 }
-<style>
-    .serverListIcon {
-        width:  4rem;
-        height:  4rem;
-        border-bottom-left-radius: .25rem;
-        border-top-left-radius: .25rem;
-    }
-</style>
 @if (!@Model.Items.Any())
 {
     <div class="px-4 py-5 my-5 text-center">
@@ -26,7 +18,7 @@
 }
 else
 {
-    <div class="btn-group mb-2" role="group" aria-label="Server List Style">
+    @*<div class="btn-group mb-2" role="group" aria-label="Server List Style">
         @if (@Model.UserConfig.ListViewStyle == ListViewStyle.List)
         {
             <a class="btn btn-primary" href="/Server/List?style=0" alt="List"><i class="bi bi-view-list"></i></a>
@@ -44,69 +36,42 @@ else
         {
             <a class="btn btn-outline-primary" href="/Server/List?style=1" alt="Grid"><i class="bi bi-grid"></i></a>
         }
-    </div>
+    </div>*@
     @if (@Model.UserConfig.ListViewStyle == ListViewStyle.Grid)
     {
-        <div class="d-flex flex-wrap">
-        @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
-        {
-            <div class="card mb-3 m-3" style="max-width: 540px;">
-                <div class="row g-0">
-                    <div class="col-md-4">
-                        <img src="@(item.Guild.IconUrl ?? "/DebugEmpty.png")" class="card-img-top serverListIcon"/>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card-body">
-                            @if (@item.Guild.OwnerId == @item.GuildUser.Id)
-                            {
-                                <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
-                            }
-                            else if (@item.GuildUser.GuildPermissions.Administrator)
-                            {
-                                <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Server Administrator"></i>
-                            }
-                            <a asp-area="" asp-route-id="@item.Guild.Id" asp-controller="Server" asp-action="Index">@item.Guild.Name</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
+        <div class="d-flex flex-wrap"
+             hx-get="/Server/Components/ServerList"
+            hx-target="this"
+            hx-swap="innerHTML"
+            hx-trigger="load"
+            hx-indicator=".htmx-indicator"
+            id="serverListContainer">
         </div>
     } else
     {
-        <table class="table">
+        <table class="table table-bordered table-sm server-listing table-fs-listing">
             <thead>
             <tr>
-                <th></th>
                 <th>Name</th>
                 <th>Members</th>
                 <th></th>
             </tr>
             </thead>
-            <tbody>
-                @foreach (var item in @Model.Items.OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id))
-                {
-                    <tr>
-                        <td><img src="@(item.Guild.IconUrl ?? "/DebugEmpty.png")" class="card-img-top serverListIcon"/></td>
-                        <td>
-                            @if (@item.Guild.OwnerId == @item.GuildUser.Id)
-                            {
-                                <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
-                            }
-                            else if (@item.GuildUser.GuildPermissions.Administrator)
-                            {
-                                <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Server Administrator"></i>
-                            }
-                            @item.Guild.Name
-                        </td>
-                        <td>@item.Guild.MemberCount</td>
-                        <td><a class="btn btn-secondary" asp-area="" asp-route-id="@item.Guild.Id" asp-controller="Server" asp-action="Index"><i class="bi bi-speedometer"></i></a></td>
-                    </tr>
-                }
+            <tbody hx-get="/Server/Components/ServerList"
+                  hx-target="this"
+                  hx-swap="innerHTML"
+                  hx-trigger="load"
+                  hx-indicator=".htmx-indicator"
+                  id="serverListContainer">
             </tbody>
         </table>
     }
 }
+<div class="d-flex justify-content-center">
+    <div class="spinner-border htmx-indicator" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
 <ul class="p-0" style="list-style: none">
     <li>
         <strong><i class="bi bi-info-circle-fill"></i> Flags</strong>

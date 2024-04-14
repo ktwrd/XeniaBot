@@ -1,14 +1,19 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Services;
 using XeniaBot.Data.Models;
+using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.Helpers;
@@ -32,29 +37,43 @@ public static class AspHelper
 
         return target;
     }
-
+    
     public static bool IsCurrentUserAdmin(HttpContext context)
     {
         var userId = GetUserId(context) ?? 0;
         return Program.Core.Config.Data.UserWhitelist.Contains(userId);
     }
+    
 
-    public static bool CanAccessGuild(ulong guildId, ulong userId)
+    public static bool CanAccessGuild(
+        ulong guildId,
+        ulong userId,
+        GuildPermission permissionRequired = GuildPermission.ManageGuild)
     {
         var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        
-        var user = discord.GetUser(userId);
-        if (user == null)
-            return false;
+        var errorReport = Program.Core.GetRequiredService<ErrorReportService>();
+        try
+        {
+            var user = discord.GetUser(userId);
+            if (user == null)
+                return false;
 
-        var guild = discord.GetGuild(guildId);
-        var guildUser = guild.GetUser(user.Id);
-        if (guildUser == null)
-            return false;
-        if (!guildUser.GuildPermissions.ManageGuild)
-            return false;
+            var guild = discord.GetGuild(guildId);
+            var guildUser = guild.GetUser(user.Id);
+            if (guildUser == null)
+                return false;
+            if (!guildUser.GuildPermissions.Has(permissionRequired))
+                return false;
 
-        return true;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to run {guildId}, {userId}, {permissionRequired}\n{ex}");
+            errorReport.ReportException(
+                ex, $"Failed to run AspHelper.CanAccessGuild ({guildId}, {userId}, {permissionRequired})");
+            return false;
+        }
     }
     public static string[] ValidMessageTypes = new string[]
     {
@@ -208,6 +227,12 @@ public static class AspHelper
 
         var warnStrikeService = Program.Core.GetRequiredService<WarnStrikeService>();
         data.WarnStrikeConfig = await warnStrikeService.GetStrikeConfig(guild.Id);
+
+        var confessionRepo = Program.Core.GetRequiredService<ConfessionConfigRepository>();
+        data.ConfessionConfig = await confessionRepo.GetGuild(guild.Id) ?? new ConfessionGuildModel()
+        {
+            GuildId = guild.Id
+        };
         
         return data;
     }
@@ -245,6 +270,22 @@ public static class AspHelper
                 return reader.ReadToEnd();
             }
         }
+    }
+    
 
+    public static List<TSource> Paginate<TSource, TKey>(IEnumerable<TSource> data, Func<TSource, TKey> keySelector, int page = 1, int pageSize = 10)
+    {
+        return Paginate(data, v => v.OrderBy(keySelector), page, pageSize);
+    }
+
+    public static List<TSource> Paginate<TSource>(IEnumerable<TSource> data,
+        Func<IEnumerable<TSource>, IEnumerable<TSource>> logic,
+        int page = 1,
+        int pageSize = 10)
+    {
+        return logic(data)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
     }
 }

@@ -13,49 +13,6 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public partial class ServerController
 {
-    [HttpPost("~/Server/{id}/Settings/Counting")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
-    public async Task<IActionResult> SaveSettings_Counting(ulong id, string? inputChannelId)
-    {
-        var userId = AspHelper.GetUserId(HttpContext);
-        if (userId == null)
-            return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
-        var guild = _discord.GetGuild(id);
-        if (guild == null)
-            return View("NotFound", "Guild not found");
-
-        ulong? channelId = null;
-        try
-        {
-            channelId = ulong.Parse(inputChannelId ?? "0");
-            if (channelId == null)
-                throw new Exception("ChannelId is null");
-            
-            var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
-            var counterData = await controller.Get(guild) ?? new CounterGuildModel()
-            {
-                GuildId = guild.Id,
-                ChannelId = (ulong)channelId
-            };
-            counterData.ChannelId = (ulong)channelId;
-            await controller.Set(counterData);
-
-            return await CountingView(id,
-                messageType: "success",
-                message: $"Saved settings.");
-        }
-        catch (Exception ex)
-        {
-            Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(ex, $"Failed to save counter settings");
-            Log.Error(ex);
-            return await CountingView(id,
-                messageType: "danger",
-                message: $"Failed to save Counting settings. {ex.Message}");
-        }
-    }
-
     public class SettingLogSystemData
     {
         public ulong? DefaultLogChannel { get; set; }
@@ -72,7 +29,8 @@ public partial class ServerController
     }
     
     [HttpPost("~/Server/{id}/Settings/Log")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_LogSystem(ulong id, SettingLogSystemData data)
     {
         var guild = _discord.GetGuild(id);
@@ -115,7 +73,8 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/RolePreserve")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
     {
         try
@@ -144,7 +103,8 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/WarnStrike")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_WarnStrike(ulong id, bool enable, int maxStrike, int strikeWindow)
     {
         try
@@ -186,7 +146,8 @@ public partial class ServerController
     }
     
     [HttpPost("~/Server/{id}/Settings/Greeter")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_Greeter(
         ulong id,
         bool inputMentionUser = false,
@@ -262,7 +223,8 @@ public partial class ServerController
     }
 
     [HttpPost("~/Server/{id}/Settings/GreeterBye")]
-    [AuthRequired(GuildIdRouteDataName = "id")]
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_GreeterBye(
         ulong id,
         bool inputMentionUser,

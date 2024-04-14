@@ -1,0 +1,73 @@
+﻿@using XeniaBot.Data
+@model XeniaBot.WebPanel.Models.Component.ServerListComponentViewModel
+
+@if (Model.UserConfig.ListViewStyle == ListViewStyle.Grid)
+{
+    @foreach (var item in @Model.Items)
+    {
+        <div class="card mb-3 m-3" style="max-width: 540px;"
+             @{
+                 if (Model.IsLastPage == false && Model.IsGuildLast(item))
+                 {
+                     <text>
+                         hx-get="/Server/Components/ServerList?cursor=@(Model.Cursor + 1)"
+                         hx-trigger="revealed"
+                         hx-target="#serverListContainer"
+                         hx-swap="beforeend"
+                         hx-indicator=".htmx-indicator"</text>
+             } }>
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="@(item.Guild.IconUrl ?? "/DebugEmpty.png")" class="card-img-top serverListIcon"/>
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <span>
+                            @if (@item.Guild.OwnerId == @item.GuildUser.Id)
+                            {
+                                <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
+                            }
+                            else if (@item.GuildUser.GuildPermissions.Administrator)
+                            {
+                                <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Server Administrator"></i>
+                            }
+                            <a asp-area="" asp-route-id="@item.Guild.Id" asp-controller="Server" asp-action="Index">@item.Guild.Name</a>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    @foreach (var item in @Model.Items)
+    {
+        <tr
+            @{
+                if (Model.IsLastPage == false && Model.IsGuildLast(item))
+                {
+                    <text>
+                        hx-get="/Server/Components/ServerList?cursor=@(Model.Cursor + 1)"
+                        hx-trigger="revealed"
+                        hx-target="#serverListContainer"
+                        hx-swap="beforeend"
+                        hx-indicator=".htmx-indicator"</text>
+            } }>
+            <td>
+                <img src="@(item.Guild.IconUrl ?? "/DebugEmpty.png")" class="serverListIcon"/>
+                @if (@item.Guild.OwnerId == @item.GuildUser.Id)
+                {
+                    <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
+                }
+                else if (@item.GuildUser.GuildPermissions.Administrator)
+                {
+                    <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Server Administrator"></i>
+                }
+                @item.Guild.Name
+            </td>
+            <td>@item.Guild.MemberCount</td>
+            <td><a class="btn btn-secondary" asp-area="" asp-route-id="@item.Guild.Id" asp-controller="Server" asp-action="Index"><i class="bi bi-speedometer"></i></a></td>
+        </tr>
+    }
+}
