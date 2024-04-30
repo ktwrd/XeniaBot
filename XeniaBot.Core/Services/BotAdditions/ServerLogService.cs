@@ -298,6 +298,11 @@ public class ServerLogService : BaseService
             return;
         try
         {
+            if (message.Id == 0)
+            {
+                Log.Warn($"message.Id is zero?\nhas type of {message.GetType()}");
+                return;
+            }
             var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(message.Id);
         
             string messageContent = message?.Content ?? funkyMessage?.Content ?? "";
