@@ -335,7 +335,7 @@ public class ServerLogService : BaseService
                     {
                         "Failed run ServerLogService.Event_MessageDelete.", $"ChannelId: {socketChannel.Id}",
                         $"Guild: {socketChannel.Guild.Id} ({socketChannel.Guild.Name})",
-                        $"MessageId: {message?.Id ?? 0}"
+                        $"MessageId: {message?.Id ?? m.Id}"
                     });
             Log.Error(msg, ex);
             await _errorService.ReportException(
