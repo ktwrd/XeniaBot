@@ -298,7 +298,7 @@ public class ServerLogService : BaseService
             return;
         try
         {
-            if (message.Id == 0 || m.Id == 0)
+            if (m.Id == 0)
             {
                 Log.Warn($"message.Id is zero?\nhas type of {message.GetType()}");
                 return;
@@ -313,7 +313,7 @@ public class ServerLogService : BaseService
             SocketUser? author = _discord.GetUser(message?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Deleted")
-                .WithDescription($"Deleted in <#{channel.Id}> at <t:{timestamp}:F>")
+                .WithDescription($"Deleted in <#{c.Id}> at <t:{timestamp}:F>")
                 .WithColor(Color.Orange);
             if (author != null)
                 embed.WithThumbnailUrl(author.GetAvatarUrl());
