@@ -323,6 +323,7 @@ namespace XeniaBot.Core.Modules
         }
 
         [SlashCommand("silence", "Disable or enable level-up notifications.")]
+        [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task Silence(bool value)
         {
             await DeferAsync();
