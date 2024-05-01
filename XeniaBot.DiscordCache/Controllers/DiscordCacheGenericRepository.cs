@@ -73,7 +73,7 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
     /// <param name="model">Model to add to the collection</param>
     public async Task Add(T model)
     {
-        model._id = default;
+        model.Id = default;
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
         await collection.InsertOneAsync(model);
