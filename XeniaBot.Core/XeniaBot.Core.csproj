@@ -42,9 +42,4 @@
   <ItemGroup>
     <Folder Include="Exceptions\" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="XeniaBot.Data">
-      <HintPath>..\XeniaBot.WebPanel\bin\Debug\net8.0\XeniaBot.Data.dll</HintPath>
-    </Reference>
-  </ItemGroup>
 </Project>

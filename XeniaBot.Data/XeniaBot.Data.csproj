@@ -12,5 +12,4 @@
       <ProjectReference Include="..\XeniaBot.DiscordCache\XeniaBot.DiscordCache.csproj" />
       <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     </ItemGroup>
-
 </Project>
