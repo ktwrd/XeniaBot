@@ -1,9 +1,10 @@
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Data.Moderation;
 using XeniaBot.Data.Moderation.Models;
 using XeniaBot.Data.Moderation.Repositories;
+using XeniaBot.Moderation.Helpers;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Moderation.Services;
@@ -146,5 +147,3 @@ public partial class ModerationService
 	}
 }
 
-public delegate Task ModerationMemberBannedDelegate(BanRecordModel record, BanHistoryModel history);
-public delegate Task ModerationMemberUnbannedDelegate(BanHistoryModel history);
