@@ -8,6 +8,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using Timer = System.Timers.Timer;
+using AuditLogActionType = XeniaBot.Data.Moderation.Models.AuditLogCheckRecord.AuditLogActionType;
 
 namespace XeniaBot.Moderation.Services;
 
@@ -33,7 +34,7 @@ public partial class ModerationService
         }
     }
 
-    public event UserKickedDelegate? DiscordUserKicked;
+    public event MemberKickedDelegate? DiscordUserKicked;
     private void KickEventTimer_Handle(object? sender, ElapsedEventArgs args)
     {
         Log.Debug("Running task.");
@@ -49,11 +50,11 @@ public partial class ModerationService
             
             taskList.Add(new Task(delegate
             {
-                var record = _auditCheckRepo.Get(item.Id, "Kick", CoreContext.InstanceId.ToString()).Result
+                var record = _auditCheckRepo.Get(item.Id, AuditLogActionType.Kick, CoreContext.InstanceId.ToString()).Result
                              ?? new AuditLogCheckRecord()
                              {
-                                 ActionType = "Kick",
-                                 GuildId = guildId,
+                                 ActionType = AuditLogActionType.Kick,
+                                 GuildId = guildId.ToString(),
                                  LastId = null
                              };
                 var lastAuditId = record.LastId;
@@ -70,7 +71,7 @@ public partial class ModerationService
                 record.LastId = audit.FirstOrDefault()?.Id;
                 if (record.LastId != null)
                 {
-                    record.Id = Guid.NewGuid();
+                    record.Id = Guid.NewGuid().ToString();
                     record.Timestamp = audit.First()!.CreatedAt.ToUnixTimeSeconds();
                     _auditCheckRepo.Add(record).Wait();
                 }

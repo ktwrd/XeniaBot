@@ -1,39 +1,68 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Moderation.Models;
 
-public class BanRecordModel
+public class BanRecordModel : BaseModelGuid
 {
     public static string CollectionName => "mod_banRecord";
-    [BsonElement("_id")]
-    public Guid Id { get; set; }
     
     /// <summary>
-    /// Guild Id this Ban Record belongs to
+    /// <para><b>Stored as ulong</b></para>
+    /// 
+    /// <inheritdoc cref="GetGuildId()"/>
     /// </summary>
-    public ulong GuildId { get; set; }
+    public string GuildId { get; set; }
+
+    /// <summary>
+    /// <para>Guild Id this Ban Record belongs to.</para>
+    /// </summary>
+    public ulong GetGuildId()
+    {
+        return ulong.Parse(GuildId);
+    }
     
     /// <summary>
-    /// Timestamp when this record was initially added to the database.
-    ///
-    /// Seconds since UTC Epoch
+    /// <para>Unix Timestamp (UTC, <b>Seconds</b>)</para>
+    /// 
+    /// <para>Timestamp when this record was initially added to the database.</para>
     /// </summary>
     public long Timestamp { get; set; }
     
     /// <summary>
-    /// Timestamp when this ban record was created. Will use <see cref="Timestamp"/> if it was fetched from the <see cref="Discord.IGuild.GetBansAsync"/>.
-    ///
-    /// Seconds since UTC Epoch
+    /// <para>Unix Timestamp (UTC, <b>Seconds</b>)</para>
+    /// 
+    /// <para>Timestamp when this ban record was created. Will use <see cref="Timestamp"/> if it was fetched from the <see cref="Discord.IGuild.GetBansAsync"/>.</para>
     /// </summary>
     public long CreatedAt { get; set; }
     /// <summary>
-    /// User that was banned.
+    /// <para><b>Stored as ulong</b></para>
+    /// 
+    /// <inheritdoc cref="GetUserId()"/>
     /// </summary>
-    public ulong UserId { get; set; }
+    public string UserId { get; set; }
+
     /// <summary>
-    /// User who banned <see cref="TargetUserId"/>. Will be `null` if we don't know.
+    /// <para>User that was banned.</para>
     /// </summary>
-    public ulong? ActionedUserId { get; set; }
+    public ulong GetUserId()
+    {
+        return ulong.Parse(UserId);
+    }
+    /// <summary>
+    /// <para><b>Stored as ulong</b></para>
+    ///
+    /// <inheritdoc cref="GetActionedByUserId()"/>
+    /// </summary>
+    public string? ActionedByUserId { get; set; }
+
+    /// <summary>
+    /// User who banned <see cref="UserId"/>. Will be `null` if we don't know.
+    /// </summary>
+    public ulong? GetActionedByUserId()
+    {
+        return ActionedByUserId == null ? null : ulong.Parse(ActionedByUserId);
+    }
 
     /// <summary>
     /// Ban Reason.
@@ -41,7 +70,9 @@ public class BanRecordModel
     public string? Reason { get; set; }
 
     public BanRecordModel()
+        : base()
     {
-        Id = Guid.NewGuid();
+        UserId = "0";
+        GuildId = "0";
     }
 }

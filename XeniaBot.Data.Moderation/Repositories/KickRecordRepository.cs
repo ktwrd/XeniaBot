@@ -15,7 +15,7 @@ public class KickRecordRepository : BaseRepository<KickRecordModel>
     {
         var filter = Builders<KickRecordModel>
             .Filter
-            .Where(v => v.GuildId == guildId && v.UserId == userId);
+            .Where(v => v.GuildId == guildId.ToString() && v.UserId == userId.ToString());
         var order = Builders<KickRecordModel>.Sort.Descending(v => v.CreatedAt);
         var res = await BaseFind(filter, order);
         return res.FirstOrDefault();
@@ -29,7 +29,7 @@ public class KickRecordRepository : BaseRepository<KickRecordModel>
     {
         var filter = Builders<KickRecordModel>
             .Filter
-            .Where(v => v.UserId == userId);
+            .Where(v => v.UserId == userId.ToString());
         var order = Builders<KickRecordModel>.Sort.Descending(v => v.CreatedAt);
         var res = await BaseFind(filter, order);
         return res.ToList();
@@ -42,7 +42,7 @@ public class KickRecordRepository : BaseRepository<KickRecordModel>
     {
         var filter = Builders<KickRecordModel>
             .Filter
-            .Where(v => v.GuildId == guildId);
+            .Where(v => v.GuildId == guildId.ToString());
         var order = Builders<KickRecordModel>.Sort.Descending(v => v.CreatedAt);
         var res = await BaseFind(filter, order);
         return res.ToList();
@@ -56,10 +56,10 @@ public class KickRecordRepository : BaseRepository<KickRecordModel>
         items = items.OrderByDescending(v => v.CreatedAt).ToList();
         foreach (var item in items)
         {
-            if (!dict.ContainsKey(item.UserId))
-                dict.Add(item.UserId, new List<KickRecordModel>());
+            if (!dict.ContainsKey(item.GetUserId()))
+                dict.Add(item.GetUserId(), new List<KickRecordModel>());
 
-            dict[item.UserId].Add(item);
+            dict[item.GetUserId()].Add(item);
         }
 
         return dict;

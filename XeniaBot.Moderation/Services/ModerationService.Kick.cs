@@ -30,9 +30,9 @@ public partial class ModerationService
     {
         var recordModel = new KickRecordModel()
         {
-            GuildId = guild.Id,
-            UserId = targetUser,
-            ActionedByUserId = actionedUser,
+            GuildId = guild.Id.ToString(),
+            UserId = targetUser.ToString(),
+            ActionedByUserId = actionedUser?.ToString(),
             Reason = reason,
             CreatedAt = timestamp ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         };

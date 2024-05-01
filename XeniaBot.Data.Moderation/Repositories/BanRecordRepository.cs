@@ -20,7 +20,7 @@ public class BanRecordRepository : BaseRepository<BanRecordModel>
     {
         var filter = Builders<BanRecordModel>
             .Filter
-            .Where(v => v.GuildId == guildId && v.UserId == userId);
+            .Where(v => v.GuildId == guildId.ToString() && v.UserId == userId.ToString());
         var order = Builders<BanRecordModel>.Sort.Descending(v => v.CreatedAt);
         var res = await BaseFind(filter, order);
         return res.FirstOrDefault();
@@ -34,7 +34,7 @@ public class BanRecordRepository : BaseRepository<BanRecordModel>
     {
         var filter = Builders<BanRecordModel>
             .Filter
-            .Where(v => v.UserId == userId);
+            .Where(v => v.UserId == userId.ToString());
         var order = Builders<BanRecordModel>.Sort.Descending(v => v.CreatedAt);
         var res = await BaseFind(filter, order);
         return res.ToList();
@@ -47,7 +47,7 @@ public class BanRecordRepository : BaseRepository<BanRecordModel>
     {
         var filter = Builders<BanRecordModel>
             .Filter
-            .Where(v => v.GuildId == guildId);
+            .Where(v => v.GuildId == guildId.ToString());
         var order = Builders<BanRecordModel>.Sort.Descending(v => v.CreatedAt);
         var res = await BaseFind(filter, order);
         return res.ToList();
@@ -61,10 +61,10 @@ public class BanRecordRepository : BaseRepository<BanRecordModel>
         items = items.OrderByDescending(v => v.Timestamp).ToList();
         foreach (var item in items)
         {
-            if (!dict.ContainsKey(item.UserId))
-                dict.Add(item.UserId, new List<BanRecordModel>());
+            if (!dict.ContainsKey(item.GetUserId()))
+                dict.Add(item.GetUserId(), new List<BanRecordModel>());
 
-            dict[item.UserId].Add(item);
+            dict[item.GetUserId()].Add(item);
         }
 
         return dict;

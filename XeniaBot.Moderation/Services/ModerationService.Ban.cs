@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Data.Moderation;
@@ -13,7 +13,13 @@ public partial class ModerationService
 	private LockState<ulong, ulong> ignoreBanLock = new LockState<ulong, ulong>();
 	private LockState<ulong, ulong> ignoreUnBanLock = new LockState<ulong, ulong>();
 
+	/// <summary>
+	/// Member was banned.
+	/// </summary>
 	public event ModerationMemberBannedDelegate? MemberBanned;
+	/// <summary>
+	/// Member was unbanned.
+	/// </summary>
 	public event ModerationMemberUnbannedDelegate? MemberUnbanned;
 
     /// <summary>
@@ -83,16 +89,16 @@ public partial class ModerationService
 
 		var recordModel = new BanRecordModel()
 		{
-			GuildId = guild.Id,
+			GuildId = guild.Id.ToString(),
 			CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-			UserId = targetUser,
-			ActionedUserId = actionedUser,
+			UserId = targetUser.ToString(),
+			ActionedByUserId = actionedUser?.ToString(),
 			Reason = guildBan.Reason
 		};
 		var historyModel = new BanHistoryModel()
 		{
-			UserId = targetUser,
-			GuildId = guild.Id,
+			UserId = targetUser.ToString(),
+			GuildId = guild.Id.ToString(),
 			IsBanned = true,
 			BanRecordId = recordModel.Id,
 			Reason = guildBan.Reason
@@ -107,8 +113,8 @@ public partial class ModerationService
 	{
 		var historyModel = new BanHistoryModel()
 		{
-			UserId = targetUser,
-			GuildId = guild.Id,
+			UserId = targetUser.ToString(),
+			GuildId = guild.Id.ToString(),
 			IsBanned = false,
 			BanRecordId = null,
 			Reason = unbanReason

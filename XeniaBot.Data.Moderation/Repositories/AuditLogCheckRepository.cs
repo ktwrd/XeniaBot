@@ -2,6 +2,7 @@
 using XeniaBot.Data.Moderation.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
+using AuditLogActionType = XeniaBot.Data.Moderation.Models.AuditLogCheckRecord.AuditLogActionType;
 
 namespace XeniaBot.Data.Moderation.Repositories;
 
@@ -12,14 +13,14 @@ public class AuditLogCheckRepository : BaseRepository<AuditLogCheckRecord>
         : base(AuditLogCheckRecord.CollectionName, services)
     { }
 
-    public Task<AuditLogCheckRecord?> Get(ulong guildId, string actionType, Guid instanceId) =>
+    public Task<AuditLogCheckRecord?> Get(ulong guildId, AuditLogActionType actionType, Guid instanceId) =>
         Get(guildId, actionType, instanceId.ToString());
     
-    public async Task<AuditLogCheckRecord?> Get(ulong guildId, string actionType, string instanceId)
+    public async Task<AuditLogCheckRecord?> Get(ulong guildId, AuditLogActionType actionType, string instanceId)
     {
         var filter = Builders<AuditLogCheckRecord>
             .Filter
-            .Where(v => v.GuildId == guildId && v.ActionType == actionType && v.InstanceId == instanceId);
+            .Where(v => v.GuildId == guildId.ToString() && v.ActionType == actionType && v.InstanceId == instanceId);
         var sort = Builders<AuditLogCheckRecord>
             .Sort
             .Descending(v => v.Timestamp);

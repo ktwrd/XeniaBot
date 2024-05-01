@@ -4,30 +4,65 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Moderation.Models
 {
-    public class BanHistoryModel
+    public class BanHistoryModel : BaseModelGuid
     {
         public static string CollectionName => "mod_banRecord_history";
-        [BsonElement("_id")]
-        public Guid Id { get; set; }
-        public ulong UserId { get; set; }
-        public ulong GuildId { get; set; }
+        /// <summary>
+        /// <para><b>Stored as ulong</b></para>
+        ///
+        /// <inheritdoc cref="GetUserId()"/>
+        /// </summary>
+        public string UserId { get; set; }
+
+        /// <summary>
+        /// User that was banned or unbanned.
+        /// </summary>
+        public ulong GetUserId()
+        {
+            return ulong.Parse(UserId);
+        }
+        /// <summary>
+        /// <para><b>Stored as ulong</b></para>
+        ///
+        /// <inheritdoc cref="GetGuildId()"/>
+        /// </summary>
+        public string GuildId { get; set; }
+
+        /// <summary>
+        /// Guild Id this Ban History item is for.
+        /// </summary>
+        public ulong GetGuildId()
+        {
+            return ulong.Parse(GuildId);
+        }
+        /// <summary>
+        /// Is the User banned?
+        /// </summary>
         public bool IsBanned { get; set; }
         /// <summary>
-        /// When this person was banned. Seconds since UTC Epoch.
+        /// <para>Unix Timestamp (UTC, <b>Seconds</b>)</para>
+        /// 
+        /// <para>When this person was banned.</para>
         /// </summary>
         public long Timestamp { get; set; }
         /// <summary>
         /// When not `null`, it is set to <see cref="BanRecordModel.Id"/> because it is a many-to-one relationship (many is <see cref="BanHistoryModel"/>).
         /// </summary>
-        public Guid? BanRecordId { get; set; }
+        public string? BanRecordId { get; set; }
+        /// <summary>
+        /// Reason why this User was banned.
+        /// </summary>
         public string? Reason { get; set; }
 
         public BanHistoryModel()
+            : base()
         {
-            Id = Guid.NewGuid();
+            UserId = "0";
+            GuildId = "0";
         }
     }
 }
