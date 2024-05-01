@@ -405,3 +405,5 @@ config.json
 XeniaBot.WebPanel/Properties/launchSettings.json
 test_backup.ps1
 run_backup.ps1
+docker-compose.yml
+XeniaBot.Core/Modules/ManualTesting/WarnTestModule.cs
