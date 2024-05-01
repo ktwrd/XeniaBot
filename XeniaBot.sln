@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Data.Moderation", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Moderation", "Moderation", "{9A4352B0-331B-4AF0-AACF-E8A41137FBB4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Evidence", "XeniaBot.Evidence\XeniaBot.Evidence.csproj", "{3CB1209B-072F-49D1-A5F5-67929227DAC3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,18 @@ Global
 		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|arm64.Build.0 = Release|Any CPU
 		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|x86.ActiveCfg = Release|Any CPU
 		{AA77501A-BB43-4691-BD9E-5112FB02D5FD}.Release|x86.Build.0 = Release|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Debug|arm64.Build.0 = Debug|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Debug|x86.Build.0 = Debug|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|arm64.ActiveCfg = Release|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|arm64.Build.0 = Release|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|x86.ActiveCfg = Release|Any CPU
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -137,5 +151,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{AA77501A-BB43-4691-BD9E-5112FB02D5FD} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
 		{292B801A-65F6-4D2D-A8D7-4D52853965C8} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
+		{3CB1209B-072F-49D1-A5F5-67929227DAC3} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
 	EndGlobalSection
 EndGlobal

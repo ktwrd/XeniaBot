@@ -7,9 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\XeniaBot.Data.Moderation\XeniaBot.Data.Moderation.csproj" />
-      <ProjectReference Include="..\XeniaBot.Evidence\XeniaBot.Evidence.csproj" />
-      <ProjectReference Include="..\XeniaBot.Logic\XeniaBot.Logic.csproj" />
+      <Folder Include="Models\" />
+      <Folder Include="Repositories\" />
+      <Folder Include="Services\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
     </ItemGroup>
 
 </Project>
