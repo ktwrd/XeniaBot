@@ -32,6 +32,7 @@ public partial class ModerationService : BaseService
         _discordClient.UserUnbanned += DiscordClientUserUnbanned;
 
         InitKickEvent();
+        InitBanEvent();
         
         return Task.CompletedTask;
     }
