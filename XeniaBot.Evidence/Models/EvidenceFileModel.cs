@@ -1,4 +1,4 @@
-using XeniaBot.Shared.Models;
+﻿using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Evidence.Models;
 
@@ -117,6 +117,13 @@ public class EvidenceFileModel : BaseModelGuid
     {
         return DeletedByUserId == null ? null : ulong.Parse(DeletedByUserId!);
     }
+    
+    /// <summary>
+    /// <para><b>UNIX Timestamp (UTC, <b>Seconds</b>)</para>
+    ///
+    /// <para>Timestamp when this record was last updated</para>
+    /// </summary>
+    public long Timestamp { get; set; }
 
     public EvidenceFileModel()
         : base()
@@ -124,7 +131,7 @@ public class EvidenceFileModel : BaseModelGuid
         Filename = "";
         Description = "";
         MimeType = "application/octet-stream";
-        Size = 0;
+        Size = "0";
         
         UploadedByUserId = "0";
         GuildId = "0";
