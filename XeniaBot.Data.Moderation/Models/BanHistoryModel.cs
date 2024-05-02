@@ -28,6 +28,20 @@ namespace XeniaBot.Data.Moderation.Models
         /// <summary>
         /// <para><b>Stored as ulong</b></para>
         ///
+        /// <inheritdoc cref="GetActionedByUserId()"/>
+        /// </summary>
+        public string? ActionedByUserId { get; set; }
+
+        /// <summary>
+        /// <para>User Id that banned/unbanned the User. Null when not known</para>
+        /// </summary>
+        public ulong? GetActionedByUserId()
+        {
+            return ActionedByUserId == null ? null : ulong.Parse(ActionedByUserId);
+        }
+        /// <summary>
+        /// <para><b>Stored as ulong</b></para>
+        ///
         /// <inheritdoc cref="GetGuildId()"/>
         /// </summary>
         public string GuildId { get; set; }
