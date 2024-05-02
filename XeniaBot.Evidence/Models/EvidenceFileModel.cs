@@ -1,4 +1,4 @@
-﻿using XeniaBot.Shared.Models;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Evidence.Models;
 
@@ -24,9 +24,19 @@ public class EvidenceFileModel : BaseModelGuid
     public string MimeType { get; set; }
     
     /// <summary>
+    /// <para><b>Stored as ulong</b></para>
+    ///
+    /// <inheritdoc cref="GetSize()"/>
+    /// </summary>
+    public string Size { get; set; }
+
+    /// <summary>
     /// File size. Measured in bytes.
     /// </summary>
-    public uint Size { get; set; }
+    public ulong GetSize()
+    {
+        return ulong.Parse(Size);
+    }
     
     /// <summary>
     /// <para><b>Stored as ulong</b></para>
