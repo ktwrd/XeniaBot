@@ -88,33 +88,50 @@ public partial class ModerationService
 	{
 		var guildBan = await guild.GetBanAsync(targetUser);
 
+        await AddRecordBan(guild, targetUser, actionedUser, guildBan.Reason, emitEvent: true);
+    }
+
+	protected async Task AddRecordBan(
+		SocketGuild guild,
+		ulong targetUser,
+		ulong? actionedUser,
+		string? reason,
+		long? timestamp = null,
+		bool emitEvent = true)
+	{
 		var recordModel = new BanRecordModel()
 		{
 			GuildId = guild.Id.ToString(),
-			CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+			CreatedAt = timestamp ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
 			UserId = targetUser.ToString(),
 			ActionedByUserId = actionedUser?.ToString(),
-			Reason = guildBan.Reason
+			Reason = reason
 		};
 		var historyModel = new BanHistoryModel()
 		{
 			UserId = targetUser.ToString(),
+			ActionedByUserId = actionedUser?.ToString(),
 			GuildId = guild.Id.ToString(),
 			IsBanned = true,
+			Timestamp = timestamp ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
 			BanRecordId = recordModel.Id,
-			Reason = guildBan.Reason
+			Reason = reason,
 		};
+		
+		recordModel = await _banRecordRepo.InsertOrUpdate(recordModel);
+		historyModel = await _banHistoryRepo.InsertOrUpdate(historyModel);
 
-        recordModel = await _banRecordRepo.InsertOrUpdate(recordModel);
-        historyModel = await _banHistoryRepo.InsertOrUpdate(historyModel);
-
-		MemberBanned?.Invoke(recordModel, historyModel);
-    }
+		if (emitEvent)
+		{
+			MemberBanned?.Invoke(recordModel, historyModel);
+		}
+	}
 	protected async Task AddRecordUnban(SocketGuild guild, ulong targetUser, ulong? actionedUser, string? unbanReason = null)
 	{
 		var historyModel = new BanHistoryModel()
 		{
 			UserId = targetUser.ToString(),
+			ActionedByUserId = actionedUser?.ToString(),
 			GuildId = guild.Id.ToString(),
 			IsBanned = false,
 			BanRecordId = null,
