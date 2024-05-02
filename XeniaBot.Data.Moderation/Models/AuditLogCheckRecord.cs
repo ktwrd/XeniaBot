@@ -29,7 +29,8 @@ public class AuditLogCheckRecord : BaseModelGuid
 
     public enum AuditLogActionType
     {
-        Kick
+        Kick,
+        Ban
     }
     /// <summary>
     /// <para>Unix Timestamp (UTC, <b>Seconds</b>)</para>
