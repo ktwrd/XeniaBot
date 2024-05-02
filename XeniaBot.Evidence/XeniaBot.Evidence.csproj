@@ -7,12 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Repositories\" />
-      <Folder Include="Services\" />
+      <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
+      <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     </ItemGroup>
 
 </Project>
