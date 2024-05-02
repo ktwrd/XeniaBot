@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Timers;
+﻿using System.Timers;
 using Discord;
 using Discord.Rest;
 using XeniaBot.Data.Moderation.Models;
@@ -50,7 +49,7 @@ public partial class ModerationService
             
             taskList.Add(new Task(delegate
             {
-                var record = _auditCheckRepo.Get(item.Id, AuditLogActionType.Kick, CoreContext.InstanceId.ToString()).Result
+                var record = _auditCheckRepo.Get(guildId, AuditLogActionType.Kick, CoreContext.InstanceId.ToString()).Result
                              ?? new AuditLogCheckRecord()
                              {
                                  ActionType = AuditLogActionType.Kick,
@@ -71,7 +70,7 @@ public partial class ModerationService
                 record.LastId = audit.FirstOrDefault()?.Id;
                 if (record.LastId != null)
                 {
-                    record.Id = Guid.NewGuid().ToString();
+                    record.ResetId();
                     record.Timestamp = audit.First()!.CreatedAt.ToUnixTimeSeconds();
                     _auditCheckRepo.Add(record).Wait();
                 }
