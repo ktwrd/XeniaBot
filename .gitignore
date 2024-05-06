@@ -407,3 +407,5 @@ test_backup.ps1
 run_backup.ps1
 docker-compose.yml
 XeniaBot.Core/Modules/ManualTesting/WarnTestModule.cs
+
+XeniaBot.Evidence.StorageProxy/Properties/launchSettings.json

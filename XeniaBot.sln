@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Moderation", "Moderation", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Evidence", "XeniaBot.Evidence\XeniaBot.Evidence.csproj", "{3CB1209B-072F-49D1-A5F5-67929227DAC3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Evidence.StorageProxy", "XeniaBot.Evidence.StorageProxy\XeniaBot.Evidence.StorageProxy.csproj", "{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +143,18 @@ Global
 		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|arm64.Build.0 = Release|Any CPU
 		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|x86.ActiveCfg = Release|Any CPU
 		{3CB1209B-072F-49D1-A5F5-67929227DAC3}.Release|x86.Build.0 = Release|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Debug|arm64.Build.0 = Debug|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Debug|x86.Build.0 = Debug|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Release|arm64.ActiveCfg = Release|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Release|arm64.Build.0 = Release|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Release|x86.ActiveCfg = Release|Any CPU
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -152,5 +166,6 @@ Global
 		{AA77501A-BB43-4691-BD9E-5112FB02D5FD} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
 		{292B801A-65F6-4D2D-A8D7-4D52853965C8} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
 		{3CB1209B-072F-49D1-A5F5-67929227DAC3} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
+		{9223FBE6-A7D7-4EA9-AFB1-CDADBE343443} = {9A4352B0-331B-4AF0-AACF-E8A41137FBB4}
 	EndGlobalSection
 EndGlobal

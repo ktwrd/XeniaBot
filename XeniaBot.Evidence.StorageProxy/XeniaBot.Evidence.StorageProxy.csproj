@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+        <AssemblyVersion>0.1.*</AssemblyVersion>
+        <Deterministic>false</Deterministic>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
+      <ProjectReference Include="..\XeniaBot.Evidence\XeniaBot.Evidence.csproj" />
+      <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+    </ItemGroup>
+
+</Project>
