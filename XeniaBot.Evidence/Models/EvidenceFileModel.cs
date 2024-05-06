@@ -1,4 +1,4 @@
-using XeniaBot.Shared.Models;
+﻿using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Evidence.Models;
 
@@ -125,6 +125,23 @@ public class EvidenceFileModel : BaseModelGuid
     /// </summary>
     public long Timestamp { get; set; }
 
+    /// <summary>
+    /// Convert this instance to its details variant, which is what is returned to users.
+    /// </summary>
+    public EvidenceFileModelDetails ToDetails()
+    {
+        var i = new EvidenceFileModelDetails();
+        i.Id = Id;
+        i.Filename = Filename;
+        i.Description = Description;
+        i.ContentType = ContentType;
+        i.Size = GetSize();
+        i.UserId = GetUploadedByUserId();
+        i.GuildId = GetGuildId();
+        i.CreatedAt = UploadedAtTimestamp;
+        return i;
+    }
+    
     public EvidenceFileModel()
         : base()
     {
