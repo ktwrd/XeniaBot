@@ -10,7 +10,6 @@ public class EvidenceFileRepository : BaseRepository<EvidenceFileModel>
     public EvidenceFileRepository(IServiceProvider services)
         : base(EvidenceFileModel.CollectionName, services)
     {
-        
     }
 
     /// <summary>

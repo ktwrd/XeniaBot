@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using Discord;
 using Google.Apis.Auth.OAuth2;
@@ -117,6 +117,7 @@ public class EvidenceFileService : BaseService
         Ok,
         Disabled,
         TooLarge,
+        /// </summary>
         MissingPermission
     }
     #region Upload File
