@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Discord;
 using Google.Apis.Auth.OAuth2;
@@ -38,10 +38,10 @@ public class EvidenceFileService : BaseService
     /// <summary>
     /// Is set from <see cref="CreateClient"/>
     /// </summary>
-    private StorageClient? storageClient;
+    private StorageClient? _storageClient;
     private async Task CreateClient()
     {
-        if (_configData.EvidenceService.Enable == false)
+        if (_configData.EvidenceService?.Enable == false)
         {
             Log.Warn("Evidence File Service is disabled. Ignoring");
             return;
@@ -55,7 +55,7 @@ public class EvidenceFileService : BaseService
             return;
         }
 
-        storageClient = client;
+        _storageClient = client;
     }
     
     private async Task<GoogleCredential?> LoadCredentials()
@@ -111,15 +111,58 @@ public class EvidenceFileService : BaseService
     }
     #endregion
     
+    /// <summary>
+    /// Result codes for when a file has uploaded.
+    /// </summary>
     public enum UploadFileResultCode
     {
+        /// <summary>
+        /// A generic failure has occurred. The error was reported via <see cref="ErrorReportService"/>
+        /// </summary>
         GenericFailure,
+        /// <summary>
+        /// File uploaded successfully!
+        /// </summary>
         Ok,
+        /// <summary>
+        /// Evidence Service is disabled.
+        /// </summary>
         Disabled,
+        /// <summary>
+        /// File is too large.
+        /// </summary>
         TooLarge,
+        /// <summary>
+        /// Requesting Discord User doesn't have the correct permissions to upload evidence.
         /// </summary>
         MissingPermission
     }
+
+    public bool WriteFileToStream(EvidenceFileModel model, Stream targetStream, out string? error)
+    {
+        error = null;
+        if (_configData.EvidenceService?.Enable == false)
+        {
+            Log.Error("Evidence File Service is disabled.");
+            error = "Evidence File Service is disabled.";
+            return false;
+        }
+        
+        if (_storageClient == null)
+        {
+            CreateClient().Wait();
+        }
+
+        var o = _storageClient?.GetObject(_configData.EvidenceService!.BucketName, model.ObjectLocation);
+        if (o == null)
+        {
+            error = "Object does not exist in bucket";
+            return false;
+        }
+        _storageClient!.DownloadObject(o, targetStream);
+        return true;
+    }
+    
     #region Upload File
     /// <summary>
     /// Upload a file by specifying all the required parameters.
@@ -154,7 +197,7 @@ public class EvidenceFileService : BaseService
             return (null, UploadFileResultCode.Disabled);
         }
         
-        if (storageClient == null)
+        if (_storageClient == null)
         {
             await CreateClient();
         }
@@ -165,7 +208,7 @@ public class EvidenceFileService : BaseService
         {
             Filename = filename,
             Description = description,
-            MimeType = contentType,
+            ContentType = contentType,
             Size = size.ToString(),
             UploadedByUserId = author.Id.ToString(),
             GuildId = author.Guild.Id.ToString(),
@@ -174,7 +217,7 @@ public class EvidenceFileService : BaseService
 
         fileModel.ObjectLocation = $"{fileModel.Id}/{filename}";
         
-        var bucketObject = await storageClient!.UploadObjectAsync(
+        var bucketObject = await _storageClient!.UploadObjectAsync(
             bucketName,
             fileModel.ObjectLocation,
             contentType,
@@ -186,7 +229,7 @@ public class EvidenceFileService : BaseService
             {
                 try
                 {
-                    await storageClient!.DeleteObjectAsync(
+                    await _storageClient!.DeleteObjectAsync(
                         bucketName,
                         fileModel.ObjectLocation);
                 }
@@ -243,7 +286,7 @@ public class EvidenceFileService : BaseService
             return (null, UploadFileResultCode.Disabled);
         }
 
-        if (storageClient == null)
+        if (_storageClient == null)
         {
             await CreateClient();
         }

@@ -1,4 +1,4 @@
-﻿using XeniaBot.Shared.Models;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Evidence.Models;
 
@@ -17,11 +17,11 @@ public class EvidenceFileModel : BaseModelGuid
     public string Description { get; set; }
     
     /// <summary>
-    /// <para>Mime Type of the file reported by Discord or Web Panel.</para>
+    /// <para>Content Type of the file reported by Discord or Web Panel.</para>
     ///
     /// <para>Defaults to application/octet-stream</para>
     /// </summary>
-    public string MimeType { get; set; }
+    public string ContentType { get; set; }
     
     /// <summary>
     /// <para><b>Stored as ulong</b></para>
@@ -41,14 +41,14 @@ public class EvidenceFileModel : BaseModelGuid
     /// <summary>
     /// <para><b>Stored as ulong</b></para>
     ///
-    /// <inheritdoc cref="GetUploadedByUser()"/>
+    /// <inheritdoc cref="GetUploadedByUserId"/>
     /// </summary>
     public string UploadedByUserId { get; set; }
     
     /// <summary>
     /// <para>User Id for the User that Uploaded this file.</para>
     /// </summary>
-    public ulong GetUploadedByUser()
+    public ulong GetUploadedByUserId()
     {
         return ulong.Parse(UploadedByUserId);
     }
@@ -130,7 +130,7 @@ public class EvidenceFileModel : BaseModelGuid
     {
         Filename = "";
         Description = "";
-        MimeType = "application/octet-stream";
+        ContentType = "application/octet-stream";
         Size = "0";
         
         UploadedByUserId = "0";
