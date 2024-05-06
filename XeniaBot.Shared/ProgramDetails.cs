@@ -7,6 +7,7 @@ public enum XeniaPlatform
 {
     WebPanel,
     Bot,
+    StorageProxy
 }
 public class ProgramDetails
 {
