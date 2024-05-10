@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
@@ -9,12 +8,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 
-namespace XeniaBot.Core.Modules
+namespace XeniaBot.Core.LevelSystem.Modules
 {
     [Group("xp", "Experience")]
     public class XpModule : InteractionModuleBase
@@ -22,7 +23,13 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("profile", "See the amount of XP you have and what level you are")]
         public async Task Profile()
         {
-            var controller = Program.Core.GetRequiredService<LevelMemberRepository>();
+            var controller = CoreContext.Instance?.GetRequiredService<LevelMemberRepository>();
+            if (controller == null)
+            {
+                await Context.Interaction.RespondAsync($"Error. Failed to get LevelMemberRepository.");
+                await DiscordHelper.ReportError(new Exception("Failed to get LevelMemberRepository"), Context);
+                return;
+            }
             var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
             var metadata = LevelSystemHelper.Generate(data);
 
@@ -125,7 +132,7 @@ namespace XeniaBot.Core.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemService>();
+                var controller = CoreContext.Instance.GetRequiredService<LevelSystemService>();
 
                 try
                 { 
