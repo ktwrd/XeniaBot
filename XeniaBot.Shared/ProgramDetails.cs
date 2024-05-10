@@ -16,6 +16,7 @@ public class ProgramDetails
     /// </summary>
     public long StartTimestamp { get; init; }
     public bool Debug { get; init; }
+    public bool SetStatus { get; set; } = false;
     public string? PlatformTag { get; set; }
     public string Version
     {
