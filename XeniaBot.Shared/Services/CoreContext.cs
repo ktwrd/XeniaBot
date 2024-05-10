@@ -63,7 +63,7 @@ public class CoreContext
 
         if (Config.Data.Health.Enable && Details.Platform == XeniaPlatform.Bot)
         {
-            new HealthServer(this).Run(Config.Data.Health.Port);
+            new HealthServer(this, Details.PlatformTag).Run(Config.Data.Health.Port);
         }
     }
     /// <summary>

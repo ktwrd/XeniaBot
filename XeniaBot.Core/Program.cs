@@ -130,6 +130,7 @@ namespace XeniaBot.Core
             StartTimestamp = StartTimestamp,
             VersionRaw = VersionReallyRaw,
             Platform = XeniaPlatform.Bot,
+            PlatformTag = "Master",
             Debug =
 #if DEBUG
                 true
