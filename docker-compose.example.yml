@@ -28,7 +28,7 @@ services:
     depends_on:
       - mongo
   dashboard:
-    image: ktwrd/xenia-discord-dash:latest
+    image: ktwrd/xenia-discord-webpanel:latest
     restart: always
     volumes:
       - ./data:/app/data
