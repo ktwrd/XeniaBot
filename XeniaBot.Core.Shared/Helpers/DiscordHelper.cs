@@ -44,7 +44,7 @@ namespace XeniaBot.Core.Helpers
         public static string GetUptimeString()
         {
             var current = DateTimeOffset.UtcNow;
-            var start = DateTimeOffset.FromUnixTimeSeconds(Program.StartTimestamp);
+            var start = DateTimeOffset.FromUnixTimeSeconds(CoreContext.Instance?.StartTimestamp ?? 0);
             var diff = current - start;
             var data = new List<string>();
             if (Math.Floor(diff.TotalHours) > 0)
@@ -116,7 +116,7 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IChannel channel, IMessage? message)
         {
-            var cont = Program.Core.GetRequiredService<ErrorReportService>();
+            var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
             await cont.ReportHTTPError(response, user, guild, channel, message);
         }
         public static async Task ReportError(Exception response, ICommandContext context)
@@ -137,12 +137,12 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IChannel? channel, IMessage? message)
         {
-            var cont = Program.Core.GetRequiredService<ErrorReportService>();
+            var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
             await cont.ReportError(response, user, guild, channel, message);
         }
         public static async Task ReportError(Exception exception, string extraText = "")
         {
-            var cont = Program.Core.GetRequiredService<ErrorReportService>();
+            var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
             await cont.ReportException(exception, extraText);
         }
         #endregion
