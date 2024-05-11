@@ -35,6 +35,7 @@ public partial class AdminController
             _client.Guilds.Select(StrippedGuild.FromGuild),
             v => v.Name,
             cursor);
+        model.Cursor = cursor;
         return PartialView("AdminServerListComponent", model);
     }
 }
