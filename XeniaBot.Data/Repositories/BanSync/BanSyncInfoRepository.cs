@@ -125,7 +125,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         return res.FirstOrDefault();
     }
     
-    public async Task<List<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = true, bool allowGhost = false)
+    public async Task<List<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = false, bool allowGhost = false)
     {
         var result = new List<BanSyncInfoModel>();
         var guild = _discord.GetGuild(guildId);
@@ -145,9 +145,15 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
             foreach (var re in userResult.ToList())
             {
                 var guildConf = await _banSyncStateController.GetLatest(re.GuildId);
-                if (ignoreDisabledGuilds
-                    && ((guildConf?.Enable ?? false)
-                        || (guildConf?.State ?? BanSyncGuildState.Unknown) == BanSyncGuildState.Active))
+                if (ignoreDisabledGuilds)
+                {
+                    if (guildConf?.Enable == true &&
+                        (guildConf?.State ?? BanSyncGuildState.Unknown) == BanSyncGuildState.Active)
+                    {
+                        innerUser.Add(re);
+                    }
+                }
+                else
                 {
                     innerUser.Add(re);
                 }
@@ -168,6 +174,68 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
             result.Add(i);
         }
         return result;
+    }
+
+    private FilterDefinition<BanSyncInfoModel> GetInfoAllInGuild_Filter(
+        ulong guildId,
+        ulong? filterByUserId,
+        bool ignoreDisabledGuilds = false,
+        bool allowGhost = false)
+    {
+        
+        var guild = _discord.GetGuild(guildId);
+        var userIdList = guild.Users.Select(v => v.Id);
+        var filter = Builders<BanSyncInfoModel>
+            .Filter
+            .In("UserId", userIdList);
+        if (filterByUserId != null)
+        {
+            filter = Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => v.UserId == filterByUserId);
+        }
+        if (allowGhost == false)
+        {
+            filter &= Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => v.Ghost == false);
+        }
+
+        if (ignoreDisabledGuilds)
+        {
+            throw new NotImplementedException($"Logic for parameter {nameof(ignoreDisabledGuilds)} is not implemented");
+        }
+
+        return filter;
+    }
+    public async Task<List<BanSyncInfoModel>> GetInfoAllInGuildPaginate(ulong guildId,
+        int page,
+        int pageSize,
+        ulong? filterByUserId,
+        bool ignoreDisabledGuilds = false,
+        bool allowGhost = false)
+    {
+        var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost);
+
+        var collection = GetCollection();
+        var result = await collection.Find(filter)
+            .SortByDescending(v => v.Timestamp)
+            .Skip((page - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync();
+        return result;
+    }
+
+    public async Task<long> GetInfoAllInGuildCount(ulong guildId,
+        ulong? filterByUserId,
+        bool ignoreDisabledGuilds = false,
+        bool allowGhost = false)
+    {
+        var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost);
+
+        var collection = GetCollection();
+        var count = await collection.CountDocumentsAsync(filter);
+        return count;
     }
     #endregion
 

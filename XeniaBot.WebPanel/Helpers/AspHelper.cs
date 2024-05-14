@@ -15,6 +15,7 @@ using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
+using XeniaBot.WebPanel.Models.Component;
 
 namespace XeniaBot.WebPanel.Helpers;
 
@@ -139,23 +140,34 @@ public static class AspHelper
 
         return channelId.ToString();
     }
-    
-    public static async Task<ServerBanSyncViewModel> FillServerModel(ulong serverId, ServerBanSyncViewModel data)
+
+    public static async Task FillServerModel(ulong serverId, IBanSyncBaseRecords data, ulong? targetUserId, HttpContext context)
     {
-        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        var guild = discord.GetGuild(serverId);
-        data.Guild = guild;
-        
+        data.FilterRecordsByUserId = targetUserId;
         var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoRepository>();
-        data.BanSyncRecords = await banSyncRecordConfig.GetInfoAllInGuild(serverId);
+        data.BanSyncRecordCount = await banSyncRecordConfig.GetInfoAllInGuildCount(
+            serverId,
+            targetUserId,
+            allowGhost: AspHelper.IsCurrentUserAdmin(context));
 
         var banSyncGuildConfig = Program.Core.GetRequiredService<BanSyncStateHistoryRepository>();
         data.BanSyncGuild = await banSyncGuildConfig.GetLatest(serverId) ?? new BanSyncStateHistoryItemModel()
         {
             GuildId = serverId
         };
+    }
 
-        return data;
+    public static async Task FillServerModel(ulong serverId, IBanSyncBaseRecordsComponent data, int cursor, ulong? targetUserId, HttpContext context)
+    {
+        await FillServerModel(serverId, (IBanSyncBaseRecords)data, targetUserId, context);
+        data.FilterRecordsByUserId = targetUserId;
+        var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoRepository>();
+        data.Items = await banSyncRecordConfig.GetInfoAllInGuildPaginate(
+            serverId, 
+            cursor,
+            BanSyncMutualRecordsListComponentViewModel.PageSize, 
+            targetUserId,
+            allowGhost: AspHelper.IsCurrentUserAdmin(context));
     }
     public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
     {

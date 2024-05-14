@@ -8,6 +8,7 @@ using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
+using XeniaBot.WebPanel.Models.Component;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -21,12 +22,24 @@ public class ServerBanSyncController : BaseXeniaController
         _logger = logger;
     }
 
-    protected async Task<ServerBanSyncViewModel> GetDetails(ulong guildId)
+    protected async Task<ServerBanSyncViewModel> GetDetails(ulong guildId, ulong? targetUserId = null)
     {
         var data = new ServerBanSyncViewModel();
         data.Guild = _discord.GetGuild(guildId);
         data.User = data.Guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
-        data = await AspHelper.FillServerModel(guildId, data);
+        await AspHelper.FillServerModel(guildId, data, targetUserId, HttpContext);
+        return data;
+    }
+
+    protected async Task<BanSyncMutualRecordsListComponentViewModel> GetComponentDetails(ulong guildId,
+        int cursor,
+        ulong? targetUserId)
+    {
+        var data = new BanSyncMutualRecordsListComponentViewModel();
+        var g = _discord.GetGuild(guildId);
+        data.Guild = g;
+        data.User = g.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
+        await AspHelper.FillServerModel(guildId, data, cursor, targetUserId, HttpContext);
         return data;
     }
     
@@ -39,13 +52,8 @@ public class ServerBanSyncController : BaseXeniaController
         if (guild == null)
             return View("NotFound", "Guild not found");
 
-        var data = await GetDetails(guild.Id);
+        var data = await GetDetails(guild.Id, targetUserId);
         await PopulateModel(data);
-
-        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
-        {
-            data.BanSyncRecords = data.BanSyncRecords.Where(v => !v.Ghost).ToList();
-        }
         
         if (messageType != null)
             data.MessageType = messageType;
@@ -58,12 +66,6 @@ public class ServerBanSyncController : BaseXeniaController
             {
                 Message = "BanSync is not enabled on your server. <a href=\"https://xenia.kate.pet/guide/about_bansync\">More Information</a>"
             });
-        }
-        
-        if (targetUserId != null)
-        {
-            data.FilterRecordsByUserId = targetUserId;
-            data.BanSyncRecords = data.BanSyncRecords.Where(v => v.UserId == targetUserId).ToList();
         }
 
         return View("Index", data);
@@ -78,20 +80,22 @@ public class ServerBanSyncController : BaseXeniaController
         if (guild == null)
             return PartialView("NotFound", "Guild not found");
 
-        var data = await GetDetails(guild.Id);
-        await PopulateModel(data);
+        // await PopulateModel(data);
+        //
+        // if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
+        // {
+        //     data.BanSyncRecords = data.BanSyncRecords.Where(v => !v.Ghost).ToList();
+        // }
+        // var c = data.BanSyncRecords
+        //     .OrderByDescending(v => v.Timestamp)
+        //     .Skip((cursor - 1) * ServerBanSyncViewModel.PageSize)
+        //     .Take(ServerBanSyncViewModel.PageSize)
+        //     .ToList();
+        // data.BanSyncRecords = c;
+        // data.Cursor = cursor;
 
-        if (!AspHelper.IsCurrentUserAdmin(this.HttpContext))
-        {
-            data.BanSyncRecords = data.BanSyncRecords.Where(v => !v.Ghost).ToList();
-        }
-        var c = data.BanSyncRecords
-            .OrderByDescending(v => v.Timestamp)
-            .Skip((cursor - 1) * ServerBanSyncViewModel.PageSize)
-            .Take(ServerBanSyncViewModel.PageSize)
-            .ToList();
-        data.BanSyncRecords = c;
-        data.Cursor = cursor;
+        var data = await GetComponentDetails(id, cursor, targetUserId);
+        await PopulateModel(data);
 
         if (!data.BanSyncGuild.Enable)
         {
@@ -99,12 +103,6 @@ public class ServerBanSyncController : BaseXeniaController
             {
                 Message = "BanSync is not enabled on your server. <a href=\"https://xenia.kate.pet/guide/about_bansync\">More Information</a>"
             });
-        }
-        
-        if (targetUserId != null)
-        {
-            data.FilterRecordsByUserId = targetUserId;
-            data.BanSyncRecords = data.BanSyncRecords.Where(v => v.UserId == targetUserId).ToList();
         }
 
         return PartialView("IndexComponent", data);
