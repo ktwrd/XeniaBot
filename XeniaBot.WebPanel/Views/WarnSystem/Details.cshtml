@@ -21,6 +21,12 @@ new List<BreadcrumbItem>()
 }))
 
 <a class="btn btn-outline-primary btn-sm mb-2" asp-area="" asp-route-id="@Model.Guild.Id" asp-controller="Server" asp-action="Index">Go Back</a>
+@if (Model.WarnItems.Any())
+{
+    <a class="btn btn-success btn-sm mb-2" asp-controller="WarnSystem" asp-action="CreateWarnWizard" asp-route-id="@Model.Guild.Id">
+        <i class="bi bi-plus"></i>
+    </a>
+}
 @* <form id="apply_filter" enctype="application/x-www-form-urlencoded" method="get" asp-controller="WarnSystem" asp-action="GuildWarns" asp-route-id="@Model.Guild.Id"> *@
 @*     <div class="form-group form-inline"> *@
 @*         <input class="form-check-input" type="checkbox" value="" name="newer_than_enable" @(Model.EnableNewerThanFilter ? "checked" : "") /> *@
@@ -53,9 +59,6 @@ else
             <th>When</th>
             <th>Description</th>
             <th>
-                <a class="btn btn-success btn-sm" asp-controller="WarnSystem" asp-action="CreateWarnWizard" asp-route-id="@Model.Guild.Id">
-                    <i class="bi bi-plus"></i>
-                </a>
             </th>
         </tr>
         </thead>
@@ -97,6 +100,9 @@ else
     </table>
 
     <a class="btn btn-outline-primary btn-sm" asp-area="" asp-route-id="@Model.Guild.Id" asp-controller="Server" asp-action="Index">Go Back</a>
+    <a class="btn btn-success btn-sm" asp-controller="WarnSystem" asp-action="CreateWarnWizard" asp-route-id="@Model.Guild.Id">
+        <i class="bi bi-plus"></i>
+    </a>
 }
 
 @section Scripts
