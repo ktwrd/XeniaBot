@@ -1,6 +1,6 @@
 param(
 	[string]
-	$TargetName="ktwrd/xenia-discord-webpanel",
+	$TargetName="ktwrd/xenia-discord-dash",
 	[string]
 	$TargetTag="latest",
 	[bool]

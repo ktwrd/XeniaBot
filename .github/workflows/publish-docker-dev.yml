@@ -30,6 +30,13 @@ jobs:
           tags: ktwrd/xenia-discord:latest
           file: Dockerfile
       -
+        name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ktwrd/xenia-discord-xp:latest
+          file: Bot_LevelSystem.Dockerfile
+      -
         name: Build and push
         uses: docker/build-push-action@v5
         with:

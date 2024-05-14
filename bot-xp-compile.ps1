@@ -1,6 +1,6 @@
 param(
 	[string]
-	$TargetName="ktwrd/xenia-discord-levelsystem",
+	$TargetName="ktwrd/xenia-discord-xp",
 	[string]
 	$TargetTag="latest",
 	[bool]
