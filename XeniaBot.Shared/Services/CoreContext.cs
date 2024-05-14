@@ -149,11 +149,13 @@ public class CoreContext
             Log.Error($"FATAL ERROR!!! CoreContext.GetDatabase() returned null!");
             OnQuit(1);
         }
+
+        var s = new InteractionService(Discord);
         
         services.AddSingleton(mongoDb)
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
-            .AddSingleton<InteractionService>()
+            .AddSingleton(s)
             .AddSingleton<CommandHandler>()
             .AddSingleton<InteractionHandler>();
 
