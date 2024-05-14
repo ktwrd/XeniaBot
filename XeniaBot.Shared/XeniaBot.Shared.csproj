@@ -15,11 +15,11 @@
 
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
-    <PackageReference Include="Discord.Net" Version="3.14.1" />
+    <PackageReference Include="Discord.Net" Version="3.15.0" />
     <PackageReference Include="Iminetsoft.CronNET" Version="8.0.2" />
     <PackageReference Include="kate.shared" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
-    <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
     <PackageReference Include="NetVips" Version="2.4.1" />
     <PackageReference Include="NetVips.Extensions" Version="2.3.0" />
     <PackageReference Include="NetVips.Native.linux-x64" Version="8.15.2" />

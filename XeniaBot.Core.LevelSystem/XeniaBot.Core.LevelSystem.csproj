@@ -23,10 +23,10 @@
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
     <PackageReference Include="kate.shared" Version="1.0.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Discord.Net" Version="3.14.1" />
+    <PackageReference Include="Discord.Net" Version="3.15.0" />
     <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
   </ItemGroup>
 
