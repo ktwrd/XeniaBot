@@ -13,9 +13,11 @@ namespace XeniaBot.Shared;
 public class HealthServer
 {
     private readonly CoreContext _core;
-    public HealthServer(CoreContext core)
+    private readonly string? _platformTag;
+    public HealthServer(CoreContext core, string? platformTag)
     {
         _core = core;
+        _platformTag = platformTag;
     }
     public void Run(int port)
     {
@@ -32,11 +34,16 @@ public class HealthServer
 
     public string Handle()
     {
+        var s = "XeniaDiscordBot";
+        if (_platformTag != null)
+        {
+            s += _platformTag;
+        }
         var data = new XeniaHealthModel()
         {
             StartTimestamp = _core.Details.StartTimestamp,
             Version = _core.Details.Version,
-            ServiceName = "XeniaDiscordBot"
+            ServiceName = s
         };
         var json = JsonSerializer.Serialize(data, CoreContext.SerializerOptions);
         return json;

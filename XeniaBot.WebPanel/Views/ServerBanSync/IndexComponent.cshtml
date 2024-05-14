@@ -1,8 +1,8 @@
 ﻿@using XeniaBot.WebPanel.Helpers
 @using Microsoft.AspNetCore.Mvc.TagHelpers
-@model ServerBanSyncViewModel
+@model XeniaBot.WebPanel.Models.Component.BanSyncMutualRecordsListComponentViewModel
 
-@foreach (var item in @Model.BanSyncRecords)
+@foreach (var item in @Model.Items)
 {
     <tr
         @{

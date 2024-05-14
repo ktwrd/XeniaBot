@@ -24,6 +24,26 @@ public class ErrorReportService : BaseService
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
         _config = services.GetRequiredService<ConfigData>();
+        if (_config == null)
+        {
+            Log.Error($"_config is null!");
+            Environment.Exit(1);
+        }
+        else if (_config.ErrorReporting == null)
+        {
+            Log.Error($"_config.ErrorReporting is null!");
+            Environment.Exit(1);
+        }
+        else if (_config.ErrorReporting.GuildId == null)
+        {
+            Log.Error($"_config.ErrorReporting.GuildId is null!");
+            Environment.Exit(1);
+        }
+        else if (_config.ErrorReporting.ChannelId == null)
+        {
+            Log.Error($"_config.ErrorReporting.ChannelId is null!");
+            Environment.Exit(1);
+        }
     }
 
     public static JsonSerializerOptions SerializerOptions => new JsonSerializerOptions()

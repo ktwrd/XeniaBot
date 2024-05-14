@@ -289,24 +289,31 @@ public class ServerLogService : BaseService
     
     #region Message Events
 
-    private async Task Event_MessageDelete(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
+    private async Task Event_MessageDelete(Cacheable<IMessage, ulong> m, Cacheable<IMessageChannel, ulong> c)
     {
-        var socketChannel = channel.Value as SocketGuildChannel;
-        if (socketChannel?.Guild == null)
+        var message = await m.GetOrDownloadAsync();
+        var channel = await c.GetOrDownloadAsync();
+        
+        if (channel == null || (channel is SocketGuildChannel socketChannel) == false)
             return;
         try
         {
-            var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(message.Id);
+            if (m.Id == 0)
+            {
+                Log.Warn($"message.Id is zero?\nhas type of {message.GetType()}");
+                return;
+            }
+            var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(m.Id);
         
-            string messageContent = message.Value?.Content ?? funkyMessage?.Content ?? "";
+            string messageContent = message?.Content ?? funkyMessage?.Content ?? "";
             long timestamp = 
-                message.Value?.CreatedAt.ToUnixTimeSeconds()
+                message?.CreatedAt.ToUnixTimeSeconds()
                 ?? funkyMessage?.CreatedAt.ToUnixTimeSeconds()
                 ?? 0;
-            SocketUser? author = _discord.GetUser(message.Value?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
+            SocketUser? author = _discord.GetUser(message?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Deleted")
-                .WithDescription($"Deleted in <#{channel.Id}> at <t:{timestamp}:F>")
+                .WithDescription($"Deleted in <#{c.Id}> at <t:{timestamp}:F>")
                 .WithColor(Color.Orange);
             if (author != null)
                 embed.WithThumbnailUrl(author.GetAvatarUrl());
@@ -328,7 +335,7 @@ public class ServerLogService : BaseService
                     {
                         "Failed run ServerLogService.Event_MessageDelete.", $"ChannelId: {socketChannel.Id}",
                         $"Guild: {socketChannel.Guild.Id} ({socketChannel.Guild.Name})",
-                        $"MessageId: {message.Value?.Id ?? 0}"
+                        $"MessageId: {message?.Id ?? m.Id}"
                     });
             Log.Error(msg, ex);
             await _errorService.ReportException(

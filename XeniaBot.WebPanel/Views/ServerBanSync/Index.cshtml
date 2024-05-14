@@ -11,11 +11,11 @@
     <img class="me-3 rounded-circle mr-3" src="@(Model.Guild.IconUrl ?? "/DebugEmpty.png")" alt="" width="48" height="48">
     <div class="lh-1">
         <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
-        <small>@Model.Guild.MemberCount members &bull; @Model.BanSyncRecords.Count records &bull; <a asp-controller="Server" asp-action="Index" asp-route-id="@Model.Guild.Id">Go Back</a></small>
+        <small>@Model.Guild.MemberCount members &bull; @Model.BanSyncRecordCount records &bull; <a asp-controller="Server" asp-action="Index" asp-route-id="@Model.Guild.Id">Go Back</a></small>
     </div>
     
 </div>
-@if (!@Model.BanSyncRecords.Any())
+@if (Model.BanSyncRecordCount< 1)
 {
     @if (@Model.FilterRecordsByUserId != null)
     {

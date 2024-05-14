@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using kate.shared.Helpers;
@@ -15,7 +15,7 @@ using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 
-namespace XeniaBot.Core.Services.BotAdditions
+namespace XeniaBot.Core.LevelSystem.Services
 {
     [XeniaController]
     public class LevelSystemService : BaseService
