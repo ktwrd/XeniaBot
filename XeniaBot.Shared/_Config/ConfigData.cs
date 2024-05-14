@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using XeniaBot.Shared.Services;
@@ -59,6 +60,8 @@ public class ConfigData
     /// <para>Should be enabled on Dashboard when deployed</para>
     /// </summary>
     public bool IsUpgradeAgent { get; set; }
+    [DefaultValue(null)]
+    public int? ShardId { get; set; }
 
     public ConfigData()
     {
@@ -85,6 +88,7 @@ public class ConfigData
         i.MongoDB = MongoDBConfigItem.Default();
         i.ReminderService = ReminderServiceConfigItem.Default();
         i.IsUpgradeAgent = false;
+        i.ShardId = null;
 
         i.SupportServerUrl = null;
         i.HasDashboard = false;

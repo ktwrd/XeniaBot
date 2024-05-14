@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CronNET;
+using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -30,7 +31,6 @@ public class CoreContext
         }
 
         Details = details;
-        Discord = new DiscordSocketClient(DiscordService.GetSocketClientConfig());
 
         RegisteredBaseControllers = new List<Type>();
         
@@ -45,6 +45,13 @@ public class CoreContext
         BsonSerializer.RegisterSerializer(objectSerializer);
 
         Config = new ConfigService(Details);
+        Discord = new DiscordSocketClient(new DiscordSocketConfig()
+        {
+            GatewayIntents = GatewayIntents.All,
+            UseInteractionSnowflakeDate = false,
+            AlwaysDownloadUsers = true,
+            ShardId = Config.Data.ShardId
+        });
         InitMongoClient();
         InitServices(beforeServiceBuild);
 
