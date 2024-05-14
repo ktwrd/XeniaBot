@@ -41,7 +41,7 @@
     <div class="container mt-3">
         &copy; 2023-2024 - Xenia Bot & Dashboard Contributors - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> - <a href="https://xenia.kate.pet">Website</a><br/>
         <hr/>
-        <code>Xenia Dashboard @(Program.VersionFull)</code>
+        <code>Xenia Dashboard @(Program.Version == null ? "" : $"v{Program.Version}")</code>
     </div>
 </footer>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
