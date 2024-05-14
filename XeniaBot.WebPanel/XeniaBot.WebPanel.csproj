@@ -6,8 +6,8 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     
-    <AssemblyVersion>0.10.*</AssemblyVersion>
-    <Deterministic>false</Deterministic>
+    <AssemblyVersion>0.11.0.0</AssemblyVersion>
+<!--    <Deterministic>false</Deterministic>-->
     
     <AssemblyName>XeniaBot.WebPanel</AssemblyName>
     <RootNamespace>XeniaBot.WebPanel</RootNamespace>
@@ -82,9 +82,9 @@
     </None>
   </ItemGroup>-->
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-  </ItemGroup>
+  </ItemGroup>-->
   <!-- T4 build support for .NET Core (Begin) -->
 
   <!--<ItemGroup Condition="'$(MSBuildRuntimeType)'=='Core'">
