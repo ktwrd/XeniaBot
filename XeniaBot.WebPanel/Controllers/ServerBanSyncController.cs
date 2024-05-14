@@ -96,6 +96,7 @@ public class ServerBanSyncController : BaseXeniaController
 
         var data = await GetComponentDetails(id, cursor, targetUserId);
         await PopulateModel(data);
+        data.Cursor = cursor;
 
         if (!data.BanSyncGuild.Enable)
         {
