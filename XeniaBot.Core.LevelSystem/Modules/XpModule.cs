@@ -62,7 +62,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
             var embed = new EmbedBuilder()
                 .WithTitle("Xp System - Guild Leaderboard");
             
-            var controller = Program.Core.GetRequiredService<LevelMemberRepository>();
+            var controller = CoreContext.Instance.GetRequiredService<LevelMemberRepository>();
             if (controller == null)
             {
                 embed.WithDescription($"Could not fetch LevelMemberRepository");
@@ -174,7 +174,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+                var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemConfigModel()
                             {
@@ -211,7 +211,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+                var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemConfigModel()
                             {
@@ -257,7 +257,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
         [SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
         public async Task GlobalLeaderboard()
         {
-            if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
+            if (!CoreContext.Instance.Config.Data.UserWhitelist.Contains(Context.User.Id))
             {
                 await RespondAsync("You do not have access to this command");
                 return;
@@ -270,7 +270,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
                 var embed = new EmbedBuilder()
                     .WithTitle("Xp System - Global Leaderboard");
 
-                var controller = Program.Core.GetRequiredService<LevelMemberRepository>();
+                var controller = CoreContext.Instance.GetRequiredService<LevelMemberRepository>();
                 if (controller == null)
                 {
                     embed.WithDescription($"Could not fetch LevelMemberRepository");
@@ -299,7 +299,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
             await DeferAsync();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+                var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemConfigModel()
                             {
@@ -340,7 +340,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
                 .WithCurrentTimestamp();
             try
             {
-                var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+                var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
                 var model = await controller.Get(Context.Guild.Id) ??
                             new LevelSystemConfigModel()
                             {
