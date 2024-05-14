@@ -109,7 +109,7 @@ namespace XeniaBot.Shared.Services
 
             // Once metrics are setup, reload discord-related metrics
             await ReloadMetrics();
-            
+            Log.Debug("Created all metrics!");
             // Create timer
             CreateMetricTimer();
 
@@ -188,7 +188,7 @@ namespace XeniaBot.Shared.Services
         {
             if (!_configData.Prometheus.Enable)
                 return Task.CompletedTask;
-            if (_details.Platform == XeniaPlatform.WebPanel)
+            if (_details.Platform != XeniaPlatform.Bot)
                 return Task.CompletedTask;
 
             if (_promCount_InteractionCount == null)
