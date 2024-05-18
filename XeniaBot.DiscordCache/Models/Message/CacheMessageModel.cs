@@ -5,6 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheMessageModel : DiscordCacheBaseModel
 {
+    public static string CollectionName => "bb_store_message";
     #region IMessage
     public string Content { get; set; }
     public string ContentClean { get; set; }

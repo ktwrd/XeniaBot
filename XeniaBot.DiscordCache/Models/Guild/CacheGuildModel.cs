@@ -7,6 +7,7 @@ namespace XeniaBot.DiscordCache.Models;
 public class CacheGuildModel
     : DiscordCacheBaseModel
 {
+    public static string CollectionName => "cache_store_guild";
     public DateTimeOffset CreatedAt { get; set; }
     public string Name { get; set; }
     public int AFKTimeout { get; set; }

@@ -38,21 +38,21 @@ public class DiscordCacheService : BaseService
     {
         _userConfig = services.GetRequiredService<UserConfigRepository>();
         _client = services.GetRequiredService<DiscordSocketClient>();
-        CacheMessageConfig = new DiscordCacheGenericRepository<CacheMessageModel>("bb_store_message", services);
-        CacheUserConfig = new DiscordCacheGenericRepository<CacheUserModel>("cache_store_user", services);
+        CacheMessageConfig = new DiscordCacheGenericRepository<CacheMessageModel>(CacheMessageModel.CollectionName, services);
+        CacheUserConfig = new DiscordCacheGenericRepository<CacheUserModel>(CacheUserModel.CollectionName, services);
         CacheGuildMemberConfig =
-            new DiscordCacheGenericRepository<CacheGuildMemberModel>("cache_store_guild_member", services);
-        CacheGuildConfig = new DiscordCacheGenericRepository<CacheGuildModel>("cache_store_guild", services);
+            new DiscordCacheGenericRepository<CacheGuildMemberModel>(CacheGuildMemberModel.CollectionName, services);
+        CacheGuildConfig = new DiscordCacheGenericRepository<CacheGuildModel>(CacheGuildModel.CollectionName, services);
         
         
         CacheForumChannelConfig =
-            new DiscordCacheGenericRepository<CacheForumChannelModel>("cache_store_channel_forum", services);
+            new DiscordCacheGenericRepository<CacheForumChannelModel>(CacheForumChannelModel.CollectionName, services);
         CacheVoiceChannelConfig =
-            new DiscordCacheGenericRepository<CacheVoiceChannelModel>("cache_store_channel_voice", services);
+            new DiscordCacheGenericRepository<CacheVoiceChannelModel>(CacheVoiceChannelModel.CollectionName, services);
         CacheStageChannelConfig =
-            new DiscordCacheGenericRepository<CacheStageChannelModel>("cache_store_channel_stage", services);
+            new DiscordCacheGenericRepository<CacheStageChannelModel>(CacheStageChannelModel.CollectionName, services);
         CacheTextChannelConfig =
-            new DiscordCacheGenericRepository<CacheTextChannelModel>("cache_store_channel_text", services);
+            new DiscordCacheGenericRepository<CacheTextChannelModel>(CacheTextChannelModel.CollectionName, services);
     }
 
     public override Task InitializeAsync()

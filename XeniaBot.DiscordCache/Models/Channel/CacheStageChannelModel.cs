@@ -5,6 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheStageChannelModel : CacheVoiceChannelModel
 {
+    public static string CollectionName => "cache_store_channel_stage";
     public StagePrivacyLevel? PrivacyLevel { get; set; }
     public bool? IsDiscoverableDisabled { get; set; }
     public bool IsLive { get; set; }

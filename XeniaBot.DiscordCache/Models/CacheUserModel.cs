@@ -7,6 +7,7 @@ public class CacheUserModel
     : DiscordCacheBaseModel,
         IMentionable
 {
+    public static string CollectionName => "cache_store_user";
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
     #endregion

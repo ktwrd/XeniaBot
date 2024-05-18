@@ -5,6 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheVoiceChannelModel : CacheTextChannelModel
 {
+    public static string CollectionName => "cache_store_channel_voice";
     public int Bitrate { get; set; }
     public int? UserLimit { get; set; }
     public string RTCRegion { get; set; }

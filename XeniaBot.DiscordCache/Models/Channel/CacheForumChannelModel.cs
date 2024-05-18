@@ -5,6 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheForumChannelModel : CacheGuildChannelModel
 {
+    public static string CollectionName => "cache_store_channel_forum";
     public string Topic { get; set; }
     public bool IsNsfw { get; set; }
     public ThreadArchiveDuration DefaultAutoArchiveDuration { get; set; }
