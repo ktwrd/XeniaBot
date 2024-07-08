@@ -5,6 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsTrimmable>false</IsTrimmable>
+        <AssemblyName>XeniaBot.DiscordCache</AssemblyName>
+        <RootNamespace>XeniaBot.DiscordCache</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
