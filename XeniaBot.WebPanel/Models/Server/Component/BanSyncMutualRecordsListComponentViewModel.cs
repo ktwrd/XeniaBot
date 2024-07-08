@@ -11,7 +11,7 @@ public class BanSyncMutualRecordsListComponentViewModel : BaseViewModel,
 {
     public IEnumerable<BanSyncInfoModel> Items { get; set; }
     public int Cursor { get; set; }
-    public bool IsLastPage => Items.Count() < PageSize;
+    public bool IsLastPage => Items.Count() < PageSize || AbsolutePageEndIndex >= BanSyncRecordCount;
     public ListViewStyle ListStyle { get; set; }
     public const int PageSize = 10;
     public BanSyncStateHistoryItemModel BanSyncGuild { get; set; }
@@ -19,6 +19,8 @@ public class BanSyncMutualRecordsListComponentViewModel : BaseViewModel,
     public ulong? FilterRecordsByUserId { get; set; } 
     public IGuild Guild { get; set; }
     public IGuildUser User { get; set; }
+    public int AbsoluteStartPageIndex => PageSize * Cursor;
+    public int AbsolutePageEndIndex => Items.Count() + AbsoluteStartPageIndex;
 
     public bool IsItemLast(BanSyncInfoModel item)
     {
