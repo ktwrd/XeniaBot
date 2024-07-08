@@ -7,6 +7,7 @@ public class CacheUserModel
     : DiscordCacheBaseModel,
         IMentionable
 {
+    public static string CollectionName => "cache_store_user";
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
     #endregion
@@ -20,6 +21,8 @@ public class CacheUserModel
     public bool IsWebhook { get; set; }
     public string Username { get; set; }
     public string GlobalName { get; set; }
+    public string AvatarDecorationHash { get; set; }
+    public ulong? AvatarDecorationSkuId { get; set; }
     
     public UserProperties? PublicFlags { get; set; }
     
@@ -50,6 +53,9 @@ public class CacheUserModel
         this.IsBot = user.IsBot;
         this.IsWebhook = user.IsWebhook;
         this.Username = user.Username;
+        this.GlobalName = user.GlobalName;
+        this.AvatarDecorationHash = user.AvatarDecorationHash;
+        this.AvatarDecorationSkuId = user.AvatarDecorationSkuId;
         this.PublicFlags = user.PublicFlags;
         this.Mention = user.Mention;
         this.Status = user.Status;

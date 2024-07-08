@@ -5,6 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheTextChannelModel : CacheGuildChannelModel
 {
+    public static string CollectionName => "cache_store_channel_text";
     public string Topic { get; set; }
     public int SlowModeInterval { get; set; }
     public ulong? CategoryId { get; set; }

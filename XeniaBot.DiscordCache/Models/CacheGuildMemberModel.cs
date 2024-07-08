@@ -5,6 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheGuildMemberModel : CacheUserModel
 {
+    public static string CollectionName => "cache_store_guild_member";
     public ulong GuildId { get; set; }
     public string DisplayName => Nickname ?? GlobalName ?? Username;
     public string? Nickname { get; set; }

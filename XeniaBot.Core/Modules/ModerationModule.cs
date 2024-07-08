@@ -67,15 +67,8 @@ public class ModerationModule : InteractionModuleBase
 
     [SlashCommand("warn", "Warn member")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
-    public async Task WarnMember(SocketGuildUser user, string reason)
+    public async Task WarnMember(IUser user, string reason)
     {
-        SocketGuildUser? member = await SafelyFetchUser(user.Id);
-        if (member == null)
-        {
-            await RespondAsync("Failed to fetch user provided");
-            return;
-        }
-
         await DeferAsync();
 
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
@@ -85,6 +78,7 @@ public class ModerationModule : InteractionModuleBase
             var warnService = CoreContext.Instance.GetRequiredService<WarnService>();
             
             var data = await warnService.CreateWarnAsync(
+                Context.Guild,
                 user, 
                 Context.User, 
                 reason);
@@ -100,7 +94,7 @@ public class ModerationModule : InteractionModuleBase
                     $"Has {activeWarns!.Count} active warns (limit is {warnStrikeConfig.MaxStrike})\nAction immediately or ignore this message.");
             }
             
-            if (Program.Core.Config.Data.HasDashboard)
+            if (CoreContext.Instance.Config.Data.HasDashboard)
             {
                 embed.Description +=
                     $"\n[View on Dashboard]({Program.Core.Config.Data.DashboardUrl}/Warn/Info/{data.WarnId})";

@@ -210,6 +210,10 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
             throw new NotImplementedException($"Logic for parameter {nameof(ignoreDisabledGuilds)} is not implemented");
         }
 
+        filter |= Builders<BanSyncInfoModel>
+            .Filter
+            .Where(v => v.GuildId == guildId);
+
         return filter;
     }
     public async Task<List<BanSyncInfoModel>> GetInfoAllInGuildPaginate(ulong guildId,

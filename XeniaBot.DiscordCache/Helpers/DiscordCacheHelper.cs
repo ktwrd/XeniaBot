@@ -1,7 +1,11 @@
-﻿using System.Text.Json;
+﻿using System.Data;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Discord;
 using Discord.WebSocket;
 using XeniaBot.DiscordCache.Models;
+using XeniaBot.DiscordCache.Repositories;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.DiscordCache.Helpers;
 
@@ -43,5 +47,21 @@ public static class DiscordCacheHelper
             return CacheChannelType.Text;
         else
             return CacheChannelType.Unknown;
+    }
+
+    public static async Task<IUser?> TryGetUser(ulong userId)
+    {
+        var discord = CoreContext.Instance?.GetRequiredService<DiscordSocketClient>();
+        if (discord == null)
+            throw new NoNullAllowedException($"Failed to get Service {nameof(DiscordSocketClient)}");
+        var discordUser = await discord.GetUserAsync(userId);
+        if (discordUser != null)
+            return discordUser;
+
+        var repo = CoreContext.Instance?.GetRequiredService<UserCacheRepository>();
+        if (repo == null)
+            throw new NoNullAllowedException($"Failed to get Service {nameof(UserCacheRepository)}");
+        var model = await repo.GetLatest(userId);
+        return CacheUserModelData.FromModel(model);
     }
 }

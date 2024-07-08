@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Services;
 using XeniaBot.Data.Models;
+using XeniaBot.DiscordCache.Helpers;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
@@ -88,15 +89,15 @@ public static class AspHelper
 
     public static string GetUserProfilePicture(ulong userId)
     {
-        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        var user = discord.GetUser(userId);
+        var user = DiscordCacheHelper.TryGetUser(userId).Result;
         if (user == null)
+        {
             return "/Debugempty.png";
-
-        var v = user.GetAvatarUrl();
-        v ??= user.GetDefaultAvatarUrl();
-        v ??= "/Debugempty.png";
-        return v;
+        }
+        else
+        {
+            return user.GetDisplayAvatarUrl() ?? "/Debugempty.png";
+        }
     }
 
     public static string GetUserProfilePicture(SocketGuildUser guildUser)
