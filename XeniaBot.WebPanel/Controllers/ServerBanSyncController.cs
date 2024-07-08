@@ -40,6 +40,7 @@ public class ServerBanSyncController : BaseXeniaController
         data.Guild = g;
         data.User = g.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
         await AspHelper.FillServerModel(guildId, data, cursor, targetUserId, HttpContext);
+        data.Cursor = cursor;
         return data;
     }
     

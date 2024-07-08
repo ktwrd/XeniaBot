@@ -57,7 +57,7 @@ public class BanSyncMutualRecordsListComponentViewModel : BaseViewModel,
 
     public bool IsItemLast(BanSyncInfoModel item)
     {
-        if (Items.Count() < 2)
+        if (Items.Count() < PageSize)
             return true;
 
         return Items.ElementAt(Items.Count() - 1).RecordId == item.RecordId;
