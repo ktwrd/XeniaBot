@@ -7,5 +7,6 @@ public class FormCheckboxViewModel
     public string Id { get; set; }
     public string Label { get; set; }
     public bool State { get; set; }
+    public string? ExtraClasses { get; set; }
     public bool Margin { get; set; } = false;
 }
