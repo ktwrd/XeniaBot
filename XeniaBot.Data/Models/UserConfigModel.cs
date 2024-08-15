@@ -9,6 +9,7 @@ public class UserConfigModel : BaseModel
     public long ModifiedAtTimestamp { get; set; }
     
     public bool EnableProfileTracking { get; set; }
+    public bool SilentJoinMessage { get; set; }
     public ListViewStyle ListViewStyle { get; set; }
 
     /// <summary>
@@ -25,6 +26,7 @@ public class UserConfigModel : BaseModel
     public static void Defaults(UserConfigModel model)
     {
         model.EnableProfileTracking = true;
+        model.SilentJoinMessage = false;
         model.ListViewStyle = ListViewStyle.List;
     }
     
