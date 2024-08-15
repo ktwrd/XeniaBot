@@ -80,18 +80,22 @@ namespace XeniaBot.Data.Services
 
         public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
         
+        private string ParseReason(string? reason)
+        {
+            return string.IsNullOrEmpty(reason) ? "<unknown>" : reason;
+        }
         public bool InfoEquals(BanSyncInfoModel self, BanSyncInfoModel other)
         {
             return self.UserId == other.UserId
                 && self.GuildId == other.GuildId
                 && self.BannedByUserId == other.BannedByUserId
-                && self.Reason == other.Reason;
+                && ParseReason(self.Reason) == ParseReason(other.Reason);
         }
         public bool InfoEquals(BanSyncInfoModel self, RestBan other, ulong otherGuildId)
         {
             return self.UserId == other.User.Id
                 && self.GuildId == otherGuildId
-                && (string.IsNullOrEmpty(self.Reason) ? "<unknown>" : self.Reason) == (string.IsNullOrEmpty(other.Reason) ? "<unknown>" : other.Reason);
+                && ParseReason(self.Reason) == ParseReason(other.Reason);
         }
         public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
         {
@@ -104,7 +108,6 @@ namespace XeniaBot.Data.Services
             {
                 try
                 {
-                    string? parsedReason = i?.Reason ?? "<unknown>";
                     // only ignore when everything matches and ignoreExisting is true
                     var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id, allowGhost: true);
                     if (ignoreExisting)
@@ -121,7 +124,7 @@ namespace XeniaBot.Data.Services
                         UserDisplayName = i.User.GlobalName,
                         GuildId = guild.Id,
                         GuildName = guild.Name,
-                        Reason = i?.Reason ?? parsedReason
+                        Reason = ParseReason(i.Reason)
                     };
                     await _banInfoRepo.SetInfo(info);
                 }
