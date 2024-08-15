@@ -22,6 +22,7 @@ namespace XeniaBot.Data.Services
         private readonly ConfigData _configData;
         private readonly BanSyncInfoRepository _banInfoRepo;
         private readonly ErrorReportService _err;
+        private readonly ProgramDetails _programDetails;
         public BanSyncService(IServiceProvider services)
             : base(services)
         {
@@ -31,9 +32,9 @@ namespace XeniaBot.Data.Services
             _banInfoRepo = services.GetRequiredService<BanSyncInfoRepository>();
             _err = services.GetRequiredService<ErrorReportService>();
 
-            var programDetails = services.GetRequiredService<ProgramDetails>();
+            _programDetails = services.GetRequiredService<ProgramDetails>();
 
-            if (programDetails.Platform != XeniaPlatform.WebPanel)
+            if (_programDetails.Platform != XeniaPlatform.WebPanel)
             {
                 _client.UserJoined += _client_UserJoined;
                 _client.UserBanned += _client_UserBanned;
@@ -42,6 +43,11 @@ namespace XeniaBot.Data.Services
 
         public override async Task OnReady()
         {
+            if (_programDetails.Platform != XeniaPlatform.Bot)
+            {
+                Log.Debug($"Skipping since not running on {XeniaPlatform.Bot} (platform: {_programDetails.Platform})");
+                return;
+            }
             var taskList = new List<Task>();
             foreach (var item in _client.Guilds)
             {
