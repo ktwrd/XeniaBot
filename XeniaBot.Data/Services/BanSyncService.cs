@@ -48,6 +48,11 @@ namespace XeniaBot.Data.Services
                 Log.Debug($"Skipping since not running on {XeniaPlatform.Bot} (platform: {_programDetails.Platform})");
                 return;
             }
+            if (_configData.RefreshBansOnStart == false)
+            {
+                Log.WriteLine($"Skipping ban refresh since it's disabled.");
+                return;
+            }
             var taskList = new List<Task>();
             foreach (var item in _client.Guilds)
             {
