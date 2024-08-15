@@ -95,19 +95,12 @@ public class GuildGreeterService : BaseService
             return;
         if (config.GuildId != guild.Id)
             return;
-        if ((config?.ChannelId ?? 0) == 0)
+        if ((config.ChannelId ?? 0) == 0)
             return;
-        var channel = guild.GetTextChannel(config?.ChannelId ?? 0);
+        var channel = guild.GetTextChannel(config.ChannelId ?? 0);
         if (channel == null)
             return;
         var embed = config.GetEmbed(user, guild);
-        if (config.MentionNewUser)
-        {
-            await channel.SendMessageAsync($"<@{user.Id}>", embed: embed.Build());
-        }
-        else
-        {
-            await channel.SendMessageAsync(embed: embed.Build());
-        }
+        await channel.SendMessageAsync(embed: embed.Build());
     }
 }
