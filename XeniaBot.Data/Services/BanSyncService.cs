@@ -112,7 +112,7 @@ namespace XeniaBot.Data.Services
                     var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id, allowGhost: true);
                     if (ignoreExisting)
                     {
-                        if (existing != null && existing.Reason == parsedReason)
+                        if (existing != null && InfoEquals(existing, i, guild.Id))
                             continue;
                     }
                 
