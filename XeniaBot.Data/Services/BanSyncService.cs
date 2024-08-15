@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Services;
+using Discord.Rest;
 
 namespace XeniaBot.Data.Services
 {
@@ -22,6 +23,7 @@ namespace XeniaBot.Data.Services
         private readonly ConfigData _configData;
         private readonly BanSyncInfoRepository _banInfoRepo;
         private readonly ErrorReportService _err;
+        private readonly ProgramDetails _programDetails;
         public BanSyncService(IServiceProvider services)
             : base(services)
         {
@@ -31,9 +33,9 @@ namespace XeniaBot.Data.Services
             _banInfoRepo = services.GetRequiredService<BanSyncInfoRepository>();
             _err = services.GetRequiredService<ErrorReportService>();
 
-            var programDetails = services.GetRequiredService<ProgramDetails>();
+            _programDetails = services.GetRequiredService<ProgramDetails>();
 
-            if (programDetails.Platform != XeniaPlatform.WebPanel)
+            if (_programDetails.Platform != XeniaPlatform.WebPanel)
             {
                 _client.UserJoined += _client_UserJoined;
                 _client.UserBanned += _client_UserBanned;
@@ -42,6 +44,16 @@ namespace XeniaBot.Data.Services
 
         public override async Task OnReady()
         {
+            if (_programDetails.Platform != XeniaPlatform.Bot)
+            {
+                Log.Debug($"Skipping since not running on {XeniaPlatform.Bot} (platform: {_programDetails.Platform})");
+                return;
+            }
+            if (_configData.RefreshBansOnStart == false)
+            {
+                Log.WriteLine($"Skipping ban refresh since it's disabled.");
+                return;
+            }
             var taskList = new List<Task>();
             foreach (var item in _client.Guilds)
             {
@@ -68,6 +80,23 @@ namespace XeniaBot.Data.Services
 
         public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
         
+        private string ParseReason(string? reason)
+        {
+            return string.IsNullOrEmpty(reason) ? "<unknown>" : reason;
+        }
+        public bool InfoEquals(BanSyncInfoModel self, BanSyncInfoModel other)
+        {
+            return self.UserId == other.UserId
+                && self.GuildId == other.GuildId
+                && self.BannedByUserId == other.BannedByUserId
+                && ParseReason(self.Reason) == ParseReason(other.Reason);
+        }
+        public bool InfoEquals(BanSyncInfoModel self, RestBan other, ulong otherGuildId)
+        {
+            return self.UserId == other.User.Id
+                && self.GuildId == otherGuildId
+                && ParseReason(self.Reason) == ParseReason(other.Reason);
+        }
         public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
         {
             var config = await _guildConfigRepo.Get(guild.Id);
@@ -79,12 +108,11 @@ namespace XeniaBot.Data.Services
             {
                 try
                 {
-                    string? parsedReason = i?.Reason ?? "<unknown>";
                     // only ignore when everything matches and ignoreExisting is true
                     var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id, allowGhost: true);
                     if (ignoreExisting)
                     {
-                        if (existing != null && existing.Reason == parsedReason)
+                        if (existing != null && InfoEquals(existing, i, guild.Id))
                             continue;
                     }
                 
@@ -96,7 +124,7 @@ namespace XeniaBot.Data.Services
                         UserDisplayName = i.User.GlobalName,
                         GuildId = guild.Id,
                         GuildName = guild.Name,
-                        Reason = i?.Reason ?? parsedReason
+                        Reason = ParseReason(i.Reason)
                     };
                     await _banInfoRepo.SetInfo(info);
                 }

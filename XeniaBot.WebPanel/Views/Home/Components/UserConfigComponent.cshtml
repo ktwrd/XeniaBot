@@ -39,6 +39,16 @@
         },
         Selected = (int)@Model.UserConfig.ListViewStyle
     })
+    @await Component.InvokeAsync("FormCheckbox", new FormCheckboxViewModel()
+    {
+        ParentFormId = "user_config",
+        Name = "silentJoinMessage",
+        Id = "silentJoinMessage",
+        Label = "Send Greeter Message in DMs",
+        Margin = false,
+        ExtraClasses = "mt-2",
+        State = Model.UserConfig.SilentJoinMessage
+    })
     <hr class="my-2" />
     <button type="submit" class="btn btn-success">
         <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
