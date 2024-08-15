@@ -1,4 +1,5 @@
-﻿using XeniaBot.Shared.Models;
+﻿using System.ComponentModel;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;
 
@@ -7,9 +8,11 @@ public class UserConfigModel : BaseModel
     public static string CollectionName => "userConfig";
     public ulong UserId { get; set; }
     public long ModifiedAtTimestamp { get; set; }
-    
+    [DefaultValue(true)]
     public bool EnableProfileTracking { get; set; }
+    [DefaultValue(false)]
     public bool SilentJoinMessage { get; set; }
+    [DefaultValue(ListViewStyle.List)]
     public ListViewStyle ListViewStyle { get; set; }
 
     /// <summary>
