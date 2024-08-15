@@ -60,6 +60,10 @@ public class ConfigData
     /// <para>Should be enabled on Dashboard when deployed</para>
     /// </summary>
     public bool IsUpgradeAgent { get; set; }
+    /// <summary>
+    /// When set to <see langword="true"/>, this client will refresh bans on startup. Will not apply when not running as a bot.
+    /// </summary>
+    public bool RefreshBansOnStart { get; set; }
     [DefaultValue(null)]
     public int? ShardId { get; set; }
 
@@ -88,6 +92,7 @@ public class ConfigData
         i.MongoDB = MongoDBConfigItem.Default();
         i.ReminderService = ReminderServiceConfigItem.Default();
         i.IsUpgradeAgent = false;
+        i.RefreshBansOnStart = true;
         i.ShardId = null;
 
         i.SupportServerUrl = null;

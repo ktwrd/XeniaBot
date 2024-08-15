@@ -75,15 +75,20 @@ public class HomeController : BaseXeniaController
     
     [AuthRequired]
     [HttpPost("~/Preferences/Save")]
-    public async Task<IActionResult> PreferencesSave(ListViewStyle listViewStyle, bool enableProfileTracking)
+    public async Task<IActionResult> PreferencesSave(
+        ListViewStyle listViewStyle,
+        bool enableProfileTracking,
+        bool silentJoinMessage)
     {
         var model = await PopulateModel();
         try
         {
-            var userId = (ulong)GetCurrentUserId();
+            // not null since AuthRequiredAttribute is used
+            var userId = (ulong)GetCurrentUserId()!; 
             var data = await _userConfig.GetOrDefault(userId);
             data.ListViewStyle = listViewStyle;
             data.EnableProfileTracking = enableProfileTracking;
+            data.SilentJoinMessage = silentJoinMessage;
             await _userConfig.Add(data);
             model.UserConfig = data;
         }
