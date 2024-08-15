@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Services;
+using Discord.Rest;
 
 namespace XeniaBot.Data.Services
 {
@@ -79,6 +80,19 @@ namespace XeniaBot.Data.Services
 
         public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
         
+        public bool InfoEquals(BanSyncInfoModel self, BanSyncInfoModel other)
+        {
+            return self.UserId == other.UserId
+                && self.GuildId == other.GuildId
+                && self.BannedByUserId == other.BannedByUserId
+                && self.Reason == other.Reason;
+        }
+        public bool InfoEquals(BanSyncInfoModel self, RestBan other, ulong otherGuildId)
+        {
+            return self.UserId == other.User.Id
+                && self.GuildId == otherGuildId
+                && (string.IsNullOrEmpty(self.Reason) ? "<unknown>" : self.Reason) == (string.IsNullOrEmpty(other.Reason) ? "<unknown>" : other.Reason);
+        }
         public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
         {
             var config = await _guildConfigRepo.Get(guild.Id);
