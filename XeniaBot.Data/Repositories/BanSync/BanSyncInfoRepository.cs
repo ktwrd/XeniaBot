@@ -201,6 +201,10 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
                 .Where(v => v.Ghost == false);
         }
 
+        filter |= Builders<BanSyncInfoModel>
+            .Filter
+            .Eq("GuildId", guildId);
+
         if (ignoreDisabledGuilds)
         {
             throw new NotImplementedException($"Logic for parameter {nameof(ignoreDisabledGuilds)} is not implemented");

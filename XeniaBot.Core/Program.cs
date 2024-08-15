@@ -24,6 +24,7 @@ using XeniaBot.Shared.Services;
 using CronNET;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.Data.Services;
 using XeniaBot.Logic.Services;
 
@@ -103,6 +104,7 @@ namespace XeniaBot.Core
                 AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
                 AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
                 AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, s); // XeniaBot.Logic
+                AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, s);
                 return Task.CompletedTask;
             }).Wait();
         }

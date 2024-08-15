@@ -35,6 +35,7 @@
     <PackageReference Include="Victoria" Version="6.0.1026" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj" />
     <ProjectReference Include="..\XeniaBot.Core.Shared\XeniaBot.Core.Shared.csproj" />
     <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
     <ProjectReference Include="..\XeniaBot.Logic\XeniaBot.Logic.csproj" />

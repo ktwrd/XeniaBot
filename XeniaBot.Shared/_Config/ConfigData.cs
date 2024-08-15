@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using XeniaBot.Shared.Services;
@@ -63,6 +64,8 @@ public class ConfigData
     /// When set to <see langword="true"/>, this client will refresh bans on startup. Will not apply when not running as a bot.
     /// </summary>
     public bool RefreshBansOnStart { get; set; }
+    [DefaultValue(null)]
+    public int? ShardId { get; set; }
 
     public ConfigData()
     {
@@ -90,6 +93,7 @@ public class ConfigData
         i.ReminderService = ReminderServiceConfigItem.Default();
         i.IsUpgradeAgent = false;
         i.RefreshBansOnStart = true;
+        i.ShardId = null;
 
         i.SupportServerUrl = null;
         i.HasDashboard = false;
