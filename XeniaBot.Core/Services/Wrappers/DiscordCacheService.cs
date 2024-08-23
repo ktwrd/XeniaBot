@@ -179,7 +179,7 @@ public class DiscordCacheService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to run DiscordCacheService._client_GuildUpdated ({current.Id})\n{iex}");
+            Log.Error($"Failed to run DiscordCacheService._client_GuildUpdated ({current.Id})\n{ex}");
             try
             {
                 var oldJson = JsonSerializer.Serialize(previous, Program.SerializerOptions);
