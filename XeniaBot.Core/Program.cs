@@ -39,7 +39,8 @@ namespace XeniaBot.Core
             IgnoreReadOnlyProperties = true,
             IncludeFields = true,
             WriteIndented = true,
-            ReferenceHandler = ReferenceHandler.Preserve
+            ReferenceHandler = ReferenceHandler.Preserve,
+            
         };
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
