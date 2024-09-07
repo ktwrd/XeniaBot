@@ -4,8 +4,8 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class DiscordCacheBaseModel : BaseModel
 {
-    public ulong Snowflake;
-    public long ModifiedAtTimestamp;
+    public ulong Snowflake { get; set; }
+    public long ModifiedAtTimestamp { get; set; }
 
     public DiscordCacheBaseModel()
     {
