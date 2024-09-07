@@ -251,7 +251,7 @@ namespace XeniaBot.Core.LevelSystem.Modules
             ":seven:",
             ":eight:",
             ":nine:",
-            ":ten:"  
+            ":keycap_ten:"  
         };
         
         [SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
