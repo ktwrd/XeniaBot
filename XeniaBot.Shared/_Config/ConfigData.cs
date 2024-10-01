@@ -15,11 +15,12 @@ public class ConfigData
     /// 3: Move MongoDB connection URL from MongoDBConnectionUrl to MongoDB.ConnectionUrl
     /// 4: Add property ReminderService. No upgrade required.
     /// 5: Add property IsUpgradeAgent. No upgrade required.
+    /// 6: Add property Developer.GenericLoggingChannelId. No upgrade required.
     /// </summary>
     public uint Version
     {
-        get => 5;
-        set { value = 5; }
+        get => 6;
+        set { value = 6; }
     }
 
     /// <summary>
