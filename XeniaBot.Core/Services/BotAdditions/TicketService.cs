@@ -259,6 +259,7 @@ namespace XeniaBot.Core.Services.BotAdditions
                 {
                     IncludeFields = true,
                     WriteIndented = true,
+                    ReferenceHandler = ReferenceHandler.Preserve
                 });
 
             var attachment = string.Join("\n", transcript.ToString());
