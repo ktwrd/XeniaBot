@@ -1,5 +1,6 @@
 ﻿using XeniaBot.DiscordCache.Helpers;
 using Discord;
+using Discord.WebSocket;
 
 namespace XeniaBot.DiscordCache.Models;
 
@@ -99,6 +100,11 @@ public class CacheMessageModel : DiscordCacheBaseModel
         this.AuthorId = message.Author.Id;
         this.ChannelId = message.Channel.Id;
         this.GuildId = 0;
+
+        if (message != null && message.Channel is SocketGuildChannel sgc)
+        {
+            this.GuildId = sgc.Guild.Id;
+        }
         return this;
     }
     public static CacheMessageModel? FromExisting(IMessage? message)
