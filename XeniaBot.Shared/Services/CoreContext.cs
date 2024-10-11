@@ -50,7 +50,6 @@ public class CoreContext
         {
             GatewayIntents = GatewayIntents.All,
             UseInteractionSnowflakeDate = false,
-            AlwaysDownloadUsers = true,
             ShardId = Config.Data.ShardId
         });
         InitMongoClient();
