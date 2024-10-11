@@ -33,6 +33,7 @@
     <PackageReference Include="Noppes.E621Client" Version="0.9.0" />
     <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
     <PackageReference Include="Victoria" Version="6.0.1026" />
+    <PackageReference Include="Sentry.AspNetCore" Version="4.12.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj" />

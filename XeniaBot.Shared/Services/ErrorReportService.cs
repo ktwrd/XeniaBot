@@ -10,6 +10,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using Sentry;
 
 namespace XeniaBot.Shared.Services;
 
@@ -54,7 +55,7 @@ public class ErrorReportService : BaseService
         WriteIndented = true,
         ReferenceHandler = ReferenceHandler.Preserve
     };
-    
+
     #region HTTP Error Reporting
     public async Task ReportError(HttpResponseMessage response, ICommandContext commandContext)
     {
@@ -116,7 +117,7 @@ public class ErrorReportService : BaseService
         await logChannel.SendMessageAsync(embed: embed.Build());
     }
     #endregion
-    
+
     #region Report Discord Context Error
     public async Task ReportError(Exception response, ICommandContext context)
     {
@@ -140,6 +141,13 @@ public class ErrorReportService : BaseService
         IChannel? channel,
         IMessage? message)
     {
+        SentrySdk.CaptureException(response, (scope) =>
+        {
+            scope.SetExtra("user", user);
+            scope.SetExtra("guild", guild);
+            scope.SetExtra("channel", channel);
+            scope.SetExtra("message", message);
+        });
         Log.Error($"Failed to process. User: {user?.Id}, Guild: {guild?.Id}, Channel: {channel?.Id}.\n{response}");
         var stack = Environment.StackTrace;
         var embed = new EmbedBuilder()
@@ -155,17 +163,17 @@ public class ErrorReportService : BaseService
             }),
             Color = Color.Red
         };
-            
+
         bool attachStack = stack.Length > 1000;
         if (!attachStack)
             embed.AddField("Stack Trace", $"```\n{stack}\n```");
-            
+
         if (message != null)
             embed.AddField("Message Content", $"```\n{message.Content}\n```");
 
         var errGuild = _client.GetGuild(_config.ErrorReporting.GuildId);
         var errChannel = errGuild.GetTextChannel(_config.ErrorReporting.ChannelId);
-            
+
         var attachments = new List<FileAttachment>();
         var responseStream = new MemoryStream(Encoding.UTF8.GetBytes(response.ToString()));
         attachments.Add(new FileAttachment(responseStream, "exception.txt"));
@@ -179,9 +187,13 @@ public class ErrorReportService : BaseService
         await errChannel.SendFilesAsync(attachments: attachments, text: "", embed: embed.Build());
     }
     #endregion
-    
+
     public async Task ReportException(Exception exception, string notes = "")
     {
+        SentrySdk.CaptureException(exception, (scope) =>
+        {
+            scope.SetExtra("notes", notes);
+        });
         Log.Error($"Exception Reported\n{notes}\n{exception}");
 
         var stack = Environment.StackTrace;
@@ -196,7 +208,7 @@ public class ErrorReportService : BaseService
 
         var stackMs = new MemoryStream(Encoding.UTF8.GetBytes(stack));
         attachments.Add(new FileAttachment(stackMs, fileName: "stack.txt"));
-        
+
         if (exceptionContent.Length > 1000)
         {
             embed.WithDescription($"Exception is attached as `exception.txt`");
@@ -217,7 +229,7 @@ public class ErrorReportService : BaseService
         {
             embed.AddField("Notes", $"```\n{notes}\n```");
         }
-        
+
         var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
         var textChannel = guild.GetTextChannel(_config.ErrorReporting.ChannelId);
 
