@@ -25,6 +25,7 @@ namespace XeniaBot.Core.LevelSystem.Services
         private Random _random;
         private LevelMemberRepository _memberConfig;
         private LevelSystemConfigRepository _config;
+        private ConfigData _configData;
         public LevelSystemService(IServiceProvider services)
             : base(services)
         {
@@ -32,6 +33,7 @@ namespace XeniaBot.Core.LevelSystem.Services
             _client = services.GetRequiredService<DiscordSocketClient>();
             _config = services.GetRequiredService<LevelSystemConfigRepository>();
             _memberConfig = services.GetRequiredService<LevelMemberRepository>();
+            _configData = services.GetRequiredService<ConfigData>();
             _random = new Random();
             _client.MessageReceived += _client_MessageReceived;
             
@@ -41,6 +43,11 @@ namespace XeniaBot.Core.LevelSystem.Services
 
         public override async Task OnReadyDelay()
         {
+            if (!_configData.RefreshLevelSystemOnStart)
+            {
+                Log.WriteLine($"Not going to run since {nameof(_configData.RefreshLevelSystemOnStart)} is false");
+                return;
+            }
             try
             {
                 var taskList = new List<Task>();
