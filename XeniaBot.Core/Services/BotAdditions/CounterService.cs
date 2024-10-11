@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
@@ -31,7 +32,7 @@ namespace XeniaBot.Core.Services.BotAdditions
         }
         public override Task InitializeAsync()
         {
-            _discord.MessageReceived += DiscordMessageReceived;
+            _discord.MessageReceived += _discord_MessageReceived;
 
             return Task.CompletedTask;
         }
@@ -41,6 +42,22 @@ namespace XeniaBot.Core.Services.BotAdditions
             {
                 _config.CachedItems.Add(item.ChannelId, item.Count);
             }
+        }
+
+        private Task _discord_MessageReceived(SocketMessage arg)
+        {
+            new Thread((ThreadStart)async delegate
+            {
+                try
+                {
+                    await DiscordMessageReceived(arg);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Failed to run {nameof(DiscordMessageReceived)}\n{ex}");
+                }
+            }).Start();
+            return Task.CompletedTask;
         }
         private async Task DiscordMessageReceived(SocketMessage arg)
         {

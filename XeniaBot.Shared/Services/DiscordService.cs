@@ -7,11 +7,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using XeniaBot.Shared;
 using Prometheus;
 using XeniaBot.Shared.Helpers;
+using Timer = System.Timers.Timer;
 
 namespace XeniaBot.Shared.Services
 {
@@ -59,7 +60,10 @@ namespace XeniaBot.Shared.Services
         {
             _client.MessageReceived += (arg) =>
             {
-                MessageReceived?.Invoke(arg);
+                new Thread((ThreadStart)delegate
+                {
+                    MessageReceived?.Invoke(arg);
+                }).Start();
                 return Task.CompletedTask;
             };
 

@@ -4,6 +4,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.DiscordCache.Helpers;
 using Discord;
@@ -593,7 +594,23 @@ public class DiscordCacheService : BaseService
     }
     
     #region Message
-    private async Task _client_MessageReceived(SocketMessage message)
+
+    private Task _client_MessageReceived(SocketMessage message)
+    {
+        new Thread((ThreadStart)async delegate
+        {
+            try
+            {
+                await HandleMessageReceived(message);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to run {nameof(HandleMessageReceived)}\n{ex}");
+            }
+        }).Start();
+        return Task.CompletedTask;
+    }
+    private async Task HandleMessageReceived(SocketMessage message)
     {
         try
         {

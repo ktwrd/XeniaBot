@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
@@ -140,7 +141,7 @@ namespace XeniaBot.Core.LevelSystem.Services
             }
         }
 
-        private async Task _client_MessageReceived(SocketMessage rawMessage)
+        private async Task ClientMessageReceived(SocketMessage rawMessage)
         {
             // Ignore messages from bots & webhooks
             if (rawMessage.Author.IsBot || rawMessage.Author.IsWebhook)
@@ -198,6 +199,20 @@ namespace XeniaBot.Core.LevelSystem.Services
                     await DiscordHelper.ReportError(e, context);
                 }
             }
+        }
+        private async Task _client_MessageReceived(SocketMessage rawMessage)
+        {
+            new Thread((ThreadStart)async delegate
+            {
+                try
+                {
+                    await ClientMessageReceived(rawMessage);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Failed to run {nameof(ClientMessageReceived)}\n{ex}");
+                }
+            }).Start();
         }
 
         public class GrantXpResult
