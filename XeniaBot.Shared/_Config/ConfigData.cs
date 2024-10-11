@@ -16,11 +16,12 @@ public class ConfigData
     /// 4: Add property ReminderService. No upgrade required.
     /// 5: Add property IsUpgradeAgent. No upgrade required.
     /// 6: Add property Developer.GenericLoggingChannelId. No upgrade required.
+    /// 7: Add property RefreshFlightCheckOnStart, and RefreshRolePreserveOnStart. No upgrade requied.
     /// </summary>
     public uint Version
     {
-        get => 6;
-        set { value = 6; }
+        get => 7;
+        set { value = 7; }
     }
 
     /// <summary>
@@ -67,6 +68,10 @@ public class ConfigData
     public bool RefreshBansOnStart { get; set; }
     [DefaultValue(null)]
     public int? ShardId { get; set; }
+    [DefaultValue(true)]
+    public bool RefreshFlightCheckOnStart { get; set; }
+    [DefaultValue(true)]
+    public bool RefreshRolePreserveOnStart { get; set; }
 
     public ConfigData()
     {
@@ -94,6 +99,8 @@ public class ConfigData
         i.ReminderService = ReminderServiceConfigItem.Default();
         i.IsUpgradeAgent = false;
         i.RefreshBansOnStart = true;
+        i.RefreshFlightCheckOnStart = true;
+        i.RefreshRolePreserveOnStart = true;
         i.ShardId = null;
 
         i.SupportServerUrl = null;

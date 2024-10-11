@@ -6,6 +6,8 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
+using System.Threading;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -14,30 +16,55 @@ public class FlightCheckService : BaseService
 {
     private readonly DiscordSocketClient _discord;
     private readonly ConfigData _config;
+    private readonly ErrorReportService _errReportService;
     public FlightCheckService(IServiceProvider services)
         : base(services)
     {
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _config = services.GetRequiredService<ConfigData>();
+        _errReportService = services.GetRequiredService<ErrorReportService>();
         
         _discord.JoinedGuild += DiscordOnJoinedGuild;
     }
 
     private async Task DiscordOnJoinedGuild(SocketGuild arg)
     {
-        await CheckGuild(arg);
+        new Thread((ThreadStart)async delegate
+        {
+            try
+            {
+                await CheckGuild(arg);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to run {nameof(CheckGuild)} for {arg.Name} ({arg.Id})\n{ex}");
+            }
+        }).Start();
     }
 
     public override async Task OnReady()
     {
-        var taskList = new List<Task>();
-        foreach (var item in _discord.Guilds)
+        if (!_config.RefreshFlightCheckOnStart)
         {
-            taskList.Add(new Task(
-                delegate
+            Log.WriteLine($"Not going to run since {nameof(_config.RefreshFlightCheckOnStart)} is false");
+            return;
+        }
+        var taskList = new List<Task>();
+        foreach (var index in Enumerable.Range(0, _discord.Guilds.Count))
+        {
+            var item = _discord.Guilds.ElementAt(index);
+            new Thread((ThreadStart)async delegate
+            {
+                try
                 {
-                    CheckGuild(item).Wait();
-                }));
+                    await CheckGuild(item);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Failed to run {nameof(CheckGuild)} for {item.Name} ({item.Id})\n{ex}");
+                await _errReportService.ReportException(ex);
+                }
+            }).Start();
         }
 
         foreach (var item in taskList)
