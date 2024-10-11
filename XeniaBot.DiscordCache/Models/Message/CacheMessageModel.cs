@@ -1,6 +1,7 @@
 ﻿using XeniaBot.DiscordCache.Helpers;
 using Discord;
 using Discord.WebSocket;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace XeniaBot.DiscordCache.Models;
 
@@ -11,8 +12,11 @@ public class CacheMessageModel : DiscordCacheBaseModel
     public string Content { get; set; }
     public string ContentClean { get; set; }
     public DateTimeOffset Timestamp { get; set; }
+    [BsonIgnoreIfNull]
     public DateTimeOffset? EditedTimestamp { get; set; }
+    [BsonIgnoreIfNull]
     public CacheMessageEmbed[]? Embeds { get; set; }
+    [BsonIgnoreIfNull]
     public CacheMessageTag[]? Tags { get; set; }
     public MessageSource Source { get; set; }
     public bool IsTTS { get; set; }
@@ -23,21 +27,28 @@ public class CacheMessageModel : DiscordCacheBaseModel
     public ulong[] MentionedChannelIds { get; set; }
     public ulong[] MentionedRoleIds { get; set; }
     public ulong[] MentionedUserIds { get; set; }
+    [BsonIgnoreIfNull]
     public CacheMessageActivity? Activity { get; set; }
+    [BsonIgnoreIfNull]
     public CacheMessageApplication? Application { get; set; }
+    [BsonIgnoreIfNull]
     public CacheMessageReference? Reference { get; set; }
     public Dictionary<CacheEmote, CacheReactionMetadata> Reactions { get; set; }
     public CacheMessageComponent[] Components { get; set; }
+    [BsonIgnoreIfNull]
     public CacheStickerItem[]? Stickers { get; set; }
+    [BsonIgnoreIfNull]
     public MessageFlags? Flags { get; set; }
-    
+    [BsonIgnoreIfNull]
     public CacheMessageInteraction? Interaction { get; set; }
+    [BsonIgnoreIfNull]
+    public CacheMessageInteractionMetadata? InteractionMetadata { get; set; }
     #endregion
-    
+
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
     #endregion
-    
+
     public ulong AuthorId { get; set; }
     public ulong ChannelId { get; set; }
     public ulong GuildId { get; set; }
@@ -52,6 +63,11 @@ public class CacheMessageModel : DiscordCacheBaseModel
         Tags = Array.Empty<CacheMessageTag>();
         IsDeleted = false;
         DeletedTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(0);
+        MentionedChannelIds = [];
+        MentionedRoleIds = [];
+        MentionedUserIds = [];
+        Reactions = [];
+        Components = [];
     }
 
     public CacheMessageModel? Clone()
@@ -94,7 +110,15 @@ public class CacheMessageModel : DiscordCacheBaseModel
             .Cast<CacheStickerItem>()
             .ToArray();
         this.Flags = message.Flags;
-        this.Interaction = CacheMessageInteraction.FromExisting(message.Interaction);
+        if (message is IUserMessage usrMsg)
+        {
+            this.InteractionMetadata = CacheMessageInteractionMetadata.FromExisting(usrMsg.InteractionMetadata);
+        }
+        else
+        {
+            this.InteractionMetadata = null;
+        }
+        this.Interaction = null;
         this.CreatedAt = message.CreatedAt;
         this.Snowflake = message.Id;
         this.AuthorId = message.Author.Id;
@@ -111,7 +135,7 @@ public class CacheMessageModel : DiscordCacheBaseModel
     {
         if (message == null)
             return null;
-        
+
         var instance = new CacheMessageModel();
         return instance.Update(message);
     }
