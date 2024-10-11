@@ -3,7 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    
+
     <AssemblyName>XeniaBot.Core</AssemblyName>
     <RootNamespace>XeniaBot.Core</RootNamespace>
 
@@ -12,7 +12,7 @@
     <TransformOnBuild>true</TransformOnBuild>
 
     <IsTrimmable>false</IsTrimmable>
-    
+
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
   <ItemGroup>
@@ -23,7 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
-    <PackageReference Include="Discord.Net" Version="3.15.3" />
+    <PackageReference Include="Discord.Net" Version="3.16.0" />
     <PackageReference Include="Google.Cloud.Translation.V2" Version="3.4.0" />
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="kate.shared" Version="1.0.4" />
