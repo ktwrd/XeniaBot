@@ -265,6 +265,9 @@ public class DiscordCacheService : BaseService
     {
         try
         {
+            // blacklist guild that is known for spamming
+            if (newMember.Guild.Id == 1095798719363956786)
+                return;
             Log.Debug($"Checking {newMember.DisplayName} ({newMember.Id}) in {newMember.Guild.Name} ({newMember.Guild.Id})");
             var data = await CacheGuildMemberConfig.GetLatest(oldMember.Id);
             var currentData = CacheGuildMemberModel.FromExisting(newMember);
