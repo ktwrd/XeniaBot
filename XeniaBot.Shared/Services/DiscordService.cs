@@ -13,6 +13,7 @@ using XeniaBot.Shared;
 using Prometheus;
 using XeniaBot.Shared.Helpers;
 using Timer = System.Timers.Timer;
+using Sentry;
 
 namespace XeniaBot.Shared.Services
 {
@@ -29,7 +30,7 @@ namespace XeniaBot.Shared.Services
         public DiscordService(IServiceProvider services)
         {
             _details = services.GetRequiredService<ProgramDetails>();
-            
+
             _configData = services.GetRequiredService<ConfigData>();
             _client = services.GetRequiredService<DiscordSocketClient>();
 
@@ -87,7 +88,7 @@ namespace XeniaBot.Shared.Services
                 "Amount of guilds this bot is in",
                 publish: false);
             _promCount_GuildUserCount = _prom.CreateGauge(
-                "xenia_discord_guild_users", 
+                "xenia_discord_guild_users",
                 "Amount of users per guild",
                 labelNames: new string[]
                 {
@@ -131,7 +132,7 @@ namespace XeniaBot.Shared.Services
         {
             if (!_configData.Prometheus.Enable)
                 return;
-            
+
             _metricTimer = new Timer(MetricTimerInterval);
             _metricTimer.AutoReset = true;
             _metricTimer.Enabled = true;
@@ -139,7 +140,7 @@ namespace XeniaBot.Shared.Services
             {
                 await ReloadMetrics();
             };
-            
+
             _metricTimer.Start();
         }
         #endregion
@@ -149,7 +150,7 @@ namespace XeniaBot.Shared.Services
         {
             if (!_configData.Prometheus.Enable)
                 return;
-            
+
             var taskList = new List<Task>()
             {
                 ReloadMetrics_GuildCountSlow()
@@ -164,12 +165,12 @@ namespace XeniaBot.Shared.Services
         {
             if (!_configData.Prometheus.Enable)
                 return;
-            
+
             if (_promCount_GuildCount == null)
                 throw new Exception("InitializeMetrics not called, _promCount_GuildCount is null");
             if (_promCount_GuildUserCount == null)
                 throw new Exception("InitializeMetrics not called, _promCount_GuildUserCount is null");
-            
+
             var taskList = new List<Task>();
             foreach (var guild in _client.Guilds)
             {
@@ -278,7 +279,14 @@ namespace XeniaBot.Shared.Services
                     break;
             }
             if (arg.Exception != null)
+            {
                 Log.Error(arg.Exception, methodname: methodName, methodfile: fileName);
+                SentrySdk.CaptureException(arg.Exception, (scope) =>
+                {
+                    scope.SetTag("source", arg.Source);
+                    scope.SetTag("message", arg.Message);
+                });
+            }
             return Task.CompletedTask;
         }
         #endregion
