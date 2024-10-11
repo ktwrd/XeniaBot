@@ -91,7 +91,21 @@ namespace XeniaBot.Core.LevelSystem
         {
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            
+            if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
+            {
+                SentrySdk.Init(new SentryOptions()
+                {
+                    Dsn = FeatureFlags.SentryDSN,
+                    TracesSampleRate = 1.0,
+                    IsGlobalModeEnabled = true,
+                    #if DEBUG
+                    Debug = true
+                    #else
+                    Debug = false
+                    #endif
+                });
+            }
+
             Core = new CoreContext(ProgramDetails);
             Core.StartTimestamp = StartTimestamp;
             Core.MainAsync(args, (s) =>
@@ -134,6 +148,6 @@ namespace XeniaBot.Core.LevelSystem
                 false
 #endif
         };
-        
+
     }
 }
