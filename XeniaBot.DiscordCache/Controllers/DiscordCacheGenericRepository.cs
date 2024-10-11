@@ -31,6 +31,10 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
             collection.Indexes.CreateOne(indexModel);
             Log.WriteLine($"{collectionName} Created Index");
         }
+        else
+        {
+            Log.WriteLine($"{collectionName} Index already exists");
+        }
     }
 
     public delegate void ModelSetDelegate(T? current, T? previous, bool isNewEntry);
