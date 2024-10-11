@@ -13,6 +13,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Discord.Rest;
 using XeniaBot.Shared;
+using Sentry;
 
 namespace XeniaBot.Shared
 {
@@ -91,11 +92,12 @@ namespace XeniaBot.Shared
             var mods = Array.Empty<ModuleInfo>();
             foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
             {
-                mods = mods.Concat(_interactionService.AddModulesAsync(item, _services).Result).ToArray();
+                var x = await _interactionService.AddModulesAsync(item, _services);
+                mods = mods.Concat(x).ToArray();
             }
             var result = await _interactionService.RegisterCommandsGloballyAsync();
             await PostDBL(result);
-            
+
             var lines = new List<string>();
             foreach (var item in mods)
             {
@@ -113,12 +115,20 @@ namespace XeniaBot.Shared
 
         private async Task InteractionCreateAsync(SocketInteraction interaction)
         {
-            var context = new SocketInteractionContext(
-                _client,
-                interaction);
-            await _interactionService.ExecuteCommandAsync(
-                context,
-                _services);
+            try
+            {
+                var context = new SocketInteractionContext(
+                    _client,
+                    interaction);
+                await _interactionService.ExecuteCommandAsync(
+                    context,
+                    _services);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"{ex}");
+                SentrySdk.CaptureException(ex);
+            }
         }
     }
 }
