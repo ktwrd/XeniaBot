@@ -1,14 +1,17 @@
 ﻿using Discord;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace XeniaBot.DiscordCache.Models;
 
 public class CacheSticker : CacheStickerItem
 {
     public ulong PackId { get; set; }
-    public string Description { get; set; }
-    public string[] Tags { get; set; }
+    public string Description { get; set; } = "";
+    public string[] Tags { get; set; } = [];
     public StickerType Type { get; set; }
+    [BsonIgnoreIfNull]
     public bool? IsAvailable { get; set; }
+    [BsonIgnoreIfNull]
     public int? SortOrder { get; set; }
     public CacheSticker Update(ISticker sticker)
     {
