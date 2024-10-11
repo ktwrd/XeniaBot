@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -13,6 +14,22 @@ public class UserConfigRepository : BaseRepository<UserConfigModel>
     public UserConfigRepository(IServiceProvider services)
         : base(UserConfigModel.CollectionName, services)
     {
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+        var existingIndexes = collection.Indexes.List().ToList().Count;
+        if (existingIndexes < 1)
+        {
+            var keys = Builders<UserConfigModel>
+                .IndexKeys
+                .Descending("UserId")
+                .Descending("ModifiedAtTimestamp");
+            var indexModel = new CreateIndexModel<UserConfigModel>(keys);
+            collection.Indexes.CreateOne(indexModel);
+            Log.WriteLine($"Created Index");
+        }
     }
 
     public async Task<UserConfigModel?> Get(ulong? id)
