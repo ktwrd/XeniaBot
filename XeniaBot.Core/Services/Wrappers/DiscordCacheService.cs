@@ -46,8 +46,8 @@ public class DiscordCacheService : BaseService
         CacheGuildMemberConfig =
             new DiscordCacheGenericRepository<CacheGuildMemberModel>(CacheGuildMemberModel.CollectionName, services);
         CacheGuildConfig = new DiscordCacheGenericRepository<CacheGuildModel>(CacheGuildModel.CollectionName, services);
-        
-        
+
+
         CacheForumChannelConfig =
             new DiscordCacheGenericRepository<CacheForumChannelModel>(CacheForumChannelModel.CollectionName, services);
         CacheVoiceChannelConfig =
@@ -63,7 +63,7 @@ public class DiscordCacheService : BaseService
         _client.MessageReceived += _client_MessageReceived;
         _client.MessageUpdated += _client_MessageUpdated;
         _client.MessageDeleted += _client_MessageDeleted;
-        
+
         _client.UserUpdated += _client_UserUpdated;
 
         _client.GuildUpdated += _client_GuildUpdated;
@@ -254,7 +254,7 @@ public class DiscordCacheService : BaseService
             }
         }
     }
-    
+
     /// <summary>
     /// Invoked when <see cref="DiscordSocketClient.GuildMemberUpdated"/> is fired.
     /// </summary>
@@ -265,13 +265,14 @@ public class DiscordCacheService : BaseService
     {
         try
         {
+            Log.Debug($"Checking {newMember.DisplayName} ({newMember.Id}) in {newMember.Guild.Name} ({newMember.Guild.Id})");
             var data = await CacheGuildMemberConfig.GetLatest(oldMember.Id);
             var currentData = CacheGuildMemberModel.FromExisting(newMember);
             if (currentData == null)
                 throw new NoNullAllowedException("currentData is null");
             await CacheGuildMemberConfig.Add(currentData);
             OnGuildMemberChange(CacheChangeType.Update,
-                currentData, 
+                currentData,
                 data);
         }
         catch (Exception ex)
@@ -305,6 +306,7 @@ public class DiscordCacheService : BaseService
     {
         if (!(newChannel is SocketGuildChannel guildChannel))
             return;
+        Log.Debug($"Checking Channel {guildChannel.Name} ({guildChannel.Id}) in {guildChannel.Guild.Name} ({guildChannel.Guild.Id})");
 
         var channelType = DiscordCacheHelper.GetChannelType(guildChannel);
         switch (channelType)
@@ -394,7 +396,7 @@ public class DiscordCacheService : BaseService
                         }
                         catch (Exception iex)
                         {
-                            Log.Error($"Failed to report error\n{iex}");   
+                            Log.Error($"Failed to report error\n{iex}");
                         }
                     }
                 }
@@ -451,8 +453,9 @@ public class DiscordCacheService : BaseService
     {
         if (!(channel is SocketGuildChannel guildChannel))
             return;
-        
+
         var channelType = DiscordCacheHelper.GetChannelType(guildChannel);
+        Log.Debug($"Checking Channel {guildChannel.Name} ({guildChannel.Id}) in {guildChannel.Guild.Name} ({guildChannel.Guild.Id})");
         switch (channelType)
         {
             case CacheChannelType.Forum:
@@ -592,11 +595,12 @@ public class DiscordCacheService : BaseService
                 break;
         }
     }
-    
+
     #region Message
 
     private Task _client_MessageReceived(SocketMessage message)
     {
+        Log.Debug($"Handling message {message.Id} in {message.Channel.Name} ({message.Channel.Id})");
         new Thread((ThreadStart)async delegate
         {
             try
@@ -622,8 +626,8 @@ public class DiscordCacheService : BaseService
             }
             await CacheMessageConfig.Add(data);
             OnMessageChange(
-                MessageChangeType.Create, 
-                data, 
+                MessageChangeType.Create,
+                data,
                 null);
         }
         catch (Exception ex)
@@ -674,6 +678,7 @@ public class DiscordCacheService : BaseService
     {
         try
         {
+            Log.Debug($"Handling message {newMessage.Id} in {newMessage.Channel.Name} ({newMessage.Channel.Id})");
             // convert data to type that mongo can support
             var data = CacheMessageModel.FromExisting(newMessage);
 
@@ -705,7 +710,7 @@ public class DiscordCacheService : BaseService
                 }
                 catch (Exception xxe)
                 {
-                    Log.Error($"Failed to serialize {nameof(newMessage)} ({newMessage.GetType()})\n{xxe}"); 
+                    Log.Error($"Failed to serialize {nameof(newMessage)} ({newMessage.GetType()})\n{xxe}");
                     try
                     { msgJson = JsonSerializer.Serialize(newMessage.DictionarySerialize(), Program.SerializerOptions); }
                     catch (Exception xie)
@@ -759,6 +764,7 @@ public class DiscordCacheService : BaseService
     {
         try
         {
+            Log.Debug($"Handling message {message.Id} in {channel.Id}");
             var data = await CacheMessageConfig.GetLatest(message.Id);
             if (data != null)
             {
