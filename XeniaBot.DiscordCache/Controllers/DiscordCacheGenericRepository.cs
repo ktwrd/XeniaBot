@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
@@ -12,6 +14,23 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
     public DiscordCacheGenericRepository(string collectionName, IServiceProvider services)
         : base(collectionName, services)
     {
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var existingIndexes = collection.Indexes.List().ToList().Count;
+        if (existingIndexes < 1)
+        {
+            var keys = Builders<T>
+                .IndexKeys
+                .Descending("Snowflake")
+                .Descending("ModifiedAtTimestamp");
+            var indexModel = new CreateIndexModel<T>(keys);
+            collection.Indexes.CreateOne(indexModel);
+            Log.WriteLine($"{collectionName} Created Index");
+        }
     }
 
     public delegate void ModelSetDelegate(T? current, T? previous, bool isNewEntry);
@@ -19,7 +38,7 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
 
     public event ModelSetDelegate OnModelSet;
     public event ModelAddDelegate OnModelAdd;
-    
+
     public async Task<T?> Get(ulong snowflake)
     {
         var collection = GetCollection();
@@ -42,7 +61,7 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
         var filter = Builders<T>
             .Filter
             .Eq("Snowflake", snowflake);
-        
+
         var result = await collection.FindAsync(filter);
         var sorted = result.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
         return sorted.FirstOrDefault();
