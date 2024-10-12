@@ -11,6 +11,7 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
+using Sentry;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.Data.Repositories;
@@ -63,6 +64,7 @@ public class DiscordCacheService : BaseService
         _client.MessageReceived += _client_MessageReceived;
         _client.MessageUpdated += _client_MessageUpdated;
         _client.MessageDeleted += _client_MessageDeleted;
+        _client.MessagesBulkDeleted += _client_MessagesBulkDeleted;
 
         _client.UserUpdated += _client_UserUpdated;
 
@@ -762,6 +764,14 @@ public class DiscordCacheService : BaseService
         }
     }
 
+    private async Task _client_MessagesBulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> messages,
+        Cacheable<IMessageChannel, ulong> channel)
+    {
+        foreach (var msg in messages)
+        {
+            await _client_MessageDeleted(msg, channel);
+        }
+    }
     private async Task _client_MessageDeleted(Cacheable<IMessage, ulong> message,
         Cacheable<IMessageChannel, ulong> channel)
     {
@@ -783,6 +793,11 @@ public class DiscordCacheService : BaseService
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex, (scope) =>
+            {
+                scope.SetExtra("message", message);
+                scope.SetExtra("channel", channel);
+            });
             Log.Error($"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})\n{ex}");
             try
             {
