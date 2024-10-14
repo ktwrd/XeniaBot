@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using CronNET;
 using Discord;
@@ -33,7 +34,7 @@ public class CoreContext
         Details = details;
 
         RegisteredBaseControllers = new List<Type>();
-        
+
         Instance = this;
     }
 
@@ -49,7 +50,6 @@ public class CoreContext
         {
             GatewayIntents = GatewayIntents.All,
             UseInteractionSnowflakeDate = false,
-            AlwaysDownloadUsers = true,
             ShardId = Config.Data.ShardId
         });
         InitMongoClient();
@@ -58,9 +58,12 @@ public class CoreContext
         var discordController = Services.GetRequiredService<DiscordService>();
         discordController.Ready += (c) =>
         {
-            RunServiceReady();
-            Task.Delay(2000).Wait();
-            RunServiceDelayedReady();
+            new Thread((ThreadStart)delegate
+            {
+                RunServiceReady();
+                Task.Delay(2000).Wait();
+                RunServiceDelayedReady();
+            }).Start();
         };
         await discordController.Run();
         if (AlternativeMain != null)
@@ -88,8 +91,8 @@ public class CoreContext
     {
         return Services.GetRequiredService<T>();
     }
-    
-    
+
+
     /// <summary>
     /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
     /// </summary>
@@ -131,7 +134,7 @@ public class CoreContext
     {
         return MongoDB.GetDatabase(Config.Data.MongoDB.DatabaseName);
     }
-    
+
     #region Services
     public void InitServices(Func<ServiceCollection, Task> beforeServiceBuild)
     {
@@ -158,7 +161,7 @@ public class CoreContext
         }
 
         var s = new InteractionService(Discord);
-        
+
         services.AddSingleton(mongoDb)
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()

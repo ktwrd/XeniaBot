@@ -15,11 +15,14 @@ public class ConfigData
     /// 3: Move MongoDB connection URL from MongoDBConnectionUrl to MongoDB.ConnectionUrl
     /// 4: Add property ReminderService. No upgrade required.
     /// 5: Add property IsUpgradeAgent. No upgrade required.
+    /// 6: Add property Developer.GenericLoggingChannelId. No upgrade required.
+    /// 7: Add property RefreshFlightCheckOnStart, and RefreshRolePreserveOnStart. No upgrade requied.
+    /// 8: Add property RefreshLevelSystemOnStart. No upgrade required.
     /// </summary>
     public uint Version
     {
-        get => 5;
-        set { value = 5; }
+        get => 8;
+        set { value = 8; }
     }
 
     /// <summary>
@@ -66,6 +69,12 @@ public class ConfigData
     public bool RefreshBansOnStart { get; set; }
     [DefaultValue(null)]
     public int? ShardId { get; set; }
+    [DefaultValue(true)]
+    public bool RefreshFlightCheckOnStart { get; set; }
+    [DefaultValue(true)]
+    public bool RefreshRolePreserveOnStart { get; set; }
+    [DefaultValue(true)]
+    public bool RefreshLevelSystemOnStart { get; set; }
 
     public ConfigData()
     {
@@ -93,6 +102,9 @@ public class ConfigData
         i.ReminderService = ReminderServiceConfigItem.Default();
         i.IsUpgradeAgent = false;
         i.RefreshBansOnStart = true;
+        i.RefreshFlightCheckOnStart = true;
+        i.RefreshRolePreserveOnStart = true;
+        i.RefreshLevelSystemOnStart = true;
         i.ShardId = null;
 
         i.SupportServerUrl = null;

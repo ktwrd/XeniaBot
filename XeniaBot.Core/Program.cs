@@ -27,6 +27,7 @@ using MongoDB.Bson.Serialization.Serializers;
 using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.Data.Services;
 using XeniaBot.Logic.Services;
+using Sentry;
 
 namespace XeniaBot.Core
 {
@@ -39,7 +40,7 @@ namespace XeniaBot.Core
             IgnoreReadOnlyProperties = true,
             IncludeFields = true,
             WriteIndented = true,
-            ReferenceHandler = ReferenceHandler.Preserve
+            ReferenceHandler = ReferenceHandler.Preserve,
         };
         /// <summary>
         /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
@@ -95,7 +96,21 @@ namespace XeniaBot.Core
         {
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            
+            if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
+            {
+                SentrySdk.Init(new SentryOptions()
+                {
+                    Dsn = FeatureFlags.SentryDSN,
+                    TracesSampleRate = 1.0,
+                    IsGlobalModeEnabled = true,
+                    #if DEBUG
+                    Debug = true
+                    #else
+                    Debug = false
+                    #endif
+                });
+            }
+
             Core = new CoreContext(ProgramDetails);
             Core.StartTimestamp = StartTimestamp;
             Core.MainAsync(args, (s) =>
@@ -111,6 +126,10 @@ namespace XeniaBot.Core
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            if (e.ExceptionObject is Exception ex)
+            {
+                SentrySdk.CaptureException(ex);
+            }
             var except = (Exception)e.ExceptionObject;
             Console.Error.WriteLine(except);
             if (Core.Services.GetRequiredService<DiscordService>().IsReady)
@@ -141,6 +160,6 @@ namespace XeniaBot.Core
                 false
 #endif
         };
-        
+
     }
 }

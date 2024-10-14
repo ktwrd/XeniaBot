@@ -12,6 +12,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
+using Sentry;
 
 namespace XeniaBot.Core.Helpers
 {
@@ -137,11 +138,22 @@ namespace XeniaBot.Core.Helpers
         }
         public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IChannel? channel, IMessage? message)
         {
+            SentrySdk.CaptureException(response, (scope) =>
+            {
+                scope.SetExtra("user", user);
+                scope.SetExtra("guild", guild);
+                scope.SetExtra("channel", channel);
+                scope.SetExtra("message", message);
+            });
             var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
             await cont.ReportError(response, user, guild, channel, message);
         }
         public static async Task ReportError(Exception exception, string extraText = "")
         {
+            SentrySdk.CaptureException(exception, (scope) =>
+            {
+                scope.SetExtra("extraText", extraText);
+            });
             var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
             await cont.ReportException(exception, extraText);
         }

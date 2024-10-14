@@ -1,4 +1,6 @@
 ﻿using Discord;
+using MongoDB.Bson.Serialization.Attributes;
+using XeniaBot.Shared;
 
 namespace XeniaBot.DiscordCache.Models;
 
@@ -11,7 +13,8 @@ public class CacheGuildPermissions
     /// <summary> Gets a <see cref="T:Discord.GuildPermissions" /> that grants all guild permissions. </summary>
     public static readonly CacheGuildPermissions All = new CacheGuildPermissions(ulong.MaxValue);
     
-    public string RawValue { get; set; }
+    [BsonSerializer(typeof(StringPreviouslyNumericalSerializer))]
+    public string? RawValue { get; set; }
 
     public CacheGuildPermissions()
         : this(0)
@@ -27,6 +30,11 @@ public class CacheGuildPermissions
     {}
     public GuildPermissions ToGuildPermissions()
     {
-        return new GuildPermissions(ulong.Parse(RawValue));
+        if (ulong.TryParse(RawValue, out var s))
+        {
+            return new GuildPermissions(s);
+        }
+
+        return GuildPermissions.None;
     }
 }

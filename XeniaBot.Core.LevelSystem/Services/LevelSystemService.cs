@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
@@ -25,6 +26,7 @@ namespace XeniaBot.Core.LevelSystem.Services
         private Random _random;
         private LevelMemberRepository _memberConfig;
         private LevelSystemConfigRepository _config;
+        private ConfigData _configData;
         public LevelSystemService(IServiceProvider services)
             : base(services)
         {
@@ -32,6 +34,7 @@ namespace XeniaBot.Core.LevelSystem.Services
             _client = services.GetRequiredService<DiscordSocketClient>();
             _config = services.GetRequiredService<LevelSystemConfigRepository>();
             _memberConfig = services.GetRequiredService<LevelMemberRepository>();
+            _configData = services.GetRequiredService<ConfigData>();
             _random = new Random();
             _client.MessageReceived += _client_MessageReceived;
             
@@ -41,6 +44,11 @@ namespace XeniaBot.Core.LevelSystem.Services
 
         public override async Task OnReadyDelay()
         {
+            if (!_configData.RefreshLevelSystemOnStart)
+            {
+                Log.WriteLine($"Not going to run since {nameof(_configData.RefreshLevelSystemOnStart)} is false");
+                return;
+            }
             try
             {
                 var taskList = new List<Task>();
@@ -133,7 +141,7 @@ namespace XeniaBot.Core.LevelSystem.Services
             }
         }
 
-        private async Task _client_MessageReceived(SocketMessage rawMessage)
+        private async Task ClientMessageReceived(SocketMessage rawMessage)
         {
             // Ignore messages from bots & webhooks
             if (rawMessage.Author.IsBot || rawMessage.Author.IsWebhook)
@@ -191,6 +199,20 @@ namespace XeniaBot.Core.LevelSystem.Services
                     await DiscordHelper.ReportError(e, context);
                 }
             }
+        }
+        private async Task _client_MessageReceived(SocketMessage rawMessage)
+        {
+            new Thread((ThreadStart)async delegate
+            {
+                try
+                {
+                    await ClientMessageReceived(rawMessage);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Failed to run {nameof(ClientMessageReceived)}\n{ex}");
+                }
+            }).Start();
         }
 
         public class GrantXpResult

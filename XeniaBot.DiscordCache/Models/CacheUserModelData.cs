@@ -14,11 +14,11 @@ public class CacheUserModelData
         i.Status = model.Status;
         i.ActiveClients = model.ActiveClients;
         i.Activities = model.Activities;
-        
+
         // ISnowflakeEntity
         i.Id = model.Snowflake;
         i.CreatedAt = model.CreatedAt;
-        
+
         // IUser
         i.AvatarId = model.AvatarId;
         i.Discriminator = model.Discriminator;

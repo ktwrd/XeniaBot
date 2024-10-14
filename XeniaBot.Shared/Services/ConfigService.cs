@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
@@ -147,7 +148,8 @@ public class ConfigService
         new JsonSerializerOptions()
         {
             IncludeFields = true,
-            WriteIndented = true
+            WriteIndented = true,
+            ReferenceHandler = ReferenceHandler.Preserve
         };
     
     private string FetchFileConfig()

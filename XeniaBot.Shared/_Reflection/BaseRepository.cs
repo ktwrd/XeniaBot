@@ -44,7 +44,7 @@ public class BaseRepository<TH> : BaseService
     /// Get collection with the name of <see cref="MongoCollectionName"/>
     /// </summary>
     /// <returns>MongoDB Collection with assumed type of <typeparamref name="TH"/> or null if the collection doesn't exist.</returns>
-    protected IMongoCollection<TH>? GetCollection()
+    public IMongoCollection<TH>? GetCollection()
         => GetCollection<TH>();
 
     /// <summary>
@@ -54,7 +54,7 @@ public class BaseRepository<TH> : BaseService
     /// <returns>MongoDB Collection with assumed type of <typeparamref name="TH"/> or null if the collection doesn't exist.</returns>
     protected IMongoCollection<TH>? GetCollection(string name)
         => GetCollection<TH>(name);
-    
+
     public Task<IAsyncCursor<TH>> BaseFind(FilterDefinition<TH> filter, SortDefinition<TH> sort = null)
     {
         var collection = GetCollection();

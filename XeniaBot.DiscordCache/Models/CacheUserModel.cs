@@ -1,5 +1,6 @@
 ﻿using XeniaBot.DiscordCache.Helpers;
 using Discord;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace XeniaBot.DiscordCache.Models;
 
@@ -11,25 +12,27 @@ public class CacheUserModel
     #region ISnowflakeEntity
     public DateTimeOffset CreatedAt { get; set; }
     #endregion
-    
+
     #region IUser
     public string AvatarId { get; set; }
     public string Discriminator { get; set; }
     public ushort DiscriminatorValue { get; set; }
-    
+
     public bool IsBot { get; set; }
     public bool IsWebhook { get; set; }
     public string Username { get; set; }
     public string GlobalName { get; set; }
     public string AvatarDecorationHash { get; set; }
+    [BsonIgnoreIfNull]
     public ulong? AvatarDecorationSkuId { get; set; }
-    
+    [BsonIgnoreIfNull]
+
     public UserProperties? PublicFlags { get; set; }
-    
+
     #region IMentionable
     public string Mention { get; set; }
     #endregion
-    
+
     #region IPresence
     public UserStatus Status { get; set; }
     public ClientType[] ActiveClients { get; set; }
@@ -43,7 +46,7 @@ public class CacheUserModel
         Activities = Array.Empty<CacheUserActivity>();
     }
 
-    public new CacheUserModel Update(IUser user)
+    public CacheUserModel Update(IUser user)
     {
         this.Snowflake = user.Id;
         this.CreatedAt = user.CreatedAt;

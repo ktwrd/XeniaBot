@@ -46,7 +46,7 @@ public static class FeatureFlags
 
     /// <summary>
     /// Parse an environment variable as <see cref="Int32"/>.
-    /// 
+    ///
     /// - Fetch Environment variable (when null, set to <see cref="defaultValue"/> as string)
     /// - Do regex match ^([0-9]+)$
     /// - When success, parse item as integer then return
@@ -72,7 +72,7 @@ public static class FeatureFlags
     /// <summary>
     /// Key: LOG_COLOR
     /// Default: true
-    /// 
+    ///
     /// Change console text/background color on logging.
     /// </summary>
     public static bool EnableLogColor => ParseBool("LOG_COLOR", true);
@@ -84,11 +84,11 @@ public static class FeatureFlags
     /// Show timestamp in log entry.
     /// </summary>
     public static bool EnableLogTimestamp => ParseBool("LOG_TS", true);
-    
+
     /// <summary>
     /// Key: DATA_DIR
     /// Default: ./data/
-    /// 
+    ///
     /// Directory where all file-based data is stored. Used for caching and whatnot.
     /// </summary>
     public static string DataDirectory =>
@@ -107,7 +107,7 @@ public static class FeatureFlags
             "DATA_DIR_FONTCACHE", Path.Join(
                 DataDirectory,
                 "fontcache"));
-    
+
     /// <summary>
     /// Key: CONFIG_LOCATION
     /// Default: ./data/config.json
@@ -126,7 +126,7 @@ public static class FeatureFlags
     /// Parse configuration from environment variable <see cref="ConfigContent"/>
     /// </summary>
     public static bool ConfigFromEnvironment => ParseBool("CONFIG_USE_ENV", false);
-    
+
     /// <summary>
     /// Key: CONFIG_CONTENT
     /// Default: {}
@@ -168,4 +168,11 @@ public static class FeatureFlags
     /// <para>Enable trace logging for Lavalink</para>
     /// </summary>
     public static bool EnableLavalinkTraceLog => ParseBool("LOG_LAVALINK_TRACE", false);
+
+    /// <summary>
+    /// <para><b>Key:</b> <c>SENTRY_DSN</c></para>
+    ///
+    /// Sentry DSN. Will be disabled when empty or null.
+    /// </summary>
+    public static string SentryDSN => ParseString("SENTRY_DSN", "");
 }

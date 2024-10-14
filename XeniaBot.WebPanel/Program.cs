@@ -22,10 +22,11 @@ using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
+using Microsoft.AspNetCore.Hosting;
 
 public static class Program
 {
-    
+
     #region Fields
     /// <summary>
     /// Created after <see cref="CreateServiceProvider"/> is called in <see cref="MainAsync(string[])"/>
@@ -48,7 +49,7 @@ public static class Program
         VersionRaw = Version,
         StartTimestamp = StartTimestamp,
         Platform = XeniaPlatform.WebPanel,
-        Debug = 
+        Debug =
 #if DEBUG
             true
 #else
@@ -120,16 +121,17 @@ public static class Program
             {
                 options.ClientId = Core.Config.Data.OAuthId;
                 options.ClientSecret = Core.Config.Data.OAuthSecret;
-                
+
                 options.ClaimActions.MapCustomJson("urn:discord:avatar:url", user =>
                     string.Format(
                         CultureInfo.InvariantCulture,
                         "https://cdn.discordapp.com/avatars/{0}/{1}.{2}",
                         user.GetString("id"),
                         user.GetString("avatar"),
-                        user.GetString("avatar").StartsWith("a_") ? "gif" : "png"));
+                        (user.GetString("avatar")?.StartsWith("a_") ?? false) ? "gif" : "png"));
             });
         builder.Services.AddServerSideBlazor();
+        builder.WebHost.UseSentry(FeatureFlags.SentryDSN);
         var app = builder.Build();
         app.UseStaticFiles();
         // Configure the HTTP request pipeline.
@@ -138,8 +140,9 @@ public static class Program
             app.UseExceptionHandler("/Home/Error");
             // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
+            app.UseSentryTracing();
         }
-        
+
         if (app.Environment.IsDevelopment())
         {
             IdentityModelEventSource.ShowPII = true;

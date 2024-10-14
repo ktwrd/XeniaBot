@@ -12,6 +12,8 @@ using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
+using System.Threading;
+using XeniaBot.Data.Repositories;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -23,11 +25,13 @@ public class RolePreserveService : BaseService
     private readonly RolePreserveGuildRepository _guildConfig;
     private readonly ErrorReportService _err;
     private readonly ServerLogRepository _serverLogConfig;
+    private readonly ConfigData _configData;
     public RolePreserveService(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
         _config = services.GetRequiredService<RolePreserveRepository>();
+        _configData = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
         _serverLogConfig = services.GetRequiredService<ServerLogRepository>();
         _guildConfig = services.GetRequiredService<RolePreserveGuildRepository>();
@@ -123,7 +127,22 @@ public class RolePreserveService : BaseService
 
     public override Task OnReadyDelay()
     {
-        PreserveAll();
+        if (!_configData.RefreshRolePreserveOnStart)
+        {
+            Log.WriteLine($"Not going to run {nameof(PreserveAll)} since {nameof(_configData.RefreshRolePreserveOnStart)} is set to false");
+            return Task.CompletedTask;
+        }
+        new Thread((ThreadStart)async delegate
+        {
+            try
+            {
+                await PreserveAll();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to run {nameof(PreserveAll)}\n{ex}");
+            }
+        }).Start();
         return Task.CompletedTask;
     }
 
