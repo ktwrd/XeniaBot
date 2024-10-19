@@ -29,11 +29,19 @@ public class CacheMessageReference
             bool p = false;
             if (value.TryGetValue("ChannelID", out var o ))
             {
-                if (o is ulong?)
+                if (ChannelId == null)
                 {
-                    ChannelId = (ulong?)o;
-                    p = true;
+                    var os = o?.ToString() ?? "";
+                    if (string.IsNullOrEmpty(os))
+                    {
+                        ChannelId = null;
+                    }
+                    else if (ulong.TryParse(os, out var x))
+                    {
+                        ChannelId = x;
+                    }
                 }
+                p = true;
             }
             _extraElements = value;
             if (p)
