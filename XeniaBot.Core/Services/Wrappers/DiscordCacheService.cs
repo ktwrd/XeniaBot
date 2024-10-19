@@ -790,15 +790,19 @@ public class DiscordCacheService : BaseService
                     data,
                     previous);
             }
+            else
+            {
+                Log.Debug($"Could not find message in database for {message.Id} in {channel.Id} :/");
+            }
         }
         catch (Exception ex)
         {
+            Log.Error($"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})\n{ex}");
             SentrySdk.CaptureException(ex, (scope) =>
             {
                 scope.SetExtra("message", message);
                 scope.SetExtra("channel", channel);
             });
-            Log.Error($"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})\n{ex}");
             try
             {
                 var msgJson = JsonSerializer.Serialize(message.Value, Program.SerializerOptions);
