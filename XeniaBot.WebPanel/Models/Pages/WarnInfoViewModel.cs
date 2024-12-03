@@ -10,4 +10,6 @@ public class WarnInfoViewModel : BaseViewModel
     
     public GuildWarnItemModel WarnItem { get; set; }
     public ICollection<GuildWarnItemModel> History { get; set; }
+    public List<GuildWarnCommentModel> Comments { get; set; } = [];
+    public Dictionary<string, AttachmentModel> Attachments { get; set; } = [];
 }
