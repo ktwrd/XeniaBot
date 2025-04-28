@@ -1,15 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.Wrappers;
-using XeniaBot.Core.Helpers;
 using XeniaBot.Shared.Helpers;
-using XeniaBot.Shared.Schema.WeatherAPI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Shared;
