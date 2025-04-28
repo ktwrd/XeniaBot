@@ -22,6 +22,44 @@
     <None Remove="obj\**" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Resources\1984.png" />
+    <None Remove="Resources\1984cover.png" />
+    <None Remove="Resources\1984originaldate.png" />
+    <None Remove="Resources\arial.ttf" />
+    <None Remove="Resources\AtkinsonHyperlegible-Bold.ttf" />
+    <None Remove="Resources\caption.otf" />
+    <None Remove="Resources\chirp-regular-web.woff2" />
+    <None Remove="Resources\HelveticaNeue.otf" />
+    <None Remove="Resources\ImpactMix.ttf" />
+    <None Remove="Resources\speech.png" />
+    <None Remove="Resources\speechbubble.png" />
+    <None Remove="Resources\TAHOMABD.TTF" />
+    <None Remove="Resources\times new roman.ttf" />
+    <None Remove="Resources\TwemojiCOLR0.otf" />
+    <None Remove="Resources\Ubuntu-R.ttf" />
+    <None Remove="Resources\whisper.otf" />
+    <None Remove="Resources\yskysn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\1984.png" />
+    <EmbeddedResource Include="Resources\1984cover.png" />
+    <EmbeddedResource Include="Resources\1984originaldate.png" />
+    <EmbeddedResource Include="Resources\arial.ttf" />
+    <EmbeddedResource Include="Resources\AtkinsonHyperlegible-Bold.ttf" />
+    <EmbeddedResource Include="Resources\caption.otf" />
+    <EmbeddedResource Include="Resources\chirp-regular-web.woff2" />
+    <EmbeddedResource Include="Resources\HelveticaNeue.otf" />
+    <EmbeddedResource Include="Resources\ImpactMix.ttf" />
+    <EmbeddedResource Include="Resources\speech.png" />
+    <EmbeddedResource Include="Resources\speechbubble.png" />
+    <EmbeddedResource Include="Resources\TAHOMABD.TTF" />
+    <EmbeddedResource Include="Resources\times new roman.ttf" />
+    <EmbeddedResource Include="Resources\TwemojiCOLR0.otf" />
+    <EmbeddedResource Include="Resources\Ubuntu-R.ttf" />
+    <EmbeddedResource Include="Resources\whisper.otf" />
+    <EmbeddedResource Include="Resources\yskysn.png" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="DiffPlex" Version="1.7.2" />
     <PackageReference Include="Google.Cloud.Translation.V2" Version="3.4.0" />
     <PackageReference Include="IdGen" Version="3.0.7" />
@@ -43,23 +81,12 @@
       <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Update="MediaManipu.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>MediaManipu.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Update="Properties\VersionAutoIncrement.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="MediaManipu.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>MediaManipu.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Exceptions\" />

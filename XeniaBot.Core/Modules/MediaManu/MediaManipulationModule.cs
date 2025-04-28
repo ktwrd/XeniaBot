@@ -304,8 +304,8 @@ public partial class MediaManipulationModule : InteractionModuleBase
 
             var sourceImage = NetVipsHelper.Normalize(Image.NewFromStream(originalData, kwargs: opts));
             var watermark = NetVipsHelper.Normalize(alpha
-                ? Image.NewFromBuffer(MediaManipu.img_speech)
-                : Image.NewFromBuffer(MediaManipu.img_speechbubble));
+                ? Image.NewFromStream(MediaResources.ImageSpeech)
+                : Image.NewFromStream(MediaResources.ImageSpeechBubble));
             var final = await Watermark(
                 sourceImage, watermark, 2, isAnimated, resize: true, yscale: 0.2f, alpha: alpha, flip: flip);
             

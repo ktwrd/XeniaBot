@@ -7,8 +7,8 @@ namespace XeniaBot.Core.Modules;
 
 public partial class MediaManipulationModule
 {
-    public static double[] WhiteRGBA => new double[] { 255, 255, 255, 255 };
-    public static double[] WhiteRGB => new double[] { 255, 255, 255 };
+    public static double[] WhiteRGBA => [255, 255, 255, 255];
+    public static double[] WhiteRGB => [255, 255, 255 ];
     private async Task AttemptFontExtract()
     {
         if (!Directory.Exists(FeatureFlags.FontCache))
@@ -19,15 +19,12 @@ public partial class MediaManipulationModule
             var outputLocation = GetFontLocation(pair.Key);
             if (File.Exists(outputLocation))
                 continue;
-            var obj = MediaManipu.ResourceManager.GetObject(pair.Key) as byte[];
-            using (var rs = new MemoryStream(obj))
-            using (var fs = new FileStream(outputLocation, FileMode.Create, FileAccess.Write))
-            {
-                await rs.CopyToAsync(fs);
-            }
+            using var stream = MediaResources.GetStream("XeniaBot.Core.Resources." + pair.Value);
+            using var fs = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
+            await stream.CopyToAsync(fs);
         }
     }
-    public static Dictionary<string, string> FontFilenamePairs => new Dictionary<string, string>()
+    public static IReadOnlyDictionary<string, string> FontFilenamePairs => new Dictionary<string, string>()
     {
         {"font_arial", "arial.ttf"},
         {"font_AtkinsonHyperlegible_Bold", "AtkinsonHyperlegible-Bold.ttf"},
@@ -40,7 +37,7 @@ public partial class MediaManipulationModule
         {"font_TwemojiCOLR0", "TwemojiCOLR0.otf"},
         {"font_Ubuntu_R", "Ubuntu-R.ttf"},
         {"font_whisper", "whisper.otf"}
-    };
+    }.AsReadOnly();
     private string GetFontLocation(string font)
     {
         return Path.Combine(FeatureFlags.FontCache, FontFilenamePairs[font]);
