@@ -1,8 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using MongoDB.Bson;
+﻿using System.Data;
 using MongoDB.Driver;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
@@ -40,8 +36,8 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
     public delegate void ModelSetDelegate(T? current, T? previous, bool isNewEntry);
     public delegate void ModelAddDelegate(T? data);
 
-    public event ModelSetDelegate OnModelSet;
-    public event ModelAddDelegate OnModelAdd;
+    public event ModelSetDelegate? OnModelSet;
+    public event ModelAddDelegate? OnModelAdd;
 
     public async Task<T?> Get(ulong snowflake)
     {
@@ -78,6 +74,8 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
     public async Task Set(T model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<T>
             .Filter
             .Where(v => v.Snowflake == model.Snowflake && v.ModifiedAtTimestamp == model.ModifiedAtTimestamp);
@@ -99,9 +97,11 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
     /// <param name="model">Model to add to the collection</param>
     public async Task Add(T model)
     {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         model.ResetId();
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var collection = GetCollection();
         await collection.InsertOneAsync(model);
         OnModelAdd?.Invoke(model);
     }

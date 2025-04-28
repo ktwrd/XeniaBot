@@ -4,10 +4,12 @@ namespace XeniaBot.Shared;
 
 public class DevModeConfigItem
 {
+    [DefaultValue(false)]
     public bool Enable { get; set; }
     /// <summary>
     /// GuildId to restrict things to. This doesn't really work all the time, it's best to have a separate private bot for development/testing.
     /// </summary>
+    [DefaultValue(0)]
     public ulong GuildId { get; set; }
     [DefaultValue(null)]
     public ulong? GenericLoggingChannelId { get; set; }

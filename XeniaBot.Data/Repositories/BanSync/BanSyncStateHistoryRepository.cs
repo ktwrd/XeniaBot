@@ -5,6 +5,7 @@ using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Data;
 
 namespace XeniaBot.Data.Repositories;
 
@@ -17,9 +18,11 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
 
     public async Task Add(BanSyncStateHistoryItemModel model)
     {
-        model.ResetId();
-        model.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        model.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        model.ResetId();
         await collection.InsertOneAsync(model);
     }
 
@@ -29,6 +32,8 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
             .Filter
             .Where(v => v.GuildId == guildId && v.Timestamp == timestamp);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var result = await collection.FindAsync(filter);
         return result?.FirstOrDefault();
     }
@@ -72,6 +77,8 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
     public async Task<ICollection<BanSyncStateHistoryItemModel>?> GetMany(FilterDefinition<BanSyncStateHistoryItemModel> filter)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var result = await collection.FindAsync(filter);
         return await result.ToListAsync();
     }

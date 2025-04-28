@@ -5,7 +5,6 @@ using MongoDB.Driver;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
@@ -381,7 +380,7 @@ namespace XeniaBot.Data.Services
         /// </summary>
         /// <param name="current">Current model content in db.</param>
         /// <param name="previous">Previous model in db before the change was made.</param>
-        protected async Task SetGuildState_NotifyGuild(ConfigBanSyncModel current, ConfigBanSyncModel previous)
+        protected async Task SetGuildState_NotifyGuild(ConfigBanSyncModel current, ConfigBanSyncModel? previous)
         {
             var guild = _client.GetGuild(current.GuildId);
             var channel = guild.GetTextChannel(current.LogChannel);
@@ -404,14 +403,14 @@ namespace XeniaBot.Data.Services
 
             if (current.State == BanSyncGuildState.Active)
             {
-                if (previous.State == BanSyncGuildState.RequestDenied)
+                if (previous?.State == BanSyncGuildState.RequestDenied)
                 {
                     // mind has been changed
                     embed.WithColor(Color.Green)
                         .WithDescription(
                             $"A mistake may have been made by the admins. BanSync has been re-enabled for your guild.");
                 }
-                else if (previous.State == BanSyncGuildState.Blacklisted)
+                else if (previous?.State == BanSyncGuildState.Blacklisted)
                 {
                     // blacklist removed
                     embed.WithColor(Color.Green)
@@ -434,14 +433,14 @@ namespace XeniaBot.Data.Services
             }
             else if (current.State == BanSyncGuildState.Blacklisted)
             {
-                if (previous.State == BanSyncGuildState.PendingRequest)
+                if (previous?.State == BanSyncGuildState.PendingRequest)
                 {
                     // rejected and blacklisted
                     embed.WithColor(Color.Red)
                         .WithDescription(
                             $"Your request to enable BanSync has been rejected and your guild has been blacklisted. For more information, {contact} if you would like to appeal.");
                 }
-                else if (previous.State != BanSyncGuildState.Blacklisted)
+                else if (previous?.State != BanSyncGuildState.Blacklisted)
                 {
                     // blacklisted
                     embed.WithColor(Color.Red)
@@ -451,7 +450,7 @@ namespace XeniaBot.Data.Services
             }
             else if (current.State == BanSyncGuildState.RequestDenied)
             {
-                if (previous.State != BanSyncGuildState.RequestDenied)
+                if (previous?.State != BanSyncGuildState.RequestDenied)
                 {
                     // request has been denied
                     embed.WithColor(Color.Red)
@@ -461,7 +460,7 @@ namespace XeniaBot.Data.Services
             }
             else if (current.State == BanSyncGuildState.PendingRequest)
             {
-                if (previous.State != BanSyncGuildState.PendingRequest)
+                if (previous?.State != BanSyncGuildState.PendingRequest)
                 {
                     // awaiting approval
                     embed.WithColor(Color.Blue)
@@ -472,7 +471,7 @@ namespace XeniaBot.Data.Services
             }
             else
             {
-                if (previous.State == BanSyncGuildState.Active)
+                if (previous?.State == BanSyncGuildState.Active)
                 {
                     // awaiting approval
                     embed.WithColor(Color.Blue)

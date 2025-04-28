@@ -1,16 +1,10 @@
 ﻿using Discord;
-using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Bson;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Schema.WeatherAPI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using static MongoDB.Bson.Serialization.Serializers.SerializerHelper;
-using static XeniaBot.Core.Modules.WeatherModule;
 using XeniaBot.Shared;
 using WHelper = XeniaBot.Shared.Helpers.WeatherHelper;
 

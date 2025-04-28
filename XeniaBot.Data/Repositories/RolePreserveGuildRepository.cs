@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -17,6 +18,8 @@ public class RolePreserveGuildRepository : BaseRepository<RolePreserveGuildModel
     public async Task<RolePreserveGuildModel?> Get(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<RolePreserveGuildModel>
             .Filter
             .Eq("GuildId", guildId);
@@ -26,6 +29,8 @@ public class RolePreserveGuildRepository : BaseRepository<RolePreserveGuildModel
     public async Task Set(RolePreserveGuildModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<RolePreserveGuildModel>
             .Filter
             .Eq("GuildId", model.GuildId);

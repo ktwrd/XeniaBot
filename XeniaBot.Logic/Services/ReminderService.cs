@@ -42,6 +42,7 @@ public class ReminderService : BaseService
     /// List of <see cref="ReminderModel.ReminderId"/> that has a timer created.
     /// </summary>
     private List<string> CurrentReminders { get; set; }
+
     #region OnReady
     public override async Task OnReady()
     {

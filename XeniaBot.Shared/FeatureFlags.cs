@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using kate.shared.Helpers;
-using NetVips;
 
 namespace XeniaBot.Shared;
 

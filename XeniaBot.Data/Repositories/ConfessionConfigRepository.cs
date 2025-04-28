@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -52,6 +53,8 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
     public async Task<ConfessionGuildModel?> GetGuild(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<ConfessionGuildModel>
             .Filter
             .Eq("GuildId", guildId);
@@ -63,6 +66,8 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
     public async Task Set(ConfessionGuildModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<ConfessionGuildModel>
             .Filter
             .Eq("GuildId", model.GuildId);
@@ -81,13 +86,15 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
         var channel = guild.GetTextChannel(model.ModalChannelId);
         if (channel == null)
             throw new Exception($"Channel {model.ModalChannelId} not found");
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         await channel.DeleteMessageAsync(model.ModalMessageId);
 
-        var collection = GetCollection();
         var filter = Builders<ConfessionGuildModel>
             .Filter
             .Eq("GuildId", model.GuildId);
 
-        await collection?.DeleteManyAsync(filter);
+        await collection.DeleteManyAsync(filter);
     }
 }

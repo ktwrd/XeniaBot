@@ -3,17 +3,14 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using MongoDB.Driver.Core.Bindings;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using XeniaBot.Data;
 using XeniaBot.Data.Models;
@@ -128,10 +125,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             }
 
             // Add user to model then save.
-            ticket.Users = ticket.Users.Concat(new ulong[]
-            {
-                userId
-            }).ToArray();
+            ticket.Users = ticket.Users.Concat([userId]).ToArray();
 
             await Set(ticket);
         }
@@ -344,6 +338,10 @@ namespace XeniaBot.Core.Services.BotAdditions
             model.Messages = messages.Select(v => TicketTranscriptMessage.FromMessage(v)).ToArray();
 
             var collection = GetTranscriptCollection();
+            if (collection == null)
+            {
+                throw new Exception("Could not get collection from " + nameof(GetTranscriptCollection));
+            }
             await collection.InsertOneAsync(model);
 
             return model;
@@ -412,6 +410,10 @@ namespace XeniaBot.Core.Services.BotAdditions
         public async Task Set(TicketModel model)
         {
             var collection = GetTicketCollection();
+            if (collection == null)
+            {
+                throw new Exception("Could not get collection from " + nameof(GetTicketCollection));
+            }
             var filter = Builders<TicketModel>
                 .Filter
                 .Eq("ChannelId", model.ChannelId);
@@ -446,6 +448,10 @@ namespace XeniaBot.Core.Services.BotAdditions
         public async Task SetGuildConfig(ConfigGuildTicketModel model)
         {
             var collection = GetConfigCollection();
+            if (collection == null)
+            {
+                throw new Exception("Could not get collection from " + nameof(GetConfigCollection));
+            }
             var filter = Builders<ConfigGuildTicketModel>
                 .Filter
                 .Eq("GuildId", model.GuildId);
@@ -458,6 +464,10 @@ namespace XeniaBot.Core.Services.BotAdditions
         public async Task DeleteGuildConfig(ulong guildId)
         {
             var collection = GetConfigCollection();
+            if (collection == null)
+            {
+                throw new Exception("Could not get collection from " + nameof(GetConfigCollection));
+            }
             var filter = Builders<ConfigGuildTicketModel>
                 .Filter
                 .Eq("GuildId", guildId);

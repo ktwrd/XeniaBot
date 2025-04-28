@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;

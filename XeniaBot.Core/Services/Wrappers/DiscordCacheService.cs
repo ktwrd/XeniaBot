@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.DiscordCache.Helpers;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 using Sentry;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models.Archival;
@@ -246,7 +243,7 @@ public class DiscordCacheService : BaseService
                     $"Failed to run DiscordCacheService._client_GuildJoined ({current.Id})\n",
                     "Guild JSON:",
                     "```json",
-                    oldJson,
+                    oldJson ?? "{}",
                     "```",
                 }));
             }
@@ -350,7 +347,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process forum channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -395,7 +392,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process voice channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -440,7 +437,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process text channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -497,7 +494,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process forum channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -542,7 +539,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process voice channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -587,7 +584,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process text channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -681,11 +678,12 @@ public class DiscordCacheService : BaseService
         SocketMessage newMessage,
         ISocketMessageChannel channel)
     {
+        if (newMessage == null) return;
         try
         {
             Log.Debug($"Handling message {newMessage.Id} in {newMessage.Channel.Name} ({newMessage.Channel.Id})");
             // convert data to type that mongo can support
-            var data = CacheMessageModel.FromExisting(newMessage);
+            var data = CacheMessageModel.FromExisting(newMessage)!;
 
             // set guild if message was actually sent in a server (and not dms)
             if (channel is SocketGuildChannel { Guild: not null } socketChannel)

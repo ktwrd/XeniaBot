@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -75,14 +74,15 @@ public class ServerLogService : BaseService
                 .WithColor(new Color(255, 255, 255))
                 .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
                 .WithThumbnailUrl(author.GetAvatarUrl());
-            if (diffContent.Length > 1000)
+            var maxDiffContentLength = 2047 - string.Join("\n", "```diff", "", "```").Length;
+            if (diffContent.Length >= maxDiffContentLength)
                 await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
             else
             {
                 embed.AddField("Difference",
                     string.Join("\n", new string[]
                     {
-                        "```",
+                        "```diff",
                         diffContent,
                         "```"
                     }));
@@ -163,16 +163,17 @@ public class ServerLogService : BaseService
                 .WithDescription(
                     $"<@{user.Id}>" +
                     string.Join(
-                        "\n", new string[]
-                        {
-                            "```", $"{userSafe}#{user.Discriminator}", $"ID: {user.Id}", "```",
-                        }))
+                        "\n",
+                            "```",
+                            $"{userSafe}#{user.Discriminator}", $"ID: {user.Id}",
+                            "```"
+                        ))
                 .AddField(
                     "Account Age", string.Join(
-                        "\n", new string[]
-                        {
-                            TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()), $"`{user.CreatedAt}`"
-                        }))
+                        "\n",
+                            TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
+                            $"`{user.CreatedAt}`"
+                        ))
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Green);
 
@@ -190,21 +191,22 @@ public class ServerLogService : BaseService
         try
         {
             var userSafe = user.Username.Replace("`", "\\`");
+
+            var description = string.Join("\n",
+                $"<@{user.Id}>",
+                "```",
+                $"{userSafe}#{user.Discriminator}",
+                $"ID: {user.Id}",
+                "```");
+
+            var accountAge = string.Join("\n",
+                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
+                $"`{user.CreatedAt}`");
+
             var embed = new EmbedBuilder()
                 .WithTitle("User Left")
-                .WithDescription(
-                    $"<@{user.Id}>" +
-                    string.Join(
-                        "\n", new string[]
-                        {
-                            "```", $"{userSafe}#{user.Discriminator}", $"ID: {user.Id}", "```",
-                        }))
-                .AddField(
-                    "Account Age", string.Join(
-                        "\n", new string[]
-                        {
-                            TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()), $"`{user.CreatedAt}`"
-                        }))
+                .WithDescription(description)
+                .AddField("Account Age", accountAge)
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
 
@@ -227,18 +229,16 @@ public class ServerLogService : BaseService
             var reason = banDetails.Reason ?? "<Unknown Reason>";
             var embed = new EmbedBuilder()
                 .WithTitle("User Banned")
-                .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
-                {
+                .WithDescription($"<@{user.Id}>" + string.Join("\n",
                     "```",
                     $"{userSafe}#{user.Discriminator}",
                     $"ID: {user.Id}",
-                    "```",
-                }))
-                .AddField("Account Age", string.Join("\n", new string[]
-                {
+                    "```"
+                ))
+                .AddField("Account Age", string.Join("\n",
                     TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
                     $"`{user.CreatedAt}`"
-                }))
+                ))
                 .AddField("Ban Reason", $"```\n{reason}\n```")
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
@@ -260,18 +260,16 @@ public class ServerLogService : BaseService
             var userSafe = user.Username.Replace("`", "\\`");
             var embed = new EmbedBuilder()
                 .WithTitle("User Unbanned")
-                .WithDescription($"<@{user.Id}>" + string.Join("\n", new string[]
-                {
+                .WithDescription($"<@{user.Id}>" + string.Join("\n",
                     "```",
                     $"{userSafe}#{user.Discriminator}",
                     $"ID: {user.Id}",
-                    "```",
-                }))
-                .AddField("Account Age", string.Join("\n", new string[]
-                {
+                    "```"
+                ))
+                .AddField("Account Age", string.Join("\n",
                     TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
                     $"`{user.CreatedAt}`"
-                }))
+                ))
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
 
@@ -330,13 +328,11 @@ public class ServerLogService : BaseService
         }
         catch (Exception ex)
         {
-            var msg = string.Join(
-                    "\n", new string[]
-                    {
-                        "Failed run ServerLogService.Event_MessageDelete.", $"ChannelId: {socketChannel.Id}",
-                        $"Guild: {socketChannel.Guild.Id} ({socketChannel.Guild.Name})",
-                        $"MessageId: {message?.Id ?? m.Id}"
-                    });
+            var msg = string.Join("\n",
+                "Failed run ServerLogService.Event_MessageDelete.",
+                $"ChannelId: {socketChannel.Id}",
+                $"Guild: {socketChannel.Guild.Id} ({socketChannel.Guild.Name})",
+                $"MessageId: {message?.Id ?? m.Id}");
             Log.Error(msg, ex);
             await _errorService.ReportException(
                 ex,

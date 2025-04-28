@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -17,6 +18,8 @@ public class GuildGreeterConfigRepository : BaseRepository<GuildGreeterConfigMod
     public async Task<GuildGreeterConfigModel?> GetLatest(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildGreeterConfigModel>
             .Filter
             .Eq("GuildId", guildId);
@@ -27,9 +30,11 @@ public class GuildGreeterConfigRepository : BaseRepository<GuildGreeterConfigMod
 
     public async Task Add(GuildGreeterConfigModel model)
     {
-        model.ResetId();
-        model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        model.ResetId();
         await collection.InsertOneAsync(model);
     }
 }

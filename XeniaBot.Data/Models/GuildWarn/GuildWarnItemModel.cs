@@ -1,5 +1,4 @@
 ﻿using System;
-using kate.shared.Helpers;
 using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;
@@ -49,6 +48,7 @@ public class GuildWarnItemModel : BaseModel
         : base()
     {
         WarnId = Guid.NewGuid().ToString();
+        Description = "";
 
         RelatedMessageIds = Array.Empty<ulong>();
         RelatedAttachmentGuids = Array.Empty<string>();

@@ -55,6 +55,8 @@ public class XeniaVersionRepository : BaseRepository<XeniaVersionModel>
     public async Task Insert(XeniaVersionModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         await collection.InsertOneAsync(model);
     }
 }

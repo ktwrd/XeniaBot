@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -21,7 +22,10 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         var filter = Builders<ReminderModel>
             .Filter
             .Eq("ReminderId", reminderId);
-        var res = await GetCollection().FindAsync(filter);
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var res = await collection.FindAsync(filter);
         var single = res.FirstOrDefault();
         return single;
     }
@@ -88,6 +92,8 @@ public class ReminderRepository : BaseRepository<ReminderModel>
             .Filter
             .Eq("ReminderId", model.ReminderId);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var result = await collection.FindAsync(filter);
         var exists = await result.AnyAsync();
         if (exists)
@@ -124,6 +130,8 @@ public class ReminderRepository : BaseRepository<ReminderModel>
             .Filter
             .Eq("UserId", userId);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var results = await collection.FindAsync(filter);
         return results.ToList();
     }
@@ -134,6 +142,8 @@ public class ReminderRepository : BaseRepository<ReminderModel>
             .Filter
             .Where(v => v.UserId == userId && v.HasReminded == false);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var result = await collection.Find(filter)
             .SortByDescending(v => v.ReminderTimestamp)
             .Skip((page - 1) * pageSize)

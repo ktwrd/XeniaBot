@@ -3,7 +3,7 @@
 public class ApiKeyConfigItem
 {
     public string? Weather { get; set; }
-    public ESixConfigItem ESix { get; set; }
+    public ESixConfigItem ESix { get; set; } = ESixConfigItem.Default();
     public string? DiscordBotList { get; set; }
     public string? BackpackTF { get; set; }
 

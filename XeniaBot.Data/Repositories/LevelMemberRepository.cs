@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -50,6 +51,8 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
     public async Task<LevelMemberModel[]?> GetGuild(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelMemberModel>
             .Filter
             .Where(v => v.GuildId == guildId);
@@ -88,6 +91,8 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
             .Where(v => filterFunction(v));
 
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var count = await collection.CountDocumentsAsync(filter);
         if (count < 1)
             return count;
@@ -103,6 +108,8 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
         var exists = (await Get(model.UserId, model.GuildId)) != null;
 
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         // Replace if exists, if not then we just insert
         if (exists)
         {

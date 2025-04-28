@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -19,7 +20,10 @@ public class ESixConfigRepository : BaseRepository<ESixConfigModel>
         var filter = Builders<ESixConfigModel>
             .Filter
             .Eq("GuildId", guildId);
-        var res = await GetCollection().FindAsync(filter);
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var res = await collection.FindAsync(filter);
         var single = res.FirstOrDefault();
         return single;
     }
@@ -30,6 +34,8 @@ public class ESixConfigRepository : BaseRepository<ESixConfigModel>
             .Filter
             .Eq("GuildId", model.GuildId);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var result = await collection.FindAsync(filter);
         var exists = await result.AnyAsync();
         if (exists)

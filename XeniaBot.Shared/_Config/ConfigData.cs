@@ -202,7 +202,6 @@ public class ConfigData
                 instance.HasDashboard = v1.HasDashboard;
                 instance.DashboardUrl = v1.DashboardLocation;
                 return instance;
-                break;
             case "2":
                 instance = JsonSerializer.Deserialize<ConfigData>(content, ConfigService.SerializerOptions) ??
                            new ConfigData();
@@ -212,7 +211,6 @@ public class ConfigData
                 }
 
                 return instance;
-                break;
         }
         return JsonSerializer.Deserialize<ConfigData>(content, ConfigService.SerializerOptions) ?? new ConfigData();
     }

@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;

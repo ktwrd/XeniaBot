@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -22,6 +23,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task Set(CounterGuildModel model)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
 
         var filter = Builders<CounterGuildModel>
             .Filter
@@ -46,6 +49,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task<CounterGuildModel?> Get(IGuild guild)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
 
         var filter = Builders<CounterGuildModel>
             .Filter
@@ -57,6 +62,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task<CounterGuildModel> Get<T>(IGuild guild, T channel) where T : IChannel
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
 
         var filter = Builders<CounterGuildModel>
             .Filter
@@ -69,6 +76,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public CounterGuildModel Get<T>(T channel) where T : IChannel
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
 
         var filter = Builders<CounterGuildModel>
             .Filter
@@ -91,6 +100,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task<CounterGuildModel[]> GetAll()
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<CounterGuildModel>
             .Filter.Empty;
         var result = await collection.FindAsync(filter);
@@ -99,6 +110,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task<CounterGuildModel[]> GetAll(IChannel channel)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<CounterGuildModel>
             .Filter
             .Eq("ChannelId", channel.Id);
@@ -109,6 +122,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task<CounterGuildModel[]> GetAll(IGuild guild)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<CounterGuildModel>
         .Filter
             .Eq("GuildId", guild.Id);
@@ -129,6 +144,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task Delete(ulong channelId)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<CounterGuildModel>
             .Filter
             .Eq("ChannelId", channelId);
@@ -137,6 +154,8 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task Delete(IGuild guild)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<CounterGuildModel>
         .Filter
             .Eq("GuildId", guild.Id);

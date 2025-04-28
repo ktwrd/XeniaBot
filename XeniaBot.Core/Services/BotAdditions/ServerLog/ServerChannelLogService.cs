@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using DiffPlex.DiffBuilder;
-using DiffPlex.DiffBuilder.Model;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,8 +70,8 @@ public class ServerChannelLogService : BaseService
         string? currentTopic = null;
         ulong? previousCategory = null;
         ulong? currentCategory = null;
-        CacheOverwrite[] currentOverwrite = Array.Empty<CacheOverwrite>();
-        CacheOverwrite[] previousOverwrite = Array.Empty<CacheOverwrite>();
+        var currentOverwrite = Array.Empty<CacheOverwrite>();
+        var previousOverwrite = Array.Empty<CacheOverwrite>();
         
         if (current is CacheTextChannelModel currentText)
         {

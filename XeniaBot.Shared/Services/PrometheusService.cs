@@ -1,11 +1,6 @@
-﻿using kate.shared.Helpers;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Prometheus;
-using XeniaBot.Shared;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 

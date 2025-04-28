@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -17,6 +18,8 @@ public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel
     public async Task<LevelSystemConfigModel?> Get(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelSystemConfigModel>
             .Filter
             .Eq("GuildId", guildId);
@@ -36,6 +39,8 @@ public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel
     public async Task Set(LevelSystemConfigModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelSystemConfigModel>
             .Filter
             .Eq("GuildId", model.GuildId);

@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Shared;
+
+using DColor = Discord.Color;
 
 namespace XeniaBot.Core.Modules;
 
@@ -20,8 +20,8 @@ public class BackpackTFModule : InteractionModuleBase
     {
         await Context.Interaction.DeferAsync();
         var embed = new EmbedBuilder()
-            .WithAuthor("Backpack.tf - Currencies", "https://xb.redfur.cloud/tOpi9/JAhuLohI59.png/raw")
-            .WithColor(new Discord.Color(91, 105, 129))
+            .WithAuthor("Backpack.tf - Currencies", "https://res.kate.pet/upload/backpacktf-icon.png")
+            .WithColor(new DColor(91, 105, 129))
             .WithCurrentTimestamp();
         try
         {
@@ -30,7 +30,7 @@ public class BackpackTFModule : InteractionModuleBase
             if (data == null)
             {
                 embed.WithDescription($"Failed to fetch currency data!!")
-                    .WithColor(Color.Red);
+                    .WithColor(DColor.Red);
                 await Context.Interaction.FollowupAsync(embed: embed.Build());
                 return;
             }
@@ -42,17 +42,14 @@ public class BackpackTFModule : InteractionModuleBase
                 decimal dollarCost = controller.GetDollarCost(item.Price);
 
                 embed.AddField(item.Name, string.Join("\n",
-                    new string[]
+                    item.Price.ToString(),
+                    "Calculated: `" + string.Join(" / ", new string[]
                     {
-                        item.Price.ToString(),
-                        "Calculated: `" + string.Join(" / ", new string[]
-                        {
-                            $"{Math.Round(refinedCost, 2)}ref",
-                            $"{Math.Round(keyCost, 2)}key",
-                            $"US${Math.Round(dollarCost, 2)}"
-                        }.Select(v => v.PadRight(8, ' '))) + "`",
-                        $"Last updated: <t:{item.Price.LastUpdateTimestamp}:R>"
-                    }));
+                        $"{Math.Round(refinedCost, 2)}ref",
+                        $"{Math.Round(keyCost, 2)}key",
+                        $"US${Math.Round(dollarCost, 2)}"
+                    }.Select(v => v.PadRight(8, ' '))) + "`",
+                    $"Last updated: <t:{item.Price.LastUpdateTimestamp}:R>"));
             }
 
             await Context.Interaction.FollowupAsync(embed: embed.Build());
@@ -61,7 +58,7 @@ public class BackpackTFModule : InteractionModuleBase
         {
             embed.Fields.Clear();
             embed.WithDescription($"Failed to get currency data! `{ex.Message}`")
-                .WithColor(Color.Red);
+                .WithColor(DColor.Red);
             
             var programDetails = Program.Core.GetRequiredService<ProgramDetails>();
             if (programDetails.Debug)

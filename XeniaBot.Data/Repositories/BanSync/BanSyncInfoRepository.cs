@@ -1,14 +1,13 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
+using System.Data;
 
 namespace XeniaBot.Data.Repositories;
 
@@ -250,6 +249,8 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     public async Task SetInfo(BanSyncInfoModel data)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.RecordId == data.RecordId);
@@ -262,7 +263,9 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     public async Task RemoveInfo(string recordId)
     {
         var collection = GetCollection();
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.RecordId == recordId);
 
@@ -273,7 +276,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     #region Info Exists
     public async Task<bool> InfoExists(ulong userId, ulong guildId)
     {
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
         var res = await BaseFind(filter);
@@ -281,7 +284,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     }
     public async Task<bool> InfoExists(ulong userId)
     {
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        var filter = Builders<BanSyncInfoModel>
             .Filter
             .Eq("UserId", userId);
         var res = await BaseFind(filter);

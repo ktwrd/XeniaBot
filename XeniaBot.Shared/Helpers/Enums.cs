@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Shared.Helpers
+public enum MeasurementSystem
 {
-    public enum MeasurementSystem
-    {
-        Metric,
-        Imperial
-    }
+    Metric,
+    Imperial
 }

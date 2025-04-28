@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -154,11 +153,12 @@ namespace XeniaBot.Core.Services.Wrappers
             Validate();
 
             // Fetch credentials, if failed then throw exception
-            GoogleCredential? googleCredential = await LoadCredentials();
+            var googleCredential = await LoadCredentials();
             if (googleCredential == null)
             {
                 Log.Error("Failed to load Google Cloud Translate Credentials. Result was null");
                 Program.Quit(1);
+                return;
             }
             _gcsCred = googleCredential;
 

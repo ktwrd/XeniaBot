@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -19,7 +20,10 @@ public class EconomyProfileRepository : BaseRepository<EconProfileModel>
         var filter = Builders<EconProfileModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
-        var result = await GetCollection().FindAsync(filter);
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var result = await collection.FindAsync(filter);
         var first = result.FirstOrDefault();
         return first;
     }
@@ -30,6 +34,8 @@ public class EconomyProfileRepository : BaseRepository<EconProfileModel>
             .Filter
             .Where(v => v.UserId == model.UserId && v.GuildId == model.GuildId);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var result = await collection.FindAsync(filter);
         var exists = await result.AnyAsync();
         if (exists)

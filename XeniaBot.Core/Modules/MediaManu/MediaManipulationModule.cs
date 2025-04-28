@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using NetVips;
-using NetVips.Extensions;
 using XeniaBot.Core.Helpers;
-using Image = NetVips.Image;
+
+using NVImage = NetVips.Image;
 using Log = XeniaBot.Shared.Log;
 
 namespace XeniaBot.Core.Modules;
@@ -57,7 +56,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
                 opts.Add("n", -1);
             }
 
-            var imageToCaption = NetVipsHelper.Normalize(Image.NewFromStream(originalData, kwargs: opts));
+            var imageToCaption = NetVipsHelper.Normalize(NVImage.NewFromStream(originalData, kwargs: opts));
             
             var width = imageToCaption.Width;
             var pageHeight = imageToCaption.PageHeight;
@@ -67,7 +66,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
             var textWidth = imageToCaption.Width - ((imageToCaption.Width / 25) * 2);
 
             // Create caption text
-            var text = Image.Text(
+            var text = NVImage.Text(
                 text: $"<span background=\"white\">{caption}</span>",
                 rgba: true,
                 align: Enums.Align.Centre,
@@ -88,7 +87,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
                     extend: Enums.Extend.White);
             
             // Append vertically `imageToCaption` to `text`, with gif support.
-            var imgList = new Image[nPages];
+            var imgList = new NVImage[nPages];
             for (int i = 0; i < nPages; i++)
             {
                 var imgFrame = isAnimated
@@ -102,13 +101,13 @@ public partial class MediaManipulationModule : InteractionModuleBase
             // Make sure that the image height is the actual
             // height instead of the whole animation height.
             var textHeight = captionImage.Height;
-            var final = Image.Arrayjoin(imgList, across: 1)
+            var final = NVImage.Arrayjoin(imgList, across: 1)
                 .Mutate((i) =>
                 {
                     if (nPages > 1)
                         i.Set("page-height", pageHeight + textHeight);
                 });
-            Log.Debug($"Complete");
+            Log.Debug("Complete");
             if (isAnimated || saveAsGif)
             {
                 using var gifStream = new MemoryStream(final.GifsaveBuffer(dither: 1, bitdepth: 8, interlace: true));
@@ -130,8 +129,8 @@ public partial class MediaManipulationModule : InteractionModuleBase
         }
     }
 
-    public async Task<Image> Watermark(Image source,
-        Image watermark,
+    public async Task<NVImage> Watermark(NVImage source,
+        NVImage watermark,
         int gravity,
         bool isGif,
         bool resize = false,
@@ -192,12 +191,12 @@ public partial class MediaManipulationModule : InteractionModuleBase
                 break;
         }
 
-        var img = new Image[nPages];
+        var img = new NVImage[nPages];
         int addedHeight = 0;
-        Image? contentAlpha = null;
-        Image? frameAlpha = null;
-        Image? bg = null;
-        Image? frame = null;
+        NVImage? contentAlpha = null;
+        NVImage? frameAlpha = null;
+        NVImage? bg = null;
+        NVImage? frame = null;
         for (int i = 0; i < nPages; i++)
         {
             var imgFrame = isGif ? source.Crop(0, i * pageHeight, width, pageHeight) : source;
@@ -217,7 +216,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
             }
             else
             {
-                Image? composited = null;
+                NVImage? composited = null;
                 if (alpha)
                 {
                     if (i == 0)
@@ -247,7 +246,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
         }
         
         
-        var final = Image.Arrayjoin(img, across: 1)
+        var final = NVImage.Arrayjoin(img, across: 1)
             .Mutate((i) =>
             {
                 if (nPages > 1)
@@ -302,10 +301,10 @@ public partial class MediaManipulationModule : InteractionModuleBase
                 opts.Add("n", -1);
             }
 
-            var sourceImage = NetVipsHelper.Normalize(Image.NewFromStream(originalData, kwargs: opts));
+            var sourceImage = NetVipsHelper.Normalize(NVImage.NewFromStream(originalData, kwargs: opts));
             var watermark = NetVipsHelper.Normalize(alpha
-                ? Image.NewFromStream(MediaResources.ImageSpeech)
-                : Image.NewFromStream(MediaResources.ImageSpeechBubble));
+                ? NVImage.NewFromStream(MediaResources.ImageSpeech)
+                : NVImage.NewFromStream(MediaResources.ImageSpeechBubble));
             var final = await Watermark(
                 sourceImage, watermark, 2, isAnimated, resize: true, yscale: 0.2f, alpha: alpha, flip: flip);
             

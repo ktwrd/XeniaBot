@@ -46,7 +46,11 @@ namespace XeniaBot.Core.Modules
                         .WithDescription($"Failed to fetch data. \n```\n{ex.Message}\n```")
                         .WithColor(Color.Red)
                         .Build());
-                await CoreContext.Instance?.GetRequiredService<ErrorReportService>()?.ReportError(ex, Context);
+                var errorService = CoreContext.Instance?.GetRequiredService<ErrorReportService>();
+                if (errorService != null)
+                {
+                    await errorService.ReportError(ex, Context);
+                }
             }
         }
 
@@ -83,7 +87,11 @@ namespace XeniaBot.Core.Modules
                         .WithDescription($"Failed to fetch data. \n```\n{ex.Message}\n```")
                         .WithColor(Color.Red)
                         .Build());
-                await CoreContext.Instance?.GetRequiredService<ErrorReportService>()?.ReportError(ex, Context);
+                var errorService = CoreContext.Instance?.GetRequiredService<ErrorReportService>();
+                if (errorService != null)
+                {
+                    await errorService.ReportError(ex, Context);
+                }
             }
         }
     }

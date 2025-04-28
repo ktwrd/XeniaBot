@@ -18,6 +18,7 @@ public class GuildWarnCommentModel : BaseModelGuid
         CreatedByFallbackUsername = "unknown";
         CreatedByFallbackDisplayName = "Unknown User";
         CreatedAt = new BsonTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        AttachmentIds = [];
     }
     /// <summary>
     /// Foreign Key to <see cref="GuildWarnItemModel.WarnId"/>

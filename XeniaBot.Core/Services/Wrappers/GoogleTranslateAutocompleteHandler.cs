@@ -1,12 +1,10 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Google.Cloud.Translation.V2;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace XeniaBot.Core.Services.Wrappers

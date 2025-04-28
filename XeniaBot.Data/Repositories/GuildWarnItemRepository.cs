@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -33,6 +34,8 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
     public async Task<ICollection<GuildWarnItemModel>?> GetItemsById(string id)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildWarnItemModel>
             .Filter
             .Eq("WarnId", id);
@@ -44,6 +47,8 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
     public async Task<ICollection<GuildWarnItemModel>?> GetLatestGuildItems(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildWarnItemModel>
             .Filter
             .Eq("GuildId", guildId);
@@ -85,6 +90,8 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
     public async Task Add(GuildWarnItemModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         model.ResetId();
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await collection.InsertOneAsync(model);

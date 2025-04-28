@@ -1,19 +1,14 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Flurl.Util;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
-using XeniaBot.Core.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 
@@ -62,7 +57,7 @@ namespace XeniaBot.Core.Modules
             {
                 await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                     .WithTitle("Xenia Dashboard")
-                    .WithDescription($"Unfortunately, the dashboard has not been setup yet. Please wait for the Xenia Dashboard to become publicly available.\n\nTo be the first to know, [join our discord server](https://r.kate.pet/discord)!")
+                    .WithDescription($"Unfortunately, the dashboard has not been setup yet. Please wait for the Xenia Dashboard to become publicly available.\n\nTo be the first to know, [join our discord server](https://kate.pet/l/discord)!")
                     .WithColor(Color.Red)
                     .WithCurrentTimestamp()
                     .Build());
@@ -158,9 +153,9 @@ namespace XeniaBot.Core.Modules
                 var response = await client.GetAsync("https://icanhazdadjoke.com/");
                 var text = response.Content.ReadAsStringAsync().Result;
                 var deser = JObject.Parse(text);
-                if (deser?["joke"] != null)
+                if (deser?.TryGetValue("joke", out var jokeValue) ?? false && jokeValue != null)
                 {
-                    await FollowupAsync(deser["joke"].ToString());
+                    await FollowupAsync(jokeValue.ToString());
                 }
                 else
                 {

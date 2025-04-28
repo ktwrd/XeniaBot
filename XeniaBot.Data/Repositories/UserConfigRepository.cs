@@ -59,9 +59,11 @@ public class UserConfigRepository : BaseRepository<UserConfigModel>
 
     public async Task Add(UserConfigModel model)
     {
-        model.Id = default;
-        model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        model.Id = default;
         await collection.InsertOneAsync(model);
     }
 }

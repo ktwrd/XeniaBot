@@ -1,15 +1,10 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using XeniaBot.Shared;
 using Prometheus;
 using XeniaBot.Shared.Helpers;
 using Timer = System.Timers.Timer;

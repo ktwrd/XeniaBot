@@ -1,10 +1,15 @@
-﻿namespace XeniaBot.Shared;
+﻿using System.ComponentModel;
+
+namespace XeniaBot.Shared;
 
 public class AuthentikConfigItem
 {
-    public bool Enable { get; set; }
-    public string Token { get; set; }
-    public string Url { get; set; }
+    [DefaultValue(false)]
+    public bool Enable { get; set; } = false;
+    [DefaultValue("")]
+    public string Token { get; set; } = "";
+    [DefaultValue("")]
+    public string Url { get; set; } = "";
 
     public static AuthentikConfigItem Default(AuthentikConfigItem? i = null)
     {

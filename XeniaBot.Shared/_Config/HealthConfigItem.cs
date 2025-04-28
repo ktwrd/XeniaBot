@@ -1,8 +1,12 @@
-﻿namespace XeniaBot.Shared;
+﻿using System.ComponentModel;
+
+namespace XeniaBot.Shared;
 
 public class HealthConfigItem
 {
+    [DefaultValue(false)]
     public bool Enable { get; set; }
+    [DefaultValue(4829)]
     public int Port { get; set; }
 
     public static HealthConfigItem Default(HealthConfigItem? i = null)

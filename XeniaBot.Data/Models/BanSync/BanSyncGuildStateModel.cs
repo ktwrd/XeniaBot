@@ -1,6 +1,4 @@
-﻿using kate.shared.Helpers;
-using MongoDB.Bson;
-using XeniaBot.Shared.Models;
+﻿using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;
 
@@ -12,5 +10,5 @@ public class BanSyncStateHistoryItemModel : BaseModel
     
     public bool Enable { get; set; }
     public BanSyncGuildState State { get; set; }
-    public string Reason { get; set; }
+    public string Reason { get; set; } = "";
 }

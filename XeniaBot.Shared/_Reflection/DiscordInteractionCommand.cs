@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using Discord;
 using Discord.Rest;
-using Newtonsoft.Json;
 
 namespace XeniaBot.Shared;
 

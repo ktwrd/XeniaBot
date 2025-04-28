@@ -1,17 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Data.Services;
-using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules
@@ -31,8 +26,8 @@ namespace XeniaBot.Core.Modules
                 
                 await FollowupAsync(
                     embed: new EmbedBuilder()
-                        .WithTitle($"BanSync - Refresh")
-                        .WithDescription($"Bans were refreshed successfully.")
+                        .WithTitle("BanSync - Refresh")
+                        .WithDescription("Bans were refreshed successfully.")
                         .WithColor(Color.Red)
                         .WithCurrentTimestamp()
                         .Build());
@@ -41,8 +36,8 @@ namespace XeniaBot.Core.Modules
             {
                 await FollowupAsync(
                     embed: new EmbedBuilder()
-                        .WithTitle($"BanSync - Action Failed")
-                        .WithDescription($"Failed to refresh bans in this guild. `{ex.Message}`")
+                        .WithTitle("BanSync - Action Failed")
+                        .WithDescription("Failed to refresh bans in this guild. `{ex.Message}`")
                         .WithColor(Color.Red)
                         .WithCurrentTimestamp()
                         .Build());
@@ -58,11 +53,11 @@ namespace XeniaBot.Core.Modules
             var infoController = Program.Core.GetRequiredService<BanSyncInfoRepository>();
             var data = await infoController.GetInfoEnumerable(user.Id);
 
-            if (!data.Any())
+            if (data.Count == 0)
             {
                 await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                 {
-                    Description = $"No bans found for <@{user.Id}> ({user.Id})",
+                    Description = $"No bans found for <@{user.Id}> ({user.Id}, {user.Username})",
                     Color = Color.Orange
                 }.Build());
                 return;
@@ -160,17 +155,16 @@ namespace XeniaBot.Core.Modules
             {
                 case BanSyncService.BanSyncGuildKind.LogChannelMissing:
                     embed.Color = Color.Red;
-                    embed.Description = $"You must set a log channel with `/bansync setchannel`.";
+                    embed.Description = "You must set a log channel with `/bansync setchannel`.";
                     await Context.Interaction.RespondAsync(embed: embed.Build());
                     return;
-                    break;
                 case BanSyncService.BanSyncGuildKind.LogChannelCannotAccess:
                     embed.Color = Color.Red;
-                    embed.Description = $"Xenia is unable to access the log channel that was set.\n" +
-                                        $"Please double-check the permissions in that channel.";
+                    embed.Description = string.Join("\n",
+                        "Xenia is unable to access the log channel that was set.",
+                        "Please double-check the permissions in that channel.");
                     await Context.Interaction.RespondAsync(embed: embed.Build());
                     return;
-                    break;
             }
 
             if (kind != BanSyncService.BanSyncGuildKind.Valid)
