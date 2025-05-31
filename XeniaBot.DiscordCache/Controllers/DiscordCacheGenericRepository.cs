@@ -16,20 +16,35 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
             throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
         }
 
-        var existingIndexes = collection.Indexes.List().ToList().Count;
-        if (existingIndexes < 1)
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<T>>()
         {
-            var keys = Builders<T>
+            {
+                collectionName + "IX_SnowflakeModifiedAtTimestamp",
+                Builders<T>
                 .IndexKeys
                 .Descending("Snowflake")
-                .Descending("ModifiedAtTimestamp");
-            var indexModel = new CreateIndexModel<T>(keys);
-            collection.Indexes.CreateOne(indexModel);
-            Log.WriteLine($"{collectionName} Created Index");
-        }
-        else
+                .Descending("ModifiedAtTimestamp")
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
         {
-            Log.WriteLine($"{collectionName} Index already exists");
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<T>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                }
+            }
         }
     }
 
@@ -58,13 +73,24 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
     public async Task<T?> GetLatest(ulong snowflake)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<T>
             .Filter
             .Eq("Snowflake", snowflake);
 
-        var result = await collection.FindAsync(filter);
-        var sorted = result.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
-        return sorted.FirstOrDefault();
+        var sort = Builders<T>
+            .Sort
+            .Descending(e => e.ModifiedAtTimestamp);
+
+        var opts = new FindOptions<T>()
+        {
+            Limit = 1,
+            Sort = sort
+        };
+
+        var result = await collection.FindAsync(filter, opts);
+        return await result.FirstOrDefaultAsync();
     }
 
     /// <summary>
@@ -79,8 +105,12 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
         var filter = Builders<T>
             .Filter
             .Where(v => v.Snowflake == model.Snowflake && v.ModifiedAtTimestamp == model.ModifiedAtTimestamp);
+        var findOptions = new FindOptions<T>()
+        {
+            Limit = 1
+        };
 
-        var findResult = await collection.FindAsync(filter);
+        var findResult = await collection.FindAsync(filter, findOptions);
         var first = findResult.FirstOrDefault();
         if (first != null)
         {
