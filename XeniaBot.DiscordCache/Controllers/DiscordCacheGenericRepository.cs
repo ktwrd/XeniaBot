@@ -20,11 +20,17 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
         var targetIndexes = new Dictionary<string, IndexKeysDefinition<T>>()
         {
             {
-                collectionName + "IX_SnowflakeModifiedAtTimestamp",
+                collectionName + "_IX_SnowflakeModifiedAtTimestamp",
                 Builders<T>
-                .IndexKeys
-                .Descending("Snowflake")
-                .Descending("ModifiedAtTimestamp")
+                    .IndexKeys
+                    .Descending("Snowflake")
+                    .Descending("ModifiedAtTimestamp")
+            },
+            {
+                collectionName + "_IX_Snowflake",
+                Builders<T>
+                    .IndexKeys
+                    .Descending("Snowflake")
             }
         };
         foreach (var (name, idx) in targetIndexes)
