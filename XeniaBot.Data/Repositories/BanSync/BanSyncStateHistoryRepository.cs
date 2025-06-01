@@ -14,7 +14,58 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
 {
     public BanSyncStateHistoryRepository(IServiceProvider services)
         : base(BanSyncStateHistoryItemModel.CollectionName, services)
-    {}
+    {
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var collectionName = MongoCollectionName;
+
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<BanSyncStateHistoryItemModel>>()
+        {
+            {
+                collectionName + "_IX_GuildId",
+                Builders<BanSyncStateHistoryItemModel>
+                    .IndexKeys
+                    .Descending(e => e.GuildId)
+            },
+            {
+                collectionName + "_IX_GuildIdTimestamp",
+                Builders<BanSyncStateHistoryItemModel>
+                    .IndexKeys
+                    .Descending(e => e.GuildId)
+                    .Descending(e => e.Timestamp)
+            },
+            {
+                collectionName + "_IX_Timestamp",
+                Builders<BanSyncStateHistoryItemModel>
+                    .IndexKeys
+                    .Descending(e => e.Timestamp)
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
+        {
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<BanSyncStateHistoryItemModel>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                }
+            }
+        }
+    }
 
     public async Task Add(BanSyncStateHistoryItemModel model)
     {

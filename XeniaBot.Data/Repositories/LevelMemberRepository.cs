@@ -14,7 +14,58 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
 {
     public LevelMemberRepository(IServiceProvider services)
         : base(LevelMemberModel.CollectionName, services)
-    {}
+    {
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var collectionName = MongoCollectionName;
+
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<LevelMemberModel>>()
+        {
+            {
+                collectionName + "_IX_UserIdGuildId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+                    .Descending(e => e.GuildId)
+            },
+            {
+                collectionName + "_IX_UserId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+            },
+            {
+                collectionName + "_IX_GuildId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.GuildId)
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
+        {
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<LevelMemberModel>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                }
+            }
+        }
+    }
     
     public async Task<LevelMemberModel?> Get(ulong userId, ulong guildId)
     {

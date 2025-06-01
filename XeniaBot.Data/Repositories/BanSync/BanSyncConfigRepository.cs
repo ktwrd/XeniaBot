@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using XeniaBot.Shared;
 using XeniaBot.Data.Models;
 using System.Data;
+using System.Collections.Generic;
 
 namespace XeniaBot.Data.Repositories;
 
@@ -17,6 +18,44 @@ public class BanSyncConfigRepository : BaseRepository<ConfigBanSyncModel>
         : base("banSyncGuildConfig", services)
     {
         _stateHistory = services.GetRequiredService<BanSyncStateHistoryRepository>();
+
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var collectionName = MongoCollectionName;
+
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<ConfigBanSyncModel>>()
+        {
+            {
+                collectionName + "_IX_GuildId",
+                Builders<ConfigBanSyncModel>
+                    .IndexKeys
+                    .Descending(e => e.GuildId)
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
+        {
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<ConfigBanSyncModel>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                }
+            }
+        }
     }
 
     public async Task<bool> Exists(ulong guildId)
