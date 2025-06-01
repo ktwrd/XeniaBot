@@ -21,7 +21,7 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     {
         var filter = Builders<ReminderModel>
             .Filter
-            .Eq("ReminderId", reminderId);
+            .Where(e => e.ReminderId == reminderId);
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
@@ -90,13 +90,12 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     {
         var filter = Builders<ReminderModel>
             .Filter
-            .Eq("ReminderId", model.ReminderId);
+            .Where(e => e.ReminderId == model.ReminderId);
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var result = await collection.FindAsync(filter);
-        var exists = await result.AnyAsync();
-        if (exists)
+        var result = await collection.CountDocumentsAsync(filter);
+        if (result > 0)
         {
             await collection.ReplaceOneAsync(filter, model);
         }
@@ -128,7 +127,7 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     {
         var filter = Builders<ReminderModel>
             .Filter
-            .Eq("UserId", userId);
+            .Where(e => e.UserId == userId);
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");

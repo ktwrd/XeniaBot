@@ -24,15 +24,15 @@ public class BanSyncConfigRepository : BaseRepository<ConfigBanSyncModel>
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var result = await collection.FindAsync(GetFilter(guildId));
-        return await result.AnyAsync();
+        var result = await collection.CountDocumentsAsync(GetFilter(guildId));
+        return result > 0;
     }
     public async Task<ConfigBanSyncModel?> Get(ulong guildId)
     {
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var result = await collection.FindAsync(GetFilter(guildId));
+        var result = await BaseFind(GetFilter(guildId), limit: 1);
 
         return result.FirstOrDefault();
     }
@@ -66,7 +66,7 @@ public class BanSyncConfigRepository : BaseRepository<ConfigBanSyncModel>
     {
         var filter = Builders<ConfigBanSyncModel>
             .Filter
-            .Eq("GuildId", guildId);
+            .Where(e => e.GuildId == guildId);
         return filter;
     }
 }

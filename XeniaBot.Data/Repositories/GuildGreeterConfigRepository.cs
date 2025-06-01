@@ -22,10 +22,12 @@ public class GuildGreeterConfigRepository : BaseRepository<GuildGreeterConfigMod
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildGreeterConfigModel>
             .Filter
-            .Eq("GuildId", guildId);
-        var res = await collection.FindAsync(filter);
-        var sorted = res.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
-        return sorted.FirstOrDefault();
+            .Where(e => e.GuildId == guildId);
+        var sort = Builders<GuildGreeterConfigModel>
+            .Sort
+            .Descending(e => e.ModifiedAtTimestamp);
+        var res = await BaseFind(filter, sort, limit: 1);
+        return res.FirstOrDefault();
     }
 
     public async Task Add(GuildGreeterConfigModel model)

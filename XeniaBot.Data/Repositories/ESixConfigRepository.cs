@@ -19,26 +19,21 @@ public class ESixConfigRepository : BaseRepository<ESixConfigModel>
     {
         var filter = Builders<ESixConfigModel>
             .Filter
-            .Eq("GuildId", guildId);
-        var collection = GetCollection();
-        if (collection == null)
-            throw new NoNullAllowedException("GetCollection resulted in null");
-        var res = await collection.FindAsync(filter);
-        var single = res.FirstOrDefault();
-        return single;
+            .Where(e => e.GuildId == guildId);
+        var res = await BaseFind(filter, limit: 1);
+        return res.FirstOrDefault();
     }
 
     public async Task Set(ESixConfigModel model)
     {
         var filter = Builders<ESixConfigModel>
             .Filter
-            .Eq("GuildId", model.GuildId);
+            .Where(e => e.GuildId == model.GuildId);
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var result = await collection.FindAsync(filter);
-        var exists = await result.AnyAsync();
-        if (exists)
+        var result = await collection.CountDocumentsAsync(filter);
+        if (result > 0)
         {
             await collection.ReplaceOneAsync(filter, model);
         }

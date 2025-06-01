@@ -17,13 +17,6 @@ public class RoleConfigRepository : BaseRepository<RoleConfigModel>
     {
     }
 
-    protected async Task<IAsyncCursor<RoleConfigModel>?> InternalFetch(FilterDefinition<RoleConfigModel> filter)
-    {
-        var collection = GetCollection();
-        var result = await collection.FindAsync(filter);
-        return result;
-    }
-
     #region Get
     public async Task<RoleConfigModel?> Get(ulong guildId, string name)
     {
@@ -31,7 +24,7 @@ public class RoleConfigRepository : BaseRepository<RoleConfigModel>
             .Filter
             .Where(v => v.GuildId == guildId && v.Name == name);
 
-        var results = await InternalFetch(filter);
+        var results = await BaseFind(filter, limit: 1);
         return results.FirstOrDefault();
     }
     public async Task<RoleConfigModel?> Get(ulong guildId, ulong roleId)
@@ -40,7 +33,7 @@ public class RoleConfigRepository : BaseRepository<RoleConfigModel>
             .Filter
             .Where(v => v.GuildId == guildId && v.RoleId == roleId);
 
-        var results = await InternalFetch(filter);
+        var results = await BaseFind(filter, limit: 1);
         return results.FirstOrDefault();
     }
     #endregion
@@ -98,7 +91,7 @@ public class RoleConfigRepository : BaseRepository<RoleConfigModel>
         }
 
 
-        var results = await InternalFetch(filter);
+        var results = await BaseFind(filter);
         return results.ToList();
     }
 
@@ -124,7 +117,7 @@ public class RoleConfigRepository : BaseRepository<RoleConfigModel>
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<RoleConfigModel>
             .Filter
-            .Eq("Uid", model.Uid);
+            .Where(e => e.Uid == model.Uid);
 
         var exists = (await collection.CountDocumentsAsync(filter)) > 0;
         if (exists)

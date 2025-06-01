@@ -65,7 +65,7 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
         var collection = GetCollection();
         var filter = Builders<T>
             .Filter
-            .Eq("Snowflake", snowflake);
+            .Where(e => e.Snowflake == snowflake);
 
         var result = await collection.FindAsync(filter);
         return result.FirstOrDefault();
@@ -83,7 +83,7 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<T>
             .Filter
-            .Eq("Snowflake", snowflake);
+            .Where(e => e.Snowflake == snowflake);
 
         var sort = Builders<T>
             .Sort

@@ -38,13 +38,16 @@ public class UserConfigRepository : BaseRepository<UserConfigModel>
         {
             return new UserConfigModel();
         }
+
         var filter = Builders<UserConfigModel>
             .Filter
-            .Eq("UserId", id);
-        var collection = GetCollection();
-        var result = await collection.FindAsync(filter);
-        var sorted = result.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
-        return sorted.FirstOrDefault();
+            .Where(e => e.UserId == id);
+        var sort = Builders<UserConfigModel>
+            .Sort
+            .Descending(e => e.ModifiedAtTimestamp);
+
+        var result = await BaseFind(filter, sort, limit: 1);
+        return result.FirstOrDefault();
     }
 
     public async Task<UserConfigModel> GetOrDefault(ulong id)

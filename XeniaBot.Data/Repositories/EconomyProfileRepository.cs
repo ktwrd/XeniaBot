@@ -20,12 +20,8 @@ public class EconomyProfileRepository : BaseRepository<EconProfileModel>
         var filter = Builders<EconProfileModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
-        var collection = GetCollection();
-        if (collection == null)
-            throw new NoNullAllowedException("GetCollection resulted in null");
-        var result = await collection.FindAsync(filter);
-        var first = result.FirstOrDefault();
-        return first;
+        var result = await BaseFind(filter, limit: 1);
+        return result.FirstOrDefault();
     }
 
     public async Task Set(EconProfileModel model)
@@ -36,9 +32,8 @@ public class EconomyProfileRepository : BaseRepository<EconProfileModel>
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var result = await collection.FindAsync(filter);
-        var exists = await result.AnyAsync();
-        if (exists)
+        var result = await collection.CountDocumentsAsync(filter);
+        if (result > 0)
         {
             await collection.ReplaceOneAsync(filter, model);
         }

@@ -38,10 +38,9 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildWarnItemModel>
             .Filter
-            .Eq("WarnId", id);
-        var res = await collection.FindAsync(filter);
-        var sorted = res.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
-        return sorted.ToList();
+            .Where(e => e.WarnId == id);
+        var res = await BaseFind(filter, sort_modifiedAt);
+        return res.ToList();
     }
 
     public async Task<ICollection<GuildWarnItemModel>?> GetLatestGuildItems(ulong guildId)
@@ -51,7 +50,7 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildWarnItemModel>
             .Filter
-            .Eq("GuildId", guildId);
+            .Where(e => e.GuildId == guildId);
         var res = await collection.FindAsync(filter);
         var parentList = res.ToList();
         var resultDict = new Dictionary<string, GuildWarnItemModel>();

@@ -75,7 +75,8 @@ public class RoleMessageConfigRepository : BaseRepository<RoleMessageConfigModel
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<RoleMessageConfigModel>
-        .Filter.Eq("MessageId", model.MessageId);
+            .Filter
+            .Where(e => e.MessageId == model.MessageId);
 
         var exists = (await collection.CountDocumentsAsync(filter)) > 0;
         if (exists)

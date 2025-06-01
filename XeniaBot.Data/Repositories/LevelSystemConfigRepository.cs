@@ -22,9 +22,9 @@ public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelSystemConfigModel>
             .Filter
-            .Eq("GuildId", guildId);
+            .Where(e => e.GuildId == guildId);
 
-        var result = await collection.FindAsync(filter);
+        var result = await BaseFind(filter, limit: 1);
         var first = await result.FirstOrDefaultAsync();
         if (first == null)
             first = new LevelSystemConfigModel()
@@ -43,9 +43,9 @@ public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel
             throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelSystemConfigModel>
             .Filter
-            .Eq("GuildId", model.GuildId);
+            .Where(e => e.GuildId == model.GuildId);
 
-        var existResult = await collection.FindAsync(filter);
+        var existResult = await BaseFind(filter, limit: 1);
         var exists = await existResult.AnyAsync();
 
         if (exists)

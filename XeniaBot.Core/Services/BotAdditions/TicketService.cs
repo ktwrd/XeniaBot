@@ -306,7 +306,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             var collection = GetTranscriptCollection();
             var filter = Builders<TicketTranscriptModel>
                 .Filter
-                .Eq("Uid", transcriptUid);
+                .Filter(e => e.Uid == transcriptUid);
 
             var items = await collection.FindAsync(filter);
 
@@ -401,7 +401,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             var collection = GetTicketCollection();
             var filter = Builders<TicketModel>
                 .Filter
-                .Eq("ChannelId", channelId);
+                .Where(e => e.ChannelId == channelId);
 
             var items = await collection.FindAsync(filter);
 
@@ -416,7 +416,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             }
             var filter = Builders<TicketModel>
                 .Filter
-                .Eq("ChannelId", model.ChannelId);
+                .Where(e => e.ChannelId == model.ChannelId);
 
             if (await (await collection.FindAsync(filter)).AnyAsync())
                 await collection.FindOneAndReplaceAsync(filter, model);
@@ -438,7 +438,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             var collection = GetConfigCollection();
             var filter = Builders<ConfigGuildTicketModel>
                 .Filter
-                .Eq("GuildId", guildId);
+                .Where(e => e.GuildId == guildId);
 
             var item = await collection.FindAsync(filter);
 
@@ -454,7 +454,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             }
             var filter = Builders<ConfigGuildTicketModel>
                 .Filter
-                .Eq("GuildId", model.GuildId);
+                .Where(e => e.GuildId == model.GuildId);
 
             if (await (await collection.FindAsync(filter)).AnyAsync())
                 await collection.FindOneAndReplaceAsync(filter, model);
@@ -470,7 +470,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             }
             var filter = Builders<ConfigGuildTicketModel>
                 .Filter
-                .Eq("GuildId", guildId);
+                .Where(e => e.GuildId == guildId);
 
             await collection.DeleteManyAsync(filter);
         }

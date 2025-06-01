@@ -15,27 +15,20 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
     public LevelMemberRepository(IServiceProvider services)
         : base(LevelMemberModel.CollectionName, services)
     {}
-
     
-    protected async Task<IAsyncCursor<LevelMemberModel>?> InternalFind(FilterDefinition<LevelMemberModel> filter)
-    {
-        var collection = GetCollection();
-        var result = await collection.FindAsync(filter);
-        return result;
-    }
     public async Task<LevelMemberModel?> Get(ulong userId, ulong guildId)
     {
-        var filter = MongoDB.Driver.Builders<LevelMemberModel>
+        var filter = Builders<LevelMemberModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
-        var res = await InternalFind(filter);
+        var res = await BaseFind(filter, limit: 1);
         return res.FirstOrDefault();
     }
     public async Task<ICollection<LevelMemberModel>?> GetAllUsersCombined()
     {
         var filter = Builders<LevelMemberModel>
             .Filter.Empty;
-        var result = await InternalFind(filter);
+        var result = await BaseFind(filter);
         var data = new Dictionary<ulong, LevelMemberModel>();
         foreach (var item in result.ToEnumerable())
         {
@@ -48,7 +41,7 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
 
         return data.Select(v => v.Value).ToList();
     }
-    public async Task<LevelMemberModel[]?> GetGuild(ulong guildId)
+    public async Task<ICollection<LevelMemberModel>> GetGuild(ulong guildId)
     {
         var collection = GetCollection();
         if (collection == null)
@@ -57,9 +50,8 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
             .Filter
             .Where(v => v.GuildId == guildId);
 
-        var result = await collection.FindAsync(filter);
-        var item = await result.ToListAsync();
-        return item.ToArray();
+        var result = await BaseFind(filter);
+        return await result.ToListAsync();
     }
     /// <summary>
     /// Delete many objects from the database

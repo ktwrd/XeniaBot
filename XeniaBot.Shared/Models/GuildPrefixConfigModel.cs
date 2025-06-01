@@ -20,7 +20,7 @@ public class GuildPrefixConfigModel : BaseModel
     [JsonIgnore]
     [XmlIgnore]
     public FilterDefinition<GuildPrefixConfigModel> Filter =>
-        Builders<GuildPrefixConfigModel>.Filter.Eq("GuildId", GuildId);
+        Builders<GuildPrefixConfigModel>.Filter.Where(e => e.GuildId == GuildId);
     public GuildPrefixConfigModel(ulong guildId)
     {
         GuildId = guildId;

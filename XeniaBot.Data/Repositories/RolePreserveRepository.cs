@@ -17,13 +17,10 @@ public class RolePreserveRepository : BaseRepository<RolePreserveModel>
 
     public async Task<RolePreserveModel?> Get(ulong userId, ulong guildId)
     {
-        var collection = GetCollection();
-        if (collection == null)
-            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<RolePreserveModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
-        var res = await collection.FindAsync(filter);
+        var res = await BaseFind(filter, limit: 1);
         return res.FirstOrDefault();
     }
 
@@ -36,8 +33,7 @@ public class RolePreserveRepository : BaseRepository<RolePreserveModel>
             .Filter
             .Where(v => v.UserId == model.UserId && v.GuildId == model.GuildId);
 
-        var existResult = await collection.FindAsync(filter);
-        var exists = await existResult.AnyAsync();
+        var exists = await collection.CountDocumentsAsync(filter) > 0;
 
         if (exists)
         {

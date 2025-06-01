@@ -27,7 +27,7 @@ public class XeniaVersionRepository : BaseRepository<XeniaVersionModel>
         var filter = Builders<XeniaVersionModel>
             .Filter
             .Where(v => v.Id == id);
-        var res = await BaseFind(filter);
+        var res = await BaseFind(filter, limit: 1);
         return res.FirstOrDefault();
     }
     public async Task<List<XeniaVersionModel>> GetAllByName(string name)
@@ -48,7 +48,7 @@ public class XeniaVersionRepository : BaseRepository<XeniaVersionModel>
         var filter = Builders<XeniaVersionModel>
             .Filter
             .Where(v => v.Name == current.Name && v.ParsedVersionTimestamp < current.ParsedVersionTimestamp);
-        var res = await BaseFind(filter, sort_createdAt);
+        var res = await BaseFind(filter, sort_createdAt, limit: 1);
         return res.FirstOrDefault();
     }
 
