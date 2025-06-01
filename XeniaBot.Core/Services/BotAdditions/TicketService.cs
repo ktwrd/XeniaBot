@@ -399,11 +399,20 @@ namespace XeniaBot.Core.Services.BotAdditions
         public async Task<TicketModel?> Get(ulong channelId)
         {
             var collection = GetTicketCollection();
+            if (collection == null)
+            {
+                throw new Exception("Could not get collection from " + nameof(GetTicketCollection));
+            }
             var filter = Builders<TicketModel>
                 .Filter
                 .Where(e => e.ChannelId == channelId);
 
-            var items = await collection.FindAsync(filter);
+            var opts = new FindOptions<TicketModel>()
+            {
+                Limit = 1
+            };
+
+            var items = await collection.FindAsync(filter, opts);
 
             return items.FirstOrDefault();
         }
@@ -418,7 +427,9 @@ namespace XeniaBot.Core.Services.BotAdditions
                 .Filter
                 .Where(e => e.ChannelId == model.ChannelId);
 
-            if (await (await collection.FindAsync(filter)).AnyAsync())
+            var exists = await collection.CountDocumentsAsync(filter) > 0;
+
+            if (exists)
                 await collection.FindOneAndReplaceAsync(filter, model);
             else
                 await collection.InsertOneAsync(model);
@@ -436,11 +447,20 @@ namespace XeniaBot.Core.Services.BotAdditions
         public async Task<ConfigGuildTicketModel?> GetGuildConfig(ulong guildId)
         {
             var collection = GetConfigCollection();
+            if (collection == null)
+            {
+                throw new Exception("Could not get collection from " + nameof(GetConfigCollection));
+            }
             var filter = Builders<ConfigGuildTicketModel>
                 .Filter
                 .Where(e => e.GuildId == guildId);
 
-            var item = await collection.FindAsync(filter);
+            var opts = new FindOptions<ConfigGuildTicketModel>()
+            {
+                Limit = 1
+            };
+
+            var item = await collection.FindAsync(filter, opts);
 
             return item.FirstOrDefault();
         }

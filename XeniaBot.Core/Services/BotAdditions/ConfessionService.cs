@@ -44,6 +44,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             if (data == null)
             {
                 await arg.RespondAsync("Couldn't find configuration for guild " + arg.GuildId.ToString());
+                return;
             }
             var guild = _client.GetGuild(data.GuildId);
             var channel = guild.GetTextChannel(data.ChannelId);
