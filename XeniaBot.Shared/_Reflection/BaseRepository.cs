@@ -55,12 +55,16 @@ public class BaseRepository<TH> : BaseService
     protected IMongoCollection<TH>? GetCollection(string name)
         => GetCollection<TH>(name);
 
-    public Task<IAsyncCursor<TH>> BaseFind(FilterDefinition<TH> filter, SortDefinition<TH> sort = null)
+    public Task<IAsyncCursor<TH>> BaseFind(FilterDefinition<TH> filter, SortDefinition<TH>? sort = null, int? limit = null)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var opts = new FindOptions<TH, TH>();
         if (sort != null)
             opts.Sort = sort;
+        if (limit != null && limit.HasValue)
+            opts.Limit = limit.Value;
         return collection.FindAsync(filter, opts);
     }
 }
