@@ -73,13 +73,13 @@ public class XpModule : InteractionModuleBase
         return embed;
     }
 
-    public EmbedBuilder GenerateLeaderboard(EmbedBuilder embed, LevelMemberModel[] data, int size = 5)
+    public EmbedBuilder GenerateLeaderboard(EmbedBuilder embed, ICollection<LevelMemberModel> data, int size = 5)
     {
         size = Math.Min(size, 10);
 
         var resultLines = new List<string>()
         {
-            $"Top {size} of {data.Length} records."
+            $"Top {size} of {data.Count} records."
         };
 
         var sorted = data.OrderByDescending(v => v.Xp).ToArray();

@@ -17,6 +17,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
+using MongoDB.Driver;
 
 namespace XeniaBot.WebPanel.Helpers;
 
@@ -190,7 +191,8 @@ public static class AspHelper
         };
 
         var banSyncStateHistory = Program.Core.GetRequiredService<BanSyncStateHistoryRepository>();
-        data.BanSyncStateHistory = await banSyncStateHistory.GetMany(guild.Id) ?? Array.Empty<BanSyncStateHistoryItemModel>();
+        var history = await banSyncStateHistory.GetMany(guild.Id);
+        data.BanSyncStateHistory = history.ToList();
 
         var xpConfig = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
         data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemConfigModel()

@@ -52,7 +52,7 @@ namespace XeniaBot.Core.Modules
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
             var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
-            CounterGuildModel data = counterConfig.Get(targetChannel);
+            var data = await counterConfig.Get(targetChannel);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync($"Channel not found in database.");

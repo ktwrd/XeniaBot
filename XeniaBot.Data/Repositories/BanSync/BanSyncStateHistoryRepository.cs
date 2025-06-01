@@ -87,7 +87,7 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
         return await result.ToListAsync();
     }
 
-    public Task<IAsyncCursor<BanSyncStateHistoryItemModel>?> GetMany(ulong guildId)
+    public Task<IAsyncCursor<BanSyncStateHistoryItemModel>> GetMany(ulong guildId)
     {
         var filter = Builders<BanSyncStateHistoryItemModel>
             .Filter
