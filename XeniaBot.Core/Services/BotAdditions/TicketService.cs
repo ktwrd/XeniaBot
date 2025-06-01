@@ -306,7 +306,7 @@ namespace XeniaBot.Core.Services.BotAdditions
             var collection = GetTranscriptCollection();
             var filter = Builders<TicketTranscriptModel>
                 .Filter
-                .Filter(e => e.Uid == transcriptUid);
+                .Where(e => e.Uid == transcriptUid);
 
             var items = await collection.FindAsync(filter);
 
