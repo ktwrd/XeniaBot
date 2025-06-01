@@ -16,9 +16,12 @@
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Exceptions\**" />
     <Compile Remove="obj\**" />
     <Content Remove="obj\**" />
+    <EmbeddedResource Remove="Exceptions\**" />
     <EmbeddedResource Remove="obj\**" />
+    <None Remove="Exceptions\**" />
     <None Remove="obj\**" />
   </ItemGroup>
   <ItemGroup>
@@ -87,9 +90,6 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Exceptions\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Properties\VersionAutoIncrement.cs">

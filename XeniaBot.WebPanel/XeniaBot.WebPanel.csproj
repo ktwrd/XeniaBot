@@ -6,12 +6,23 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 
-    <AssemblyVersion>0.12.0.0</AssemblyVersion>
+    <AssemblyVersion>0.14.0.0</AssemblyVersion>
 <!--    <Deterministic>false</Deterministic>-->
 
     <AssemblyName>XeniaBot.WebPanel</AssemblyName>
     <RootNamespace>XeniaBot.WebPanel</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Components\**" />
+    <Compile Remove="Pages\**" />
+    <Content Remove="Components\**" />
+    <Content Remove="Pages\**" />
+    <EmbeddedResource Remove="Components\**" />
+    <EmbeddedResource Remove="Pages\**" />
+    <None Remove="Components\**" />
+    <None Remove="Pages\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="..\.dockerignore">
@@ -42,11 +53,6 @@
     <_ContentIncludedByDefault Remove="Views\Server\Settings\LevelSystem.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Server\Settings\Logging.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Server\Details\BanSync\Index.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Components\" />
-    <Folder Include="Pages\Components\" />
   </ItemGroup>
 
   <ItemGroup>
