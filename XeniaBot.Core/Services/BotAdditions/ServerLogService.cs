@@ -74,7 +74,7 @@ public class ServerLogService : BaseService
                 .WithColor(new Color(255, 255, 255))
                 .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
                 .WithThumbnailUrl(author.GetAvatarUrl());
-            var maxDiffContentLength = 2047 - string.Join("\n", "```diff", "", "```").Length;
+            var maxDiffContentLength = 1024 - string.Join("\n", "```diff", "", "```").Length;
             if (diffContent.Length >= maxDiffContentLength)
                 await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
             else
@@ -315,10 +315,12 @@ public class ServerLogService : BaseService
                 .WithColor(Color.Orange);
             if (author != null)
                 embed.WithThumbnailUrl(author.GetAvatarUrl());
-        
-            if (messageContent.Length is < 1000 and > 0)
-                embed.AddField("Content", $"```\n{messageContent}\n```");
-            else if (messageContent.Length > 1000)
+
+            var targetFieldMessageContent = $"```\n{messageContent}\n```";
+
+            if (targetFieldMessageContent.Length is < 1024 and > 0)
+                embed.AddField("Content", targetFieldMessageContent);
+            else if (targetFieldMessageContent.Length > 1024)
             {
                 embed.AddField("Content", "Attached to this message");
                 await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed, messageContent, "content.txt");
