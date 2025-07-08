@@ -302,15 +302,24 @@ public class ServerLogService : BaseService
             }
             var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(m.Id);
         
-            string messageContent = message?.Content ?? funkyMessage?.Content ?? "";
-            long timestamp = 
+            var messageContent = message?.Content ?? funkyMessage?.Content ?? "";
+            var timestamp = 
                 message?.CreatedAt.ToUnixTimeSeconds()
                 ?? funkyMessage?.CreatedAt.ToUnixTimeSeconds()
                 ?? 0;
-            SocketUser? author = _discord.GetUser(message?.Author.Id ?? funkyMessage?.AuthorId ?? 0);
+            if (timestamp == 0)
+            {
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            }
+            SocketUser? author = null;
+            var authorId = message?.Author.Id ?? funkyMessage?.AuthorId ?? 0;
+            if (authorId != 0)
+            {
+                author = _discord.GetUser(authorId);
+            }
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Deleted")
-                .WithDescription($"Deleted in <#{c.Id}> at <t:{timestamp}:F>")
+                .WithDescription($"Deleted in <#{c.Id}> at <t:{timestamp}:F>" + (author == null ? "" : $" from <@{author.Id}> (`{author.Username}`)"))
                 .WithColor(Color.Orange);
             if (author != null)
                 embed.WithThumbnailUrl(author.GetAvatarUrl());
