@@ -74,8 +74,7 @@ public class ServerLogService : BaseService
                 .WithColor(new Color(255, 255, 255))
                 .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
                 .WithThumbnailUrl(author.GetAvatarUrl());
-            var maxDiffContentLength = 1024 - string.Join("\n", "```diff", "", "```").Length;
-            if (diffContent.Length >= maxDiffContentLength)
+            if (diffContent.Length >= 1000)
                 await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
             else
             {
