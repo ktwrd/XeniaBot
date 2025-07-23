@@ -37,14 +37,14 @@
         <a asp-controller="Server" asp-route-id="@Model.Guild.Id" asp-action="Index"><code>@Model.Guild.Name</code></a>
     </p>
     <h4>Description</h4>
-    <textarea class="form-control" readonly>@Model.WarnItem.Description</textarea>
+    <textarea class="form-control" readonly rows="15">@Model.WarnItem.Description</textarea>
     <a class="btn btn-outline-primary btn-sm mt-3" asp-controller="WarnSystem" asp-action="GuildWarns" asp-route-id="@Model.Guild.Id">Go Back</a>
     
     <hr/>
     <h4>Comments</h4>
     <div class="row">
         <div class="col">
-            <div class="row">
+            @*<div class="row">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <table>
@@ -65,7 +65,7 @@
                         </table>
                     </div>
                 </div>
-            </div>
+            </div>*@
             @foreach (var comment in Model.Comments.OrderBy(e => e.CreatedAt.Value))
             {
             }
