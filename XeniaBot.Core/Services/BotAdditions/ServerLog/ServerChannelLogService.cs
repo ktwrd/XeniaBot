@@ -55,6 +55,7 @@ public class ServerChannelLogService : BaseService
                 .WithColor(Color.Blue));
         }
 
+		/*
         if (current.Position != previous?.Position)
         {
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
@@ -63,6 +64,7 @@ public class ServerChannelLogService : BaseService
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
+		*/
 
         bool previousNsfw = false;
         bool currentNsfw = false;
