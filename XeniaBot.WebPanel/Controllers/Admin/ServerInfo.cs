@@ -72,14 +72,14 @@ public partial class AdminController
     [HttpPost("~/Admin/Server/{id}/Settings/BanSync/State")]
     [AuthRequired]
     [RequireSuperuser]
-    public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason)
+    public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason, bool doRefreshBans)
     {
         var controller = Program.Core.GetRequiredService<BanSyncService>();
         var model = new AdminBanSyncComponentViewModel();
         await model.PopulateModel(HttpContext, id);
         try
         {
-            var res = await controller.SetGuildState(id, state, reason);
+            var res = await controller.SetGuildState(id, state, reason, doRefreshBans);
             if (res == null)
                 throw new Exception("Server Config not found");
         }

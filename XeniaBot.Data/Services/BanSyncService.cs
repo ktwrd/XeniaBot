@@ -305,7 +305,7 @@ namespace XeniaBot.Data.Services
         /// <param name="reason">Required when <paramref name="state"/> is <see cref="BanSyncGuildState.Blacklisted"/> or <see cref="BanSyncGuildState.RequestDenied"/></param>
         /// <returns></returns>
         /// <exception cref="Exception">When <paramref name="reason"/> is empty when required.</exception>
-        public async Task<ConfigBanSyncModel?> SetGuildState(ulong guildId, BanSyncGuildState state, string reason = "")
+        public async Task<ConfigBanSyncModel?> SetGuildState(ulong guildId, BanSyncGuildState state, string reason = "", bool doRefreshBans = true)
         {
             var config = await _guildConfigRepo.Get(guildId);
             if (config == null)
@@ -330,7 +330,7 @@ namespace XeniaBot.Data.Services
             await SetGuildState_Notify(config);
             await SetGuildState_NotifyGuild(config, oldConfig);
 
-            if (state == BanSyncGuildState.Active)
+            if (state == BanSyncGuildState.Active && doRefreshBans)
             {
                 try
                 {
