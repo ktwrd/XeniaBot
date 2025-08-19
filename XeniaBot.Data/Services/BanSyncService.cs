@@ -326,6 +326,10 @@ namespace XeniaBot.Data.Services
                 config.Reason = reason;
                 config.Enable = false;
             }
+            else if (state == BanSyncGuildState.Active)
+            {
+                config.Reason = reason;
+            }
 
             config.Enable = state == BanSyncGuildState.Active;
             config.State = state;
