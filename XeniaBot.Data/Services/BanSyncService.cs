@@ -81,7 +81,12 @@ namespace XeniaBot.Data.Services
         
         private string ParseReason(string? reason)
         {
-            return string.IsNullOrEmpty(reason) ? "<unknown>" : reason;
+            if (string.IsNullOrEmpty(reason))
+                return "<unknown>";
+            else if (reason.Equals("<null>", StringComparison.InvariantCultureIgnoreCase))
+                return "<unknown>";
+            else
+                return reason.Trim();
         }
         public bool InfoEquals(BanSyncInfoModel self, BanSyncInfoModel other)
         {
