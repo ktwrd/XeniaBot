@@ -26,8 +26,9 @@ public class CacheUserModel
     [BsonIgnoreIfNull]
     public ulong? AvatarDecorationSkuId { get; set; }
     [BsonIgnoreIfNull]
-
     public UserProperties? PublicFlags { get; set; }
+    [BsonIgnoreIfNull]
+    public CacheUserPrimaryGuild? PrimaryGuild { get; set; }
 
     #region IMentionable
     public string Mention { get; set; }
@@ -48,25 +49,26 @@ public class CacheUserModel
 
     public CacheUserModel Update(IUser user)
     {
-        this.Snowflake = user.Id;
-        this.CreatedAt = user.CreatedAt;
-        this.AvatarId = user.AvatarId;
-        this.Discriminator = user.Discriminator;
-        this.DiscriminatorValue = user.DiscriminatorValue;
-        this.IsBot = user.IsBot;
-        this.IsWebhook = user.IsWebhook;
-        this.Username = user.Username;
-        this.GlobalName = user.GlobalName;
-        this.AvatarDecorationHash = user.AvatarDecorationHash;
-        this.AvatarDecorationSkuId = user.AvatarDecorationSkuId;
-        this.PublicFlags = user.PublicFlags;
-        this.Mention = user.Mention;
-        this.Status = user.Status;
-        this.ActiveClients = user.ActiveClients.ToArray();
-        this.Activities = user.Activities
+        Snowflake = user.Id;
+        CreatedAt = user.CreatedAt;
+        AvatarId = user.AvatarId;
+        Discriminator = user.Discriminator;
+        DiscriminatorValue = user.DiscriminatorValue;
+        IsBot = user.IsBot;
+        IsWebhook = user.IsWebhook;
+        Username = user.Username;
+        GlobalName = user.GlobalName;
+        AvatarDecorationHash = user.AvatarDecorationHash;
+        AvatarDecorationSkuId = user.AvatarDecorationSkuId;
+        PublicFlags = user.PublicFlags;
+        Mention = user.Mention;
+        Status = user.Status;
+        ActiveClients = user.ActiveClients.ToArray();
+        Activities = user.Activities
             .Select(CacheUserActivity.FromExisting)
             .Where(v => v != null)
             .Cast<CacheUserActivity>().ToArray();
+        PrimaryGuild = user.PrimaryGuild == null ? null : new CacheUserPrimaryGuild(user.PrimaryGuild.Value);
         return this;
     }
     public static CacheUserModel? FromExisting(IUser? user)
