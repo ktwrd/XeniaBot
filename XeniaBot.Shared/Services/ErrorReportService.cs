@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -186,8 +187,11 @@ public class ErrorReportService : BaseService
     }
     #endregion
 
-    public async Task ReportException(Exception exception, string notes = "")
+    public async Task ReportException(Exception exception, string notes = "",
+        IReadOnlyDictionary<string, string>? extraAttachments = null)
     {
+        if (extraAttachments?.Count > 9)
+            throw new ArgumentOutOfRangeException(nameof(extraAttachments), $"Too many attachments! (limit: 9, got: {extraAttachments.Count})");
         SentrySdk.CaptureException(exception, (scope) =>
         {
             scope.SetExtra("notes", notes);
@@ -219,6 +223,27 @@ public class ErrorReportService : BaseService
         else if (notes.Length > 0)
         {
             embed.AddField("Notes", $"```\n{notes}\n```");
+        }
+        
+        if (extraAttachments?.Count > 0)
+        {
+            foreach (var pair in extraAttachments)
+            {
+                var fn = Path.GetFileNameWithoutExtension(pair.Key);
+                var ex = Path.GetExtension(pair.Key);
+                if (string.IsNullOrEmpty(fn)) ex = "attachment";
+                if (string.IsNullOrEmpty(ex)) ex = ".txt";
+                var tgtFn = fn + ex;
+                /*int? c = null;
+                while (attachments.Any(e => e.FileName == tgtFn))
+                {
+                    if (c == null) c = 0;
+                    c++;
+                    
+                    tgtFn = $"{fn} ({c}){ex}";
+                }*/
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(pair.Value)), fileName: tgtFn));
+            }
         }
 
         var guild = _client.GetGuild(_config.ErrorReporting.GuildId);

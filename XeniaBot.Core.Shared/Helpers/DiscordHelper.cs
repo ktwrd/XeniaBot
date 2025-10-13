@@ -137,14 +137,15 @@ public static class DiscordHelper
         var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
         await cont.ReportError(response, user, guild, channel, message);
     }
-    public static async Task ReportError(Exception exception, string extraText = "")
+    public static async Task ReportError(Exception exception, string extraText = "",
+        IReadOnlyDictionary<string, string>? extraAttachments = null)
     {
         SentrySdk.CaptureException(exception, (scope) =>
         {
             scope.SetExtra("extraText", extraText);
         });
         var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
-        await cont.ReportException(exception, extraText);
+        await cont.ReportException(exception, extraText, extraAttachments);
     }
     #endregion
 }
