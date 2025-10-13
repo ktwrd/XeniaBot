@@ -172,22 +172,18 @@ public class LevelSystemService : BaseService
             {
                 var result = await GrantXp(data, message);
                 var targetChannel = message.Channel;
-                if (guildConfig != null)
+                if (guildConfig.LevelUpChannel != null)
                 {
-                    if (guildConfig.LevelUpChannel != null)
-                    {
-                        var tc = context.Guild.GetTextChannel((ulong)guildConfig.LevelUpChannel);
-                        if (tc != null)
-                            targetChannel = tc;
-                    }
-
-                    if (!guildConfig.ShowLeveUpMessage)
-                        targetChannel = null;
+                    var tc = context.Guild.GetTextChannel((ulong)guildConfig.LevelUpChannel);
+                    if (tc != null)
+                        targetChannel = tc;
                 }
+
+                if (!guildConfig.ShowLeveUpMessage) targetChannel = null;
+                
                 if (result.DidLevelUp && targetChannel != null)
                 {
-                    await targetChannel.SendMessageAsync(
-                        $"<@{message.Author.Id}> You've advanced to *level {result.Metadata.UserLevel}*!");
+                    await targetChannel.SendMessageAsync($"<@{message.Author.Id}> You've advanced to *level {result.Metadata.UserLevel}*!");
                 }
             }
             catch (Exception e)
@@ -196,9 +192,9 @@ public class LevelSystemService : BaseService
             }
         }
     }
-    private async Task _client_MessageReceived(SocketMessage rawMessage)
+    private Task _client_MessageReceived(SocketMessage rawMessage)
     {
-        new Thread((ThreadStart)async delegate
+        new Thread(async () =>
         {
             try
             {
@@ -208,7 +204,11 @@ public class LevelSystemService : BaseService
             {
                 Log.Error($"Failed to run {nameof(ClientMessageReceived)}\n{ex}");
             }
-        }).Start();
+        })
+        {
+            Name = $"{GetType().Namespace}.{GetType().Name}.{nameof(_client_MessageReceived)}(messageId: {rawMessage.Id})"
+        }.Start();
+        return Task.CompletedTask;
     }
 
     public class GrantXpResult
@@ -220,7 +220,7 @@ public class LevelSystemService : BaseService
         /// <summary>
         /// New XP Metadata
         /// </summary>
-        public ExperienceMetadata Metadata { get; init; }
+        public ExperienceMetadata Metadata { get; init; } = new();
     }
     /// <summary>
     /// Grant user 4 to 16 xp.
@@ -230,7 +230,8 @@ public class LevelSystemService : BaseService
     /// <returns>Result information. See <see cref="GrantXpResult"/></returns>
     public async Task<GrantXpResult> GrantXp(LevelMemberModel model, SocketUserMessage message)
     {
-        var data = await _memberConfig.Get(model.UserId, model.GuildId);
+        var data = await _memberConfig.Get(model.UserId, model.GuildId)
+            ?? model;
         var amount = (ulong)_random.Next(4, 16);
 
         // Generate previous and current metadata
@@ -255,12 +256,9 @@ public class LevelSystemService : BaseService
             Metadata = metadata
         };
     }
-    protected void OnUserLevelUp(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
+    private void OnUserLevelUp(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current)
     {
-        if (UserLevelUp != null)
-        {
-            UserLevelUp?.Invoke(model, previous, current);
-        }
+        UserLevelUp?.Invoke(model, previous, current);
     }
     public event ExperienceComparisonDelegate UserLevelUp;
 }
