@@ -1,5 +1,4 @@
-﻿using XeniaBot.DiscordCache.Helpers;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -68,11 +67,6 @@ public class CacheMessageModel : DiscordCacheBaseModel
         MentionedUserIds = [];
         Reactions = [];
         Components = [];
-    }
-
-    public CacheMessageModel? Clone()
-    {
-        return DiscordCacheHelper.ForceTypeCast<CacheMessageModel, CacheMessageModel>(this);
     }
 
     public CacheMessageModel Update(IMessage message)

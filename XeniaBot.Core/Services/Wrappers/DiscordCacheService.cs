@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -779,7 +780,7 @@ public class DiscordCacheService : BaseService
             var data = await CacheMessageConfig.GetLatest(message.Id);
             if (data != null)
             {
-                var previous = data.Clone();
+                var previous = FastCloner.FastCloner.DeepClone(data);
                 data.IsDeleted = true;
                 data.DeletedTimestamp = DateTimeOffset.UtcNow;
                 await CacheMessageConfig.Add(data);
@@ -805,18 +806,13 @@ public class DiscordCacheService : BaseService
             {
                 var msgJson = JsonSerializer.Serialize(message.Value, Program.SerializerOptions);
                 var channelJson = JsonSerializer.Serialize(channel.Value, Program.SerializerOptions);
-                await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                {
-                    $"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})\n",
-                    "Message JSON:",
-                    "```json",
-                    msgJson,
-                    "```",
-                    "Channel JSON:",
-                    "```json",
-                    channelJson,
-                    "```"
-                }));
+                await DiscordHelper.ReportError(ex, 
+                    $"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})", 
+                    new Dictionary<string, string>()
+                    {
+                        {"message.json", msgJson},
+                        {"channel.json", channelJson}
+                    });
             }
             catch (Exception iex)
             {
