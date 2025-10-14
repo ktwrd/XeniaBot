@@ -23,17 +23,22 @@ public class CacheMessageModel : DiscordCacheBaseModel
     public bool IsSuppressed { get; set; }
     public bool MentionedEveryone { get; set; }
 
-    public ulong[] MentionedChannelIds { get; set; }
-    public ulong[] MentionedRoleIds { get; set; }
-    public ulong[] MentionedUserIds { get; set; }
+    [BsonIgnoreIfNull]
+    public ulong[]? MentionedChannelIds { get; set; }
+    [BsonIgnoreIfNull]
+    public ulong[]? MentionedRoleIds { get; set; }
+    [BsonIgnoreIfNull]
+    public ulong[]? MentionedUserIds { get; set; }
     [BsonIgnoreIfNull]
     public CacheMessageActivity? Activity { get; set; }
     [BsonIgnoreIfNull]
     public CacheMessageApplication? Application { get; set; }
     [BsonIgnoreIfNull]
     public CacheMessageReference? Reference { get; set; }
-    public Dictionary<CacheEmote, CacheReactionMetadata> Reactions { get; set; }
-    public CacheMessageComponent[] Components { get; set; }
+    [BsonIgnoreIfNull]
+    public Dictionary<CacheEmote, CacheReactionMetadata>? Reactions { get; set; }
+    [BsonIgnoreIfNull]
+    public CacheMessageComponent[]? Components { get; set; }
     [BsonIgnoreIfNull]
     public CacheStickerItem[]? Stickers { get; set; }
     [BsonIgnoreIfNull]
@@ -42,6 +47,8 @@ public class CacheMessageModel : DiscordCacheBaseModel
     public CacheMessageInteraction? Interaction { get; set; }
     [BsonIgnoreIfNull]
     public CacheMessageInteractionMetadata? InteractionMetadata { get; set; }
+    [BsonIgnoreIfNull]
+    public List<CacheMessageAttachment>? Attachments { get; set; }
     #endregion
 
     #region ISnowflakeEntity
@@ -58,71 +65,77 @@ public class CacheMessageModel : DiscordCacheBaseModel
     {
         Content = "";
         ContentClean = "";
-        Embeds = Array.Empty<CacheMessageEmbed>();
-        Tags = Array.Empty<CacheMessageTag>();
         IsDeleted = false;
         DeletedTimestamp = DateTimeOffset.FromUnixTimeMilliseconds(0);
-        MentionedChannelIds = [];
-        MentionedRoleIds = [];
-        MentionedUserIds = [];
-        Reactions = [];
-        Components = [];
     }
 
     public CacheMessageModel Update(IMessage message)
     {
-        this.Content = message.Content;
-        this.Timestamp = message.Timestamp;
-        this.EditedTimestamp = message.EditedTimestamp;
-        this.Embeds = message.Embeds.Select(CacheMessageEmbed.FromExisting)
-            .Where(v => v != null)
-            .Cast<CacheMessageEmbed>()
-            .ToArray();
-        this.Tags = message.Tags.Select(CacheMessageTag.FromExisting)
-            .Where(v => v != null)
-            .Cast<CacheMessageTag>()
-            .ToArray();
-        this.Source = message.Source;
-        this.IsTTS = message.IsTTS;
-        this.Pinned = message.IsPinned;
-        this.IsSuppressed = message.IsSuppressed;
-        this.MentionedEveryone = message.MentionedEveryone;
-        this.MentionedChannelIds = message.MentionedChannelIds.ToArray();
-        this.MentionedRoleIds = message.MentionedRoleIds.ToArray();
-        this.MentionedUserIds = message.MentionedUserIds.ToArray();
-        this.Activity = CacheMessageActivity.FromExisting(message.Activity);
-        this.Application = CacheMessageApplication.FromExisting(message.Application);
-        this.Reference = CacheMessageReference.FromExisting(message.Reference);
-        this.Components = message.Components
+        Content = message.Content;
+        Timestamp = message.Timestamp;
+        EditedTimestamp = message.EditedTimestamp;
+        Embeds = message.Embeds.Count == 0 ? null
+            : message.Embeds.Select(CacheMessageEmbed.FromExisting)
+                .Where(v => v != null)
+                .Cast<CacheMessageEmbed>()
+                .ToArray();
+        Tags = message.Tags.Count == 0 ? null
+            : message.Tags.Select(CacheMessageTag.FromExisting)
+                .Where(v => v != null)
+                .Cast<CacheMessageTag>()
+                .ToArray();
+        Source = message.Source;
+        IsTTS = message.IsTTS;
+        Pinned = message.IsPinned;
+        IsSuppressed = message.IsSuppressed;
+        MentionedEveryone = message.MentionedEveryone;
+        MentionedChannelIds = message.MentionedChannelIds.Count == 0
+            ? null : message.MentionedChannelIds.ToArray();
+        MentionedRoleIds = message.MentionedRoleIds.Count == 0
+            ? null : message.MentionedRoleIds.ToArray();
+        MentionedUserIds = message.MentionedUserIds.Count == 0
+            ? null : message.MentionedUserIds.ToArray();
+        Activity = CacheMessageActivity.FromExisting(message.Activity);
+        Application = CacheMessageApplication.FromExisting(message.Application);
+        Reference = CacheMessageReference.FromExisting(message.Reference);
+        Components = message.Components.Count == 0 ? null
+            : message.Components
                 .Select(CacheMessageComponent.FromExisting)
                 .Where(v => v != null)
                 .Cast<CacheMessageComponent>()
                 .ToArray();
-        this.Stickers = message.Stickers
-            .Select(CacheStickerItem.FromExisting)
-            .Where(v => v != null)
-            .Cast<CacheStickerItem>()
-            .ToArray();
-        this.Flags = message.Flags;
+        Stickers = message.Stickers.Count == 0 ? null
+            : message.Stickers
+                .Select(CacheStickerItem.FromExisting)
+                .Where(v => v != null)
+                .Cast<CacheStickerItem>()
+                .ToArray();
+        Flags = message.Flags;
         if (message is IUserMessage usrMsg)
         {
-            this.InteractionMetadata = CacheMessageInteractionMetadata.FromExisting(usrMsg.InteractionMetadata);
+            InteractionMetadata = CacheMessageInteractionMetadata.FromExisting(usrMsg.InteractionMetadata);
         }
         else
         {
-            this.InteractionMetadata = null;
+            InteractionMetadata = null;
         }
-        this.Interaction = null;
-        this.CreatedAt = message.CreatedAt;
-        this.Snowflake = message.Id;
-        this.AuthorId = message.Author.Id;
-        this.ChannelId = message.Channel.Id;
-        this.GuildId = 0;
+        Interaction = null;
+        CreatedAt = message.CreatedAt;
+        Snowflake = message.Id;
+        AuthorId = message.Author.Id;
+        ChannelId = message.Channel.Id;
+        GuildId = 0;
 
-        if (message != null && message.Channel is SocketGuildChannel sgc)
+        if (message.Channel is SocketGuildChannel sgc)
         {
-            this.GuildId = sgc.Guild.Id;
+            GuildId = sgc.Guild.Id;
         }
+
+        Attachments = message.Attachments == null || message.Attachments.Count < 1
+            ? null
+            : message.Attachments.Select(CacheMessageAttachment.FromExisting)
+                .Where(e => e != null)
+                .Cast<CacheMessageAttachment>().ToList();
         return this;
     }
     public static CacheMessageModel? FromExisting(IMessage? message)
