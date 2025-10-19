@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Core.Shared\XeniaBot.Core.Shared.csproj" />
-    <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
+    <ProjectReference Include="..\XeniaBot.MongoData\XeniaBot.MongoData.csproj" />
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
   </ItemGroup>
 

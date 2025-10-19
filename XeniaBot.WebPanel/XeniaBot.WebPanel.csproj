@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\XeniaBot.Data\XeniaBot.Data.csproj" />
+    <ProjectReference Include="..\XeniaBot.MongoData\XeniaBot.MongoData.csproj" />
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
   </ItemGroup>
 
