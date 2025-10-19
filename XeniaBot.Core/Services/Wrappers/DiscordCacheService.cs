@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.DiscordCache.Helpers;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 using Sentry;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models.Archival;
@@ -246,7 +244,7 @@ public class DiscordCacheService : BaseService
                     $"Failed to run DiscordCacheService._client_GuildJoined ({current.Id})\n",
                     "Guild JSON:",
                     "```json",
-                    oldJson,
+                    oldJson ?? "{}",
                     "```",
                 }));
             }
@@ -350,7 +348,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process forum channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -395,7 +393,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process voice channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -440,7 +438,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process text channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -497,7 +495,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process forum channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -542,7 +540,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process voice channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -587,7 +585,7 @@ public class DiscordCacheService : BaseService
                             {
                                 $"Failed to process text channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
                                 "```json",
-                                channelJson,
+                                channelJson ?? "{}",
                                 "```"
                             }));
                         }
@@ -681,11 +679,12 @@ public class DiscordCacheService : BaseService
         SocketMessage newMessage,
         ISocketMessageChannel channel)
     {
+        if (newMessage == null) return;
         try
         {
             Log.Debug($"Handling message {newMessage.Id} in {newMessage.Channel.Name} ({newMessage.Channel.Id})");
             // convert data to type that mongo can support
-            var data = CacheMessageModel.FromExisting(newMessage);
+            var data = CacheMessageModel.FromExisting(newMessage)!;
 
             // set guild if message was actually sent in a server (and not dms)
             if (channel is SocketGuildChannel { Guild: not null } socketChannel)
@@ -781,7 +780,7 @@ public class DiscordCacheService : BaseService
             var data = await CacheMessageConfig.GetLatest(message.Id);
             if (data != null)
             {
-                var previous = data.Clone();
+                var previous = FastCloner.FastCloner.DeepClone(data);
                 data.IsDeleted = true;
                 data.DeletedTimestamp = DateTimeOffset.UtcNow;
                 await CacheMessageConfig.Add(data);
@@ -790,31 +789,30 @@ public class DiscordCacheService : BaseService
                     data,
                     previous);
             }
+            else
+            {
+                Log.Debug($"Could not find message in database for {message.Id} in {channel.Id} :/");
+            }
         }
         catch (Exception ex)
         {
+            Log.Error($"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})\n{ex}");
             SentrySdk.CaptureException(ex, (scope) =>
             {
                 scope.SetExtra("message", message);
                 scope.SetExtra("channel", channel);
             });
-            Log.Error($"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})\n{ex}");
             try
             {
                 var msgJson = JsonSerializer.Serialize(message.Value, Program.SerializerOptions);
                 var channelJson = JsonSerializer.Serialize(channel.Value, Program.SerializerOptions);
-                await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                {
-                    $"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})\n",
-                    "Message JSON:",
-                    "```json",
-                    msgJson,
-                    "```",
-                    "Channel JSON:",
-                    "```json",
-                    channelJson,
-                    "```"
-                }));
+                await DiscordHelper.ReportError(ex, 
+                    $"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})", 
+                    new Dictionary<string, string>()
+                    {
+                        {"message.json", msgJson},
+                        {"channel.json", channelJson}
+                    });
             }
             catch (Exception iex)
             {

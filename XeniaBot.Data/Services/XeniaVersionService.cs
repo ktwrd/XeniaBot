@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
@@ -39,7 +37,7 @@ public class XeniaVersionService : BaseService
         {
             ParsedVersionTimestamp = new DateTimeOffset(_details.VersionDate).ToUnixTimeSeconds(),
             Version = _details.Version,
-            Name = calling.FullName?.Split(",")[0] ?? ""
+            Name = calling?.FullName?.Split(",")[0] ?? ""
         };
         currentModel.FillAssemblies(allAssemblies);
         SetFlags(currentModel);

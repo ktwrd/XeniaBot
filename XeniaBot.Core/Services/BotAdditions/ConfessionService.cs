@@ -4,12 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.Shared;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Channels;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Services;
 
@@ -45,6 +41,11 @@ namespace XeniaBot.Core.Services.BotAdditions
             string content = arg.Data.Components.First(x => x.CustomId == "confession_text").Value;
 
             var data = await _config.GetGuild(arg.GuildId ?? 0);
+            if (data == null)
+            {
+                await arg.RespondAsync("Couldn't find configuration for guild " + arg.GuildId.ToString());
+                return;
+            }
             var guild = _client.GetGuild(data.GuildId);
             var channel = guild.GetTextChannel(data.ChannelId);
             await channel.SendMessageAsync(embed: GenerateConfessionEmbed(content).Build());

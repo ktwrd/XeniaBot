@@ -27,10 +27,8 @@ namespace XeniaBot.Core.Services.Wrappers
                     {
                         case 1003:
                             return AutocompletionResult.FromError(InteractionCommandError.Unsuccessful, $"Not found ({response.Error.Code})");
-                            break;
                         default:
                             return AutocompletionResult.FromError(InteractionCommandError.Unsuccessful, $"{response.Error.Code}: {response.Error.Message}");
-                            break;
                     }
                 }
                 if (response.Response != null)

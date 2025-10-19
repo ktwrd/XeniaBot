@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -92,10 +93,15 @@ public class ErrorReportService : BaseService
                 "```"
             })
         };
+        var attachments = new List<FileAttachment>();
 
-        embed.AddField("Stack Trace", $"```\n{stack}\n```");
-        if (message != null)
-            embed.AddField("Message Content", $"```\n{message.Content}\n```");
+        GenerateAttachments(
+            embed,
+            attachments,
+            null,
+            stack,
+            null);
+
         embed.AddField("HTTP Details", string.Join("\n", new string[]
         {
             "```",
@@ -103,14 +109,15 @@ public class ErrorReportService : BaseService
             $"URL: {response.RequestMessage?.RequestUri}",
             "```"
         }));
-        embed.AddField("Response Headers", string.Join("\n", new string[]
+        var responseHeadersText = string.Join("\n", new string[]
         {
             "```",
             JsonSerializer.Serialize(response.Headers, SerializerOptions),
             JsonSerializer.Serialize(response.TrailingHeaders, SerializerOptions),
             JsonSerializer.Serialize(response.Content.Headers, SerializerOptions),
             "```"
-        }));
+        });
+        embed.AddField("Response Headers", responseHeadersText);
 
         var logGuild = _client.GetGuild(_config.ErrorReporting.GuildId);
         var logChannel = logGuild.GetTextChannel(_config.ErrorReporting.ChannelId);
@@ -164,32 +171,27 @@ public class ErrorReportService : BaseService
             Color = Color.Red
         };
 
-        bool attachStack = stack.Length > 1000;
-        if (!attachStack)
-            embed.AddField("Stack Trace", $"```\n{stack}\n```");
+        var attachments = new List<FileAttachment>();
 
-        if (message != null)
-            embed.AddField("Message Content", $"```\n{message.Content}\n```");
+        GenerateAttachments(
+            embed,
+            attachments,
+            null,
+            stack,
+            response.ToString());
 
         var errGuild = _client.GetGuild(_config.ErrorReporting.GuildId);
         var errChannel = errGuild.GetTextChannel(_config.ErrorReporting.ChannelId);
-
-        var attachments = new List<FileAttachment>();
-        var responseStream = new MemoryStream(Encoding.UTF8.GetBytes(response.ToString()));
-        attachments.Add(new FileAttachment(responseStream, "exception.txt"));
-
-        var stackStream = new MemoryStream(Encoding.UTF8.GetBytes(stack));
-        if (attachStack)
-        {
-            attachments.Add(new FileAttachment(stackStream, "stack.txt"));
-        }
 
         await errChannel.SendFilesAsync(attachments: attachments, text: "", embed: embed.Build());
     }
     #endregion
 
-    public async Task ReportException(Exception exception, string notes = "")
+    public async Task ReportException(Exception exception, string notes = "",
+        IReadOnlyDictionary<string, string>? extraAttachments = null)
     {
+        if (extraAttachments?.Count > 9)
+            throw new ArgumentOutOfRangeException(nameof(extraAttachments), $"Too many attachments! (limit: 9, got: {extraAttachments.Count})");
         SentrySdk.CaptureException(exception, (scope) =>
         {
             scope.SetExtra("notes", notes);
@@ -206,19 +208,12 @@ public class ErrorReportService : BaseService
         }.WithCurrentTimestamp();
         var attachments = new List<FileAttachment>();
 
-        var stackMs = new MemoryStream(Encoding.UTF8.GetBytes(stack));
-        attachments.Add(new FileAttachment(stackMs, fileName: "stack.txt"));
-
-        if (exceptionContent.Length > 1000)
-        {
-            embed.WithDescription($"Exception is attached as `exception.txt`");
-            var ms = new MemoryStream(Encoding.UTF8.GetBytes(exceptionContent));
-            attachments.Add(new FileAttachment(ms, fileName: "exception.txt"));
-        }
-        else
-        {
-            embed.AddField("Exception", $"```\n{exception}\n```");
-        }
+        GenerateAttachments(
+            embed,
+            attachments,
+            null,
+            stack,
+            exceptionContent);
 
         if (notes.Length > 1000)
         {
@@ -228,6 +223,27 @@ public class ErrorReportService : BaseService
         else if (notes.Length > 0)
         {
             embed.AddField("Notes", $"```\n{notes}\n```");
+        }
+        
+        if (extraAttachments?.Count > 0)
+        {
+            foreach (var pair in extraAttachments)
+            {
+                var fn = Path.GetFileNameWithoutExtension(pair.Key);
+                var ex = Path.GetExtension(pair.Key);
+                if (string.IsNullOrEmpty(fn)) ex = "attachment";
+                if (string.IsNullOrEmpty(ex)) ex = ".txt";
+                var tgtFn = fn + ex;
+                /*int? c = null;
+                while (attachments.Any(e => e.FileName == tgtFn))
+                {
+                    if (c == null) c = 0;
+                    c++;
+                    
+                    tgtFn = $"{fn} ({c}){ex}";
+                }*/
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(pair.Value)), fileName: tgtFn));
+            }
         }
 
         var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
@@ -240,6 +256,57 @@ public class ErrorReportService : BaseService
         else
         {
             await textChannel.SendMessageAsync(embed: embed.Build());
+        }
+    }
+
+    private void GenerateAttachments(
+        EmbedBuilder embed,
+        List<FileAttachment> attachments,
+        string? message,
+        string? stack,
+        string? exception)
+    {
+        if (!string.IsNullOrEmpty(message))
+        {
+            if (message.Length > 1024)
+            {
+                embed.AddField("Message Content", "Attached as `messageContent.txt`");
+                embed.WithDescription($"Exception is attached as `exception.txt`");
+                var ms = new MemoryStream(Encoding.UTF8.GetBytes(message));
+                attachments.Add(new FileAttachment(ms, fileName: "messageContent.txt"));
+            }
+            else
+            {
+                embed.AddField("Message Content", message);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(stack))
+        {
+            if (stack.Length > 1024)
+            {
+                embed.AddField("Stack Trace", "Attached as `stack.txt`");
+                var ms = new MemoryStream(Encoding.UTF8.GetBytes(stack));
+                attachments.Add(new FileAttachment(ms, fileName: "stack.txt"));
+            }
+            else
+            {
+                embed.AddField("Stack Trace", stack);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(exception))
+        {
+            if (exception.Length > 1024)
+            {
+                embed.AddField("Exception", "Attached as `exception.txt`");
+                var ms = new MemoryStream(Encoding.UTF8.GetBytes(exception));
+                attachments.Add(new FileAttachment(ms, fileName: "exception.txt"));
+            }
+            else
+            {
+                embed.AddField("Exception", exception);
+            }
         }
     }
 }

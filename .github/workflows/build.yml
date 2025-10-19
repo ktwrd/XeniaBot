@@ -41,7 +41,7 @@ jobs:
         Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/${{ matrix.runtime }}/publish/* -Destination ${{ matrix.projectName }}.zip
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.projectName }} (${{ matrix.configuration }}, ${{ matrix.runtime }})
         path: |

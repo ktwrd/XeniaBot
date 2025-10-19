@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -22,10 +23,12 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task Set(CounterGuildModel model)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
 
         var filter = Builders<CounterGuildModel>
             .Filter
-            .Eq("GuildId", model.GuildId);
+            .Where(e => e.GuildId == model.GuildId);
 
         var existsRes = await collection.FindAsync(filter);
         
@@ -45,36 +48,35 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     /// <returns><see cref="null"/> when doesn't exist</returns>
     public async Task<CounterGuildModel?> Get(IGuild guild)
     {
-        var collection = GetCollection<CounterGuildModel>();
-
         var filter = Builders<CounterGuildModel>
             .Filter
-            .Eq("GuildId", guild.Id);
+            .Where(e => e.GuildId == guild.Id);
 
-        var result = await collection.FindAsync(filter);
+        var result = await BaseFind(filter, limit: 1);
         return result.FirstOrDefault();
     }
     public async Task<CounterGuildModel> Get<T>(IGuild guild, T channel) where T : IChannel
     {
-        var collection = GetCollection<CounterGuildModel>();
-
         var filter = Builders<CounterGuildModel>
             .Filter
-            .Eq("GuildId", guild.Id);
+            .Where(e => e.GuildId == guild.Id && e.ChannelId == channel.Id);
 
-        var result = await collection.FindAsync(filter);
-        var filtered = result.ToList().Where(v => v.ChannelId == channel.Id);
-        return filtered.FirstOrDefault() ?? new CounterGuildModel(channel, guild);
+        var result = await BaseFind(filter, limit: 1);
+        return result.FirstOrDefault() ?? new CounterGuildModel(channel, guild);
     }
-    public CounterGuildModel Get<T>(T channel) where T : IChannel
+    public async Task<CounterGuildModel> Get<T>(T channel) where T : IChannel
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
 
         var filter = Builders<CounterGuildModel>
             .Filter
-            .Eq("ChannelId", channel.Id);
+            .Where(e => e.ChannelId == channel.Id);
 
-        return collection.Find(filter).FirstOrDefault();
+        var result = await BaseFind(filter, limit: 1);
+
+        return result.FirstOrDefault();
     }
     public async Task<CounterGuildModel?> GetOrCreate(IGuild guild, IChannel channel)
     {
@@ -88,33 +90,30 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     }
     #endregion
     #region Get All
-    public async Task<CounterGuildModel[]> GetAll()
+    public async Task<ICollection<CounterGuildModel>> GetAll()
     {
-        var collection = GetCollection<CounterGuildModel>();
         var filter = Builders<CounterGuildModel>
             .Filter.Empty;
-        var result = await collection.FindAsync(filter);
-        return result.ToList().ToArray();
+        var result = await BaseFind(filter);
+        return result.ToList();
     }
-    public async Task<CounterGuildModel[]> GetAll(IChannel channel)
+    public async Task<ICollection<CounterGuildModel>> GetAll(IChannel channel)
     {
-        var collection = GetCollection<CounterGuildModel>();
         var filter = Builders<CounterGuildModel>
             .Filter
-            .Eq("ChannelId", channel.Id);
+            .Where(e => e.ChannelId == channel.Id);
 
-        var result = await collection.FindAsync(filter);
-        return result.ToList().ToArray();
+        var result = await BaseFind(filter);
+        return result.ToList();
     }
-    public async Task<CounterGuildModel[]> GetAll(IGuild guild)
+    public async Task<ICollection<CounterGuildModel>> GetAll(IGuild guild)
     {
-        var collection = GetCollection<CounterGuildModel>();
         var filter = Builders<CounterGuildModel>
         .Filter
-            .Eq("GuildId", guild.Id);
+            .Where(e => e.GuildId == guild.Id);
 
-        var result = await collection.FindAsync(filter);
-        return result.ToList().ToArray();
+        var result = await BaseFind(filter);
+        return result.ToList();
     }
     #endregion
     #region Delete
@@ -129,18 +128,22 @@ public class CounterConfigRepository : BaseRepository<CounterGuildModel>
     public async Task Delete(ulong channelId)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<CounterGuildModel>
             .Filter
-            .Eq("ChannelId", channelId);
-        await collection?.DeleteManyAsync(filter);
+            .Where(e => e.ChannelId == channelId);
+        await collection.DeleteManyAsync(filter);
     }
     public async Task Delete(IGuild guild)
     {
         var collection = GetCollection<CounterGuildModel>();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<CounterGuildModel>
-        .Filter
-            .Eq("GuildId", guild.Id);
-        await collection?.DeleteManyAsync(filter);
+            .Filter
+            .Where(e => e.GuildId == guild.Id);
+        await collection.DeleteManyAsync(filter);
     }
     #endregion
 }

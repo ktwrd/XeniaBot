@@ -24,7 +24,7 @@ public class GuildConfigWarnStrikeRepository : BaseRepository<GuildConfigWarnStr
         var filter = Builders<GuildConfigWarnStrikeModel>
             .Filter
             .Where(v => v.Id == id);
-        var res = await BaseFind(filter);
+        var res = await BaseFind(filter, limit: 1);
         return res?.FirstOrDefault();
     }
     
@@ -38,7 +38,7 @@ public class GuildConfigWarnStrikeRepository : BaseRepository<GuildConfigWarnStr
         var filter = Builders<GuildConfigWarnStrikeModel>
             .Filter
             .Where(v => v.GuildId == guildId);
-        var res = await BaseFind(filter);
+        var res = await BaseFind(filter, limit: 1);
         return res.FirstOrDefault();
     }
 

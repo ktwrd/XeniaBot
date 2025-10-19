@@ -1,10 +1,8 @@
 using System;
-using System.Threading.Tasks;
 
-namespace XeniaBot.Shared
+namespace XeniaBot.Shared;
+
+[AttributeUsage(AttributeTargets.Class)]
+public class XeniaControllerAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class)]
-    public class XeniaControllerAttribute : Attribute
-    {
-    }
 }

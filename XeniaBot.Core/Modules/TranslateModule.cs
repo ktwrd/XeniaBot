@@ -26,7 +26,7 @@ namespace XeniaBot.Core.Modules
             if (sourceLanguage == "null" || sourceLanguage?.Length < 1)
                 sourceLanguage = null;
             var controller = Program.Core.GetRequiredService<GoogleTranslateService>();
-            TranslationResult result = null;
+            TranslationResult? result = null;
             try
             {
                 result = await controller.Translate(phrase, targetLanguage, sourceLanguage);
@@ -40,7 +40,7 @@ namespace XeniaBot.Core.Modules
                     Color = new Color(255, 0 ,0)
                 };
                 await Context.Interaction.RespondAsync(embed: failEmbed.Build());
-                DiscordHelper.ReportError(ex, Context);
+                await DiscordHelper.ReportError(ex, Context);
                 return;
             }
             if (result == null)

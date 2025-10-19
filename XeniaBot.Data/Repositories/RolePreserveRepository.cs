@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -11,28 +14,67 @@ public class RolePreserveRepository : BaseRepository<RolePreserveModel>
 {
     public RolePreserveRepository(IServiceProvider services)
         : base(RolePreserveModel.CollectionName, services)
-    { }
+    {
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var collectionName = MongoCollectionName;
+
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<RolePreserveModel>>()
+        {
+            {
+                collectionName + "_IX_UserIdGuildId",
+                Builders<RolePreserveModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+                    .Descending(e => e.GuildId)
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
+        {
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<RolePreserveModel>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                }
+            }
+        }
+    }
 
 
     public async Task<RolePreserveModel?> Get(ulong userId, ulong guildId)
     {
-        var collection = GetCollection();
         var filter = Builders<RolePreserveModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
-        var res = await collection.FindAsync(filter);
+        var res = await BaseFind(filter, limit: 1);
         return res.FirstOrDefault();
     }
 
     public async Task Set(RolePreserveModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<RolePreserveModel>
             .Filter
             .Where(v => v.UserId == model.UserId && v.GuildId == model.GuildId);
 
-        var existResult = await collection.FindAsync(filter);
-        var exists = await existResult.AnyAsync();
+        var exists = await collection.CountDocumentsAsync(filter) > 0;
 
         if (exists)
         {

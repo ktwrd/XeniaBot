@@ -1,8 +1,11 @@
-﻿namespace XeniaBot.Shared;
+﻿using System.ComponentModel;
+
+namespace XeniaBot.Shared;
 
 public class ReminderServiceConfigItem
 {
-    public bool Enable { get; set; }
+    [DefaultValue(false)]
+    public bool Enable { get; set; } = false;
 
     public static ReminderServiceConfigItem Default(ReminderServiceConfigItem? i = null)
     {

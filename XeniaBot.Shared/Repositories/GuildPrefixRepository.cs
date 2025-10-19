@@ -32,9 +32,13 @@ public class GuildPrefixRepository : BaseRepository<GuildPrefixConfigModel>
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var defaultData = new GuildPrefixConfigModel(guildId);
-        var result = await collection.FindAsync(defaultData.Filter);
-        return result.FirstOrDefault() ?? defaultData;
+
+        var filter = Builders<GuildPrefixConfigModel>
+            .Filter
+            .Where(e => e.GuildId == guildId);
+
+        var result = await BaseFind(filter, limit: 1);
+        return result.FirstOrDefault() ?? new(guildId);
     }
 
     /// <summary>
@@ -48,8 +52,13 @@ public class GuildPrefixRepository : BaseRepository<GuildPrefixConfigModel>
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var result = await collection.FindAsync(new GuildPrefixConfigModel(guildId).Filter);
-        return await result.AnyAsync();
+
+        var filter = Builders<GuildPrefixConfigModel>
+            .Filter
+            .Where(e => e.GuildId == guildId);
+
+        var result = await collection.CountDocumentsAsync(filter);
+        return result > 0;
     }
     /// <exception cref="NoNullAllowedException">Thrown when <see cref="BaseRepository{TH}.GetCollection()"/> returns null</exception>
     public async Task Set(GuildPrefixConfigModel data)

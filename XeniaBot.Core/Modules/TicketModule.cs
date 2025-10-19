@@ -1,11 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.BotAdditions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
@@ -24,7 +20,7 @@ namespace XeniaBot.Core.Modules
             baseEmbed.Timestamp = DateTimeOffset.UtcNow;
             baseEmbed.WithFooter("Xenia Ticket Management");
 
-            TicketModel model = null;
+            TicketModel? model = null;
             try
             {
                 model = await controller.CreateTicket(Context.Guild.Id);
@@ -36,13 +32,13 @@ namespace XeniaBot.Core.Modules
             catch (TicketException exception)
             {
                 baseEmbed.Title = "Failed to Create Ticket";
-                baseEmbed.Description = $"{exception.Message}\n```\n{exception.StackTrace.Substring(0, Math.Min(3000, exception.StackTrace.Length))}\n```";
+                baseEmbed.Description = FormatException(exception);
                 baseEmbed.Color = new Color(255, 255, 0);
             }
             catch (Exception exception)
             {
                 baseEmbed.Title = "Failed to Create Ticket";
-                baseEmbed.Description = $"{exception.Message}\n```\n{exception.StackTrace.Substring(0, Math.Min(3000, exception.StackTrace.Length))}\n```";
+                baseEmbed.Description = FormatException(exception);
                 baseEmbed.Color = Color.Red;
             }
 
@@ -66,7 +62,7 @@ namespace XeniaBot.Core.Modules
         [SlashCommand("resolve", "Mark ticket as resolved")]
         public async Task ResolveTicket(
             [Discord.Interactions.Summary(description: "Channel of the ticket to resolve. Will assume current channel if not provided.")]
-            [ChannelTypes(ChannelType.Text)] IChannel ticketChannel = null)
+            [ChannelTypes(ChannelType.Text)] IChannel? ticketChannel = null)
         {
             // When ticket channel is null, assume we're talking about the current channel.
             if (ticketChannel == null)
@@ -86,13 +82,13 @@ namespace XeniaBot.Core.Modules
             catch (TicketException exception)
             {
                 embed.Title = "Failed to Close Ticket";
-                embed.Description = $"{exception.Message}\n```\n{exception.StackTrace.Substring(0, Math.Min(3000, exception.StackTrace.Length))}\n```";
+                embed.Description = FormatException(exception);
                 embed.Color = new Color(255, 255, 0);
             }
             catch (Exception exception)
             {
                 embed.Title = "Failed to Close Ticket";
-                embed.Description = $"{exception.Message}\n```\n{exception.StackTrace.Substring(0, Math.Min(3000, exception.StackTrace.Length))}\n```";
+                embed.Description = FormatException(exception);
                 embed.Color = Color.Red;
             }
 
@@ -124,19 +120,34 @@ namespace XeniaBot.Core.Modules
             catch (TicketException exception)
             {
                 embed.Title = "Failed to Close Ticket";
-                embed.Description = $"{exception.Message}\n```\n{exception.StackTrace.Substring(0, Math.Min(3000, exception.StackTrace.Length))}\n```";
+                embed.Description = FormatException(exception);
                 embed.Color = new Color(255, 255, 0);
             }
             catch (Exception exception)
             {
                 embed.Title = "Failed to Close Ticket";
-                embed.Description = $"{exception.Message}\n```\n{exception.StackTrace.Substring(0, Math.Min(3000, exception.StackTrace.Length))}\n```";
+                embed.Description = FormatException(exception);
                 embed.Color = Color.Red;
             }
 
             await Context.User.SendMessageAsync(embed: embed.Build());
 
             await Context.Interaction.RespondAsync(embed: embed.Build());
+        }
+
+        private string FormatException(Exception error)
+        {
+            if (!string.IsNullOrEmpty(error.StackTrace))
+            {
+                var sb = new StringBuilder();
+                sb.Append(error.Message);
+                sb.Append("\n\n");
+                sb.Append("```\n");
+                sb.Append(error.StackTrace.Substring(0, Math.Min(3000, error.StackTrace.Length)));
+                sb.Append("\n```");
+                return sb.ToString();
+            }
+            return error.Message;
         }
     }
 }

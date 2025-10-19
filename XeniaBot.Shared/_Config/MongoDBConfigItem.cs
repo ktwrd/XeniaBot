@@ -1,9 +1,13 @@
-﻿namespace XeniaBot.Shared;
+﻿using System.ComponentModel;
+
+namespace XeniaBot.Shared;
 
 public class MongoDBConfigItem
 {
-    public string ConnectionUrl { get; set; }
-    public string DatabaseName { get; set; }
+    [DefaultValue("")]
+    public string ConnectionUrl { get; set; } = "";
+    [DefaultValue("xenia_discord")]
+    public string DatabaseName { get; set; } = "xenia_discord";
 
     public static MongoDBConfigItem Default(MongoDBConfigItem? i = null)
     {

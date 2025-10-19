@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -16,12 +17,11 @@ public class ServerLogRepository : BaseRepository<ServerLogModel>
 
     public async Task<ServerLogModel?> Get(ulong serverId)
     {
-        var collection = GetCollection();
         var filter = Builders<ServerLogModel>
             .Filter
-            .Eq("ServerId", serverId);
+            .Where(e => e.ServerId == serverId);
 
-        var result = await collection.FindAsync(filter);
+        var result = await BaseFind(filter, limit: 1);
         var first = await result.FirstOrDefaultAsync();
         if (first == null)
             first = new ServerLogModel()
@@ -34,12 +34,13 @@ public class ServerLogRepository : BaseRepository<ServerLogModel>
     public async Task Set(ServerLogModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<ServerLogModel>
             .Filter
-            .Eq("ServerId", model.ServerId);
+            .Where(e => e.ServerId == model.ServerId);
 
-        var existResult = await collection.FindAsync(filter);
-        var exists = await existResult.AnyAsync();
+        var exists = await collection.CountDocumentsAsync(filter) > 0;
 
         if (exists)
         {

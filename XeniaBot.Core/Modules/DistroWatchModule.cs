@@ -20,7 +20,7 @@ public class DistroWatchModule : InteractionModuleBase
         var embed = new EmbedBuilder()
             .WithTitle("DistroWatch - Random");
         var client = new HttpClient();
-        var url = $"https://api.redfur.cloud/dw/random";
+        var url = "https://api.redfur.cloud/dw/random";
         var response = await client.GetAsync(url);
         var stringContent = response.Content.ReadAsStringAsync().Result;
         if (response.StatusCode == HttpStatusCode.OK)
@@ -31,7 +31,7 @@ public class DistroWatchModule : InteractionModuleBase
                 var first = deser.FirstOrDefault();
                 if (first == null)
                 {
-                    embed.WithDescription($"Failed to fetch!").WithColor(Color.Red);
+                    embed.WithDescription("Failed to fetch!").WithColor(Color.Red);
                 }
                 else
                 {
@@ -73,18 +73,25 @@ public class DistroWatchResponseItem
 {
     [JsonPropertyName("arch")]
     public string Arch { get; set; }
+
     [JsonPropertyName("basedon")]
-    public string[] BasedOn { get; set; }
+    public string[] BasedOn { get; set; } = [];
+
     [JsonPropertyName("category")]
     public string Category { get; set; }
+
     [JsonPropertyName("desc")]
     public string Description { get; set; }
+
     [JsonPropertyName("latest_version")]
     public string LatestVersion { get; set; }
+
     [JsonPropertyName("name")]
     public string Name { get; set; }
+
     [JsonPropertyName("origin")]
     public string Origin { get; set; }
+
     [JsonPropertyName("status")]
     public string Status { get; set; }
 }

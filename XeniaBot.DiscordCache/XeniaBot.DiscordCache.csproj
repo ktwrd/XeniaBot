@@ -14,11 +14,4 @@
       <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     </ItemGroup>
 
-
-
-
-
-
-
-
 </Project>

@@ -27,11 +27,17 @@ public class BackpackTFService : BaseService
     }
 
     public T ParseResponse<T>(string content)
+        where T : new()
     {
         var obj = JObject.Parse(content);
         var item = obj["response"];
         var itemStr = item?.ToString();
-        return (T)JsonSerializer.Deserialize(itemStr, typeof(T), Program.SerializerOptions);
+        if (string.IsNullOrEmpty(itemStr))
+            return new();
+        var d = JsonSerializer.Deserialize(itemStr, typeof(T), Program.SerializerOptions);
+        if (d is T t)
+            return t;
+        return new();
     }
 
     public async Task<ICollection<BackpackCurrencyItem>?> GetCurrenciesAsync()

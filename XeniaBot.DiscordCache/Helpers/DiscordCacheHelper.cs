@@ -11,20 +11,6 @@ namespace XeniaBot.DiscordCache.Helpers;
 
 public static class DiscordCacheHelper
 {
-    public static TH? ForceTypeCast<T, TH>(T input)
-    {
-        var options = new JsonSerializerOptions()
-        {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
-            IncludeFields = true,
-            ReferenceHandler = ReferenceHandler.Preserve
-        };
-        var teCachet = JsonSerializer.Serialize(input, options);
-        var output = JsonSerializer.Deserialize<TH>(teCachet, options);
-        return output;
-    }
-
     public static CacheChannelType GetChannelType<T>(T channel) where T : SocketChannel
     {
         if (channel is SocketCategoryChannel)

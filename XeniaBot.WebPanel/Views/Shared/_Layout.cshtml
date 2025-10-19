@@ -39,9 +39,21 @@
 </div>
 <footer class="border-top footer text-muted mt-4">
     <div class="container mt-3">
-        &copy; 2023-2024 - Xenia Bot & Dashboard Contributors - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> - <a href="https://xenia.kate.pet">Website</a><br/>
+        &copy; 2023 - @DateTime.Now.Year - Xenia Bot & Dashboard Contributors - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a> - <a href="https://xenia.kate.pet">Website</a><br/>
         <hr/>
-        <code>Xenia Dashboard @(Program.Version == null ? "" : $"v{Program.Version}")</code>
+        @{
+            var versionString = Program.Version?.ToString();
+            if (versionString != null)
+            {
+                while (versionString.EndsWith(".0"))
+                    versionString = versionString[..^2];
+                if (!string.IsNullOrEmpty(versionString))
+                {
+                    versionString = $"v{versionString}";
+                }
+            }
+        }
+        <code>Xenia Dashboard @versionString</code>
     </div>
 </footer>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>

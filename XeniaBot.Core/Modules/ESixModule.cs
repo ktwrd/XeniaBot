@@ -1,15 +1,10 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using Noppes.E621;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Shared;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace XeniaBot.Core.Modules
@@ -36,7 +31,7 @@ namespace XeniaBot.Core.Modules
             var embed = new EmbedBuilder()
                 .WithFooter(query);
 
-            Post[] results = Array.Empty<Post>();
+            var results = Array.Empty<Post>();
             try
             {
                 results = await controller.Query(query);
@@ -67,7 +62,7 @@ namespace XeniaBot.Core.Modules
                 ?? targetPost.Sample?.Location
                 ?? targetPost.Preview?.Location;
             embed.WithTitle("View Post")
-                 .WithUrl((channel.IsNsfw ? $"https://e621.net" : $"https://e926.net") + $"/posts/{targetPost.Id}")
+                 .WithUrl((channel.IsNsfw ? "https://e621.net" : "https://e926.net") + $"/posts/{targetPost.Id}")
                  .WithImageUrl(url?.ToString() ?? "");
             await Context.Interaction.RespondAsync(embed: embed.Build());
         }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Discord;
 using XeniaBot.Shared.Models;
 
 namespace XeniaBot.Data.Models;

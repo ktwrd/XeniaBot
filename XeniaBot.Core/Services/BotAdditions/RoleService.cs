@@ -3,11 +3,8 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
@@ -108,7 +105,8 @@ namespace XeniaBot.Core.Services.BotAdditions
             var targetRoleConfigId = messageConfig.ReactionRoleMap[reaction.Emote.Name] ?? "";
             var roleConfigAll = await _config.GetAll(false, uid: targetRoleConfigId);
             var roleConfig = roleConfigAll?.FirstOrDefault();
-
+            if (roleConfig == null)
+                return;
             var validateResult = ValidateReactionObjects(message, reaction, roleConfig, targetRoleConfigId);
             if (!validateResult)
                 return;

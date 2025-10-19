@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using XeniaBot.Data.Models;
@@ -17,11 +18,13 @@ public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel
     public async Task<LevelSystemConfigModel?> Get(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelSystemConfigModel>
             .Filter
-            .Eq("GuildId", guildId);
+            .Where(e => e.GuildId == guildId);
 
-        var result = await collection.FindAsync(filter);
+        var result = await BaseFind(filter, limit: 1);
         var first = await result.FirstOrDefaultAsync();
         if (first == null)
             first = new LevelSystemConfigModel()
@@ -36,11 +39,13 @@ public class LevelSystemConfigRepository : BaseRepository<LevelSystemConfigModel
     public async Task Set(LevelSystemConfigModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelSystemConfigModel>
             .Filter
-            .Eq("GuildId", model.GuildId);
+            .Where(e => e.GuildId == model.GuildId);
 
-        var existResult = await collection.FindAsync(filter);
+        var existResult = await BaseFind(filter, limit: 1);
         var exists = await existResult.AnyAsync();
 
         if (exists)

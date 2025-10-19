@@ -23,24 +23,24 @@ namespace XeniaBot.Core.Modules
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
             var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
-            CounterGuildModel data = await counterConfig.Get(Context.Guild);
+            var data = await counterConfig.Get(Context.Guild);
             if (data == null)
             {
                 data = new CounterGuildModel(targetChannel, Context.Guild);
-                counterConfig.Set(data);
+                await counterConfig.Set(data);
             }
-            else if (data != null && targetChannel.Id == data.ChannelId)
+            else if (targetChannel.Id == data.ChannelId)
             {
                 await Context.Interaction.RespondAsync($"<#{data.ChannelId}> is already this server's counting channel.");
                 return;
             }
 
             data.ChannelId = targetChannel.Id;
-            counterConfig.Set(data);
+            await counterConfig.Set(data);
 
             var guild = await Context.Client.GetGuildAsync(Context.Guild.Id);
             var targetTextChannel = await guild.GetTextChannelAsync(targetChannel.Id);
-            await targetTextChannel.SendMessageAsync($"Counting has been enabled, start with `1`");
+            await targetTextChannel.SendMessageAsync("Counting has been enabled, start with `1`");
 
             await Context.Interaction.RespondAsync($"Counting channel changed to <#{data.ChannelId}>");
             return;
@@ -52,7 +52,7 @@ namespace XeniaBot.Core.Modules
             [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
         {
             var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
-            CounterGuildModel data = counterConfig.Get(targetChannel);
+            var data = await counterConfig.Get(targetChannel);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync($"Channel not found in database.");
@@ -66,8 +66,9 @@ namespace XeniaBot.Core.Modules
             catch (Exception ex)
             {
                 Log.Error(ex.ToString());
-                DiscordHelper.ReportError(ex, Context);
+                var r = DiscordHelper.ReportError(ex, Context);
                 await Context.Interaction.RespondAsync($"Failed to delete record.\n```\n{ex.Message}\n```");
+                await r;
                 return;
             }
             await Context.Interaction.RespondAsync($"Removed channel from database.");
@@ -77,7 +78,7 @@ namespace XeniaBot.Core.Modules
         public async Task Delete()
         {
             var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
-            CounterGuildModel data = await counterConfig.Get(Context.Guild);
+            var data = await counterConfig.Get(Context.Guild);
             if (data == null)
             {
                 await Context.Interaction.RespondAsync("Server not found in database");
@@ -91,8 +92,9 @@ namespace XeniaBot.Core.Modules
             catch (Exception ex)
             {
                 Log.Error(ex.ToString());
-                DiscordHelper.ReportError(ex, Context);
+                var r = DiscordHelper.ReportError(ex, Context);
                 await Context.Interaction.RespondAsync($"Failed to delete record.\n```\n{ex.Message}\n```");
+                await r;
                 return;
             }
             await Context.Interaction.RespondAsync($"Removed server from database.");

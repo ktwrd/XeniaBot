@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -33,20 +34,23 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
     public async Task<ICollection<GuildWarnItemModel>?> GetItemsById(string id)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildWarnItemModel>
             .Filter
-            .Eq("WarnId", id);
-        var res = await collection.FindAsync(filter);
-        var sorted = res.ToList().OrderByDescending(v => v.ModifiedAtTimestamp);
-        return sorted.ToList();
+            .Where(e => e.WarnId == id);
+        var res = await BaseFind(filter, sort_modifiedAt);
+        return res.ToList();
     }
 
     public async Task<ICollection<GuildWarnItemModel>?> GetLatestGuildItems(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<GuildWarnItemModel>
             .Filter
-            .Eq("GuildId", guildId);
+            .Where(e => e.GuildId == guildId);
         var res = await collection.FindAsync(filter);
         var parentList = res.ToList();
         var resultDict = new Dictionary<string, GuildWarnItemModel>();
@@ -85,6 +89,8 @@ public class GuildWarnItemRepository : BaseRepository<GuildWarnItemModel>
     public async Task Add(GuildWarnItemModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         model.ResetId();
         model.ModifiedAtTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await collection.InsertOneAsync(model);

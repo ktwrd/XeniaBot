@@ -13,7 +13,6 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
 using System.Threading;
-using XeniaBot.Data.Repositories;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 

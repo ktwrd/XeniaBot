@@ -2,8 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
@@ -21,6 +19,12 @@ public class ServerLogModule : InteractionModuleBase
             var controller = Program.Core.GetRequiredService<ServerLogRepository>();
 
             var data = await controller.Get(Context.Guild.Id);
+            data ??= new ServerLogModel()
+            {
+                ServerId = Context.Guild.Id,
+                DefaultLogChannel = 0
+            };
+            
             data.SetChannel(logEvent, channelId);
 
             await controller.Set(data);

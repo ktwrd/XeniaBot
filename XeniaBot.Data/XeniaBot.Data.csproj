@@ -13,12 +13,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\XeniaBot.DiscordCache\XeniaBot.DiscordCache.csproj" />
-    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+    <Compile Remove="Controllers\**" />
+    <EmbeddedResource Remove="Controllers\**" />
+    <None Remove="Controllers\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\BotAdditions\" />
+    <ProjectReference Include="..\XeniaBot.DiscordCache\XeniaBot.DiscordCache.csproj" />
+    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 using Discord;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace XeniaBot.DiscordCache.Models;
 
@@ -31,6 +32,7 @@ public class CacheUserModelData
         i.GlobalName = model.GlobalName;
         i.AvatarDecorationHash = model.AvatarDecorationHash;
         i.AvatarDecorationSkuId = model.AvatarDecorationSkuId;
+        i.PrimaryGuild = model.PrimaryGuild?.ToPrimaryGuild();
 
         return i;
     }
@@ -69,10 +71,14 @@ public class CacheUserModelData
     public bool IsBot { get; set; }
     public bool IsWebhook { get; set; }
     public string Username { get; set; }
+    [BsonIgnoreIfNull]
     public UserProperties? PublicFlags { get; set; }
     public string GlobalName { get; set; }
     public string AvatarDecorationHash { get; set; }
+    [BsonIgnoreIfNull]
     public ulong? AvatarDecorationSkuId { get; set; }
+    [BsonIgnoreIfNull]
+    public PrimaryGuild? PrimaryGuild { get; set; }
 
     public Task<IDMChannel> CreateDMChannelAsync(RequestOptions options = null)
     {

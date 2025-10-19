@@ -1,14 +1,13 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
+using System.Data;
 
 namespace XeniaBot.Data.Repositories;
 
@@ -23,6 +22,62 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     {
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _banSyncStateController = services.GetRequiredService<BanSyncStateHistoryRepository>();
+        var collectionName = BanSyncInfoModel.CollectionName;
+
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<BanSyncInfoModel>>()
+        {
+            {
+                collectionName + "_IX_UserIdGuildId",
+                Builders<BanSyncInfoModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+                    .Descending(e => e.GuildId)
+            },
+            {
+                collectionName + "_IX_UserId",
+                Builders<BanSyncInfoModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+            },
+            {
+                collectionName + "_IX_GuildId",
+                Builders<BanSyncInfoModel>
+                    .IndexKeys
+                    .Descending(e => e.GuildId)
+            },
+            {
+                collectionName + "_IX_Timestamp",
+                Builders<BanSyncInfoModel>
+                    .IndexKeys
+                    .Descending(e => e.Timestamp)
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
+        {
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<BanSyncInfoModel>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                }
+            }
+        }
     }
     
     private SortDefinition<BanSyncInfoModel> sort_timestamp
@@ -42,15 +97,15 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     }
     public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId, bool allowGhost = false)
     {
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        var filter = Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.UserId == userId && v.GuildId == guildId && !v.Ghost);
+            .Where(v => v.UserId == userId && v.GuildId == guildId);
         
-        if (allowGhost)
+        if (!allowGhost)
         {
-            filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+            filter &= Builders<BanSyncInfoModel>
                 .Filter
-                .Where(v => v.UserId == userId && v.GuildId == guildId);
+                .Where(v => !v.Ghost);
         }
 
         var res = await BaseFind(filter);
@@ -65,10 +120,21 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     /// <returns>Amount of records.</returns>
     public async Task<long> CountInGuild(ulong guildId, bool allowGhost = false)
     {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+
         var filter = Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.GuildId == guildId && (!allowGhost && !v.Ghost));
-        var collection = GetCollection();
+            .Where(v => v.GuildId == guildId);
+
+        if (!allowGhost)
+        {
+            filter &= Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => !v.Ghost);
+        }
+
         return await collection.CountDocumentsAsync(filter);
     }
     public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(BanSyncInfoModel data, bool allowGhost = false)
@@ -77,12 +143,13 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     {
         var filter = Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.UserId == userId && !v.Ghost);
-        if (allowGhost)
+            .Where(v => v.UserId == userId);
+
+        if (!allowGhost)
         {
-            filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+            filter &= Builders<BanSyncInfoModel>
                 .Filter
-                .Eq("UserId", userId);
+                .Where(v => !v.Ghost);
         }
 
         var res = await BaseFind(filter);
@@ -90,16 +157,16 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     }
     public async Task<BanSyncInfoModel?> GetInfo(ulong userId, ulong guildId, bool allowGhost = false)
     {
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        var filter = Builders<BanSyncInfoModel>
             .Filter
-            .Where(v => v.UserId == userId && v.GuildId == guildId && !v.Ghost);
-        if (allowGhost)
+            .Where(v => v.UserId == userId && v.GuildId == guildId);
+        if (!allowGhost)
         {
-            filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+            filter &= Builders<BanSyncInfoModel>
                 .Filter
-                .Where(v => v.UserId == userId && v.GuildId == guildId);
+                .Where(v => !v.Ghost);
         }
-        var res = await BaseFind(filter, sort_timestamp);
+        var res = await BaseFind(filter, sort_timestamp, limit: 1);
         return res.FirstOrDefault();
     }
     public async Task<BanSyncInfoModel?> GetInfo(BanSyncInfoModel data, bool allowGhost = false)
@@ -118,10 +185,10 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
             .Where(v => v.RecordId == id);
         if (allowGhost == false)
         {
-            filter &= Builders<BanSyncInfoModel>.Filter.Where(v => v.Ghost == false);
+            filter &= Builders<BanSyncInfoModel>.Filter.Where(v => !v.Ghost);
         }
 
-        var res = await BaseFind(filter, sort_timestamp);
+        var res = await BaseFind(filter, sort_timestamp, limit: 1);
         return res.FirstOrDefault();
     }
     
@@ -133,12 +200,12 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         {
             var filter = Builders<BanSyncInfoModel>
                 .Filter
-                .Where(v => v.UserId == user.Id && !v.Ghost);
-            if (allowGhost)
+                .Where(v => v.UserId == user.Id);
+            if (!allowGhost)
             {
-                filter = Builders<BanSyncInfoModel>
+                filter &= Builders<BanSyncInfoModel>
                     .Filter
-                    .Where(v => v.UserId == user.Id);
+                    .Where(v => !v.Ghost);
             }
             var userResult = await BaseFind(filter);
             var innerUser = new List<BanSyncInfoModel>();
@@ -159,9 +226,10 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
                 }
             }
 
-            if (innerUser.Any())
+            var targetUser = innerUser.OrderByDescending(e => e.Timestamp).FirstOrDefault();
+            if (targetUser != null)
             {
-                result.Add(innerUser.OrderByDescending(v => v.Timestamp).FirstOrDefault());
+                result.Add(targetUser);
             }
         }
 
@@ -187,23 +255,23 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         var userIdList = guild.Users.Select(v => v.Id);
         var filter = Builders<BanSyncInfoModel>
             .Filter
-            .In("UserId", userIdList);
+            .In(e => e.UserId, userIdList);
         if (filterByUserId != null)
         {
             filter = Builders<BanSyncInfoModel>
                 .Filter
                 .Where(v => v.UserId == filterByUserId);
         }
-        if (allowGhost == false)
+        if (!allowGhost)
         {
             filter &= Builders<BanSyncInfoModel>
                 .Filter
-                .Where(v => v.Ghost == false);
+                .Where(v => !v.Ghost);
         }
 
         filter |= Builders<BanSyncInfoModel>
             .Filter
-            .Eq("GuildId", guildId);
+            .Where(e => e.GuildId == guildId);
 
         if (ignoreDisabledGuilds)
         {
@@ -226,6 +294,10 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost);
 
         var collection = GetCollection();
+        
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+
         var result = await collection.Find(filter)
             .SortByDescending(v => v.Timestamp)
             .Skip((page - 1) * pageSize)
@@ -242,6 +314,9 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost);
 
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+
         var count = await collection.CountDocumentsAsync(filter);
         return count;
     }
@@ -250,6 +325,8 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     public async Task SetInfo(BanSyncInfoModel data)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.RecordId == data.RecordId);
@@ -262,7 +339,9 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     public async Task RemoveInfo(string recordId)
     {
         var collection = GetCollection();
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.RecordId == recordId);
 
@@ -273,19 +352,23 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
     #region Info Exists
     public async Task<bool> InfoExists(ulong userId, ulong guildId)
     {
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
-        var res = await BaseFind(filter);
-        return await res.AnyAsync();
+        return await collection.CountDocumentsAsync(filter) > 0;
     }
     public async Task<bool> InfoExists(ulong userId)
     {
-        var filter = MongoDB.Driver.Builders<BanSyncInfoModel>
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var filter = Builders<BanSyncInfoModel>
             .Filter
-            .Eq("UserId", userId);
-        var res = await BaseFind(filter);
-        return await res.AnyAsync();
+            .Where(e => e.UserId == userId);
+        return await collection.CountDocumentsAsync(filter) > 0;
     }
     public async Task<bool> InfoExists(BanSyncInfoModel data)
         => await InfoExists(data.UserId, data.GuildId);

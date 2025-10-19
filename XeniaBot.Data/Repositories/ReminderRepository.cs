@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -20,8 +21,11 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     {
         var filter = Builders<ReminderModel>
             .Filter
-            .Eq("ReminderId", reminderId);
-        var res = await GetCollection().FindAsync(filter);
+            .Where(e => e.ReminderId == reminderId);
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var res = await collection.FindAsync(filter);
         var single = res.FirstOrDefault();
         return single;
     }
@@ -86,11 +90,12 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     {
         var filter = Builders<ReminderModel>
             .Filter
-            .Eq("ReminderId", model.ReminderId);
+            .Where(e => e.ReminderId == model.ReminderId);
         var collection = GetCollection();
-        var result = await collection.FindAsync(filter);
-        var exists = await result.AnyAsync();
-        if (exists)
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var result = await collection.CountDocumentsAsync(filter);
+        if (result > 0)
         {
             await collection.ReplaceOneAsync(filter, model);
         }
@@ -122,8 +127,10 @@ public class ReminderRepository : BaseRepository<ReminderModel>
     {
         var filter = Builders<ReminderModel>
             .Filter
-            .Eq("UserId", userId);
+            .Where(e => e.UserId == userId);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var results = await collection.FindAsync(filter);
         return results.ToList();
     }
@@ -134,6 +141,8 @@ public class ReminderRepository : BaseRepository<ReminderModel>
             .Filter
             .Where(v => v.UserId == userId && v.HasReminded == false);
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var result = await collection.Find(filter)
             .SortByDescending(v => v.ReminderTimestamp)
             .Skip((page - 1) * pageSize)

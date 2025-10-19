@@ -1,11 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.BotAdditions;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models;
@@ -23,36 +20,30 @@ namespace XeniaBot.Core.Modules
         [RequireUserPermission(GuildPermission.ManageGuild)]
         public async Task TicketConfig(
             [Discord.Interactions.Summary(description: "Parent Category for all channels that will be created when a ticket is made.")]
-            [ChannelTypes(ChannelType.Category)] ICategoryChannel ticketCategory = null,
+            [ChannelTypes(ChannelType.Category)] ICategoryChannel? ticketCategory = null,
             [Discord.Interactions.Summary(description: "Role for who will be able to manage tickets.")]
-            IRole managerRole = null,
+            IRole? managerRole = null,
             [Discord.Interactions.Summary(description: "Channel where ticket states will be logged and archived.")]
-            [ChannelTypes(ChannelType.Text)] ITextChannel logChannel = null)
+            [ChannelTypes(ChannelType.Text)] ITextChannel? logChannel = null)
         {
             TicketService service = Program.Core.GetRequiredService<TicketService>();
 
-            ConfigGuildTicketModel? model = await service.GetGuildConfig(Context.Guild.Id);
-            if (model == null)
+            var model = await service.GetGuildConfig(Context.Guild.Id);
+            model ??= new ConfigGuildTicketModel()
             {
-                model = new ConfigGuildTicketModel()
-                {
-                    GuildId = Context.Guild.Id
-                };
-            }
+                GuildId = Context.Guild.Id
+            };
 
-            bool updateCategory = ticketCategory != null;
-            bool updateRole = managerRole != null;
-            bool updateChannel = logChannel != null;
             model.CategoryId = ticketCategory?.Id ?? model.CategoryId;
             model.RoleId = managerRole?.Id ?? model.RoleId;
             model.LogChannelId = logChannel?.Id ?? model.LogChannelId;
 
             var content = new List<string>();
-            if (updateCategory)
+            if (ticketCategory != null)
                 content.Add($"Ticket Category to <#{ticketCategory.Id}>");
-            if (updateRole)
+            if (managerRole != null)
                 content.Add($"Manager Role to <@&{managerRole.Id}>");
-            if (updateChannel)
+            if (logChannel != null)
                 content.Add($"Logging Channel to <#{logChannel.Id}>");
 
             var embed = new EmbedBuilder()
@@ -95,13 +86,12 @@ namespace XeniaBot.Core.Modules
             }
             catch (Exception ex)
             {
-                embed.WithDescription(string.Join("\n", new string[]
-                {
+                embed.WithDescription(string.Join("\n",
                     "Failed to enable the Warn Strike System",
                     "```",
                     ex.Message,
                     "```"
-                }));
+                ));
                 embed.WithColor(Color.Red);
                 await FollowupAsync(
                     embed: embed.Build());
@@ -128,13 +118,12 @@ namespace XeniaBot.Core.Modules
             }
             catch (Exception ex)
             {
-                embed.WithDescription(string.Join("\n", new string[]
-                {
+                embed.WithDescription(string.Join("\n",
                     "Failed to disable the Warn Strike System",
                     "```",
                     ex.Message,
                     "```"
-                }));
+                ));
                 embed.WithColor(Color.Red);
                 await FollowupAsync(
                     embed: embed.Build());
@@ -187,13 +176,12 @@ namespace XeniaBot.Core.Modules
             }
             catch (Exception ex)
             {
-                embed.WithDescription(string.Join("\n", new string[]
-                {
+                embed.WithDescription(string.Join("\n",
                     "Failed to set the Strike Window",
                     "```",
                     ex.Message,
                     "```"
-                }));
+                ));
                 embed.WithColor(Color.Red);
                 await FollowupAsync(
                     embed: embed.Build());
@@ -237,13 +225,12 @@ namespace XeniaBot.Core.Modules
             }
             catch (Exception ex)
             {
-                embed.WithDescription(string.Join("\n", new string[]
-                {
+                embed.WithDescription(string.Join("\n",
                     "Failed to set Warn Limit",
                     "```",
                     ex.Message,
                     "```"
-                }));
+                ));
                 embed.WithColor(Color.Red);
                 await FollowupAsync(
                     embed: embed.Build());
@@ -282,13 +269,12 @@ namespace XeniaBot.Core.Modules
             }
             catch (Exception ex)
             {
-                embed.WithDescription(string.Join("\n", new string[]
-                {
+                embed.WithDescription(string.Join("\n",
                     "Failed to get config",
                     "```",
                     ex.Message,
                     "```"
-                }));
+                ));
                 embed.WithColor(Color.Red);
                 await FollowupAsync(
                     embed: embed.Build());

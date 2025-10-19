@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -13,28 +14,72 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
 {
     public LevelMemberRepository(IServiceProvider services)
         : base(LevelMemberModel.CollectionName, services)
-    {}
-
-    
-    protected async Task<IAsyncCursor<LevelMemberModel>?> InternalFind(FilterDefinition<LevelMemberModel> filter)
     {
         var collection = GetCollection();
-        var result = await collection.FindAsync(filter);
-        return result;
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var collectionName = MongoCollectionName;
+
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<LevelMemberModel>>()
+        {
+            {
+                collectionName + "_IX_UserIdGuildId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+                    .Descending(e => e.GuildId)
+            },
+            {
+                collectionName + "_IX_UserId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+            },
+            {
+                collectionName + "_IX_GuildId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.GuildId)
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
+        {
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<LevelMemberModel>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                }
+            }
+        }
     }
+    
     public async Task<LevelMemberModel?> Get(ulong userId, ulong guildId)
     {
-        var filter = MongoDB.Driver.Builders<LevelMemberModel>
+        var filter = Builders<LevelMemberModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
-        var res = await InternalFind(filter);
+        var res = await BaseFind(filter, limit: 1);
         return res.FirstOrDefault();
     }
     public async Task<ICollection<LevelMemberModel>?> GetAllUsersCombined()
     {
         var filter = Builders<LevelMemberModel>
             .Filter.Empty;
-        var result = await InternalFind(filter);
+        var result = await BaseFind(filter);
         var data = new Dictionary<ulong, LevelMemberModel>();
         foreach (var item in result.ToEnumerable())
         {
@@ -47,16 +92,17 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
 
         return data.Select(v => v.Value).ToList();
     }
-    public async Task<LevelMemberModel[]?> GetGuild(ulong guildId)
+    public async Task<ICollection<LevelMemberModel>> GetGuild(ulong guildId)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<LevelMemberModel>
             .Filter
             .Where(v => v.GuildId == guildId);
 
-        var result = await collection.FindAsync(filter);
-        var item = await result.ToListAsync();
-        return item.ToArray();
+        var result = await BaseFind(filter);
+        return await result.ToListAsync();
     }
     /// <summary>
     /// Delete many objects from the database
@@ -88,6 +134,8 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
             .Where(v => filterFunction(v));
 
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var count = await collection.CountDocumentsAsync(filter);
         if (count < 1)
             return count;
@@ -103,6 +151,8 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
         var exists = (await Get(model.UserId, model.GuildId)) != null;
 
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         // Replace if exists, if not then we just insert
         if (exists)
         {

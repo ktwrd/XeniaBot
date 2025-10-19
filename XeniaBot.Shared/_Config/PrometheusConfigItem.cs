@@ -1,11 +1,17 @@
-﻿namespace XeniaBot.Shared;
+﻿using System.ComponentModel;
+
+namespace XeniaBot.Shared;
 
 public class PrometheusConfigItem
 {
-    public bool Enable { get; set; }
-    public int Port { get; set; }
-    public string Url { get; set; }
-    public string Hostname { get; set; }
+    [DefaultValue(false)]
+    public bool Enable { get; set; } = false;
+    [DefaultValue(4828)]
+    public int Port { get; set; } = 4828;
+    [DefaultValue("/metrics")]
+    public string Url { get; set; } = "/metrics";
+    [DefaultValue("+")]
+    public string Hostname { get; set; } = "+";
 
     /// <summary>
     /// Reset to default values.

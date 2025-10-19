@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Services;
@@ -30,6 +31,7 @@ public class AdminBanSyncComponentViewModel : IGuildViewModel, IBanSyncViewModel
             GuildId = guildId
         };
         var banSyncStateHistory = CoreContext.Instance!.GetRequiredService<BanSyncStateHistoryRepository>();
-        BanSyncStateHistory = await banSyncStateHistory.GetMany(guildId) ?? Array.Empty<BanSyncStateHistoryItemModel>();
+        var history = await banSyncStateHistory.GetMany(guildId);
+        BanSyncStateHistory = history.ToList();
     }
 }

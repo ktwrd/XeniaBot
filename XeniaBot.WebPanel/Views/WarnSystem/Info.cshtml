@@ -1,5 +1,22 @@
 ﻿@{
     Layout = "_Layout";
+
+    string GetAvatar(string userId)
+    {
+        var a = "/Debugempty.png";
+        if (string.IsNullOrEmpty(userId))
+            return a;
+        var u = Model.Client.GetUserAsync(ulong.Parse(userId)).Result;
+        if (u != null)
+        {
+            var x = u.GetAvatarUrl();
+            x ??= u.GetDefaultAvatarUrl();
+            a = x;
+        }
+
+        return a;
+    }
+
 }
 @using XeniaBot.WebPanel.Helpers
 @model WarnInfoViewModel
@@ -8,16 +25,51 @@
     <h1 class="mb-0">Warn Details</h1>
     <sup>@Model.WarnItem.WarnId</sup>
     <p>
-        <img src="@(Model.Client.GetUser(Model.WarnItem.TargetUserId).GetAvatarUrl() ?? Model.Client.GetUser(Model.WarnItem.TargetUserId).GetDefaultAvatarUrl())" class="smallUserIcon" /> <code alt="@Model.WarnItem.TargetUserId">@Model.Client.GetUser(Model.WarnItem.TargetUserId).ToString()</code>
+        
+        <img src="@GetAvatar(Model.WarnItem.TargetUserId.ToString())" class="smallUserIcon"/>
+        <code alt="@Model.WarnItem.TargetUserId">@(Model.Client.GetUser(Model.WarnItem.TargetUserId)?.ToString() ?? Model.WarnItem.TargetUserId.ToString())</code>
         was warned by
-        <img src="@(Model.Client.GetUser(Model.WarnItem.ActionedUserId).GetAvatarUrl() ?? Model.Client.GetUser(Model.WarnItem.ActionedUserId).GetDefaultAvatarUrl())" class="smallUserIcon" /> <code alt="@Model.WarnItem.ActionedUserId">@Model.Client.GetUser(Model.WarnItem.ActionedUserId).ToString()</code>
+        <img src="@GetAvatar(Model.WarnItem.ActionedUserId.ToString())" class="smallUserIcon"/>
+        <code alt="@Model.WarnItem.ActionedUserId">@(Model.Client.GetUser(Model.WarnItem.ActionedUserId)?.ToString() ?? Model.WarnItem.ActionedUserId.ToString())</code>
         at
         <code>@(AspHelper.DateTimeFromTimestamp(Model.WarnItem.CreatedAtTimestamp).ToString("yyyy/MM/dd HH:mm:ss tt"))</code>
         in
         <a asp-controller="Server" asp-route-id="@Model.Guild.Id" asp-action="Index"><code>@Model.Guild.Name</code></a>
     </p>
     <h4>Description</h4>
-    <textarea class="form-control" readonly>@Model.WarnItem.Description</textarea>
+    <textarea class="form-control" readonly rows="15">@Model.WarnItem.Description</textarea>
     <a class="btn btn-outline-primary btn-sm mt-3" asp-controller="WarnSystem" asp-action="GuildWarns" asp-route-id="@Model.Guild.Id">Go Back</a>
+    
+    <hr/>
+    <h4>Comments</h4>
+    <div class="row">
+        <div class="col">
+            @*<div class="row">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <table>
+                            <tr>
+                                <td>
+                                    <p><img src="/Debugempty.png" class="smallUserIcon"/>
+                                        <code alt="000000">kate.pet</code></p>
+                                </td>
+                                <td rowspan="2" style="vertical-align: top; text-align: left; padding-top: 0.15rem; padding-left: 1rem;">
+                                    <p>
+                                        comment content
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3rd Dec 2024<br/>5:07pm</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>*@
+            @foreach (var comment in Model.Comments.OrderBy(e => e.CreatedAt.Value))
+            {
+            }
+        </div>
+    </div>
 </div>
 

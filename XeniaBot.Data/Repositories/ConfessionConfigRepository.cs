@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -51,24 +52,25 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
     
     public async Task<ConfessionGuildModel?> GetGuild(ulong guildId)
     {
-        var collection = GetCollection();
         var filter = Builders<ConfessionGuildModel>
             .Filter
-            .Eq("GuildId", guildId);
+            .Where(e => e.GuildId == guildId);
 
-        var results = await collection.FindAsync(filter);
+        var results = await BaseFind(filter, limit: 1);
 
         return results.FirstOrDefault();
     }
     public async Task Set(ConfessionGuildModel model)
     {
         var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         var filter = Builders<ConfessionGuildModel>
             .Filter
-            .Eq("GuildId", model.GuildId);
+            .Where(e => e.GuildId == model.GuildId);
 
-        var existingItems = await collection.FindAsync(filter);
-        if (existingItems != null && await existingItems.AnyAsync())
+        var existingItems = await collection.CountDocumentsAsync(filter);
+        if (existingItems == 1)
             await collection.FindOneAndReplaceAsync(filter, model);
         else
             await collection.InsertOneAsync(model);
@@ -81,13 +83,15 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
         var channel = guild.GetTextChannel(model.ModalChannelId);
         if (channel == null)
             throw new Exception($"Channel {model.ModalChannelId} not found");
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
         await channel.DeleteMessageAsync(model.ModalMessageId);
 
-        var collection = GetCollection();
         var filter = Builders<ConfessionGuildModel>
             .Filter
-            .Eq("GuildId", model.GuildId);
+            .Where(e => e.GuildId == model.GuildId);
 
-        await collection?.DeleteManyAsync(filter);
+        await collection.DeleteManyAsync(filter);
     }
 }

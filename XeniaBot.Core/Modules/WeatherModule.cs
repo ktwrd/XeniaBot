@@ -1,15 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.Wrappers;
-using XeniaBot.Core.Helpers;
 using XeniaBot.Shared.Helpers;
-using XeniaBot.Shared.Schema.WeatherAPI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Shared;
@@ -53,7 +46,11 @@ namespace XeniaBot.Core.Modules
                         .WithDescription($"Failed to fetch data. \n```\n{ex.Message}\n```")
                         .WithColor(Color.Red)
                         .Build());
-                await CoreContext.Instance?.GetRequiredService<ErrorReportService>()?.ReportError(ex, Context);
+                var errorService = CoreContext.Instance?.GetRequiredService<ErrorReportService>();
+                if (errorService != null)
+                {
+                    await errorService.ReportError(ex, Context);
+                }
             }
         }
 
@@ -90,7 +87,11 @@ namespace XeniaBot.Core.Modules
                         .WithDescription($"Failed to fetch data. \n```\n{ex.Message}\n```")
                         .WithColor(Color.Red)
                         .Build());
-                await CoreContext.Instance?.GetRequiredService<ErrorReportService>()?.ReportError(ex, Context);
+                var errorService = CoreContext.Instance?.GetRequiredService<ErrorReportService>();
+                if (errorService != null)
+                {
+                    await errorService.ReportError(ex, Context);
+                }
             }
         }
     }

@@ -27,7 +27,7 @@ public class FlightCheckService : BaseService
         _discord.JoinedGuild += DiscordOnJoinedGuild;
     }
 
-    private async Task DiscordOnJoinedGuild(SocketGuild arg)
+    private Task DiscordOnJoinedGuild(SocketGuild arg)
     {
         new Thread((ThreadStart)async delegate
         {
@@ -40,6 +40,7 @@ public class FlightCheckService : BaseService
                 Log.Error($"Failed to run {nameof(CheckGuild)} for {arg.Name} ({arg.Id})\n{ex}");
             }
         }).Start();
+        return Task.CompletedTask;
     }
 
     public override async Task OnReady()
@@ -86,19 +87,20 @@ public class FlightCheckService : BaseService
         
         if (!HasValidPermissions(guild))
         {
+            var guildUrl = $"https://discord.com/channels/{guild.Id}/{guild.Channels.FirstOrDefault()?.Id ?? 0}";
+            var inviteUrl = $"https://discord.com/oauth2/authorize?client_id={_discord.CurrentUser.Id}&scope=bot&permissions={_config.InvitePermissions}";
             embed.AddField("Permissions Invalid", string.Join(
-                "\n", new string[]
-                {
-                    $"I've encountered some issues in your guild [`{guild.Name}`](https://discord.com/channels/{guild.Id}/{guild.Channels.FirstOrDefault()?.Id ?? 0}), and that I do not have my required permissions.",
+                "\n",
+                    $"I've encountered some issues in your guild [`{guild.Name}`]({guildUrl}), and that I do not have my required permissions.",
                     "",
-                    $"To resolve this issue, please re-invite me with [this link](https://discord.com/oauth2/authorize?client_id={_discord.CurrentUser.Id}&scope=bot&permissions={_config.InvitePermissions}).",
+                    $"To resolve this issue, please re-invite me with [this link]({inviteUrl}).",
                     "",
                     "If this does not get resolved, some of Xenia's features will work poorly or it won't work at all. (i.e, server logging, role menu, BanSync, etc...)",
                     "",
                     "Thanks!",
                     "",
                     "P.S; If you have any issues, don't hesitate to chat to the dev team with the discord link in my bio!"
-                }));
+                ));
             Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\": Permissions invalid");
         }
 

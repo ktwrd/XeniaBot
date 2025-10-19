@@ -1,6 +1,7 @@
 ﻿using Discord;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson.Serialization.Serializers;
+using Newtonsoft.Json;
 
 namespace XeniaBot.DiscordCache.Models;
 
@@ -16,7 +17,40 @@ public class CacheMessageReference
     public bool? FailIfNotExists { get; set; }
     [BsonIgnoreIfNull]
     public MessageReferenceType? ReferenceType { get; set; }
-
+    
+    private IDictionary<string, object> _extraElements = new Dictionary<string, object>();
+    [BsonExtraElements()]
+    [JsonIgnore]
+    public IDictionary<string, object> ExtraElements
+    {
+        get => _extraElements;
+        set
+        {
+            bool p = false;
+            if (value.TryGetValue("ChannelID", out var o ))
+            {
+                if (ChannelId == null)
+                {
+                    var os = o?.ToString() ?? "";
+                    if (string.IsNullOrEmpty(os))
+                    {
+                        ChannelId = null;
+                    }
+                    else if (ulong.TryParse(os, out var x))
+                    {
+                        ChannelId = x;
+                    }
+                }
+                p = true;
+            }
+            _extraElements = value;
+            if (p)
+            {
+                _extraElements.Remove("ChannelID");
+            }
+        }
+    }
+    
     public CacheMessageReference Update(MessageReference r)
     {
         var a = r.MessageId.ToNullable();

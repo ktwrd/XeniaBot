@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using DiffPlex.DiffBuilder;
-using DiffPlex.DiffBuilder.Model;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,6 +55,7 @@ public class ServerChannelLogService : BaseService
                 .WithColor(Color.Blue));
         }
 
+		/*
         if (current.Position != previous?.Position)
         {
             await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
@@ -66,6 +64,7 @@ public class ServerChannelLogService : BaseService
                 .WithCurrentTimestamp()
                 .WithColor(Color.Blue));
         }
+		*/
 
         bool previousNsfw = false;
         bool currentNsfw = false;
@@ -73,8 +72,8 @@ public class ServerChannelLogService : BaseService
         string? currentTopic = null;
         ulong? previousCategory = null;
         ulong? currentCategory = null;
-        CacheOverwrite[] currentOverwrite = Array.Empty<CacheOverwrite>();
-        CacheOverwrite[] previousOverwrite = Array.Empty<CacheOverwrite>();
+        var currentOverwrite = Array.Empty<CacheOverwrite>();
+        var previousOverwrite = Array.Empty<CacheOverwrite>();
         
         if (current is CacheTextChannelModel currentText)
         {
