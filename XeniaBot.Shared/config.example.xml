@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<XeniaConfig>
+    <!-- PostgreSQL Connection Settings. "Name" attribute is the name of your database.
+        NOTE: You must already have an existing database & account created on the instance
+               that Xenia is using. -->
+    <!-- If you're using the exact same credentials in docker-compose.example.yml,
+         then you don't need to change anything for this section. -->
+    <Database Host="db" Port="5432" Name="xeniadiscord">
+        <Username>xeniadiscord</Username>
+        <Password>changeme123</Password>
+    </Database>
+
+    <!-- MongoDB Connection Information. Required for importing old data and Discord Cache -->
+    <MongoDb Database="xenia_discord"
+             ConnectionUrl="mongodb://xenia:SuperSercretPassword@mongo:27017" />
+
+    <!-- Discord config stuff. -->
+    <Discord>
+        <Token>discordbottoken</Token>
+        <PublicKey>InteractionsUrlPublicKey</PublicKey>
+        <SuperuserId>488187472514252811</SuperuserId>
+        <BanSync>
+            <GuildId>000000</GuildId>
+            <GuildStateChangedChannelId>000000</GuildStateChangedChannelId>
+            <FeatureRequestChannelId>000000</FeatureRequestChannelId>
+        </BanSync>
+    </Discord>
+
+    <!-- Service-specific config -->
+    <Services.ErrorReporting Guild="0" Channel="0" />
+    <Services.Reminder Enabled="true" />
+
+    <!-- Database Caching Options.
+        Note: If nothing is defined in the Cache element, then
+              an in-memory cache will be used by default. -->
+    <Cache>
+        <!-- Cache Key prefix. This shouldn't be changed. -->
+        <CachePrefix>EF_XeniaDiscord_</CachePrefix>
+
+        <!-- Redis-compatible server for caching -->
+        <Redis Enabled="false">
+            <EnableLogging>true</EnableLogging>
+            <DBConfig>
+                <!-- Make sure that your password and endpoint is correct!-->
+                <Password>mysupersecretpassword</Password>
+                <AllowAdmin>true</AllowAdmin>
+                <Endpoint Host="redis" Port="6380" />
+            </DBConfig>
+        </Redis>
+    </Cache>
+
+    <!-- Value is a TZ Identifier (see column on following wikipedia link)
+        https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+        
+        If you're on linux, you can also do "ls /usr/share/zoneinfo/" to see
+        the available timezones. -->
+    <DefaultTimezone>UTC</DefaultTimezone>
+</XeniaConfig>

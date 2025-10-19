@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
 
     <AssemblyName>XeniaBot.Core</AssemblyName>
@@ -67,8 +67,8 @@
     <PackageReference Include="Google.Cloud.Translation.V2" Version="3.4.0" />
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="MimeTypesMap" Version="1.0.9" />
-    <PackageReference Include="Noppes.E621Client" Version="0.10.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="5.16.0" />
+    <PackageReference Include="Noppes.E621Client" Version="0.11.0" />
+    <PackageReference Include="Sentry.AspNetCore" Version="5.16.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj" />
@@ -76,6 +76,8 @@
     <ProjectReference Include="..\XeniaBot.MongoData\XeniaBot.MongoData.csproj" />
     <ProjectReference Include="..\XeniaBot.Logic\XeniaBot.Logic.csproj" />
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Common\XeniaDiscord.Common.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Shared.Interactions\XeniaDiscord.Shared.Interactions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\VersionAutoIncrement.cs">

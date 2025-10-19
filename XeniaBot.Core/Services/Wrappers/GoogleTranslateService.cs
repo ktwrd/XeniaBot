@@ -11,28 +11,29 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Config;
+using NLog;
 
 namespace XeniaBot.Core.Services.Wrappers
 {
-    [XeniaController]
-    public class GoogleTranslateService : BaseService
+    public class GoogleTranslateService
     {
-        private ConfigData _configData;
+        private XeniaConfig _config;
         private GoogleCredential _gcsCred;
         private TranslationClient _translateClient;
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
         public GoogleTranslateService(IServiceProvider services)
-            : base(services)
         {
-            _configData = services.GetRequiredService<ConfigData>();
+            _config = services.GetRequiredService<XeniaConfig>();
         }
 
         private void Validate()
         {
-            bool configInvalid =
-                _configData.GoogleCloud == null;
+            // TODO re-implement config loading for XML
+            bool configInvalid = _config.GoogleCloud == null;
             var configDictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(
                 JsonSerializer.Serialize(
-                    _configData.GoogleCloud ?? new GoogleCloudKey(),
+                    _config.GoogleCloud ?? new GoogleCloudKey(),
                     Program.SerializerOptions) ?? "{}",
                 Program.SerializerOptions) ?? new Dictionary<string, string>();
             int dictRequired = configDictionary.Count;
@@ -40,26 +41,26 @@ namespace XeniaBot.Core.Services.Wrappers
 
             if (dictRequired < 1)
             {
-                Log.Error("Config.GCSKey_Translate is empty");
-                Program.Quit(1);
+                _log.Error("Config.GCSKey_Translate is empty");
+                Environment.Exit(1);
             }
             foreach (var pair in configDictionary)
             {
                 if (pair.Value.Length > 0)
                     dictFound++;
                 else
-                    Log.Warn($"Empty value \"Config.GCSKey_Translate.{pair.Key}\"");
+                    _log.Warn($"Empty value \"Config.GCSKey_Translate.{pair.Key}\"");
             }
             if (dictFound < dictRequired)
             {
-                Log.Error("Not all fields have a value in \"Config.GCSKey_Translate\"");
+                _log.Error("Not all fields have a value in \"Config.GCSKey_Translate\"");
                 configInvalid = false;
             }
 
             if (configInvalid)
             {
-                Log.Error("Config Invalid");
-                Program.Quit(1);
+                _log.Error("Config Invalid");
+                Environment.Exit(1);
                 return;
             }
         }
@@ -86,7 +87,7 @@ namespace XeniaBot.Core.Services.Wrappers
 
         private async Task<GoogleCredential?> LoadCredentials()
         {
-            bool denyAccess = _configData.GoogleCloud == null || _configData.GoogleCloud.ProjectId.Length < 1;
+            bool denyAccess = _config.GoogleCloud == null || _config.GoogleCloud.ProjectId.Length < 1;
             if (denyAccess)
             {
                 Log.Error("Config not setup (null or project_id not set)");
@@ -96,7 +97,7 @@ namespace XeniaBot.Core.Services.Wrappers
             GoogleCredential? cred = null;
             using (CancellationTokenSource source = new CancellationTokenSource())
             {
-                var jsonText = JsonSerializer.Serialize(_configData.GoogleCloud, Program.SerializerOptions);
+                var jsonText = JsonSerializer.Serialize(_config.GoogleCloud, Program.SerializerOptions);
                 if (jsonText == null)
                 {
                     Log.Error("Failed to serialize Google Cloud Config.");
@@ -139,31 +140,31 @@ namespace XeniaBot.Core.Services.Wrappers
             TranslationClient client = await TranslationClient.CreateAsync(_gcsCred);
             if (client == null)
             {
-                Log.Error("TranslationClient is null? (Failed to create client)");
-                Program.Quit(1);
+                _log.Error("TranslationClient is null? (Failed to create client)");
+                Environment.Exit(1);
                 return;
             }
             _translateClient = client;
         }
 
-        public override async Task InitializeAsync()
+        public async Task InitializeAsync()
         {
             var start_ts = GeneralHelper.GetMicroseconds();
-            Log.Debug("Initializing GoogleTranslateService");
+            _log.Debug("Initializing GoogleTranslateService");
             Validate();
 
             // Fetch credentials, if failed then throw exception
             var googleCredential = await LoadCredentials();
             if (googleCredential == null)
             {
-                Log.Error("Failed to load Google Cloud Translate Credentials. Result was null");
-                Program.Quit(1);
+                _log.Error("Failed to load Google Cloud Translate Credentials. Result was null");
+                Environment.Exit(1);
                 return;
             }
             _gcsCred = googleCredential;
 
             await CreateClient();
-            Log.Debug($"Done! Took {GeneralHelper.GetMicroseconds() - start_ts}us");
+            _log.Debug($"Done! Took {GeneralHelper.GetMicroseconds() - start_ts}us");
         }
     }
 }

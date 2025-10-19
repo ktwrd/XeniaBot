@@ -47,7 +47,7 @@ public class ProgramDetails
     {
         get
         {
-            DateTime buildDate = new DateTime(2022, 1, 1)
+            var buildDate = new DateTime(2022, 1, 1)
                 .AddDays(VersionRaw?.Build ?? 0)
                 .AddMinutes((VersionRaw?.Revision ?? 0));
             return buildDate;

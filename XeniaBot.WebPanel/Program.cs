@@ -131,7 +131,7 @@ public static class Program
                         (user.GetString("avatar")?.StartsWith("a_") ?? false) ? "gif" : "png"));
             });
         builder.Services.AddServerSideBlazor();
-        builder.WebHost.UseSentry(FeatureFlags.SentryDSN);
+        builder.WebHost.UseSentry(FeatureFlags.SentryDsn);
         var app = builder.Build();
         app.UseStaticFiles();
         // Configure the HTTP request pipeline.

@@ -7,7 +7,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Data.Repositories;
-using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Services.BotAdditions
 {
@@ -15,13 +14,11 @@ namespace XeniaBot.Core.Services.BotAdditions
     public class ConfessionService : BaseService
     {
         private readonly DiscordSocketClient _client;
-        private readonly DiscordService _discord;
         private readonly ConfessionConfigRepository _config;
         public ConfessionService(IServiceProvider services)
             : base(services)
         {
             _client = services.GetRequiredService<DiscordSocketClient>();
-            _discord = services.GetRequiredService<DiscordService>();
             _config = services.GetRequiredService<ConfessionConfigRepository>();
         }
 
