@@ -83,6 +83,7 @@ public static class Program
         var discord = services.GetRequiredService<DiscordShardedClient>();
         discord.ShardReady += client =>
         {
+            log.Info($"Shard Ready ({client.ShardId})");
             var innerLog = LogManager.GetLogger("Discord.DiscordShardedClient");
             new Thread(() =>
             {
@@ -91,6 +92,10 @@ public static class Program
             }).Start();
             return Task.CompletedTask;
         };
+        AllBaseServices(services, async (s) =>
+        {
+            await s.ActivateAsync();
+        });
         var cfg = XeniaConfig.Get();
         log.Info("Connecting to Discord...");
         await discord.LoginAsync(TokenType.Bot, cfg.Discord.Token);
@@ -105,6 +110,7 @@ public static class Program
         //     log.Error(ex, "Failed to run thread for Health Service");
         // }
         await discord.StartAsync();
+        await Task.Delay(-1);
     }
     private static IServiceProvider GetServices()
     {
@@ -125,9 +131,13 @@ public static class Program
             InteractionConfig = new InteractionServiceConfig()
             {
                 UseCompiledLambda = true,
-                AutoServiceScopes = true
+                AutoServiceScopes = false
             },
-            AutoLogin = true
+            SocketConfig = new DiscordSocketConfig()
+            {
+                GatewayIntents = GatewayIntents.All
+            },
+            AutoLogin = false
         }, (interaction, p) =>
         {
             XeniaDiscordSharedInteractions.RegisterModules(interaction, p).Wait();
@@ -139,6 +149,25 @@ public static class Program
         XeniaServiceList = FunctionalGlue.FindServicesThatExtend<IXeniaService>(services).Select(e => e.ServiceType).ToList();
         return services.BuildServiceProvider();
     }
-
+    private static void AllBaseServices(IServiceProvider services, Func<IXeniaService, Task> func)
+    {
+        var taskList = new List<Task>();
+        var ins = new List<IXeniaService>();
+        foreach (var service in XeniaServiceList)
+        {
+            foreach (var item in services.GetServices(service) ?? [])
+            {
+                if (item != null && item.GetType().IsAssignableTo(typeof(IXeniaService)))
+                {
+                    ins.Add((IXeniaService)item);
+                }
+            }
+        }
+        foreach (var item in ins)
+        {
+            taskList.Add(func(item));
+        }
+        Task.WaitAll(taskList.ToArray());
+    }
     private static IReadOnlyList<Type> XeniaServiceList { get; set; } = [];
 }

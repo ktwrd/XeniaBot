@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Confession;
+using XeniaDiscord.Data.Models.DiscordSnapshot;
 using XeniaDiscord.Data.Models.Ticket;
 
 namespace XeniaDiscord.Data;
@@ -24,11 +25,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<BanSyncRecordModel> BanSyncRecords { get; set; }
 
     public DbSet<GuildTicketModel> GuildTickets { get; set; }
+    public DbSet<GuildTicketUserModel> GuildTicketUsers { get; set; }
     public DbSet<GuildTicketConfigModel> GuildTicketConfigs { get; set; }
 
 
     public DbSet<GuildConfessionModel> GuildConfessions { get; set; }
     public DbSet<GuildConfessionConfigModel> GuildConfessionConfigs { get; set; }
+
+    public DbSet<DiscordSnapshotMessageModel> DiscordSnapshotMessages { get; set; }
+    public DbSet<DiscordSnapshotMessageAuthorModel> DiscordSnapshotMessageAuthors { get; set; }
+    public DbSet<DiscordSnapshotMessageAuthorPrimaryGuildModel> DiscordSnapshotMessageAuthorPrimaryGuilds { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -58,6 +64,17 @@ public class ApplicationDbContext : DbContext
         builder.Entity<GuildTicketModel>(b =>
         {
             b.ToTable(GuildTicketModel.TableName).HasKey(e => e.Id);
+
+            b.HasMany(e => e.Users)
+                .WithOne()
+                .HasForeignKey(e => e.TicketId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
+        });
+        builder.Entity<GuildTicketUserModel>(b =>
+        {
+            b.ToTable(GuildTicketUserModel.TableName)
+             .HasKey(e => new { e.TicketId, e.UserId });
         });
         builder.Entity<GuildTicketConfigModel>(b =>
         {
@@ -84,6 +101,36 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.GuildConfessionConfigId)
                 .IsRequired(false);
+        });
+        #endregion
+
+        #region Snapshots
+        builder.Entity<DiscordSnapshotMessageModel>(b =>
+        {
+            b.ToTable(DiscordSnapshotMessageModel.TableName).HasKey(e => e.Id);
+            b.HasIndex(e => new { e.MessageId, e.ChannelId }).IsUnique(false);
+
+            b.HasMany(e => e.Attachments)
+                .WithOne()
+                .HasForeignKey(e => e.SnapshotMessageId)
+                .IsRequired();
+            b.HasOne(e => e.Author)
+                .WithOne()
+                .HasForeignKey<DiscordSnapshotMessageAuthorModel>(e => e.SnapshotMessageId)
+                .IsRequired();
+        });
+        builder.Entity<DiscordSnapshotMessageAuthorModel>(b =>
+        {
+            b.ToTable(DiscordSnapshotMessageAuthorModel.TableName).HasKey(e => e.Id);
+
+            b.HasOne(e => e.PrimaryGuild)
+            .WithOne()
+            .HasForeignKey<DiscordSnapshotMessageAuthorPrimaryGuildModel>(e => e.SnapshotMessageAuthorId)
+            .IsRequired(false);
+        });
+        builder.Entity<DiscordSnapshotMessageAuthorPrimaryGuildModel>(b =>
+        {
+            b.ToTable(DiscordSnapshotMessageAuthorPrimaryGuildModel.TableName);
         });
         #endregion
     }

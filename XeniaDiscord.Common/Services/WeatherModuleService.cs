@@ -1,90 +1,21 @@
 ﻿using Discord;
-using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using NLog;
-using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Schema.WeatherAPI;
-using XeniaBot.Shared.Services;
+using XeniaDiscord.Common.Interfaces;
 
 namespace XeniaDiscord.Common.Services;
 
 /// <summary>
 /// Used to provide embeds and for handling buttons for <see cref="Modules.WeatherModule"/>
 /// </summary>
-[XeniaController]
-public class WeatherModuleService : BaseService
+public class WeatherModuleService : IWeatherModuleService
 {
-    private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly DiscordSocketClient _discord;
     private readonly WeatherApiService _weather;
-    private readonly ErrorReportService _error;
 
     public WeatherModuleService(IServiceProvider services)
-        : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
         _weather = services.GetRequiredService<WeatherApiService>();
-        _error = services.GetRequiredService<ErrorReportService>();
-        
-        _discord.ButtonExecuted += DiscordOnButtonExecuted;
-    }
-
-    private async Task DiscordOnButtonExecuted(SocketMessageComponent arg)
-    {
-        if (!arg.Data.CustomId.StartsWith("weather-"))
-        {
-            return;
-        }
-
-        try
-        {
-            var param = arg.Data.CustomId.Split(" ");
-            EmbedBuilder? embed = null;
-            ComponentBuilder? builder = null;
-            if (param[0] == "weather-forecast")
-            {
-                embed = await GetForecastEmbed(
-                    param[1], param[2] == "1" ? MeasurementSystem.Imperial : MeasurementSystem.Metric);
-                builder = WeatherForecastComponents(
-                    param[1], param[2] == "1" ? MeasurementSystem.Imperial : MeasurementSystem.Metric);
-            }
-            else if (param[0] == "weather-current")
-            {
-                embed = await GetCurrentWeatherEmbed(
-                    param[1], param[2] == "1" ? MeasurementSystem.Imperial : MeasurementSystem.Metric);
-                builder = WeatherCurrentComponents(
-                    param[1], param[2] == "1" ? MeasurementSystem.Imperial : MeasurementSystem.Metric);
-            }
-
-            if (embed == null)
-            {
-                await arg.RespondAsync(
-                    embed: new EmbedBuilder()
-                        .WithTitle("Weather Refresh")
-                        .WithDescription($"No handler for action `{param[0]}`")
-                        .WithColor(Color.Red).Build());
-                return;
-            }
-            
-            await arg.RespondAsync(
-                embed: embed.Build(),
-                components: builder?.Build());
-        }
-        catch (Exception ex)
-        {
-            var msg =
-                $"Failed to run button {arg.Data.CustomId} in channel {arg.Message.Channel.Id} for {arg.Message.Author} ({arg.Message.Author.Id})";
-            _log.Error(ex, msg);
-            await _error.ReportException(ex, msg);
-            
-            await arg.RespondAsync(
-                embed: new EmbedBuilder()
-                    .WithTitle("Weather Refresh")
-                    .WithDescription($"Failed to fetch weather data.\n```\n{ex.Message}\n```")
-                    .WithColor(Color.Red)
-                    .Build());
-        }
     }
 
     public async Task<EmbedBuilder> GetForecastEmbed(string location, MeasurementSystem system)
@@ -101,7 +32,9 @@ public class WeatherModuleService : BaseService
         }
         catch (Exception ex)
         {
-            embed.Description = $"Exception occurred.\n```\n{ex.Message}\n```";
+            embed.WithDescription($"Failed to fetch data (`{ex.GetType().Namespace}.{ex.GetType().Name}`)")
+                 .AddField("Message", ex.Message[..2000], false)
+                 .WithColor(Color.Red);
             return embed;
         }
 
@@ -109,29 +42,32 @@ public class WeatherModuleService : BaseService
 
         // when success is true, result will never be null.
         // any result null errors from now on can be ignored.
-        if (!validateResponse.Success)
+        if (!validateResponse.Success || result == null)
         {
             embed.Description = validateResponse.Message;
             return embed;
         }
         embed = new EmbedBuilder()
         {
-            Title = $"Forecast for {result.Location.Name}, {result.Location.Region}",
-            Url = $"https://google.com/maps/@{result.Location.Longitude},{result.Location.Latitude}",
+            Title = $"Forecast for {result.Location?.Name}, {result.Location?.Region}",
             Color = Color.Blue
         }.WithCurrentTimestamp();
+        if (result.Location != null)
+        {
+            embed.Url = $"https://google.com/maps/@{result.Location.Longitude},{result.Location.Latitude}";
+        }
 
         var fields = new List<(string, string)>();
 
-        foreach (var item in result.Forecast.ForecastDay)
+        foreach (var item in result.Forecast?.ForecastDay ?? [])
         {
+            if (item.Day == null) continue;
             fields.Add(($"{item.Date.Year}-{item.Date.Month}-{item.Date.Day} ",
-                string.Join("\n", new string[]
-                {
+                string.Join("\n",
                     $"High: " + (system == MeasurementSystem.Metric ? $"{item.Day.TemperatureMaximumCelcius}°C" : $"{item.Day.TemperatureMaximumFahrenheit}°F"),
                     $"Low: "   + (system == MeasurementSystem.Metric ? $"{item.Day.TemperatureMinimumCelcius}°C" : $"{item.Day.TemperatureMinimumFahrenheit}°F"),
                     $"Rain Chance: {item.Day.ChanceOfRain}%"
-                })));
+                )));
         }
 
         foreach (var (name, value) in fields)
@@ -147,7 +83,7 @@ public class WeatherModuleService : BaseService
         var builder = new ComponentBuilder();
         builder.AddRow(
             new ActionRowBuilder()
-                .WithButton("Refresh", $"weather-current {location} {(int)system}"));
+                .WithButton("Refresh", InteractionIdentifier.WeatherTodayRefresh + $"\n{location}\n{(int)system}"));
         return builder;
     }
 
@@ -156,10 +92,10 @@ public class WeatherModuleService : BaseService
         var builder = new ComponentBuilder();
         builder.AddRow(
             new ActionRowBuilder()
-                .WithButton("Refresh", $"weather-forecast {location} {(int)system}"));
+                .WithButton("Refresh", InteractionIdentifier.WeatherForecastRefresh + $"\n{location}\n{(int)system}"));
         return builder;
     }
-    public async Task<EmbedBuilder> GetCurrentWeatherEmbed(String location, MeasurementSystem system)
+    public async Task<EmbedBuilder> GetCurrentWeatherEmbed(string location, MeasurementSystem system)
     {
         var embed = new EmbedBuilder()
         {

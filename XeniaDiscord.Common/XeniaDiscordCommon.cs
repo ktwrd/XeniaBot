@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Common.Services;
 using XeniaDiscord.Common.Interfaces;
+using XeniaDiscord.Common.Repositories;
 using XeniaDiscord.Common.Services;
 
 namespace XeniaDiscord.Common;
@@ -10,14 +11,14 @@ public static class XeniaDiscordCommon
     public static void RegisterServices(IServiceCollection services)
     {
         // services
-        services.AddSingleton<IBackpackTFService, BackpackTFService>()
+        services
             .AddScoped<IConfessionService, ConfessionService>()
             .AddScoped<IBanSyncService, BanSyncService>()
             .AddScoped<ITicketService, TicketService>()
-            .AddSingleton<IWeatherApiService, WeatherApiService>();
-        //.AddScoped<IWeatherService, WeatherService>()
-        //.AddScoped<IConfessionService, ConfessionService>()
-        //.AddScoped<IBanSyncService, BanSyncService>()
+            .AddSingleton<IBackpackTFService, BackpackTFService>()
+            .AddSingleton<IWeatherApiService, WeatherApiService>()
+            .AddSingleton<IWeatherModuleService, WeatherModuleService>()
+            .AddSingleton<IGoogleTranslateService, GoogleTranslateService>();
         //.AddScoped<IDistrowatchService, DistrowatchService>()
         //.AddSingleton<IDistrowatchService, DistrowatchService>()
         //.AddScoped<IWarnService, WarnService>()
@@ -25,6 +26,13 @@ public static class XeniaDiscordCommon
         //
         //.AddScoped<IEmojiService, EmojiService>()
         //.AddSingleton<IEmojiService, EmojiService>();
+
+        // repositories
+        services
+            .AddScoped<IBanSyncGuildRepository, BanSyncGuildRepository>()
+            .AddScoped<IBanSyncRepository, BanSyncRepository>()
+            .AddScoped<IGuildTicketConfigRepository, GuildTicketConfigRepository>()
+            .AddScoped<IGuildTicketRepository, GuildTicketRepository>();
 
         // repositories
         //services

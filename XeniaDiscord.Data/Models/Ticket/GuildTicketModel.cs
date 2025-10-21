@@ -1,4 +1,6 @@
-﻿namespace XeniaDiscord.Data.Models.Ticket;
+﻿using XeniaDiscord.Data.Models.BanSync;
+
+namespace XeniaDiscord.Data.Models.Ticket;
 
 public class GuildTicketModel
 {
@@ -35,6 +37,11 @@ public class GuildTicketModel
     {
         if (ulong.TryParse(ChannelId, out var r)) return r;
         return 0;
+    }
+    public GuildTicketModel Clone()
+    {
+        if (this.MemberwiseClone() is GuildTicketModel r) return r;
+        throw new NotImplementedException();
     }
 }
 

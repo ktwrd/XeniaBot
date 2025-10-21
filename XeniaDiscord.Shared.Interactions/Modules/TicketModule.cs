@@ -1,39 +1,36 @@
 ﻿using Discord;
 using Discord.Interactions;
-using XeniaBot.Core.Services.BotAdditions;
-using System;
-using System.Text;
-using System.Threading.Tasks;
-using XeniaBot.Data.Models;
-using XeniaBot.Shared;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text;
+using XeniaBot.Shared;
+using XeniaDiscord.Common.Interfaces;
+using XeniaDiscord.Data.Models.Ticket;
 
 namespace XeniaDiscord.Shared.Interactions.Modules;
 
 [Group("ticket", "Ticketing Module")]
 public class TicketModule : InteractionModuleBase
 {
-    private readonly TicketService _ticketService;
+    private readonly ITicketService _ticketService;
     public TicketModule(IServiceProvider services)
     {
-        _ticketService = services.GetRequiredService<TicketService>();
+        _ticketService = services.GetRequiredService<ITicketService>();
     }
     [SlashCommand("create", "Create a new ticket")]
     public async Task CreateTicket()
     {
-        var controller = Program.Core.GetRequiredService<TicketService>();
         var baseEmbed = new EmbedBuilder();
         baseEmbed.Timestamp = DateTimeOffset.UtcNow;
         baseEmbed.WithFooter("Xenia Ticket Management");
 
-        TicketModel? model = null;
+        GuildTicketModel? model = null;
         try
         {
-            model = await controller.CreateTicket(Context.Guild.Id);
+            model = await _ticketService.CreateTicket(Context.Guild.Id);
             if (model == null)
                 throw new TicketException("Got null ticket details from controller");
 
-            await controller.UserAccessGrant(model.ChannelId, Context.User.Id);
+            await _ticketService.UserAccessGrant(model.GetChannelId(), Context.User.Id);
         }
         catch (TicketException exception)
         {
@@ -74,7 +71,6 @@ public class TicketModule : InteractionModuleBase
         if (ticketChannel == null)
             ticketChannel = Context.Channel;
 
-        var controller = Program.Core.GetRequiredService<TicketService>();
         var embed = new EmbedBuilder()
         {
             Title = "Resolved Ticket",
@@ -83,7 +79,7 @@ public class TicketModule : InteractionModuleBase
         };
         try
         {
-            await controller.CloseTicket(ticketChannel.Id, TicketStatus.Resolved, Context.User.Id);
+            await _ticketService.CloseTicket(ticketChannel.Id, GuildTicketStatus.Resolved, Context.User.Id);
         }
         catch (TicketException exception)
         {
@@ -112,7 +108,6 @@ public class TicketModule : InteractionModuleBase
         if (ticketChannel == null)
             ticketChannel = Context.Channel;
 
-        var controller = Program.Core.GetRequiredService<TicketService>();
         var embed = new EmbedBuilder()
         {
             Title = "Rejected Ticket",
@@ -121,7 +116,7 @@ public class TicketModule : InteractionModuleBase
         };
         try
         {
-            await controller.CloseTicket(ticketChannel.Id, TicketStatus.Rejected, Context.User.Id);
+            await _ticketService.CloseTicket(ticketChannel.Id, GuildTicketStatus.Rejected, Context.User.Id);
         }
         catch (TicketException exception)
         {

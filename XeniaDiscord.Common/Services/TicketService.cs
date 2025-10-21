@@ -2,11 +2,9 @@
 using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text;
 using XeniaBot.Shared;
 using XeniaDiscord.Common.Interfaces;
 using XeniaDiscord.Common.Repositories;
-using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Ticket;
 
 namespace XeniaDiscord.Common.Services;
@@ -213,16 +211,17 @@ public class TicketService : ITicketService
     /// <param name="closingUserId"></param>
     /// <returns></returns>
     /// <exception cref="TicketException"></exception>
-    public async Task<TicketTranscriptModel> CloseTicket(ulong channelId, TicketStatus status, ulong closingUserId)
+    public async Task<GuildTicketTranscriptModel> CloseTicket(ulong channelId, GuildTicketStatus status, ulong closingUserId)
     {
         var details = await GetTicketDetails(channelId, closingUserId);
 
-        details.Ticket.ClosedTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        details.Ticket.ClosedAt = DateTimeOffset.UtcNow;
         details.Ticket.Status = status;
-        details.Ticket.ClosedByUserId = closingUserId;
-        await Set(details.Ticket);
-
-        details.Ticket = await Get(details.Ticket.ChannelId);
+        details.Ticket.ClosedByUserId = closingUserId.ToString();
+        throw new NotImplementedException();
+        // details.Ticket = await _configRepo.UpdateAsync(details.Ticket);
+        // old code from mongodb era
+        /*details.Ticket = await Get(details.Ticket.ChannelId);
         if (details.Ticket == null)
             throw new TicketException("Ticket Details not found");
 
@@ -273,7 +272,7 @@ public class TicketService : ITicketService
 
         await details.TicketChannel.DeleteAsync();
 
-        return transcript;
+        return transcript;*/
     }
     private static OverwritePermissions GetOverwritePermissions()
     {
@@ -284,99 +283,5 @@ public class TicketService : ITicketService
             sendMessages: PermValue.Allow);
         return perms;
     }
-
-    #region MongoDB TicketTranscript Boilerplate
-    public const string MongoTranscriptCollectionName = "ticketTranscript";
-    protected static IMongoCollection<T>? GetTranscriptCollection<T>()
-    {
-        return Program.Core.GetDatabase()?.GetCollection<T>(MongoTranscriptCollectionName);
-    }
-    protected static IMongoCollection<TicketTranscriptModel>? GetTranscriptCollection()
-        => GetTranscriptCollection<TicketTranscriptModel>();
-    public async Task<TicketTranscriptModel?> GetTranscript(string transcriptUid)
-    {
-        var collection = GetTranscriptCollection();
-        var filter = Builders<TicketTranscriptModel>
-            .Filter
-            .Where(e => e.Uid == transcriptUid);
-
-        var items = await collection.FindAsync(filter);
-
-        return items.FirstOrDefault();
-    }
-    public async Task<TicketTranscriptModel?> GenerateTranscript(TicketModel ticket)
-    {
-        var guild = _client.GetGuild(ticket.GuildId);
-        if (guild == null)
-            throw new Exception($"Failed to fetch guild {ticket.GuildId}");
-        var channel = guild.GetTextChannel(ticket.ChannelId);
-        if (channel == null)
-            throw new Exception($"Failed to fetch ticket channel {ticket.ChannelId}");
-
-        // Fetch all messages in channel
-        var messages = await channel.GetMessagesAsync(int.MaxValue).FlattenAsync();
-
-        var model = new TicketTranscriptModel()
-        {
-            TicketUid = ticket.Uid,
-        };
-        var _tk = await Get(ticket.ChannelId);
-        if (_tk != null)
-        {
-            _tk.TranscriptUid = model.Uid;
-            await Set(_tk);
-        }
-
-        model.Messages = messages.Select(v => TicketTranscriptMessage.FromMessage(v)).ToArray();
-
-        var collection = GetTranscriptCollection();
-        if (collection == null)
-        {
-            throw new Exception("Could not get collection from " + nameof(GetTranscriptCollection));
-        }
-        await collection.InsertOneAsync(model);
-
-        return model;
-    }
-
-    /// <summary>
-    /// Generate a backup of a ticket channel. Converts messages into <see cref="CacheMessageModel"/>
-    /// </summary>
-    /// <returns>List of messages in the specified ticket channel.</returns>
-    /// <exception cref="InnerTicketException">Thrown when logic inside of this function is fucked.</exception>
-    public async Task<List<CacheMessageModel>> GenerateChannelBackup(TicketModel ticket)
-    {
-        var guild = _client.GetGuild(ticket.GuildId);
-        if (guild == null)
-            throw new InnerTicketException($"Guild {ticket.GuildId} not found.", ticket);
-
-        var channel = guild.GetTextChannel(ticket.ChannelId);
-        if (channel == null)
-            throw new InnerTicketException($"Guild {ticket.ChannelId} not found.", ticket);
-
-        var messages = await channel.GetMessagesAsync(int.MaxValue).FlattenAsync();
-        var msgArr = messages.ToArray();
-
-        var result = new List<CacheMessageModel>();
-        for (int i = 0; i < msgArr.Length; i++)
-        {
-            var msg = msgArr[i];
-            try
-            {
-                var converted = CacheMessageModel.FromExisting(msg);
-                if (converted != null)
-                    result.Add(converted);
-            }
-            catch (Exception ex)
-            {
-                throw new InnerTicketException(
-                    $"Failed to convert message at index {i} (ID: {msg.Id}) to CacheMessageModel", ticket, ex);
-            }
-        }
-
-        return result;
-    }
-
-    #endregion
 
 }

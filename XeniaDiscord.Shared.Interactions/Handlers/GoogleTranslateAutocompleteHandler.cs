@@ -1,28 +1,26 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Google.Cloud.Translation.V2;
-using XeniaBot.Core.Helpers;
+using Microsoft.Extensions.DependencyInjection;
+using XeniaDiscord.Common.Interfaces;
 
 namespace XeniaDiscord.Shared.Interactions.Handlers;
 
 public class GoogleTranslateAutocompleteHandler : AutocompleteHandler
 {
-    private List<Language>? languageList = null;
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
         IInteractionContext context,
         IAutocompleteInteraction autocompleteInteraction,
         IParameterInfo parameter,
         IServiceProvider services)
     {
-        var service = Program.Core.GetRequiredService<GoogleTranslateService>();
-
+        var service = services.GetRequiredService<IGoogleTranslateService>();
         var results = new List<AutocompleteResult>();
         var currentSearch = autocompleteInteraction.Data.Current.Value?.ToString()?.Trim().ToLower() ?? "";
         results.Add(new AutocompleteResult("Auto", ""));
         try
         {
-            List<Language> response = languageList ?? service.GetLanguages();
-            foreach (var item in response)
+            foreach (var item in service.GetLanguages())
             {
                 if (item.Code == null)
                     continue;
@@ -40,7 +38,6 @@ public class GoogleTranslateAutocompleteHandler : AutocompleteHandler
         }
         catch (Exception ex)
         {
-            await DiscordHelper.ReportError(ex);
             return AutocompletionResult.FromError(InteractionCommandError.Unsuccessful, ex.Message);
         }
 

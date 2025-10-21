@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaDiscord.Common.Interfaces;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Ticket;
 
 namespace XeniaDiscord.Common.Repositories;
 
-public class GuildTicketConfigRepository
+public class GuildTicketConfigRepository : IGuildTicketConfigRepository
 {
     private readonly ApplicationDbContext _db;
     public GuildTicketConfigRepository(IServiceProvider services)

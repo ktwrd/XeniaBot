@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaDiscord.Common.Interfaces;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Common.Repositories;
 
-public class BanSyncRepository
+public class BanSyncRepository : IBanSyncRepository
 {
     private readonly ApplicationDbContext _db;
     public BanSyncRepository(IServiceProvider services)

@@ -6,4 +6,7 @@ public class ApiKeysConfigElement
 {
     [XmlElement("Weather")]
     public string? Weather { get; set; }
+
+    [XmlElement("GoogleCloud.Translate.Base64")]
+    public string? GoogleCloudTranslateAsBase64 { get; set; }
 }

@@ -5,4 +5,5 @@ namespace XeniaBot.Shared;
 public interface IXeniaService
 {
     public Task OnDiscordReady();
+    public Task ActivateAsync();
 }

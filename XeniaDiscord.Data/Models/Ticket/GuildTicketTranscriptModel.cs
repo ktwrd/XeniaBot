@@ -1,22 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace XeniaDiscord.Data.Models.Ticket;
+﻿namespace XeniaDiscord.Data.Models.Ticket;
 
 public class GuildTicketTranscriptModel
 {
     public Guid Id { get; set; }
+    /// <summary>
+    /// Foreign Key to <see cref="GuildTicketModel.Id"/>
+    /// </summary>
     public Guid TicketId { get; set; }
-    // todo port cache to sql fuck me sideways
-    //property accessor
-    public List<GuildTicketTranscriptMessageModel> Messages { get; set; } = [];
+
+    // Property Accessor
+    public List<GuildTicketTranscriptMessageSnapshotModel> Messages { get; set; } = [];
 
     public new string[] ToString()
     {
-        var lines = new List<string>();
+        throw new NotImplementedException();
+        // old code from mongodb project
+        /*var lines = new List<string>();
 
         foreach (var item in Messages)
         {
@@ -32,6 +31,6 @@ public class GuildTicketTranscriptModel
             lines.Add(item.CleanContent + "\n\n\n");
         }
 
-        return lines.ToArray();
+        return lines.ToArray();*/
     }
 }

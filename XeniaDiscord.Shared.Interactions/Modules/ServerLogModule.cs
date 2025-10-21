@@ -1,14 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
-using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
 
 namespace XeniaDiscord.Shared.Interactions.Modules;
 
-[Discord.Interactions.Group("log", "Configure Server Event Logging")]
+[Group("log", "Configure Server Event Logging")]
 [RequireUserPermission(GuildPermission.ManageGuild)]
 public class ServerLogModule : InteractionModuleBase
 {
