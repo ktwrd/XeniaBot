@@ -151,6 +151,7 @@ public class LevelSystemService : BaseService
             return;
         }
         var context = new SocketCommandContext(_client, message);
+        if (context.Guild == null) return;
         var data = await _memberConfig.Get(message.Author.Id, context.Guild.Id);
         if (data == null)
             data = new LevelMemberModel()
