@@ -37,7 +37,7 @@ jobs:
 
     - name: Publish Windows
       run: |
-        dotnet publish ${{ matrix.projectName }} --self-contained true -c ${{ matrix.configuration }} --runtime ${{ matrix.runtime }}
+        dotnet publish ${{ matrix.projectName }} --self-contained true -c ${{ matrix.configuration }} --runtime ${{ matrix.runtime }} -p:PublishSingleFile=true
         Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net8.0/${{ matrix.runtime }}/publish/* -Destination ${{ matrix.projectName }}.zip
 
     - name: Upload build artifacts
