@@ -1,0 +1,101 @@
+name: docker
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'develop'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set Environment Variables
+        run: |
+          echo "TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          echo "CONTAINER_VERSION=$(git describe --tags --abbrev=0).$([[ $GITHUB_REF = refs/tags/* ]] && echo 0 || echo 65534)-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "REVISION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date --iso-8601=s)" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Build and push: xenia-discord (dev)'
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            ktwrd/xenia-discord:dev
+            ktwrd/xenia-discord:latest
+            ktwrd/xenia-discord:dev-${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord:latest-${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord:dev
+            ghcr.io/ktwrd/xenia-discord:latest
+            ghcr.io/ktwrd/xenia-discord:dev-${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord:latest-${{ env.CONTAINER_VERSION }}
+          file: Dockerfile
+      - name: 'Build and push: xenia-discord-dash (dev)'
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            ktwrd/xenia-discord-dash:dev
+            ktwrd/xenia-discord-dash:latest
+            ktwrd/xenia-discord-dash:dev-${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord-dash:latest-${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord-dash:dev
+            ghcr.io/ktwrd/xenia-discord-dash:latest
+            ghcr.io/ktwrd/xenia-discord-dash:dev-${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord-dash:latest-${{ env.CONTAINER_VERSION }}
+          file: WebPanel.Dockerfile
+
+      - name: 'Build and push: xenia-discord (stable)'
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            ktwrd/xenia-discord:${{ env.TAG }}
+            ktwrd/xenia-discord:${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord:stable
+            ktwrd/xenia-discord:stable-${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord:${{ env.TAG }}
+            ghcr.io/ktwrd/xenia-discord:${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord:stable
+            ghcr.io/ktwrd/xenia-discord:stable-${{ env.CONTAINER_VERSION }}
+          file: Dockerfile
+      - name: 'Build and push: xenia-discord-dash (stable)'
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            ktwrd/xenia-discord-dash:${{ env.TAG }}
+            ktwrd/xenia-discord-dash:${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord-dash:stable
+            ktwrd/xenia-discord-dash:stable-${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord-dash:${{ env.TAG }}
+            ghcr.io/ktwrd/xenia-discord-dash:${{ env.CONTAINER_VERSION }}
+            ghcr.io/ktwrd/xenia-discord-dash:stable
+            ghcr.io/ktwrd/xenia-discord-dash:stable-${{ env.CONTAINER_VERSION }}
+          file: WebPanel.Dockerfile
