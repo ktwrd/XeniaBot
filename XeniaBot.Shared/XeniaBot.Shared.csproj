@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.*" />
     <PackageReference Include="MongoDB.Bson" Version="3.3.0" />
     <PackageReference Include="MongoDB.Driver" Version="3.3.0" />
+    <PackageReference Include="NeoSmart.PrettySize" Version="3.1.1" />
     <PackageReference Include="NetVips" Version="3.0.1" />
     <PackageReference Include="NetVips.Extensions" Version="3.0.0" />
     <PackageReference Include="NetVips.Native.linux-x64" Version="8.16.1" />

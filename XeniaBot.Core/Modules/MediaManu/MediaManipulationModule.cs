@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using ImageMagick;
+using NeoSmart.PrettySize;
 using NetVips;
 using NLog;
 using System;
@@ -121,7 +122,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
             resultStream.Seek(0, SeekOrigin.Begin);
             optimizer.Compress(resultStream);
             resultStream.Seek(0, SeekOrigin.Begin);
-            Log.Debug($"Uploading file \"{filename}\" ({resultStream.Length}b)");
+            Log.Debug($"Uploading file \"{filename}\" ({PrettySize.Bytes(resultStream.Length)})");
             await FollowupWithFileAsync(resultStream, filename);
         }
         catch (Exception ex)
@@ -325,7 +326,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
             resultStream.Seek(0, SeekOrigin.Begin);
             optimizer.Compress(resultStream);
             resultStream.Seek(0, SeekOrigin.Begin);
-            Log.Debug($"Uploading file \"{filename}\" ({resultStream.Length}b)");
+            Log.Debug($"Uploading file \"{filename}\" ({PrettySize.Bytes(resultStream.Length)})");
             await FollowupWithFileAsync(resultStream, filename);
         }
         catch (Exception ex)
