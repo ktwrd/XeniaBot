@@ -2,12 +2,22 @@ name: docker
 
 on:
   push:
-    branches:
-      - 'main'
-      - 'develop'
+    branches: [ main, develop ]
+    tags: "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   docker:
+    strategy:
+      matrix:
+        include:
+          - dockerFilename: Dockerfile
+            imageName: ktwrd/xenia-discord
+          - dockerFilename: Dockerfile
+            imageName: ghcr.io/ktwrd/xenia-discord
+          - dockerFilename: WebPanel.Dockerfile
+            imageName: ktwrd/xenia-discord-dash
+          - dockerFilename: WebPanel.Dockerfile
+            imageName: ghcr.io/ktwrd/xenia-discord-dash
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -40,62 +50,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 'Build and push: xenia-discord (dev)'
+      - name: 'Build and push (dev, ${{ matrix.imageName }}, ${{ matrix.dockerFilename }})'
         uses: docker/build-push-action@v5
+        if: github.ref == 'refs/heads/develop'
         with:
           push: true
           tags: |
-            ktwrd/xenia-discord:dev
-            ktwrd/xenia-discord:latest
-            ktwrd/xenia-discord:dev-${{ env.CONTAINER_VERSION }}
-            ktwrd/xenia-discord:latest-${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord:dev
-            ghcr.io/ktwrd/xenia-discord:latest
-            ghcr.io/ktwrd/xenia-discord:dev-${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord:latest-${{ env.CONTAINER_VERSION }}
-          file: Dockerfile
-      - name: 'Build and push: xenia-discord-dash (dev)'
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: |
-            ktwrd/xenia-discord-dash:dev
-            ktwrd/xenia-discord-dash:latest
-            ktwrd/xenia-discord-dash:dev-${{ env.CONTAINER_VERSION }}
-            ktwrd/xenia-discord-dash:latest-${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord-dash:dev
-            ghcr.io/ktwrd/xenia-discord-dash:latest
-            ghcr.io/ktwrd/xenia-discord-dash:dev-${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord-dash:latest-${{ env.CONTAINER_VERSION }}
-          file: WebPanel.Dockerfile
+            ${{ matrix.imageName }}:dev
+            ${{ matrix.imageName }}:latest
+            ${{ matrix.imageName }}:dev-${{ env.CONTAINER_VERSION }}
+            ${{ matrix.imageName }}:latest-${{ env.CONTAINER_VERSION }}
+          file: ${{ matrix.dockerFilename }}
 
-      - name: 'Build and push: xenia-discord (stable)'
+      - name: 'Build and push (stable, ${{ matrix.imageName }}, ${{ matrix.dockerFilename }})'
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
           push: true
           tags: |
-            ktwrd/xenia-discord:${{ env.TAG }}
-            ktwrd/xenia-discord:${{ env.CONTAINER_VERSION }}
-            ktwrd/xenia-discord:stable
-            ktwrd/xenia-discord:stable-${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord:${{ env.TAG }}
-            ghcr.io/ktwrd/xenia-discord:${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord:stable
-            ghcr.io/ktwrd/xenia-discord:stable-${{ env.CONTAINER_VERSION }}
-          file: Dockerfile
-      - name: 'Build and push: xenia-discord-dash (stable)'
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: |
-            ktwrd/xenia-discord-dash:${{ env.TAG }}
-            ktwrd/xenia-discord-dash:${{ env.CONTAINER_VERSION }}
-            ktwrd/xenia-discord-dash:stable
-            ktwrd/xenia-discord-dash:stable-${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord-dash:${{ env.TAG }}
-            ghcr.io/ktwrd/xenia-discord-dash:${{ env.CONTAINER_VERSION }}
-            ghcr.io/ktwrd/xenia-discord-dash:stable
-            ghcr.io/ktwrd/xenia-discord-dash:stable-${{ env.CONTAINER_VERSION }}
-          file: WebPanel.Dockerfile
+            ${{ matrix.imageName }}:${{ env.TAG }}
+            ${{ matrix.imageName }}:${{ env.CONTAINER_VERSION }}
+            ${{ matrix.imageName }}:stable
+            ${{ matrix.imageName }}:stable-${{ env.CONTAINER_VERSION }}
+          file: ${{ matrix.dockerFilename }}
