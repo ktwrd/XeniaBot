@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-using CronNET;
+﻿using CronNET;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -15,6 +7,15 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
+using NLog;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace XeniaBot.Shared.Services;
 
@@ -23,6 +24,7 @@ namespace XeniaBot.Shared.Services;
 /// </summary>
 public class CoreContext
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia.CoreContext");
     public static CoreContext? Instance { get; private set; }
     public CoreContext(ProgramDetails details)
     {
@@ -166,21 +168,14 @@ public class CoreContext
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
             .AddSingleton(s)
-            .AddSingleton<CommandHandler>()
             .AddSingleton<InteractionHandler>();
 
         beforeBuild(services).Wait();
 
-        RegisteredBaseControllers = new List<Type>();
-        foreach (var item in services)
-        {
-            if (item.ServiceType.IsAssignableTo(typeof(BaseService)) &&
-                !RegisteredBaseControllers.Contains(item.ServiceType))
-            {
-                RegisteredBaseControllers.Add(item.ServiceType);
-            }
-        }
-
+        RegisteredBaseControllers = services.Where(item
+            => item.ServiceType.IsAssignableTo(typeof(BaseService))
+            && !RegisteredBaseControllers.Contains(item.ServiceType)).Select(item => item.ServiceType)
+            .ToList();
         Services = services.BuildServiceProvider();
         RunServiceInit();
     }

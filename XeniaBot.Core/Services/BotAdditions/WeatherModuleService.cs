@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
@@ -19,6 +20,7 @@ namespace XeniaBot.Core.Services.BotAdditions;
 [XeniaController]
 public class WeatherModuleService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(WeatherModuleService));
     private readonly DiscordSocketClient _discord;
     private readonly WeatherAPIService _weather;
     private readonly ErrorReportService _error;
@@ -78,7 +80,7 @@ public class WeatherModuleService : BaseService
         {
             var msg =
                 $"Failed to run button {arg.Data.CustomId} in channel {arg.Message.Channel.Id} for {arg.Message.Author} ({arg.Message.Author.Id})";
-            Log.Error($"{msg}\n{ex}");
+            _log.Error(ex, msg);
             await _error.ReportException(ex, msg);
             
             await arg.RespondAsync(

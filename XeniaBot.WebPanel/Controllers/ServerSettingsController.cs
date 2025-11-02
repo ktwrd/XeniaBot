@@ -8,6 +8,7 @@ using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -59,9 +60,10 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()
+            Program.Core.GetRequiredService<ErrorReportService>()?
                 .ReportException(ex, $"Failed to save logging settings");
-            Log.Error($"Failed to save logging settings. \n{ex}");
+            _logger.LogError(ex, "Failed to save logging settings for Guild {GuldId} (data={Data})",
+                id, data);
             return await ModerationView(id,
                 messageType: "danger",
                 message: $"Failed to save Logging settings. {ex.Message}");
@@ -93,9 +95,10 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()
+            Program.Core.GetRequiredService<ErrorReportService>()?
                 .ReportException(ex, $"Failed to save role preserve settings");
-            Log.Error($"Failed to save role preserve settings\n{ex}");
+            _logger.LogError(ex, "Failed to save role preserve settings for Guild {GuildId}",
+                id);
             return await ModerationView(id,
                 messageType: "danger",
                 message: $"Failed to save Role Preserve settings. {ex.Message}");
@@ -122,7 +125,8 @@ public partial class ServerController
                     messageType: "danger",
                     message: $"Failed to save Warn Strike settings. Strike Window must be greater than one");
             }
-            var warnStrikeService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
+            var warnStrikeService = CoreContext.Instance?.GetRequiredService<WarnStrikeService>()
+                ?? throw new InvalidOperationException($"Could not find service {typeof(WarnStrikeService)}");
             var configRepo = CoreContext.Instance.GetRequiredService<GuildConfigWarnStrikeRepository>();
             var model = await warnStrikeService.GetStrikeConfig(id);
 
@@ -136,9 +140,9 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()
+            Program.Core.GetRequiredService<ErrorReportService>()?
                 .ReportException(ex, $"Failed to save Warn Strike settings");
-            Log.Error($"Failed to save Warn Strike settings\n{ex}");
+            _logger.LogError(ex, "Failed to save Warn Strike settings for Guild {GuildId}", id);
             return await ModerationView(id,
                 messageType: "danger",
                 message: $"Failed to save Warn Strike settings. {ex.Message}");
@@ -213,9 +217,10 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()
+            Program.Core.GetRequiredService<ErrorReportService>()?
                 .ReportException(ex, $"Failed to save greeter settings");
-            Log.Error($"Failed to save greeter settings\n{ex}");
+            _logger.LogError(ex, "Failed to save greeter settings in Guild {GuildId}",
+                id);
             return await GreeterJoinView(id,
                 messageType: "danger",
                 message: $"Failed to save. {ex.Message}");
@@ -290,9 +295,10 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()
+            Program.Core.GetRequiredService<ErrorReportService>()?
                 .ReportException(ex, $"Failed to save goodbye settings");
-            Log.Error($"Failed to save greeter goodbye settings\n{ex}");
+            _logger.LogError(ex, "Failed to save goodbye settings for Guild {GuildId}",
+                id);
             return await GreeterLeaveView(id,
                 messageType: "danger",
                 message: $"Failed to save settings. {ex.Message}");

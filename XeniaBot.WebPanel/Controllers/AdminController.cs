@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -11,12 +12,14 @@ namespace XeniaBot.WebPanel.Controllers;
 [Controller]
 public partial class AdminController : BaseXeniaController
 {
+    private readonly ILogger<AdminController> _logger;
     private readonly IServiceProvider _services;
     private readonly DiscordSocketClient _client;
     private readonly ConfigData _config;
-    public AdminController()
+    public AdminController(ILogger<AdminController> logger)
         : base()
     {
+        _logger = logger;
         _services = Program.Core.Services;
 
         _client = _services.GetRequiredService<DiscordSocketClient>();

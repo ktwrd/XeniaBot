@@ -3,6 +3,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
+using NLog;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
@@ -11,6 +12,7 @@ namespace XeniaBot.Data.Repositories;
 [XeniaController]
 public class UserConfigRepository : BaseRepository<UserConfigModel>
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public UserConfigRepository(IServiceProvider services)
         : base(UserConfigModel.CollectionName, services)
     {
@@ -28,7 +30,7 @@ public class UserConfigRepository : BaseRepository<UserConfigModel>
                 .Descending("ModifiedAtTimestamp");
             var indexModel = new CreateIndexModel<UserConfigModel>(keys);
             collection.Indexes.CreateOne(indexModel);
-            Log.WriteLine($"Created Index");
+            _log.Info($"{UserConfigModel.CollectionName} - Created Index");
         }
     }
 
@@ -47,7 +49,7 @@ public class UserConfigRepository : BaseRepository<UserConfigModel>
             .Descending(e => e.ModifiedAtTimestamp);
 
         var result = await BaseFind(filter, sort, limit: 1);
-        return result.FirstOrDefault();
+        return await result.FirstOrDefaultAsync();
     }
 
     public async Task<UserConfigModel> GetOrDefault(ulong id)

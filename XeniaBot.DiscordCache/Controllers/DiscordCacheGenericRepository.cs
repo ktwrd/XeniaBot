@@ -1,5 +1,6 @@
-﻿using System.Data;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
+using NLog;
+using System.Data;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 
@@ -7,6 +8,7 @@ namespace XeniaBot.DiscordCache.Controllers;
 
 public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : DiscordCacheBaseModel
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DiscordCacheGenericRepository(string collectionName, IServiceProvider services)
         : base(collectionName, services)
     {
@@ -44,11 +46,11 @@ public class DiscordCacheGenericRepository<T> : BaseRepository<T> where T : Disc
                 try
                 {
                     collection.Indexes.CreateOne(model);
-                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                    _log.Info($"{collectionName} - Created index \"{name}\"");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                    _log.Error(ex, $"{collectionName} - Failed to create index \"{name}\"");
                 }
             }
         }

@@ -1,19 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using System.Web;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using XeniaBot.Data;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
-using XeniaBot.WebPanel.Extensions;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
@@ -39,7 +31,7 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
+        var user = await _discord.GetUserAsync((ulong)userId);
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -65,7 +57,7 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
+        var user = await _discord.GetUserAsync(userId.Value);
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -90,7 +82,7 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
+        var user = await _discord.GetUserAsync(userId.Value);
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
@@ -112,7 +104,7 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
+        var user = await _discord.GetUserAsync(userId.Value);
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");

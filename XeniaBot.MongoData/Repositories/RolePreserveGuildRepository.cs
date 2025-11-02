@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
+using NLog;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
@@ -12,6 +13,7 @@ namespace XeniaBot.Data.Repositories;
 [XeniaController]
 public class RolePreserveGuildRepository : BaseRepository<RolePreserveGuildModel>
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public RolePreserveGuildRepository(IServiceProvider services)
         : base(RolePreserveGuildModel.CollectionName, services)
     {
@@ -44,11 +46,11 @@ public class RolePreserveGuildRepository : BaseRepository<RolePreserveGuildModel
                 try
                 {
                     collection.Indexes.CreateOne(model);
-                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                    _log.Info($"{collectionName} - Created index \"{name}\"");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                    _log.Error(ex, $"{collectionName} - Failed to create index \"{name}\"");
                 }
             }
         }
@@ -61,7 +63,7 @@ public class RolePreserveGuildRepository : BaseRepository<RolePreserveGuildModel
             .Filter
             .Where(e => e.GuildId == guildId);
         var res = await BaseFind(filter, limit: 1);
-        return res.FirstOrDefault();
+        return await res.FirstOrDefaultAsync();
     }
     public async Task Set(RolePreserveGuildModel model)
     {

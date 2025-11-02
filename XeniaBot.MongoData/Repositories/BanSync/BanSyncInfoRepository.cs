@@ -8,12 +8,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using System.Data;
+using NLog;
 
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
 public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly DiscordSocketClient _discord;
     private readonly BanSyncStateHistoryRepository _banSyncStateController;
 
@@ -70,11 +72,11 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
                 try
                 {
                     collection.Indexes.CreateOne(model);
-                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                    _log.Info($"{collectionName} - Created index \"{name}\"");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                    _log.Error(ex, $"{collectionName} - Failed to create index \"{name}\"");
                 }
             }
         }

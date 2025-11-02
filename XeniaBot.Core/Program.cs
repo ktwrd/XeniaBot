@@ -12,6 +12,7 @@ using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.Data.Services;
 using XeniaBot.Logic.Services;
 using Sentry;
+using NLog;
 
 namespace XeniaBot.Core
 {
@@ -63,11 +64,11 @@ namespace XeniaBot.Core
                 {
                     if (name == null)
                     {
-                        Log.Warn($"Assembly.GetName() resulted in null (when Assembly is from {asm?.Location})");
+                        LogManager.GetLogger("Main").Warn($"Assembly.GetName() resulted in null (when Assembly is from {asm?.Location})");
                     }
                     else if (name.Version == null)
                     {
-                        Log.Warn($"Assembly.GetName().Version is null (when Assembly is from {asm?.Location})");
+                        LogManager.GetLogger("Main").Warn($"Assembly.GetName().Version is null (when Assembly is from {asm?.Location})");
                     }
                     return null;
                 }
@@ -78,6 +79,8 @@ namespace XeniaBot.Core
         public static CoreContext Core { get; private set; }
         public static void Main(string[] args)
         {
+            LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
+
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
@@ -92,6 +95,17 @@ namespace XeniaBot.Core
                     #else
                     Debug = false
                     #endif
+                });
+                LogManager.Configuration.AddSentry(options =>
+                {
+                    options.Dsn = FeatureFlags.SentryDSN;
+                    options.TracesSampleRate = 1.0;
+                    options.IsGlobalModeEnabled = true;
+#if DEBUG
+                    options.Debug = true;
+#else
+                    options.Debug = false;
+#endif
                 });
             }
 

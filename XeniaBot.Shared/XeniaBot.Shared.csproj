@@ -18,18 +18,20 @@
     <PackageReference Include="FastCloner" Version="3.3.16" />
     <PackageReference Include="Iminetsoft.CronNET" Version="8.0.2" />
     <PackageReference Include="kate.shared" Version="1.5.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.*" />
     <PackageReference Include="MongoDB.Bson" Version="3.3.0" />
     <PackageReference Include="MongoDB.Driver" Version="3.3.0" />
     <PackageReference Include="NetVips" Version="3.0.1" />
     <PackageReference Include="NetVips.Extensions" Version="3.0.0" />
     <PackageReference Include="NetVips.Native.linux-x64" Version="8.16.1" />
     <PackageReference Include="NetVips.Native.win-x64" Version="8.16.1" />
-    <PackageReference Include="prometheus-net" Version="8.2.1" />
-    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
-    <PackageReference Include="Sentry" Version="5.16.0" />
-    <PackageReference Include="System.Resources.Extensions" Version="9.0.9" />
+    <PackageReference Include="NLog" Version="6.*" />
+    <PackageReference Include="prometheus-net" Version="8.*" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.*" />
+    <PackageReference Include="Sentry" Version="5.16.2" />
+    <PackageReference Include="Sentry.NLog" Version="5.16.2" />
+    <PackageReference Include="System.Resources.Extensions" Version="9.*" />
   </ItemGroup>
 
 </Project>

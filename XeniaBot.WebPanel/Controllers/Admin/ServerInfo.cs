@@ -9,6 +9,7 @@ using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
+using Microsoft.Extensions.Logging;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -54,7 +55,7 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
-            Log.Error(ex);
+            _logger.LogError(ex, "Failed to refresh bans for Guild {GuildId}", id);
             await Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to refresh bans in {id}");
             model.MessageType = "danger";
@@ -81,11 +82,12 @@ public partial class AdminController
         {
             var res = await controller.SetGuildState(id, state, reason, doRefreshBans);
             if (res == null)
-                throw new Exception("Server Config not found");
+                throw new InvalidOperationException($"Server Config not found for Guild {id}");
         }
         catch (Exception ex)
         {
-            Log.Error(ex);
+            _logger.LogError(ex, "Failed to save bansync state for Guild {GuildId} (state={State}, reason={Reason}, doRefreshBans={DoRefreshBans})",
+                id, state, reason, doRefreshBans);
             model.MessageType = "danger";
             model.Message = ex.Message;
             return PartialView("ServerInfo/BanSyncComponent", model);

@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
+using NLog;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
@@ -15,6 +16,7 @@ namespace XeniaBot.Data.Services;
 [XeniaController]
 public class XeniaVersionService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(XeniaVersionService));
     private readonly ProgramDetails _details;
     private readonly ConfigData _configData;
     private readonly XeniaVersionRepository _repo;
@@ -49,12 +51,12 @@ public class XeniaVersionService : BaseService
         
         if (_configData.IsUpgradeAgent && currentModel.Name.StartsWith("XeniaBot.Core"))
         {
-            Log.Debug("Initializing Upgrades");
+            _log.Info("Initializing Upgrades");
             await InitializeUpgrade(currentModel, previousModel);
         }
         else
         {
-            Log.Warn("Ignoring DB Upgrade (Config.IsUpgradeAgent is false)");
+            _log.Info("Ignoring DB Upgrade (Config.IsUpgradeAgent is false)");
         }
     }
 
@@ -125,10 +127,10 @@ public class XeniaVersionService : BaseService
     {
         if (!_configData.IsUpgradeAgent)
         {
-            Log.Warn($"Not Upgrade Agent. Ignoring");
+            _log.Info($"Not Upgrade Agent. Ignoring");
             return;
         }
-        Log.WriteLine("Converting the type of _id in all documents from ObjectId to Guid");
+        _log.Info("Converting the type of _id in all documents from ObjectId to Guid");
         // TODO
     }
 
@@ -141,7 +143,7 @@ public class XeniaVersionService : BaseService
     {
         if (previousModel == null)
         {
-            Log.Warn("Ignoring. Previous model is null");
+            _log.Warn("Ignoring. Previous model is null");
             return;
         }
         var currentDataAsm = currentModel?.GetAssemblyByName("XeniaBot.Data");
@@ -159,14 +161,14 @@ public class XeniaVersionService : BaseService
         // Ignore when current version is <1.1
         if (parsedCurrentVersion < changedAtVersion)
         {
-            Log.Warn("Not Eligible. Current version is <1.1");
+            _log.Warn("Not Eligible. Current version is <1.1");
             return;
         }
 
         // Ignore when previous version is >=1.1
         if (parsedPreviousVersion >= changedAtVersion)
         {
-            Log.Warn("Not Eligible. Previous version is >=1.1");
+            _log.Warn("Not Eligible. Previous version is >=1.1");
             return;
         }
 
@@ -174,7 +176,7 @@ public class XeniaVersionService : BaseService
         if (reminderRepo == null)
             throw new NoNullAllowedException("ReminderRepository is null");
 
-        Log.WriteLine($"Running Upgrade (current {parsedCurrentVersion}, previous {parsedPreviousVersion}");
+        _log.Info($"Running Upgrade (current {parsedCurrentVersion}, previous {parsedPreviousVersion})");
         
         var start = DateTimeOffset.UtcNow;
         
@@ -227,14 +229,14 @@ public class XeniaVersionService : BaseService
                 {
                     item.Start();
                     item.Wait();
-                };
-                Log.Debug($"bucket[{index}] took {XeniaHelper.FormatDuration(bucketStart)}");
+                }
+                _log.Debug($"bucket[{index}] took {XeniaHelper.FormatDuration(bucketStart)}");
             }));
         }
 
         foreach (var i in taskList)
             i.Start();
         await Task.WhenAll(taskList);
-        Log.Debug($"Upgrade took {XeniaHelper.FormatDuration(start)}");
+        _log.Info($"Upgrade took {XeniaHelper.FormatDuration(start)}");
     }
 }

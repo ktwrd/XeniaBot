@@ -6,12 +6,14 @@ using XeniaBot.Shared;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
+using NLog;
 
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
 public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryItemModel>
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public BanSyncStateHistoryRepository(IServiceProvider services)
         : base(BanSyncStateHistoryItemModel.CollectionName, services)
     {
@@ -57,11 +59,11 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
                 try
                 {
                     collection.Indexes.CreateOne(model);
-                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                    _log.Info($"{collectionName} - Created index \"{name}\"");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                    _log.Error(ex, $"{collectionName} - Failed to create index \"{name}\"");
                 }
             }
         }

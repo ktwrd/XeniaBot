@@ -1,12 +1,13 @@
-﻿using System;
+﻿using kate.shared.Helpers;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
+using NLog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using kate.shared.Helpers;
-using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
@@ -14,6 +15,7 @@ namespace XeniaBot.Shared.Services;
 
 public class ConfigService
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia.ConfigService");
     public ConfigService(IServiceProvider services)
     {
         Data = FetchConfig(services.GetRequiredService<ProgramDetails>());

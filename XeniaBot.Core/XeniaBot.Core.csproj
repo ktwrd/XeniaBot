@@ -67,8 +67,7 @@
     <PackageReference Include="Google.Cloud.Translation.V2" Version="3.4.0" />
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="MimeTypesMap" Version="1.0.9" />
-    <PackageReference Include="Noppes.E621Client" Version="0.10.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="5.16.0" />
+    <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj" />
@@ -86,6 +85,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Update="nlog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Properties\VersionAutoIncrement.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>

@@ -2,21 +2,24 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using XeniaBot.Core.Helpers;
-using XeniaBot.Shared;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
+using XeniaBot.Data.Services;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.LevelSystem.Services;
 
 [XeniaController]
 public class LevelSystemService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(LevelSystemService));
     private IMongoDatabase _db;
     private DiscordSocketClient _client;
     private Random _random;
@@ -42,7 +45,7 @@ public class LevelSystemService : BaseService
     {
         if (!_configData.RefreshLevelSystemOnStart)
         {
-            Log.WriteLine($"Not going to run since {nameof(_configData.RefreshLevelSystemOnStart)} is false");
+            _log.Info($"Not going to run since {nameof(_configData.RefreshLevelSystemOnStart)} is false");
             return;
         }
         try
@@ -63,7 +66,7 @@ public class LevelSystemService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to run OnReady.\n{ex}");
+            _log.Error(ex, $"Failed to run OnReady");
         }
     }
 
@@ -118,13 +121,13 @@ public class LevelSystemService : BaseService
                 {
                     if (current.UserLevel >= item.RequiredLevel)
                     {
-                        var role = guild.GetRole(item.RoleId);
+                        var role = await guild.GetRoleAsync(item.RoleId);
                         await member.AddRoleAsync(role);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}\n{ex}");
+                    _log.Error(ex, $"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}");
                     await DiscordHelper.ReportError(
                         ex,
                         $"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}");
@@ -133,7 +136,7 @@ public class LevelSystemService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to run with user: {model.UserId} and guild {model.GuildId}\n{ex}");
+            _log.Error(ex, $"Failed to run with user: {model.UserId} and guild {model.GuildId}");
         }
     }
 
@@ -202,7 +205,7 @@ public class LevelSystemService : BaseService
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to run {nameof(ClientMessageReceived)}\n{ex}");
+                _log.Error(ex, $"Failed to run {nameof(ClientMessageReceived)}");
             }
         })
         {

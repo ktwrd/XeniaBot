@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
@@ -12,6 +13,7 @@ namespace XeniaBot.Core.Services.BotAdditions;
 [XeniaController]
 public class GuildGreeterService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(GuildGreeterService));
     private readonly GuildGreeterConfigRepository _configWelcomeRepository;
     private readonly GuildGreetByeConfigRepository _configByeRepository;
     private readonly UserConfigRepository _userConfigRepo;
@@ -60,15 +62,15 @@ public class GuildGreeterService : BaseService
             }
             catch (Exception ex)
             {
-                var msg = $"Failed to create DM Channel for User {user.ToString()} ({user.Id}";
-                Log.Error($"{msg}\n{ex}");
+                var msg = $"Failed to create DM Channel for User {user} ({user.Id})";
+                _log.Error(ex, msg);
                 try
                 {
                     await _errReportService.ReportException(ex, msg);
                 }
                 catch (Exception iex)
                 {
-                    Log.Error($"Failed to report exception\n{iex}");
+                    _log.Error(iex, $"Failed to report exception");
                 }
                 createDMChannelError = ex.Message;
             }

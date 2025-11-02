@@ -18,6 +18,7 @@ using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
 using MongoDB.Driver;
+using NLog;
 
 namespace XeniaBot.WebPanel.Helpers;
 
@@ -72,7 +73,7 @@ public static class AspHelper
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to run {guildId}, {userId}, {permissionRequired}\n{ex}");
+            LogManager.GetCurrentClassLogger().Error(ex, $"Failed to run {guildId}, {userId}, {permissionRequired}");
             errorReport.ReportException(
                 ex, $"Failed to run AspHelper.CanAccessGuild ({guildId}, {userId}, {permissionRequired})");
             return false;

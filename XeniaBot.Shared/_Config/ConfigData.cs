@@ -1,13 +1,15 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using NLog;
+using System;
 using System.ComponentModel;
 using System.Text.Json;
-using Newtonsoft.Json.Linq;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Shared;
 
 public class ConfigData
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(ConfigData));
     /// <summary>
     /// Current config version.
     ///

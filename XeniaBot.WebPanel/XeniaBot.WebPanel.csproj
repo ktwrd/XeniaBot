@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -7,7 +7,6 @@
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 
     <AssemblyVersion>0.14.0.0</AssemblyVersion>
-<!--    <Deterministic>false</Deterministic>-->
 
     <AssemblyName>XeniaBot.WebPanel</AssemblyName>
     <RootNamespace>XeniaBot.WebPanel</RootNamespace>
@@ -37,14 +36,13 @@
 
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.3.0" />
-    <PackageReference Include="Markdig" Version="0.42.0" />
+    <PackageReference Include="Markdig" Version="0.43.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.20" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.20" />
     <PackageReference Include="Microsoft.IdentityModel.Logging" Version="8.14.0" />
-    <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="5.16.0" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="6.*" />
+    <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
+    <PackageReference Include="Sentry.NLog" Version="5.16.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,67 +58,9 @@
     <EmbeddedResource Include="Views\Home\About.md" />
   </ItemGroup>
 
-  <!--<ItemGroup>
-    <Compile Update="Properties\VersionAutoIncrement.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-  </ItemGroup>
   <ItemGroup>
-    <None Update="Properties\VersionAutoIncrement.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>VersionAutoIncrement.cs</LastGenOutput>
-    </None>
+    <Content Update="nlog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\VersionAutoIncrement.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Properties\VersionAutoIncrement.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>VersionAutoIncrement.tt</DependentUpon>
-    </None>
-  </ItemGroup>-->
-
-  <!--<ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-  </ItemGroup>-->
-  <!-- T4 build support for .NET Core (Begin) -->
-
-  <!--<ItemGroup Condition="'$(MSBuildRuntimeType)'=='Core'">
-    <TextTemplate Include="**\*.tt" />
-  </ItemGroup>
-
-  <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild" Condition="'$(MSBuildRuntimeType)'=='Core'">
-    <ItemGroup>
-      <Compile Remove="**\*.cs" />
-    </ItemGroup>
-    <Exec WorkingDirectory="$(ProjectDir)" Command="t4 %(TextTemplate.Identity)" />
-    <ItemGroup>
-      <Compile Include="**\*.cs" />
-    </ItemGroup>
-  </Target>
-
-  &lt;!&ndash; T4 build support for .NET Core (End) &ndash;&gt;
-
-  &lt;!&ndash; T4 build support for Visual Studio (Begin) &ndash;&gt;
-  <PropertyGroup Condition="'$(Configuration)'=='Release' And '$(MSBuildRuntimeType)'=='Full'">
-      <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
-      <TransformOnBuild>true</TransformOnBuild>
-      &lt;!&ndash;Other properties can be inserted here&ndash;&gt;
-      &lt;!&ndash;Set to true to force overwriting of read-only output files, e.g. if they're not checked out (default is false)&ndash;&gt;
-      <OverwriteReadOnlyOutputFiles>true</OverwriteReadOnlyOutputFiles>
-      &lt;!&ndash;Set to false to transform files even if the output appears to be up-to-date (default is true)&ndash;&gt;
-      <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
-  </PropertyGroup>
-  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" Condition="'$(Configuration)'=='Release' And '$(MSBuildRuntimeType)'=='Full'" />
-
-  &lt;!&ndash; T4 build support for Visual Studio (End) &ndash;&gt;-->
 </Project>

@@ -11,12 +11,14 @@ using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Services;
 using Discord.Rest;
+using NLog;
 
 namespace XeniaBot.Data.Services
 {
     [XeniaController]
     public class BanSyncService : BaseService
     {
+        private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(BanSyncService));
         private readonly DiscordSocketClient _client;
         private readonly BanSyncConfigRepository _guildConfigRepo;
         private readonly ConfigData _configData;
@@ -45,12 +47,12 @@ namespace XeniaBot.Data.Services
         {
             if (_programDetails.Platform != XeniaPlatform.Bot)
             {
-                Log.Debug($"Skipping since not running on {XeniaPlatform.Bot} (platform: {_programDetails.Platform})");
+                _log.Info($"Skipping since not running on {XeniaPlatform.Bot} (platform: {_programDetails.Platform})");
                 return;
             }
-            if (_configData.RefreshBansOnStart == false)
+            if (!_configData.RefreshBansOnStart)
             {
-                Log.WriteLine($"Skipping ban refresh since it's disabled.");
+                _log.Info($"Skipping ban refresh since it's disabled.");
                 return;
             }
             var taskList = new List<Task>();
@@ -395,7 +397,7 @@ namespace XeniaBot.Data.Services
             var channel = guild.GetTextChannel(current.LogChannel);
             if (channel == null)
             {
-                Log.Warn($"Failed to get channel {current.LogChannel} in guild {guild.Id} ({guild.Name})");
+                _log.Warn($"Failed to get channel {current.LogChannel} in guild {guild.Id} ({guild.Name})");
                 return;
             }
 

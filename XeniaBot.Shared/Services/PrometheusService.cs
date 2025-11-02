@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using Prometheus;
 using System;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace XeniaBot.Shared.Services
     [XeniaController]
     public class PrometheusService : BaseService
     {
+        private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(PrometheusService));
         private ConfigData _configData;
         private ProgramDetails _details;
         protected Prometheus.KestrelMetricServer? Server { get; private set; }
@@ -40,7 +42,7 @@ namespace XeniaBot.Shared.Services
             string address = _configData.Prometheus.Hostname;
             if (address == "+")
                 address = "0.0.0.0";
-            Log.Note($"Available at http://{address}:{_configData.Prometheus.Port}{_configData.Prometheus.Url}");
+            Log.Info($"Available at http://{address}:{_configData.Prometheus.Port}{_configData.Prometheus.Url}");
             ServerStart?.Invoke();
         }
 
@@ -53,7 +55,7 @@ namespace XeniaBot.Shared.Services
         {
             if (!_configData.Prometheus.Enable || _details.Platform == XeniaPlatform.WebPanel)
             {
-                Log.Note("Prometheus Metrics is disabled");
+                Log.Debug("Prometheus Metrics is disabled");
                 return Task.CompletedTask;
             }
             Log.Debug($"Starting server");

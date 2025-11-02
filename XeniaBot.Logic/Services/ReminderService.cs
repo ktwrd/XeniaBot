@@ -1,24 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Repositories;
+using NLog;
+using Sentry;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using XeniaBot.Data.Models;
+using XeniaBot.Data.Repositories;
+using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using Timer = System.Timers.Timer;
-using Sentry;
 
 namespace XeniaBot.Logic.Services;
 
 [XeniaController]
 public class ReminderService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ReminderService));
     private readonly CoreContext _core;
     private readonly ConfigData _configData;
     private readonly DiscordSocketClient _discordClient;
@@ -49,7 +52,7 @@ public class ReminderService : BaseService
         InitTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if (!_configData.ReminderService.Enable)
         {
-            Log.Warn("Ignoring since ReminderServiceConfigItem.Enable is false");
+            _log.Info("Ignoring since ReminderServiceConfigItem.Enable is false");
             return;
         }
 
@@ -60,7 +63,7 @@ public class ReminderService : BaseService
         catch (Exception ex)
         {
             SentrySdk.CaptureException(ex);
-            Log.Error($"Failed to call {nameof(CallForgottenReminders)}\n{ex}");
+            _log.Error(ex, $"Failed to call {nameof(CallForgottenReminders)}");
         }
         try
         {
@@ -69,7 +72,7 @@ public class ReminderService : BaseService
         catch (Exception ex)
         {
             SentrySdk.CaptureException(ex);
-            Log.Error($"Failed to call {nameof(OnReadyTasks)}\n{ex}");
+            _log.Error(ex, $"Failed to call {nameof(OnReadyTasks)}");
         }
 
         CreateUnregisteredTasksCompleted += ReminderDbCheckLoop;
@@ -108,7 +111,7 @@ public class ReminderService : BaseService
                 scope.SetExtra(nameof(CurrentReminders), string.Join(", ", CurrentReminders));
                 scope.SetExtra(nameof(notCalled), notCalled);
             });
-            Log.Error($"Failed to run {nameof(CreateUnregisteredTasks)}\n{ex}");
+            _log.Error(ex, $"Failed to run {nameof(CreateUnregisteredTasks)}");
         }
     }
 
@@ -121,7 +124,7 @@ public class ReminderService : BaseService
         {
             if (!_configData.ReminderService.Enable)
             {
-                Log.Warn("Ignoring since ReminderServiceConfigItem.Enable is false");
+                _log.Debug("Ignoring since ReminderServiceConfigItem.Enable is false");
                 return;
             }
             var notCalled = await _reminderDb.GetMany(
@@ -133,7 +136,7 @@ public class ReminderService : BaseService
             {
                 if (item.HasReminded)
                     continue;
-                Log.Debug($"Called {item.ReminderId}");
+                _log.Debug($"Called {item.ReminderId}");
                 taskList.Add(new Task(delegate
                 {
                     SendNotification(item.ReminderId).Wait();
@@ -145,7 +148,7 @@ public class ReminderService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to send notifications for forgotten reminders\n{ex}");
+            _log.Error(ex, $"Failed to send notifications for forgotten reminders");
             SentrySdk.CaptureException(ex);
         }
     }
@@ -153,7 +156,7 @@ public class ReminderService : BaseService
     {
         if (!_configData.ReminderService.Enable)
         {
-            Log.Warn("Ignoring since ReminderServiceConfigItem.Enable is false");
+            _log.Debug("Ignoring since ReminderServiceConfigItem.Enable is false");
             return;
         }
 
@@ -164,7 +167,7 @@ public class ReminderService : BaseService
         catch (Exception ex)
         {
             SentrySdk.CaptureException(ex);
-            Log.Error($"Failed to call {nameof(CreateUnregisteredTasks)}\n{ex}");
+            _log.Error(ex, $"Failed to call {nameof(CreateUnregisteredTasks)}");
         }
     }
 
@@ -187,7 +190,7 @@ public class ReminderService : BaseService
                 continue;
             if (ignoreItems.Length < 1 || ignoreItems.Contains(i.ReminderId))
             {
-                Log.Debug($"Registered {i.ReminderId}");
+                _log.Debug($"Registered {i.ReminderId}");
                 taskList.Add(new Task(delegate { AddReminderTask(i).Wait(); }));
                 if (appendToCurrentReminders)
                 {
@@ -216,7 +219,7 @@ public class ReminderService : BaseService
         var diff = model.ReminderTimestamp - currentTimestamp;
         if (diff < 3)
         {
-            Log.Warn($"Reminder ${model.ReminderId} too short, ignoring.");
+            _log.Warn($"Reminder ${model.ReminderId} too short, ignoring.");
             return Task.CompletedTask;
         }
         var timer = new Timer(diff * 1000);
@@ -278,10 +281,10 @@ public class ReminderService : BaseService
             if (model.HasReminded)
                 return;
             
-            var channel = _discordClient.GetChannel(model.ChannelId);
+            var channel = await _discordClient.GetChannelAsync(model.ChannelId);
             if (!(channel is ITextChannel textChannel))
             {
-                Log.Error($"Channel for Reminder {reminderId} isn't a text channel");
+                _log.Error($"Channel for Reminder {reminderId} isn't a text channel");
                 return;
             }
 
@@ -297,14 +300,7 @@ public class ReminderService : BaseService
         }
         catch (Exception ex)
         {
-            try
-            {
-                throw new ApplicationException($"Failed to send reminder ({reminderId})", ex);
-            }
-            catch (Exception iex)
-            {
-                SentrySdk.CaptureException(iex);
-            }
+            _log.Error(ex, $"Failed to send reminder {reminderId}");
         }
     }
 }

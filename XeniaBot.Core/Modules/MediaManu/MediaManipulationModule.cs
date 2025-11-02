@@ -1,18 +1,18 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using NetVips;
+using NLog;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
-
 using NVImage = NetVips.Image;
-using Log = XeniaBot.Shared.Log;
 
 namespace XeniaBot.Core.Modules;
 
 public partial class MediaManipulationModule : InteractionModuleBase
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(MediaManipulationModule));
     [SlashCommand("caption", "Add a caption to a piece of media")]
     public async Task Caption(string caption,
         IAttachment attachment,

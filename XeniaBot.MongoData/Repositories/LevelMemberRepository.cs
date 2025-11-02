@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
+using NLog;
 using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 
@@ -12,6 +13,7 @@ namespace XeniaBot.Data.Repositories;
 [XeniaController]
 public class LevelMemberRepository : BaseRepository<LevelMemberModel>
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public LevelMemberRepository(IServiceProvider services)
         : base(LevelMemberModel.CollectionName, services)
     {
@@ -57,11 +59,11 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
                 try
                 {
                     collection.Indexes.CreateOne(model);
-                    Log.WriteLine($"{collectionName} - Created index \"{name}\"");
+                    _log.Info($"{collectionName} - Created index \"{name}\"");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"{collectionName} - Failed to create index \"{name}\"", ex);
+                    _log.Error(ex, $"{collectionName} - Failed to create index \"{name}\"");
                 }
             }
         }

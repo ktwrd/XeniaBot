@@ -1,4 +1,10 @@
-﻿using System;
+﻿using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using Sentry;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,17 +13,13 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Discord;
-using Discord.Commands;
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using Sentry;
 
 namespace XeniaBot.Shared.Services;
 
 [XeniaController]
 public class ErrorReportService : BaseService
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(ErrorReportService));
     private readonly DiscordSocketClient _client;
     private readonly ConfigData _config;
 

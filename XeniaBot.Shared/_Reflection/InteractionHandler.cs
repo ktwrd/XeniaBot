@@ -1,6 +1,9 @@
 ﻿using Discord.Interactions;
+using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,13 +11,12 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Discord.Rest;
-using Sentry;
 
 namespace XeniaBot.Shared;
 
 public class InteractionHandler
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(InteractionHandler));
     private readonly InteractionService _interactionService;
     private readonly DiscordSocketClient _client;
     private readonly IServiceProvider _services;
@@ -33,7 +35,7 @@ public class InteractionHandler
         {
             if (string.IsNullOrEmpty(_configData.ApiKeys.DiscordBotList))
             {
-                Log.WriteLine($"Ignoring since DiscordBotList_Token is empty");
+                Log.Warn($"Ignoring since DiscordBotList_Token is empty");
                 return;
             }
             var blacklist = new Dictionary<string, string[]>()

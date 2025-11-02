@@ -10,87 +10,88 @@ using System.Threading.Tasks;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Services;
+using NLog;
 
-namespace XeniaBot.Core.Services.BotAdditions
+namespace XeniaBot.Core.Services.BotAdditions;
+
+[XeniaController]
+public class CounterService : BaseService
 {
-    [XeniaController]
-    public class CounterService : BaseService
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(CounterService));
+    private readonly DiscordSocketClient _client;
+    private readonly DiscordService _discord;
+    private readonly CounterConfigRepository _config;
+    public CounterService(IServiceProvider services)
+        : base(services)
     {
-        private readonly DiscordSocketClient _client;
-        private readonly DiscordService _discord;
-        private readonly CounterConfigRepository _config;
-        public CounterService(IServiceProvider services)
-            : base(services)
-        {
-            _client = services.GetRequiredService<DiscordSocketClient>();
-            _discord = services.GetRequiredService<DiscordService>();
-            _config = services.GetRequiredService<CounterConfigRepository>();
-        }
-        public override Task InitializeAsync()
-        {
-            _discord.MessageReceived += _discord_MessageReceived;
+        _client = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordService>();
+        _config = services.GetRequiredService<CounterConfigRepository>();
+    }
+    public override Task InitializeAsync()
+    {
+        _discord.MessageReceived += _discord_MessageReceived;
 
-            return Task.CompletedTask;
-        }
-        public override async Task OnReady()
+        return Task.CompletedTask;
+    }
+    public override async Task OnReady()
+    {
+        foreach (var item in await _config.GetAll())
         {
-            foreach (var item in await _config.GetAll())
-            {
-                _config.CachedItems.Add(item.ChannelId, item.Count);
-            }
+            _config.CachedItems.Add(item.ChannelId, item.Count);
         }
+    }
 
-        private Task _discord_MessageReceived(SocketMessage arg)
+    private Task _discord_MessageReceived(SocketMessage arg)
+    {
+        new Thread((ThreadStart)async delegate
         {
-            new Thread((ThreadStart)async delegate
-            {
-                try
-                {
-                    await DiscordMessageReceived(arg);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Failed to run {nameof(DiscordMessageReceived)}\n{ex}");
-                }
-            }).Start();
-            return Task.CompletedTask;
-        }
-        private async Task DiscordMessageReceived(SocketMessage arg)
-        {
-            if (!(arg is SocketUserMessage message))
-                return;
-            if (message.Source != MessageSource.User)
-                return;
-            if (!_config.CachedItems.ContainsKey(arg.Channel.Id))
-                return;
-
-            // Try and parse the content as a ulong, if we fail
-            // then we delete the message. FormatException is
-            // thrown when we fail to parse as a ulong.
-            ulong value = 0;
             try
             {
-                value = ulong.Parse(arg.Content);
+                await DiscordMessageReceived(arg);
             }
-            catch (FormatException)
+            catch (Exception ex)
             {
-                await DiscordHelper.DeleteMessage(_client, arg);
-                return;
+                _log.Error(ex, $"Failed to run {nameof(DiscordMessageReceived)}");
             }
+        }).Start();
+        return Task.CompletedTask;
+    }
+    private async Task DiscordMessageReceived(SocketMessage arg)
+    {
+        if (!(arg is SocketUserMessage message))
+            return;
+        if (message.Source != MessageSource.User)
+            return;
+        if (!_config.CachedItems.ContainsKey(arg.Channel.Id))
+            return;
 
-            // If number is not the next number, then we delete the message.
-            var context = new SocketCommandContext(_client, message);
-            ulong targetValue = value + 1;
-            if (value != targetValue)
-            {
-                await DiscordHelper.DeleteMessage(_client, arg);
-                return;
-            }
-
-            // Update record
-            CounterGuildModel data = await _config.Get(context.Guild, context.Channel);
-            data.Count = value;
-            await _config.Set(data);
+        // Try and parse the content as a ulong, if we fail
+        // then we delete the message. FormatException is
+        // thrown when we fail to parse as a ulong.
+        ulong value = 0;
+        try
+        {
+            value = ulong.Parse(arg.Content);
         }
+        catch (FormatException)
+        {
+            await DiscordHelper.DeleteMessage(_client, arg);
+            return;
+        }
+
+        // If number is not the next number, then we delete the message.
+        var context = new SocketCommandContext(_client, message);
+        ulong targetValue = value + 1;
+        if (value != targetValue)
+        {
+            await DiscordHelper.DeleteMessage(_client, arg);
+            return;
+        }
+
+        // Update record
+        CounterGuildModel data = await _config.Get(context.Guild, context.Channel);
+        data.Count = value;
+        await _config.Set(data);
     }
 }

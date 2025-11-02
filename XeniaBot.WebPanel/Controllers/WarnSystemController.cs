@@ -136,13 +136,13 @@ public class WarnSystemController: BaseXeniaController
         ulong userId = 0;
         try
         {
-            userId = ulong.Parse(user);
-            if (userId == null)
-                throw new Exception("Parsed as null");
+            if (!ulong.TryParse(user, out userId))
+                throw new ArgumentException($"Failed to parse value \"{user}\"", nameof(user));
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to create record. Failed to parse userId: \n{ex}");
+            _logger.LogError(ex, "Failed to create warn in Guild {GuildId} for User {UserId} (reason={Reason})",
+                id, user, reason);
             return await CreateWarnWizard(id,
                 messageType: "danger",
                 message: $"Failed to create record. Failed to parse userId:  {ex.Message}");
@@ -166,7 +166,8 @@ public class WarnSystemController: BaseXeniaController
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to create record. \n{ex}");
+            _logger.LogError(ex, "Failed to create warn in Guild {GuildId} for User {UserId} (reason={Reason})",
+                id, user, reason);
             return await CreateWarnWizard(id,
                 messageType: "danger",
                 message: $"Failed to create record. {ex.Message}");
