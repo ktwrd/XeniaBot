@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using ImageMagick;
 using NetVips;
 using NLog;
 using System;
@@ -16,7 +17,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
     [SlashCommand("caption", "Add a caption to a piece of media")]
     public async Task Caption(string caption,
         IAttachment attachment,
-        [Discord.Interactions.Summary(description: "Export as a GIF")]
+        [Summary(description: "Export as a GIF")]
         bool saveAsGif = false)
     {
         await Context.Interaction.DeferAsync();
@@ -67,7 +68,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
 
             // Create caption text
             var text = NVImage.Text(
-                text: $"<span background=\"white\">{caption}</span>",
+                text: $"<span background=\"white\">"+ caption.Replace("\\n", "\n") + "</span>",
                 rgba: true,
                 align: Enums.Align.Centre,
                 font: $"FuturaExtraBlackCondensed {fontSize}px",
@@ -107,17 +108,21 @@ public partial class MediaManipulationModule : InteractionModuleBase
                     if (nPages > 1)
                         i.Set("page-height", pageHeight + textHeight);
                 });
-            Log.Debug("Complete");
-            if (isAnimated || saveAsGif)
+
+            using var resultStream = new MemoryStream(isAnimated || saveAsGif
+                ? final.GifsaveBuffer(dither: 1, effort: 2, bitdepth: 8, interlace: true, reuse: true)
+                : final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true));
+            var filename = isAnimated || saveAsGif ? $"{Context.Interaction.Id}.gif" : $"{Context.Interaction.Id}.png";
+            var optimizer = new ImageOptimizer()
             {
-                using var gifStream = new MemoryStream(final.GifsaveBuffer(dither: 1, bitdepth: 8, interlace: true));
-                await FollowupWithFileAsync(gifStream, $"{Context.Interaction.Id}.gif");
-            }
-            else
-            {
-                using var pngStream = new MemoryStream(final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true));
-                await FollowupWithFileAsync(pngStream, $"{Context.Interaction.Id}.png");
-            }
+                IgnoreUnsupportedFormats = true,
+                OptimalCompression = true
+            };
+            resultStream.Seek(0, SeekOrigin.Begin);
+            optimizer.Compress(resultStream);
+            resultStream.Seek(0, SeekOrigin.Begin);
+            Log.Debug($"Uploading file \"{filename}\" ({resultStream.Length}b)");
+            await FollowupWithFileAsync(resultStream, filename);
         }
         catch (Exception ex)
         {
@@ -125,7 +130,6 @@ public partial class MediaManipulationModule : InteractionModuleBase
             embed.WithDescription($"Failed to run task.\n```\n{ex.Message}\n```").WithColor(Color.Red);
             await FollowupAsync(embed: embed.Build());
             await DiscordHelper.ReportError(ex, Context);
-            return;
         }
     }
 
@@ -257,11 +261,11 @@ public partial class MediaManipulationModule : InteractionModuleBase
 
     [SlashCommand("speechbubble", "Add a speech bubble to an image or a gif.")]
     public async Task SpeechBubble(IAttachment attachment,
-        [Discord.Interactions.Summary(description: "When True, the speech bubble will be on the bottom, and when False it will be on top.")]
+        [Summary(description: "When True, the speech bubble will be on the bottom, and when False it will be on top.")]
         bool flip = false,
-        [Discord.Interactions.Summary(description: "When True, the speech bubble will have a transparent background, or it will have a white background")]
+        [Summary(description: "When True, the speech bubble will have a transparent background, or it will have a white background")]
         bool alpha = false,
-        [Discord.Interactions.Summary(description: "Export as a GIF")]
+        [Summary(description: "Export as a GIF")]
         bool saveAsGif = false)
     {
         await Context.Interaction.DeferAsync();
@@ -307,19 +311,22 @@ public partial class MediaManipulationModule : InteractionModuleBase
                 : NVImage.NewFromStream(MediaResources.ImageSpeechBubble));
             var final = await Watermark(
                 sourceImage, watermark, 2, isAnimated, resize: true, yscale: 0.2f, alpha: alpha, flip: flip);
-            
-            
-            Log.Debug($"Complete");
-            if (isAnimated || saveAsGif)
+
+
+            using var resultStream = new MemoryStream(isAnimated || saveAsGif
+                ? final.GifsaveBuffer(dither: 1, effort: 2, bitdepth: 8, interlace: true, reuse: true)
+                : final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true));
+            var filename = isAnimated || saveAsGif ? $"{Context.Interaction.Id}.gif" : $"{Context.Interaction.Id}.png";
+            var optimizer = new ImageOptimizer()
             {
-                using var gifStream = new MemoryStream(final.GifsaveBuffer(dither: 1, bitdepth: 8, interlace: true));
-                await FollowupWithFileAsync(gifStream, $"{Context.Interaction.Id}.gif");
-            }
-            else
-            {
-                using var pngStream = new MemoryStream(final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true));
-                await FollowupWithFileAsync(pngStream, $"{Context.Interaction.Id}.png");
-            }
+                IgnoreUnsupportedFormats = true,
+                OptimalCompression = true
+            };
+            resultStream.Seek(0, SeekOrigin.Begin);
+            optimizer.Compress(resultStream);
+            resultStream.Seek(0, SeekOrigin.Begin);
+            Log.Debug($"Uploading file \"{filename}\" ({resultStream.Length}b)");
+            await FollowupWithFileAsync(resultStream, filename);
         }
         catch (Exception ex)
         {
@@ -327,7 +334,6 @@ public partial class MediaManipulationModule : InteractionModuleBase
             embed.WithDescription($"Failed to run task.\n```\n{ex.Message}\n```").WithColor(Color.Red);
             await FollowupAsync(embed: embed.Build());
             await DiscordHelper.ReportError(ex, Context);
-            return;
         }
     }
 }
