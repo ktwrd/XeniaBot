@@ -6,6 +6,8 @@ WORKDIR /app
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
+RUN sudo apt-get update && sudo apt-get install -y fonts-recommended
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 RUN dotnet tool install -g dotnet-t4
 ENV PATH="/root/.dotnet/tools:${PATH}"
