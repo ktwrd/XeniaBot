@@ -1,6 +1,9 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base-pkg
 
-RUN apt-get update && apt-get install -y fonts-recommended fontconfig
+RUN apt-get update
+RUN apt-get install -y fonts-recommended fontconfig fonts-noto-cjk fonts-noto-cjk-extra fonts-liberation fonts-dejavu
+ADD localfonts.conf /etc/fonts/local.conf
+RUN fc-cache -f -v
 
 FROM base-pkg AS base
 WORKDIR /app
