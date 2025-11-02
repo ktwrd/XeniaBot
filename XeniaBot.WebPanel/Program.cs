@@ -1,28 +1,22 @@
-using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Logging;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver;
 using NLog;
 using NLog.Web;
 using Sentry;
 using System;
-using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using XeniaBot.Data;
 using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
@@ -172,6 +166,30 @@ public static class Program
                         (user.GetString("avatar")?.StartsWith("a_") ?? false) ? "gif" : "png"));
             });
         builder.Services.AddServerSideBlazor();
+
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.Providers.Add<GzipCompressionProvider>();
+            options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat([
+                // images
+                "image/jpeg",
+                "image/png",
+                "image/svg+xml",
+                "image/tiff",
+                "image/webp",
+
+                // fonts
+                "application/font-woff2",
+                "font/woff",
+                "font/woff2",
+                "font/otf",
+
+                // FE code/styles
+                "text/javascript",
+                "text/css"
+            ]);
+            options.EnableForHttps = true;
+        });
         builder.WebHost.UseSentry(FeatureFlags.SentryDSN);
         var app = builder.Build();
         app.UseStaticFiles();
@@ -207,29 +225,13 @@ public static class Program
             pattern: "{controller=Home}/{action=Index}/{id?}");
         app.UseEndpoints(endpoints =>
         {
+            endpoints.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}");
+            endpoints.MapRazorPages();
             endpoints.MapDefaultControllerRoute();
         });
         app.MapBlazorHub();
-        /*var options = new StaticFileOptions()
-        {
-            ServeUnknownFileTypes = true,
-        };
-
-        app.UseHttpsRedirection();
-        app.UseStaticFiles(options);
-
-        app.UseRouting();
-
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        app.MapControllerRoute(
-            name: "default",
-            pattern: "{controller=Home}/{action=Index}/{id?}");
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapDefaultControllerRoute();
-        });*/
 
         await app.RunAsync();
     }
