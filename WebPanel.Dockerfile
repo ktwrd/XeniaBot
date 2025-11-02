@@ -8,6 +8,9 @@ EXPOSE 80 8080
 RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
+RUN sudo apt-get update && sudo apt-get install -y fonts-recommended fontconfig
+
+# --- compile project ---
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 RUN dotnet tool install -g dotnet-t4
 ENV PATH="/root/.dotnet/tools:${PATH}"
@@ -18,6 +21,7 @@ COPY . .
 WORKDIR "/src/."
 RUN dotnet build "./XeniaBot.WebPanel/XeniaBot.WebPanel.csproj" -c Release -o /app/build
 
+# --- publish project ---
 FROM build AS publish
 RUN dotnet publish "./XeniaBot.WebPanel/XeniaBot.WebPanel.csproj" -c Release -o /app/publish
 
