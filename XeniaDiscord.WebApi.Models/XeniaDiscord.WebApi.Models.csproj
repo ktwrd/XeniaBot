@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\XeniaDiscord.Shared\XeniaDiscord.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
