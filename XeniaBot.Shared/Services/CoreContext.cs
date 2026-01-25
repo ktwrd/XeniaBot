@@ -166,7 +166,6 @@ public class CoreContext
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
             .AddSingleton(s)
-            .AddSingleton<CommandHandler>()
             .AddSingleton<InteractionHandler>();
 
         beforeBuild(services).Wait();
