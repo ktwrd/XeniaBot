@@ -13,10 +13,12 @@ public static class XeniaDiscordSharedInteractions
             interactions.AddModuleAsync<BackpackTFModule>(provider),
             interactions.AddModuleAsync<BanSyncModule>(provider),
             interactions.AddModuleAsync<ConfessionAdminModule>(provider),
+            interactions.AddModuleAsync<ConfessionModule>(provider),
             interactions.AddModuleAsync<CounterModule>(provider),
             interactions.AddModuleAsync<DiceModule>(provider),
             interactions.AddModuleAsync<DistroWatchModule>(provider),
             interactions.AddModuleAsync<HelpModule>(provider),
+            interactions.AddModuleAsync<MediaModule>(provider),
             interactions.AddModuleAsync<MiscModule>(provider),
             interactions.AddModuleAsync<ModerationModule>(provider),
             interactions.AddModuleAsync<RandomAnimalModule>(provider),
@@ -25,6 +27,7 @@ public static class XeniaDiscordSharedInteractions
             interactions.AddModuleAsync<ServerLogModule>(provider),
             interactions.AddModuleAsync<TicketModule>(provider),
             interactions.AddModuleAsync<TranslateModule>(provider),
+            interactions.AddModuleAsync<ConfessionModule>(provider),
             interactions.AddModuleAsync<WeatherModule>(provider));
         transaction.Finish();
     }

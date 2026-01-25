@@ -27,4 +27,11 @@ public class DiscordConfigElement
 
     [XmlElement("InvitePermissions")]
     public ulong InvitePermissions { get; set; }
+
+
+    [XmlElement("OAuthId")]
+    public string? OAuthId { get; set; }
+
+    [XmlElement("OAuthSecret")]
+    public string? OAuthSecret { get; set; }
 }

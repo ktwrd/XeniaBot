@@ -3,6 +3,7 @@ using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Confession;
 using XeniaDiscord.Data.Models.DiscordSnapshot;
 using XeniaDiscord.Data.Models.Ticket;
+using XeniaDiscord.Data.Models.Warn;
 
 namespace XeniaDiscord.Data;
 
@@ -18,8 +19,7 @@ public class ApplicationDbContext : DbContext
     {
         return new(_ops);
     }
-
-
+    
     public DbSet<BanSyncGuildModel> BanSyncGuilds { get; set; }
     public DbSet<BanSyncGuildSnapshotModel> BanSyncGuildSnapshots { get; set; }
     public DbSet<BanSyncRecordModel> BanSyncRecords { get; set; }
@@ -31,6 +31,11 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<GuildConfessionModel> GuildConfessions { get; set; }
     public DbSet<GuildConfessionConfigModel> GuildConfessionConfigs { get; set; }
+
+    public DbSet<GuildWarnConfigModel> GuildWarnConfigs { get; set; }
+    public DbSet<GuildWarnStrikeConfigModel> GuildWarnStrikeConfigs { get; set; }
+    public DbSet<GuildWarnModel> GuildWarns { get; set; }
+    public DbSet<GuildWarnCommentModel> GuildWarnComments { get; set; }
 
     public DbSet<DiscordSnapshotMessageModel> DiscordSnapshotMessages { get; set; }
     public DbSet<DiscordSnapshotMessageAuthorModel> DiscordSnapshotMessageAuthors { get; set; }
@@ -101,6 +106,48 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.GuildConfessionConfigId)
                 .IsRequired(false);
+        });
+        #endregion
+
+        #region Warn
+        builder.Entity<GuildWarnConfigModel>(b =>
+        {
+            b.ToTable(GuildWarnConfigModel.TableName)
+                .HasKey(e => e.Id);
+
+            b.HasIndex(e => new { e.Id, e.EnableLogging }).IsUnique(false);
+        });
+        builder.Entity<GuildWarnStrikeConfigModel>(b =>
+        {
+            b.ToTable(GuildWarnStrikeConfigModel.TableName)
+                .HasKey(e => e.Id);
+
+            b.HasIndex(e => new { e.Id, e.Enabled }).IsUnique(false);
+            b.HasIndex(e => e.CreatedAt).IsUnique(false).IsDescending(true);
+        });
+        builder.Entity<GuildWarnModel>(b =>
+        {
+            b.ToTable(GuildWarnModel.TableName)
+                .HasKey(e => e.Id);
+
+            b.HasIndex(e => e.GuildId).IsUnique(false);
+            b.HasIndex(e => e.TargetUserId).IsUnique(false);
+            b.HasIndex(e => e.CreatedByUserId).IsUnique(false);
+            b.HasIndex(e => e.CreatedAt).IsUnique(false).IsDescending(true);
+
+            b.HasIndex(e => new { e.GuildId, e.TargetUserId }).IsUnique(false);
+        });
+        builder.Entity<GuildWarnCommentModel>(b =>
+        {
+            b.ToTable(GuildWarnCommentModel.TableName)
+                .HasKey(e => e.Id);
+
+            b.HasIndex(e => e.CreatedByUserId).IsUnique(false);
+            b.HasIndex(e => e.CreatedAt).IsUnique(false).IsDescending(true);
+            b.HasIndex(e => e.IsDeleted).IsUnique(false);
+            b.HasIndex(e => new { e.Id, e.CreatedAt }).IsUnique(false);
+            b.HasIndex(e => new { e.Id, e.CreatedAt, e.IsDeleted }).IsUnique(false);
+            b.HasIndex(e => new { e.DeletedByUserId, e.IsDeleted }).IsUnique(false);
         });
         #endregion
 

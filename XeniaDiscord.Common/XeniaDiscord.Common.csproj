@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Data\XeniaDiscord.Data.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Shared\XeniaDiscord.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -57,12 +57,12 @@ public static class StartupExtensions
                     ((ForeverDiscordShardedClient)client).LoginAsync(TokenType.Bot, cfg.Discord.Token).Wait();
 
                 services
-                    .AddScoped(typeof(DiscordShardedClient), _ => c)
-                    .AddScoped(typeof(IRestClientProvider), _ => c)
-                    .AddScoped(typeof(IDiscordClient), _ => c)
-                    .AddSingleton(typeof(DiscordShardedClient), c)
-                    .AddSingleton(typeof(IRestClientProvider), c)
-                    .AddSingleton(typeof(IDiscordClient), c);
+                    .AddScoped(typeof(DiscordShardedClient), _ => client)
+                    .AddScoped(typeof(IRestClientProvider), _ => client)
+                    .AddScoped(typeof(IDiscordClient), _ => client)
+                    .AddSingleton(typeof(DiscordShardedClient), client)
+                    .AddSingleton(typeof(IRestClientProvider), client)
+                    .AddSingleton(typeof(IDiscordClient), client);
             }
             else
             {

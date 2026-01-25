@@ -40,10 +40,10 @@
     <ProjectReference Include="..\XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj" />
     <ProjectReference Include="..\XeniaBot.Core.Shared\XeniaBot.Core.Shared.csproj" />
     <ProjectReference Include="..\XeniaBot.Logic\XeniaBot.Logic.csproj" />
-    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Common\XeniaDiscord.Common.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Data\XeniaDiscord.Data.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Shared.Interactions\XeniaDiscord.Shared.Interactions.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Shared\XeniaDiscord.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\VersionAutoIncrement.cs">

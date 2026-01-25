@@ -4,8 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
 
-    <AssemblyName>XeniaBot.Shared</AssemblyName>
-    <RootNamespace>XeniaBot.Shared</RootNamespace>
+    <RootNamespace>XeniaDiscord.Shared</RootNamespace>
 
     <IsTrimmable>false</IsTrimmable>
 

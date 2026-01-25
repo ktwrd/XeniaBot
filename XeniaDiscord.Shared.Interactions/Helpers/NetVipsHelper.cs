@@ -1,6 +1,6 @@
-﻿namespace XeniaBot.Core.Helpers;
-using Image = NetVips.Image;
-using NetVips;
+﻿using NetVips;
+
+namespace XeniaDiscord.Shared.Interactions.Helpers;
 
 public static class NetVipsHelper
 {
@@ -30,10 +30,10 @@ public static class NetVipsHelper
     }
     public static Image Normalize(Image img)
     {
-        if (!img.HasAlpha())
-            return img.Bandjoin(255);
-        else
-            return img;
+        // if (!img.HasAlpha())
+        //     return img.Bandjoin(255);
+        // else
+        //     return img;
         if (img.Bands < 3)
             img = img.Colourspace(Enums.Interpretation.Srgb);
 

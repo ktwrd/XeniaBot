@@ -1,17 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <IsTrimmable>false</IsTrimmable>
-        <AssemblyVersion>1.1.0.0</AssemblyVersion>
-        <AssemblyName>XeniaBot.DiscordCache</AssemblyName>
-        <RootNamespace>XeniaBot.DiscordCache</RootNamespace>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTrimmable>false</IsTrimmable>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <RootNamespace>XeniaBot.DiscordCache</RootNamespace>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\XeniaDiscord.Shared\XeniaDiscord.Shared.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\XeniaDiscord.Shared\XeniaDiscord.Shared.csproj" />
+  </ItemGroup>
 
 </Project>

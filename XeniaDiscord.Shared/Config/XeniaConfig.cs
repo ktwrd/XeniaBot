@@ -2,6 +2,7 @@
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
+using XeniaDiscord.Shared.Config;
 
 namespace XeniaBot.Shared.Config;
 
@@ -81,6 +82,9 @@ public class XeniaConfig
 
     [XmlElement("Cache")]
     public CacheConfigElement Cache { get; set; } = new();
+
+    [XmlElement("Health")]
+    public HealthConfigElement Health { get; set; } = new();
 
     [XmlElement("Services.Reminder")]
     public ReminderServiceConfigElement ReminderService { get; set; } = new();

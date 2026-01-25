@@ -7,8 +7,48 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+    <None Remove="Resources\MediaModule\1984.png" />
+    <None Remove="Resources\MediaModule\1984cover.png" />
+    <None Remove="Resources\MediaModule\1984originaldate.png" />
+    <None Remove="Resources\MediaModule\arial.ttf" />
+    <None Remove="Resources\MediaModule\AtkinsonHyperlegible-Bold.ttf" />
+    <None Remove="Resources\MediaModule\caption.otf" />
+    <None Remove="Resources\MediaModule\chirp-regular-web.woff2" />
+    <None Remove="Resources\MediaModule\HelveticaNeue.otf" />
+    <None Remove="Resources\MediaModule\ImpactMix.ttf" />
+    <None Remove="Resources\MediaModule\speech.png" />
+    <None Remove="Resources\MediaModule\speechbubble.png" />
+    <None Remove="Resources\MediaModule\TAHOMABD.TTF" />
+    <None Remove="Resources\MediaModule\times new roman.ttf" />
+    <None Remove="Resources\MediaModule\TwemojiCOLR0.otf" />
+    <None Remove="Resources\MediaModule\Ubuntu-R.ttf" />
+    <None Remove="Resources\MediaModule\whisper.otf" />
+    <None Remove="Resources\MediaModule\yskysn.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\MediaModule\1984.png" />
+    <EmbeddedResource Include="Resources\MediaModule\1984cover.png" />
+    <EmbeddedResource Include="Resources\MediaModule\1984originaldate.png" />
+    <EmbeddedResource Include="Resources\MediaModule\arial.ttf" />
+    <EmbeddedResource Include="Resources\MediaModule\AtkinsonHyperlegible-Bold.ttf" />
+    <EmbeddedResource Include="Resources\MediaModule\caption.otf" />
+    <EmbeddedResource Include="Resources\MediaModule\chirp-regular-web.woff2" />
+    <EmbeddedResource Include="Resources\MediaModule\HelveticaNeue.otf" />
+    <EmbeddedResource Include="Resources\MediaModule\ImpactMix.ttf" />
+    <EmbeddedResource Include="Resources\MediaModule\speech.png" />
+    <EmbeddedResource Include="Resources\MediaModule\speechbubble.png" />
+    <EmbeddedResource Include="Resources\MediaModule\TAHOMABD.TTF" />
+    <EmbeddedResource Include="Resources\MediaModule\times new roman.ttf" />
+    <EmbeddedResource Include="Resources\MediaModule\TwemojiCOLR0.otf" />
+    <EmbeddedResource Include="Resources\MediaModule\Ubuntu-R.ttf" />
+    <EmbeddedResource Include="Resources\MediaModule\whisper.otf" />
+    <EmbeddedResource Include="Resources\MediaModule\yskysn.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\XeniaDiscord.Common\XeniaDiscord.Common.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Shared\XeniaDiscord.Shared.csproj" />
   </ItemGroup>
 
 </Project>
