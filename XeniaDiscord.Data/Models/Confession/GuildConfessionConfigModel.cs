@@ -8,11 +8,6 @@ public class GuildConfessionConfigModel
     public GuildConfessionConfigModel()
     {
         Id = "";
-
-        OutputChannelId = "";
-        ButtonChannelId = "";
-        ButtonMessageId = "";
-
         CreatedByUserId = "0";
         CreatedAt = DateTimeOffset.UtcNow;
     }
@@ -27,19 +22,19 @@ public class GuildConfessionConfigModel
     /// Discord Channel Snowflake to put the confession in.
     /// </summary>
     [MaxLength(DbGlobals.MaxLength.ULong)]
-    public string OutputChannelId { get; set; }
+    public string? OutputChannelId { get; set; }
 
     /// <summary>
     /// Discord Channel Snowflake that contains <see cref="ButtonMessageId"/>
     /// </summary>
     [MaxLength(DbGlobals.MaxLength.ULong)]
-    public string ButtonChannelId { get; set; }
+    public string? ButtonChannelId { get; set; }
 
     /// <summary>
     /// Discord Message Snowflake that contains the button to confess something.
     /// </summary>
     [MaxLength(DbGlobals.MaxLength.ULong)]
-    public string ButtonMessageId { get; set; }
+    public string? ButtonMessageId { get; set; }
 
     /// <summary>
     /// Discord User Snowflake that created this record.
@@ -53,40 +48,14 @@ public class GuildConfessionConfigModel
     public DateTimeOffset CreatedAt { get; set; }
 
 
-    public ulong? GetGuildId()
-    {
-        if (string.IsNullOrEmpty(Id))
-            return null;
-        if (ulong.TryParse(Id, out var result) && result > 0)
-            return result;
-        return null;
-    }
+    public ulong GetGuildId()
+        => Id.ParseRequiredULong(nameof(Id), false);
     public ulong? GetOutputChannelId()
-    {
-        if (!string.IsNullOrEmpty(OutputChannelId) &&
-            ulong.TryParse(OutputChannelId, out var result) && result > 0)
-            return result;
-        return null;
-    }
+        => OutputChannelId?.ParseULong(false);
     public ulong? GetButtonChannelId()
-    {
-        if (!string.IsNullOrEmpty(ButtonChannelId) &&
-            ulong.TryParse(ButtonChannelId, out var result) && result > 0)
-            return result;
-        return null;
-    }
+        => ButtonChannelId?.ParseULong(false);
     public ulong? GetButtonMessageId()
-    {
-        if (!string.IsNullOrEmpty(ButtonMessageId) &&
-            ulong.TryParse(ButtonMessageId, out var result) && result > 0)
-            return result;
-        return null;
-    }
+        => ButtonMessageId?.ParseULong(false);
     public ulong? GetCreatedByUserId()
-    {
-        if (!string.IsNullOrEmpty(CreatedByUserId) &&
-            ulong.TryParse(CreatedByUserId, out var result) && result > 0)
-            return result;
-        return null;
-    }
+        => CreatedByUserId?.ParseULong(false);
 }

@@ -7,12 +7,12 @@ namespace XeniaBot.Shared.Helpers
         /// <summary>
         /// When true, then the result given is perfectly fine. The result parameter in ValidateResponse will always be not-null when true.
         /// </summary>
-        public bool Success;
-        public string Message;
+        public bool Success { get; set; } = false;
+        public string Message { get; set; }
         /// <summary>
         /// Populated when <see cref="WeatherResponse.Error"/> is not null.
         /// </summary>
-        public int ErrorCode = 0;
+        public int ErrorCode { get; set; } = 0;
         public override string ToString()
         {
             return Message;

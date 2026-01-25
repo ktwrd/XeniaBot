@@ -95,5 +95,5 @@ public class XeniaConfig
     public ApiKeysConfigElement ApiKey { get; set; } = new();
 
     [XmlElement("SupportServerUrl")]
-    public string SupportServerUrl { get; set; }
+    public string SupportServerUrl { get; set; } = string.Empty;
 }

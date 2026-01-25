@@ -10,11 +10,13 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Discord.Rest;
 using Sentry;
+using NLog;
 
 namespace XeniaBot.Shared;
 
 public class InteractionHandler
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly InteractionService _interactionService;
     private readonly DiscordSocketClient _client;
     private readonly IServiceProvider _services;
@@ -55,9 +57,8 @@ public class InteractionHandler
                 }
             };
             var casted = new List<DiscordApplicationCommand>();
-            foreach (var item in data)
-                if (!blacklist.ContainsKey(item.Name))
-                    casted.Add(new DiscordApplicationCommand().Cast(item, blacklist));
+            foreach (var item in data.Where(e => !blacklist.ContainsKey(e.Name)))
+                casted.Add(new DiscordApplicationCommand().Cast(item, blacklist));
 
             var request = new HttpRequestMessage()
             {
@@ -76,11 +77,11 @@ public class InteractionHandler
             request.Content = new StringContent(ser, null, "application/json");
             var client = new HttpClient();
             var res = await client.SendAsync(request);
-            Log.Debug($"DBL Response: {res.StatusCode}");
+            _log.Debug($"DBL Response: {res.StatusCode}");
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to send commands to DiscordBotList.com\n{ex}");
+            _log.Error(ex, $"Failed to send commands to DiscordBotList.com");
         }
     }
     public async Task InitializeAsync()
@@ -105,7 +106,7 @@ public class InteractionHandler
             count += item.SlashCommands.Count;
             lines.Add($"- {item.Name} ({count})");
         }
-        Log.Debug($"Loaded [{mods.Count()}] modules\n" + string.Join("\n", lines));
+        _log.Debug($"Loaded [{mods.Count()}] modules\n" + string.Join("\n", lines));
         _client.InteractionCreated += InteractionCreateAsync;
     }
 
@@ -122,7 +123,7 @@ public class InteractionHandler
         }
         catch (Exception ex)
         {
-            Log.Error($"{ex}");
+            _log.Error(ex, $"Failed to handle interaction {interaction.Id} in channel {interaction.Channel.Name} ({interaction.ChannelId}) from user {interaction.User} ({interaction.User.Id})");
             SentrySdk.CaptureException(ex);
         }
     }

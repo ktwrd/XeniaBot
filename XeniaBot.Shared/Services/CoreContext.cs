@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
+using NLog;
 
 namespace XeniaBot.Shared.Services;
 
@@ -23,6 +24,7 @@ namespace XeniaBot.Shared.Services;
 /// </summary>
 public class CoreContext
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public static CoreContext? Instance { get; private set; }
     public CoreContext(ProgramDetails details)
     {
@@ -42,7 +44,7 @@ public class CoreContext
     {
         if (StartTimestamp == 0)
             StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
+        var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName?.StartsWith("XeniaBot") == true);
         BsonSerializer.RegisterSerializer(objectSerializer);
 
         Config = new ConfigService(Details);
@@ -116,7 +118,7 @@ public class CoreContext
     {
         try
         {
-            Log.Debug("Connecting to MongoDB");
+            _log.Debug("Connecting to MongoDB");
             var connectionSettings = MongoClientSettings.FromConnectionString(Config.Data.MongoDB.ConnectionUrl);
             connectionSettings.AllowInsecureTls = true;
             connectionSettings.MaxConnectionPoolSize = 500;
@@ -126,7 +128,7 @@ public class CoreContext
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to connect to MongoDB Server\n{ex}");
+            _log.Error($"Failed to connect to MongoDB Server\n{ex}");
             OnQuit(1);
         }
     }
@@ -156,7 +158,7 @@ public class CoreContext
         var mongoDb = GetDatabase();
         if (mongoDb == null)
         {
-            Log.Error($"FATAL ERROR!!! CoreContext.GetDatabase() returned null!");
+            _log.Error($"FATAL ERROR!!! CoreContext.GetDatabase() returned null!");
             OnQuit(1);
         }
 

@@ -19,8 +19,7 @@ public class ConfessionService : IConfessionService
         _client = services.GetRequiredService<IDiscordClient>();
     }
 
-
-    public async Task<EmbedBuilder> CreateAsync(IGuild pGuild, IUser user, string content)
+    public async Task<EmbedBuilder> CreateAsync(IGuild guild, IUser user, string content)
     {
         if (string.IsNullOrEmpty(content) || content.Length < 10)
         {
@@ -37,7 +36,7 @@ public class ConfessionService : IConfessionService
                 .WithColor(Color.Red);
         }
 
-        var guildIdStr = pGuild.Id.ToString();
+        var guildIdStr = guild.Id.ToString();
         var guildRecord = await _db.GuildConfessionConfigs
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Id == guildIdStr);
@@ -58,14 +57,15 @@ public class ConfessionService : IConfessionService
                 .WithColor(Color.Red);
         }
 
-        var guild = await _client.GetGuildAsync(pGuild.Id);
-        if (guild == null)
+        var lGuild = await _client.GetGuildAsync(guild.Id);
+        if (lGuild == null)
         {
             return new EmbedBuilder()
                 .WithTitle("Create Confession - Error")
                 .WithDescription($"This is really weird. I couldn't find the guild you're requesting this from...")
                 .WithColor(Color.Red);
         }
+        guild = lGuild;
 
         var outputChannel = await guild.GetTextChannelAsync(outputChannelId.Value);
         if (outputChannel == null)
@@ -190,6 +190,7 @@ public class ConfessionService : IConfessionService
         }
         catch (Exception ex)
         {
+            
             _log.Error(ex, "Failed to update record in database.");
             SentrySdk.CaptureException(ex, scope =>
             {
@@ -200,7 +201,10 @@ public class ConfessionService : IConfessionService
             });
             return new EmbedBuilder()
                 .WithTitle("Confession Admin - Set Channel - Error")
-                .WithDescription("```\n" + ex.Message.Substring(0, Math.Min(ex.Message.Length, 1900)) + "\n```")
+                .WithDescription(string.Join("\n",
+                    "```",
+                    ex.Message[..Math.Min(ex.Message.Length, 1900)],
+                    "```"))
                 .WithColor(Color.Red)
                 .WithCurrentTimestamp();
         }

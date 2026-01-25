@@ -22,14 +22,6 @@ public static class FeatureFlags
     }
 
     /// <summary>
-    /// Key: LOG_TS
-    /// Default: true
-    ///
-    /// Show timestamp in log entry.
-    /// </summary>
-    public static bool EnableLogTimestamp => ParseBool("LOG_TS", true);
-
-    /// <summary>
     /// Key: DATA_DIR
     /// Default: ./data/
     ///

@@ -3,8 +3,7 @@ using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaBot.Shared.Helpers;
-using XeniaDiscord.Common.Services;
-using XeniaDiscord.Data;
+using XeniaDiscord.Common.Interfaces;
 
 namespace XeniaDiscord.Shared.Interactions.Modules;
 
@@ -12,11 +11,9 @@ namespace XeniaDiscord.Shared.Interactions.Modules;
 public class ConfessionAdminModule : InteractionModuleBase
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly ApplicationDbContext _db;
     private readonly IConfessionService _confessionService;
     public ConfessionAdminModule(IServiceProvider services)
     {
-        _db = services.GetRequiredService<ApplicationDbContext>();
         _confessionService = services.GetRequiredService<IConfessionService>();
     }
 

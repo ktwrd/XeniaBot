@@ -7,10 +7,9 @@ public class GuildConfessionModel
     public const string TableName = "GuildConfession";
     public GuildConfessionModel()
     {
-        Id = Guid.NewGuid().ToString();
+        Id = Guid.NewGuid();
         GuildId = "0";
         Content = "";
-
         CreatedByUserId = "0";
         CreatedAt = DateTimeOffset.UtcNow;
     }
@@ -19,7 +18,7 @@ public class GuildConfessionModel
     /// Record Id
     /// </summary>
     [MaxLength(DbGlobals.MaxLength.ULong)]
-    public string Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Discord Guild Snowflake (ulong as string).
@@ -33,12 +32,11 @@ public class GuildConfessionModel
     /// </summary>
     [MaxLength(DbGlobals.MaxLength.ULong)]
     public string? GuildConfessionConfigId { get; set; }
-    public GuildConfessionConfigModel? GuildConfessionConfig { get; set; }
 
     /// <summary>
     /// Content of the confession
     /// </summary>
-    [MaxLength(DbGlobals.MaxLength.ULong)]
+    [MaxLength(DbGlobals.MaxLength.Confession)]
     [MinLength(1)]
     public string Content { get; set; }
 
@@ -54,19 +52,11 @@ public class GuildConfessionModel
     public DateTimeOffset CreatedAt { get; set; }
 
     public ulong? GetGuildId()
-    {
-        if (string.IsNullOrEmpty(GuildId))
-            return null;
-        if (ulong.TryParse(GuildId, out var result) && result > 0)
-            return result;
-        return null;
-    }
+        => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong? GetCreatedByUserId()
-    {
-        if (string.IsNullOrEmpty(CreatedByUserId))
-            return null;
-        if (ulong.TryParse(CreatedByUserId, out var result) && result > 0)
-            return result;
-        return null;
-    }
+        => GuildId.ParseULong(false);
+
+    #region Property Accessors
+    public GuildConfessionConfigModel? GuildConfessionConfig { get; set; }
+    #endregion
 }

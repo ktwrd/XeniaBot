@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Google.Cloud.Translation.V2;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using XeniaDiscord.Common.Interfaces;
 using XeniaDiscord.Shared.Interactions.Handlers;
 
@@ -9,6 +10,7 @@ namespace XeniaDiscord.Shared.Interactions.Modules;
 
 public class TranslateModule : InteractionModuleBase
 {
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly IGoogleTranslateService _translate;
     public TranslateModule(IServiceProvider services)
     {
@@ -33,6 +35,7 @@ public class TranslateModule : InteractionModuleBase
         }
         catch (Exception ex)
         {
+            _log.Error(ex, $"Failed to translate (lang from: {sourceLanguage ?? "auto"}, to: {targetLanguage}) with content:\n{phrase}");
             var failEmbed = new EmbedBuilder()
             {
                 Title = "Failed to translate!",
@@ -40,7 +43,6 @@ public class TranslateModule : InteractionModuleBase
                 Color = new Color(255, 0 ,0)
             };
             await Context.Interaction.RespondAsync(embed: failEmbed.Build());
-            // await DiscordHelper.ReportError(ex, Context);
             return;
         }
         if (result == null)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -19,7 +20,7 @@ public static class XeniaHelper
     public static EmbedBuilder BaseEmbed(EmbedBuilder? builder = null)
     {
         if (CoreContext.Instance == null)
-            throw new Exception("CoreContext hasn't been initialized.");
+            throw new InvalidOperationException("CoreContext hasn't been initialized.");
 
         var client = CoreContext.Instance.GetRequiredService<DiscordSocketClient>();
         return BaseEmbed(client, builder);
@@ -129,17 +130,17 @@ public static class XeniaHelper
     /// <returns>Formatted result</returns>
     public static string FormatPascalCase(string input)
     {
-        string result = "";
+        var sb = new StringBuilder();
         for (int i = 0; i < input.Length; i++)
         {
             char c = input[i];
             string cs = input[i].ToString();
-            if (cs.ToUpper() == cs && i != 0)
-                result += $" {c}";
+            if (cs.Equals(cs, StringComparison.OrdinalIgnoreCase) && i != 0)
+                sb.AppendFormat(" {0}", c);
             else
-                result += c;
+                sb.Append(c);
         }
-        return result;
+        return sb.ToString();
     }
     public static string GetGuildPrefix(ulong guildId, ConfigData data)
     {
@@ -197,7 +198,7 @@ public static class XeniaHelper
     public static Discord.Color FromHex(string hex)
     {
         var str = "";
-        if (!hex.StartsWith("#"))
+        if (!hex.StartsWith('#'))
             str += "#";
         str += hex;
         var color = System.Drawing.ColorTranslator.FromHtml(str);
@@ -224,19 +225,16 @@ public static class XeniaHelper
         foreach (var x in properties)
         {
             bool found = false;
-            foreach (var it in allowedTypes)
+            foreach (var it in allowedTypes.Where(e => e.IsAssignableFrom(x.PropertyType)))
             {
-                if (it.IsAssignableFrom(x.PropertyType))
-                {
-                    // only allow enums to be casted into non-strings.
-                    if (x.PropertyType.IsEnum &&
-                        (typeof(string).IsAssignableFrom(x.PropertyType) ||
-                         typeof(char).IsAssignableFrom(x.PropertyType)))
-                        continue;
-                    dict[x.Name] = x.GetValue(obj)?.ToString();
-                    found = true;
-                    break;
-                }
+                // only allow enums to be casted into non-strings.
+                if (x.PropertyType.IsEnum &&
+                    (typeof(string).IsAssignableFrom(x.PropertyType) ||
+                     typeof(char).IsAssignableFrom(x.PropertyType)))
+                    continue;
+                dict[x.Name] = x.GetValue(obj)?.ToString();
+                found = true;
+                break;
             }
 
             if (!found)
