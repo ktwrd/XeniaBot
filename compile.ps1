@@ -1,2 +1,2 @@
-.\bot-compile.ps1
-.\dash-compile.ps1
+.\compile-bot.ps1
+.\compile-dash.ps1
