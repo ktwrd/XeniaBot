@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Shared\XeniaDiscord.Shared.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Data\XeniaDiscord.Data.csproj" />
   </ItemGroup>
 

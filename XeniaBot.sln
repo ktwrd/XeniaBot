@@ -5,7 +5,7 @@ VisualStudioVersion = 18.2.11408.102 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Core", "XeniaBot.Core\XeniaBot.Core.csproj", "{344CF567-9405-4F29-881C-41AC53BF6124}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Shared", "XeniaBot.Shared\XeniaBot.Shared.csproj", "{419905B5-47CD-4B5C-9E74-F92891C94048}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaDiscord.Shared", "XeniaDiscord.Shared\XeniaDiscord.Shared.csproj", "{419905B5-47CD-4B5C-9E74-F92891C94048}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.MongoData", "XeniaBot.MongoData\XeniaBot.MongoData.csproj", "{DA272C17-4D64-4601-9954-4B4EEB08D351}"
 EndProject
