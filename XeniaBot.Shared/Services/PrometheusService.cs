@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using Prometheus;
 using System;
 using System.Threading.Tasks;
@@ -9,15 +10,16 @@ namespace XeniaBot.Shared.Services
     [XeniaController]
     public class PrometheusService : BaseService
     {
-        private ConfigData _configData;
-        private ProgramDetails _details;
-        protected Prometheus.KestrelMetricServer? Server { get; private set; }
+        private readonly Logger _log = LogManager.GetCurrentClassLogger();
+        private readonly ConfigData _configData;
+        private readonly ProgramDetails _details;
+        protected KestrelMetricServer? Server { get; private set; }
         public PrometheusService(IServiceProvider services)
             : base(services)
         {
             _configData = services.GetRequiredService<ConfigData>();
             _details = services.GetRequiredService<ProgramDetails>();
-            Server = new Prometheus.KestrelMetricServer(
+            Server = new KestrelMetricServer(
             hostname: _configData.Prometheus.Hostname,
                 port: _configData.Prometheus.Port,
                  url: _configData.Prometheus.Url);
@@ -40,7 +42,7 @@ namespace XeniaBot.Shared.Services
             string address = _configData.Prometheus.Hostname;
             if (address == "+")
                 address = "0.0.0.0";
-            Log.Note($"Available at http://{address}:{_configData.Prometheus.Port}{_configData.Prometheus.Url}");
+            _log.Info($"Available at http://{address}:{_configData.Prometheus.Port}{_configData.Prometheus.Url}");
             ServerStart?.Invoke();
         }
 
@@ -53,10 +55,10 @@ namespace XeniaBot.Shared.Services
         {
             if (!_configData.Prometheus.Enable || _details.Platform == XeniaPlatform.WebPanel)
             {
-                Log.Note("Prometheus Metrics is disabled");
+                _log.Info("Prometheus Metrics is disabled");
                 return Task.CompletedTask;
             }
-            Log.Debug($"Starting server");
+            _log.Debug($"Starting server");
             Server?.Start();
             OnServerStart();
             return base.InitializeAsync();
