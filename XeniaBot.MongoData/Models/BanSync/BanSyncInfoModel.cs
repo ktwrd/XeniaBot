@@ -48,5 +48,6 @@ public class BanSyncInfoModel : BaseModel
         Reason = "<unknown>";
         RecordId = Guid.NewGuid().ToString();
         Ghost = false;
+        Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
     }
 }
