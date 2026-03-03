@@ -250,19 +250,23 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         ulong guildId,
         ulong? filterByUserId,
         bool ignoreDisabledGuilds = false,
-        bool allowGhost = false)
+        bool allowGhost = false,
+        ulong[]? includeUsers = null)
     {
-        
-        var guild = _discord.GetGuild(guildId);
-        var userIdList = guild.Users.Select(v => v.Id);
         var filter = Builders<BanSyncInfoModel>
             .Filter
-            .In(e => e.UserId, userIdList);
+            .Where(e => e.GuildId == guildId);
         if (filterByUserId != null)
         {
             filter = Builders<BanSyncInfoModel>
                 .Filter
                 .Where(v => v.UserId == filterByUserId);
+        }
+        if (includeUsers != null)
+        {
+            filter |= Builders<BanSyncInfoModel>
+                .Filter
+                .In(v => v.UserId, includeUsers);
         }
         if (!allowGhost)
         {
@@ -270,10 +274,6 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
                 .Filter
                 .Where(v => !v.Ghost);
         }
-
-        filter |= Builders<BanSyncInfoModel>
-            .Filter
-            .Where(e => e.GuildId == guildId);
 
         if (ignoreDisabledGuilds)
         {
@@ -293,7 +293,9 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         bool ignoreDisabledGuilds = false,
         bool allowGhost = false)
     {
-        var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost);
+        var guild = _discord.GetGuild(guildId);
+        var userIdList = guild.Users.Select(v => v.Id).ToArray();
+        var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost, userIdList);
 
         var collection = GetCollection();
         
@@ -313,7 +315,9 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         bool ignoreDisabledGuilds = false,
         bool allowGhost = false)
     {
-        var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost);
+        var guild = _discord.GetGuild(guildId);
+        var userIdList = guild.Users.Select(v => v.Id).ToArray();
+        var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost, userIdList);
 
         var collection = GetCollection();
         if (collection == null)
