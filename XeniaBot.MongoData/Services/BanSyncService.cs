@@ -12,6 +12,7 @@ using XeniaBot.Data.Repositories;
 using XeniaBot.Shared.Services;
 using Discord.Rest;
 using NLog;
+using System.IO;
 
 namespace XeniaBot.Data.Services
 {
@@ -79,9 +80,8 @@ namespace XeniaBot.Data.Services
             await Task.WhenAll(taskList);
         }
 
-        public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
         
-        private string ParseReason(string? reason)
+        private static string ParseReason(string? reason)
         {
             if (string.IsNullOrEmpty(reason))
                 return "<unknown>";
@@ -90,36 +90,39 @@ namespace XeniaBot.Data.Services
             else
                 return reason.Trim();
         }
-        public bool InfoEquals(BanSyncInfoModel self, BanSyncInfoModel other)
+        public static bool InfoEquals(BanSyncInfoModel self, BanSyncInfoModel other)
         {
             return self.UserId == other.UserId
                 && self.GuildId == other.GuildId
                 && self.BannedByUserId == other.BannedByUserId
                 && ParseReason(self.Reason) == ParseReason(other.Reason);
         }
-        public bool InfoEquals(BanSyncInfoModel self, RestBan other, ulong otherGuildId)
+        public static bool InfoEquals(BanSyncInfoModel self, RestBan other, ulong otherGuildId)
         {
             return self.UserId == other.User.Id
                 && self.GuildId == otherGuildId
                 && ParseReason(self.Reason) == ParseReason(other.Reason);
         }
+
+        public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
         public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
         {
             var config = await _guildConfigRepo.Get(guild.Id);
-            if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
+            if (config?.Enable != true || config.State != BanSyncGuildState.Active)
                 return;
 
-            var bans = await guild.GetBansAsync(1000000).FlattenAsync().ConfigureAwait(false);
+            var bans = await guild.GetBansAsync(1_000_000).FlattenAsync().ConfigureAwait(false);
             foreach (var i in bans)
             {
                 try
                 {
                     // only ignore when everything matches and ignoreExisting is true
                     var existing = await _banInfoRepo.GetInfo(i.User.Id, guild.Id, allowGhost: true);
-                    if (ignoreExisting)
+                    if (ignoreExisting &&
+                        existing != null &&
+                        InfoEquals(existing, i, guild.Id))
                     {
-                        if (existing != null && InfoEquals(existing, i, guild.Id))
-                            continue;
+                        continue;
                     }
                 
                     var info = new BanSyncInfoModel()
@@ -150,7 +153,7 @@ namespace XeniaBot.Data.Services
         {
             // Ignore if guild config is disabled
             var config = await _guildConfigRepo.Get(guild.Id);
-            if ((config?.Enable ?? false) == false || (config?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
+            if (config?.Enable != true || config.State != BanSyncGuildState.Active)
                 return;
 
             var banInfo = await guild.GetBanAsync(user);
@@ -175,41 +178,77 @@ namespace XeniaBot.Data.Services
         /// </summary>
         public async Task NotifyBan(BanSyncInfoModel info)
         {
-            var taskList = new List<Task>();
             foreach (var guild in _client.Guilds)
             {
+                var guildConfig = await _guildConfigRepo.Get(guild.Id);
+                if (guildConfig == null || guildConfig.State != BanSyncGuildState.Active)
+                    continue;
+
                 var guildUser = guild.GetUser(info.UserId);
                 if (guildUser == null)
                     continue;
-
-                var guildConfig = await _guildConfigRepo.Get(guild.Id);
-                if (guildConfig == null || (guildConfig?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
-                    continue;
-                var guildId = guild.Id;
-                taskList.Add(new Task(delegate
+                try
                 {
-                    var textChannel = guild.GetTextChannel(guildConfig!.LogChannel);
-                    var embed = new EmbedBuilder()
-                    {
-                        Title = "User in your server just got banned",
-                        Description = $"<@{info.UserId}> just got banned from `{info.GuildName}` at <t:{info.Timestamp}:F>",
-                    };
-                    embed.AddField("Reason", $"```\n{info.Reason}\n```");
-                    textChannel.SendMessageAsync(embed: embed.Build()).Wait();
+                    await NotifyGuildAboutMutualBan(guildConfig, info, guild, guildUser);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex, $"Failed to process record {info.Id} for user {info.UserName} ({info.UserId}) in guild \"{guild.Name}\" ({guild.Id})");
+                }
+            }
+        }
+
+        private async Task NotifyGuildAboutMutualBan(
+            ConfigBanSyncModel guildConfig,
+            BanSyncInfoModel info,
+            SocketGuild guild,
+            SocketGuildUser guildUser)
+        {
+            var textChannel = guild.GetTextChannel(guildConfig.LogChannel);
+            var embed = new EmbedBuilder()
+            {
+                Title = "User in your server just got banned",
+                Description = $"<@{info.UserId}> just got banned from `{info.GuildName}` at <t:{info.Timestamp}:F>",
+            };
+
+            MemoryStream? reasonMemoryStream = null;
+            if (info.Reason?.Length > 2000)
+            {
+                reasonMemoryStream = new(System.Text.Encoding.UTF8.GetBytes(info.Reason));
+            }
+            else if (!string.IsNullOrEmpty(info.Reason?.Trim()))
+            {
+                embed.AddField("Reason", info.Reason.Trim());
+            }
+
+            try
+            {
+                if (reasonMemoryStream != null)
+                {
+                    await textChannel.SendFileAsync(
+                        new FileAttachment(reasonMemoryStream, "reason.txt"),
+                        embed: embed.Build());
                     try
-                    { }
+                    {
+                        await reasonMemoryStream.DisposeAsync();
+                    }
                     catch (Exception ex)
                     {
-                        var g = _client.GetGuild(guildId);
-                        _err.ReportException(
-                            ex,
-                            $"Failed to notify guild {g.Name} ({g.Id}) of user {guildUser.Username} ({guildUser.Id}) ban record.").Wait();
+                        _log.Warn(ex, $"Failed to dispose reason attachment stream for channel \"{textChannel.Name}\" ({textChannel.Id}) in guild \"{guild.Name}\" ({guild.Id}) to notifiy about user \"{info.UserName}\" ({info.UserId}) getting banned.");
                     }
-                }));
+                }
+                else
+                {
+                    await textChannel.SendMessageAsync(
+                        embed: embed.Build());
+                }
             }
-            foreach (var i in taskList)
-                i.Start();
-            await Task.WhenAll(taskList);
+            catch (Exception ex)
+            {
+                _err.ReportException(
+                    ex,
+                    $"Failed to notify guild {guild.Name} ({guild.Id}) of user {guildUser.Username} ({guildUser.Id}) ban record.").Wait();
+            }
         }
 
         private async Task _client_UserJoined(SocketGuildUser arg)
@@ -218,23 +257,20 @@ namespace XeniaBot.Data.Services
 
             // Check if the guild has config stuff setup
             // If not then we just ignore
-            if (guildConfig == null)
-                return;
+            if (guildConfig == null) return;
                 
             if ((guildConfig?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
                 return;
 
             // Check if config channel has been made, if not then ignore
             SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig!.LogChannel);
-            if (logChannel == null)
-                return;
+            if (logChannel == null) return;
 
             // Check if this user has been banned before, if not then ignore
             var userInfo = (await _banInfoRepo.GetInfoEnumerable(arg.Id)).ToArray();
-            if (!userInfo.Any())
-                return;
+            if (userInfo.Length < 1) return;
 
-            userInfo = userInfo.Where(v => !v.Ghost).ToArray();
+            userInfo = [.. userInfo.Where(v => !v.Ghost)];
 
             // Create embed then send message in log channel.
             var embed = await GenerateEmbed(userInfo);
@@ -261,12 +297,12 @@ namespace XeniaBot.Data.Services
 
                 embed.AddField(
                     item.GuildName,
-                    string.Join("\n", new string[] {
+                    string.Join("\n",
                         "```",
                         item.Reason,
                         "```",
                         $"<t:{item.Timestamp}:F>"
-                    }),
+                    ),
                     true);
             }
 
@@ -323,7 +359,7 @@ namespace XeniaBot.Data.Services
             if (state == BanSyncGuildState.Blacklisted || state == BanSyncGuildState.RequestDenied)
             {
                 if (config.Reason.Length < 1)
-                    throw new Exception("Reason parameter is required");
+                    throw new InvalidOperationException($"Reason parameter is required (GuildId={guildId}, State={state})");
 
                 config.Reason = reason;
                 config.Enable = false;
@@ -368,21 +404,20 @@ namespace XeniaBot.Data.Services
                 await logChannel.SendMessageAsync(embed: new EmbedBuilder()
                 {
                     Title = "SetGuildState",
-                    Description = string.Join("\n", new string[]
-                    {
+                    Description = string.Join("\n",
                         "```",
                         $"Guild: {guild.Name ?? "<null>"} ({model.GuildId})",
                         $"State: {model.State}",
                         $"Reason: {model.Reason}",
                         "```"
-                    }),
+                    ),
                     Url = _configData.HasDashboard ? $"{_configData.DashboardUrl}/Admin/Server/{guild.Id}#settings" : ""
                 }.WithCurrentTimestamp().Build());
             }
             catch (Exception ex)
             {
                 await _err.ReportException(ex, $"To notify bot owner about guild state change for {model.GuildId}");
-                return;
+                _log.Error(ex, $"Failed to tell bot owner about guild state change for GuildId={model.GuildId} (state changed to {model.State})");
             }
         }
 
@@ -536,7 +571,7 @@ namespace XeniaBot.Data.Services
 
             config = await _guildConfigRepo.Get(guildId);
 
-            return config;
+            return config ?? throw new InvalidOperationException($"Result model with type {typeof(ConfigBanSyncModel)} is null when it couldn't be where GuildId={guildId})");
         }
         /// <summary>
         /// Send notification to <see cref="BanSyncConfigItem.RequestChannelId."/> that a server has requested the BanSync feature.
@@ -550,16 +585,26 @@ namespace XeniaBot.Data.Services
             var firstTextChannel = guild.Channels.OfType<ITextChannel>().FirstOrDefault();
 
             // Generate invite from firstTextChannel and fetch the URL for the invite
-            IInviteMetadata? invite = null;
+            string? inviteUrl = null;
             if (firstTextChannel != null)
-                invite = await firstTextChannel.CreateInviteAsync(null);
-            string inviteUrl = invite?.Url ?? "none";
+            {
+                try
+                {
+                    IInviteMetadata? invite = null;
+                    if (firstTextChannel != null)
+                        invite = await firstTextChannel.CreateInviteAsync(null);
+                    inviteUrl = invite?.Url ?? "none";
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn(ex, $"Failed to create invite for channel {firstTextChannel?.Name} ({firstTextChannel?.Id}) in guild \"{guild.Name}\" ({guild.Id})")
+                }
+            }
 
             await logRequestChannel.SendMessageAsync(embed: new EmbedBuilder()
             {
                 Title = "BanSync Request Received.",
-                Description = string.Join("\n", new string[]
-                {
+                Description = string.Join("\n",
                     "```",
                     $"Id: {guild.Id}",
                     $"Name: {guild.Name}",
@@ -567,7 +612,7 @@ namespace XeniaBot.Data.Services
                     $"Member Count: {guild.MemberCount}",
                     $"Invite: {inviteUrl}",
                     "```"
-                }),
+                ),
                 Url = _configData.HasDashboard ? $"{_configData.DashboardUrl}/Admin/Server/{guild.Id}#settings" : ""
             }.Build());
         }
