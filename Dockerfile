@@ -1,7 +1,13 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base-pkg
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base-pkg
 
-RUN apt-get update
-RUN apt-get install -y fonts-recommended fontconfig fonts-noto-cjk fonts-noto-cjk-extra fonts-liberation fonts-dejavu
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    gnupg \
+    apt-transport-https \
+    ca-certificates \
+    adduser \
+    fonts-recommended fontconfig fonts-noto-cjk fonts-noto-cjk-extra fonts-liberation fonts-dejavu \
+    && rm -rf /var/lib/apt/lists/*
 ADD localfonts.conf /etc/fonts/local.conf
 RUN fc-cache -f -v
 
@@ -10,17 +16,16 @@ WORKDIR /app
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
 # For more info, please refer to https://aka.ms/vscode-docker-dotnet-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+RUN /usr/sbin/adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
 # --- compile project ---
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 RUN dotnet tool install -g dotnet-t4
 ENV PATH="/root/.dotnet/tools:${PATH}"
 WORKDIR /src
-COPY ["./XeniaBot.Core/XeniaBot.Core.csproj", "./"]
-RUN dotnet restore "XeniaBot.Core.csproj"
-COPY . .
+COPY . ./
+RUN dotnet restore "XeniaBot.Core/XeniaBot.Core.csproj"
 WORKDIR "/src/."
 RUN dotnet build "./XeniaBot.Core/XeniaBot.Core.csproj" -c Release -o /app/build
 

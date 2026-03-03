@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
@@ -35,14 +35,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.*" />
-    <PackageReference Include="Markdig" Version="0.43.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.*" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.*" />
-    <PackageReference Include="Microsoft.IdentityModel.Logging" Version="8.*" />
-    <PackageReference Include="NLog.Web.AspNetCore" Version="6.*" />
-    <PackageReference Include="Sentry.AspNetCore" Version="6.*" />
-    <PackageReference Include="Sentry.NLog" Version="6.*" />
+    <PackageReference Include="AspNet.Security.OAuth.Discord" />
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
+    <PackageReference Include="Microsoft.IdentityModel.Logging" />
+    <PackageReference Include="NLog.Web.AspNetCore" />
+    <PackageReference Include="Sentry.AspNetCore" />
+    <PackageReference Include="Sentry.NLog" />
   </ItemGroup>
 
   <ItemGroup>
