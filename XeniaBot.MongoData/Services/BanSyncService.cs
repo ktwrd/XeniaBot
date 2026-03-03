@@ -111,17 +111,12 @@ public class BanSyncService : BaseService
         if (config?.Enable != true || config.State != BanSyncGuildState.Active)
             return;
         _log.Debug($"Fetching bans for guild \"{guild.Name}\" ({guild.Id})");
-        const int pageSize = 500;
         long total = 0;
-        IEnumerable<RestBan> bans = await guild.GetBansAsync(pageSize).FlattenAsync();
-        while (true)
+        foreach (var bans in await guild.GetBansAsync(1_000_000).ToListAsync())
         {
             var bansArray = bans.ToArray();
             total += bansArray.Length;
             foreach (var ban in bansArray) await ProcessBanCallback(ban);
-
-            if (bansArray.Length < pageSize) break;
-            bans = await guild.GetBansAsync(bansArray[^1].User, Direction.Before, pageSize).FlattenAsync();
         }
         var totalStr = total.ToString("n0");
         _log.Debug($"Got {totalStr} records for guild \"{guild.Name}\" ({guild.Id})");
