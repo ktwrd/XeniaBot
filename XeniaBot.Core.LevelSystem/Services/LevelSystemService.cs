@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Helpers;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Helpers;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.LevelSystem.Services;

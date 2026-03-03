@@ -6,8 +6,8 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Services;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 

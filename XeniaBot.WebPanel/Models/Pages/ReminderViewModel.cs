@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 
 namespace XeniaBot.WebPanel.Models;
 
 public class ReminderViewModel : BaseViewModel
 {
-    public ICollection<ReminderModel> Reminders { get; set; }
+    public ICollection<ReminderModel> Reminders { get; set; } = [];
 }

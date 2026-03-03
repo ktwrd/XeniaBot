@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Sentry;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models.Archival;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.DiscordCache.Controllers;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;

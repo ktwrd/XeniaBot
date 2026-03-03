@@ -4,9 +4,9 @@ using XeniaBot.Core.Helpers;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Services;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules;

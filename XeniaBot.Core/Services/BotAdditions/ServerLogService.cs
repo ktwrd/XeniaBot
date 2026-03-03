@@ -7,9 +7,9 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Data.Models.Archival;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
@@ -68,11 +68,9 @@ public class ServerLogService : BaseService
 
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Edited")
-                .WithDescription(string.Join("\n", new string[]
-                {
+                .WithDescription(string.Join("\n",
                     $"From: `{author.Username}#{author.Discriminator}`",
-                    $"ID: `{current.AuthorId}`"
-                }))
+                    $"ID: `{current.AuthorId}`"))
                 .WithColor(new Color(255, 255, 255))
                 .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
                 .WithThumbnailUrl(author.GetAvatarUrl());
@@ -81,12 +79,10 @@ public class ServerLogService : BaseService
             else
             {
                 embed.AddField("Difference",
-                    string.Join("\n", new string[]
-                    {
+                    string.Join("\n",
                         "```diff",
                         diffContent,
-                        "```"
-                    }));
+                        "```"));
                 await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
             }
         }

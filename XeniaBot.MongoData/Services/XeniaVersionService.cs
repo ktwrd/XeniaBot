@@ -6,12 +6,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Data.Services;
+namespace XeniaBot.MongoData.Services;
 
 [XeniaController]
 public class XeniaVersionService : BaseService
@@ -20,7 +20,6 @@ public class XeniaVersionService : BaseService
     private readonly ProgramDetails _details;
     private readonly ConfigData _configData;
     private readonly XeniaVersionRepository _repo;
-    private readonly IMongoDatabase _mongoDb;
     public XeniaVersionService(IServiceProvider services)
         : base(services)
     {
@@ -28,7 +27,6 @@ public class XeniaVersionService : BaseService
         _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
         _repo = services.GetRequiredService<XeniaVersionRepository>();
-        _mongoDb = services.GetRequiredService<IMongoDatabase>();
     }
 
     public override async Task InitializeAsync()
@@ -45,7 +43,7 @@ public class XeniaVersionService : BaseService
         SetFlags(currentModel);
         
         if (currentModel.Name.Length < 1)
-            throw new Exception("Name for executing assembly is empty?");
+            throw new InvalidOperationException("Name for executing assembly is empty?");
         await _repo.Insert(currentModel);
         var previousModel = await _repo.GetPrevious(currentModel.Id);
         

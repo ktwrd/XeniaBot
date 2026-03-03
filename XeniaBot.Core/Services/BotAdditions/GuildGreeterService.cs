@@ -4,7 +4,7 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 

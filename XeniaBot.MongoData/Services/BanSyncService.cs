@@ -7,14 +7,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared.Services;
 using Discord.Rest;
 using NLog;
 using System.IO;
 
-namespace XeniaBot.Data.Services;
+namespace XeniaBot.MongoData.Services;
 
 [XeniaController]
 public class BanSyncService : BaseService

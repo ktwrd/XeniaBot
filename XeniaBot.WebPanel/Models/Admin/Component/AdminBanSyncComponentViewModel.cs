@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Models.Component;

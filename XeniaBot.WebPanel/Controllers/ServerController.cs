@@ -6,6 +6,7 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using XeniaBot.Data;
+using XeniaBot.MongoData;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;

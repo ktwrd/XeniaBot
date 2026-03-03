@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 
 namespace XeniaBot.Core.Modules;
 

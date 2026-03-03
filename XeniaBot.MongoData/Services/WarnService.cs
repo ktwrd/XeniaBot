@@ -2,13 +2,12 @@
 using System.Data;
 using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Services;
+namespace XeniaBot.MongoData.Services;
 
 [XeniaController]
 public class WarnService : BaseService

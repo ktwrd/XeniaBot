@@ -2,10 +2,10 @@ using System;
 using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class ServerLogRepository : BaseRepository<ServerLogModel>

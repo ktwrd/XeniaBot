@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public enum ServerLogEvent
 {
@@ -20,18 +20,18 @@ public enum ServerLogEvent
 }
 public class ServerLogModel : BaseModel
 {
-    public ulong ServerId;
-    public ulong DefaultLogChannel;
-    public ulong? MemberJoinChannel = null;
-    public ulong? MemberLeaveChannel = null;
-    public ulong? MemberBanChannel = null;
-    public ulong? MemberKickChannel = null;
-    public ulong? MessageEditChannel = null;
-    public ulong? MessageDeleteChannel = null;
-    public ulong? ChannelCreateChannel = null;
-    public ulong? ChannelEditChannel = null;
-    public ulong? ChannelDeleteChannel = null;
-    public ulong? MemberVoiceChangeChannel = null;
+    public ulong ServerId { get; set; }
+    public ulong DefaultLogChannel { get; set; }
+    public ulong? MemberJoinChannel { get; set; } = null;
+    public ulong? MemberLeaveChannel { get; set; } = null;
+    public ulong? MemberBanChannel { get; set; } = null;
+    public ulong? MemberKickChannel { get; set; } = null;
+    public ulong? MessageEditChannel { get; set; } = null;
+    public ulong? MessageDeleteChannel { get; set; } = null;
+    public ulong? ChannelCreateChannel { get; set; } = null;
+    public ulong? ChannelEditChannel { get; set; } = null;
+    public ulong? ChannelDeleteChannel { get; set; } = null;
+    public ulong? MemberVoiceChangeChannel { get; set; } = null;
 
     public ulong GetChannel(ServerLogEvent logEvent)
     {
@@ -91,7 +91,7 @@ public class ServerLogModel : BaseModel
                 MemberVoiceChangeChannel = channelId;
                 break;
             default:
-                throw new Exception($"LogEvent {logEvent} not implemented in database");
+                throw new NotImplementedException($"LogEvent {logEvent} not implemented in database");
         }
     }
 }

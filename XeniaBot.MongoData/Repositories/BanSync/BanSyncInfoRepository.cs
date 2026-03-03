@@ -7,11 +7,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Repositories;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class BanSyncInfoRepository

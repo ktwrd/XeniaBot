@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
 using System.Data;
+using XeniaBot.MongoData.Models;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class RoleConfigRepository : BaseRepository<RoleConfigModel>

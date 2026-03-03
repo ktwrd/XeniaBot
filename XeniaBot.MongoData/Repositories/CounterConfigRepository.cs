@@ -5,10 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using MongoDB.Driver;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class CounterConfigRepository : BaseRepository<CounterGuildModel>

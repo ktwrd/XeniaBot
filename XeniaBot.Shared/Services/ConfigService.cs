@@ -86,8 +86,8 @@ public class ConfigService
         }
         catch (Exception ex)
         {
-            Log.Error("Failed to parse ConfigData", ex);
-            throw new Exception("Failed to parse ConfigData", ex);
+            Log.Error(ex, $"Failed to parse ConfigData");
+            throw new InvalidOperationException("Failed to parse ConfigData", ex);
         }
 
         ConfigData.Validate(details, config);

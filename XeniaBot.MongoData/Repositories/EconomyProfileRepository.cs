@@ -2,10 +2,10 @@
 using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class EconomyProfileRepository : BaseRepository<EconProfileModel>
@@ -21,7 +21,7 @@ public class EconomyProfileRepository : BaseRepository<EconProfileModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
         var result = await BaseFind(filter, limit: 1);
-        return result.FirstOrDefault();
+        return await result.FirstOrDefaultAsync();
     }
 
     public async Task Set(EconProfileModel model)

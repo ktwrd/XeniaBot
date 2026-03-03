@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using System.ComponentModel;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class RoleConfigModel
 {

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using XeniaBot.Shared.Helpers;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class TicketTranscriptMessage/* : IMessage*/
 {
@@ -19,22 +19,22 @@ public class TicketTranscriptMessage/* : IMessage*/
     public bool IsPinned { get; set; }
     public bool IsSuppressed { get; set; }
     public bool MentionedEveryone { get; set; }
-    public string Content { get; set; }
-    public string CleanContent { get; set; }
+    public string Content { get; set; } = "";
+    public string CleanContent { get; set; } = "";
     public DateTimeOffset Timestamp { get; set; }
     public DateTimeOffset? EditedTimestamp { get; set; }
     public ulong ChannelId { get; set; }
-    public string ChannelName { get; set; }
-    public string AuthorUsername { get; set; }
-    public string AuthorDiscriminator { get; set; }
+    public string ChannelName { get; set; } = "";
+    public string AuthorUsername { get; set; } = "";
+    public string AuthorDiscriminator { get; set; } = "";
     public ulong AuthorId { get; set; }
-    public string[] AttachmentUrls { get; set; }
-    public string[] EmbedJsons { get; set; }
-    public ulong[] MentionedChannelIds { get; set; }
-    public ulong[] MentionedRoleIds { get; set; }
-    public ulong[] MentionedUserIds { get; set; }
-    public MessageActivity Activity { get; set; }
-    public MessageApplication Application { get; set; }
+    public string[] AttachmentUrls { get; set; } = [];
+    public string[] EmbedJsons { get; set; } = [];
+    public ulong[] MentionedChannelIds { get; set; } = [];
+    public ulong[] MentionedRoleIds { get; set; } = [];
+    public ulong[] MentionedUserIds { get; set; } = [];
+    public MessageActivity? Activity { get; set; }
+    public MessageApplication? Application { get; set; }
     public ulong Reference { get; set; }
     public MessageFlags? Flags { get; set; }
 

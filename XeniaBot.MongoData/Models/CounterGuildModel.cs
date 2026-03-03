@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using System.ComponentModel;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class CounterGuildModel
 {
@@ -15,7 +15,7 @@ public class CounterGuildModel
         : this(null, null)
     {
     }
-    public CounterGuildModel(IChannel? channel = null, IGuild? guild = null)
+    public CounterGuildModel(IChannel? channel, IGuild? guild)
     {
         ChannelId = channel?.Id ?? 0;
         GuildId = guild?.Id ?? 0;

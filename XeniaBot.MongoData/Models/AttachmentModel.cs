@@ -2,7 +2,7 @@
 using MongoDB.Bson;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class AttachmentModel : BaseModelGuid
 {

@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Models.Component;

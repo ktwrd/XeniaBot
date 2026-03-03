@@ -1,8 +1,7 @@
 ﻿using System.Threading.Tasks;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared.Services;
-using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Models;
 

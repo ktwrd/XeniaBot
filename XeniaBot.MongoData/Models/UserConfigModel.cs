@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class UserConfigModel : BaseModel
 {

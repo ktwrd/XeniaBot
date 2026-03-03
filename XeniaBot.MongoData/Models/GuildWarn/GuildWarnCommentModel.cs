@@ -5,7 +5,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class GuildWarnCommentModel : BaseModelGuid
 {

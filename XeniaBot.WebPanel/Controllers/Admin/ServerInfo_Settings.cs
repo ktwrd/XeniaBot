@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
-using XeniaBot.Shared;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models.Component;
@@ -11,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public partial class AdminController
+partial class AdminController
 {
     /// <summary>
     /// Save Level System settings for Guild provided.

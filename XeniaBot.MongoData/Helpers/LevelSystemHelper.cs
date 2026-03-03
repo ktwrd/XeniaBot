@@ -1,18 +1,18 @@
 ﻿using System;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 
-namespace XeniaBot.Data.Helpers;
+namespace XeniaBot.MongoData.Helpers;
 
 public delegate void ExperienceComparisonDelegate(LevelMemberModel model, ExperienceMetadata previous, ExperienceMetadata current);
 public class ExperienceMetadata
 {
-    public ulong UserLevel;
-    public ulong UserXp;
-    public ulong NextLevelXp;
-    public ulong CurrentLevelStart;
-    public ulong CurrentLevelEnd;
-    public ulong CurrentLevelSize;
-    public decimal NextLevelProgress;
+    public ulong UserLevel { get; set; }
+    public ulong UserXp { get; set; }
+    public ulong NextLevelXp { get; set; }
+    public ulong CurrentLevelStart { get; set; }
+    public ulong CurrentLevelEnd { get; set; }
+    public ulong CurrentLevelSize { get; set; }
+    public decimal NextLevelProgress { get; set; }
 }
 public static class LevelSystemHelper
 {

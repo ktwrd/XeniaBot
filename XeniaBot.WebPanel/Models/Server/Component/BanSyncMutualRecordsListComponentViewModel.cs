@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Discord;
-using XeniaBot.Data;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData;
+using XeniaBot.MongoData.Models;
 
 namespace XeniaBot.WebPanel.Models.Component;
 
-public class BanSyncMutualRecordsListComponentViewModel : BaseViewModel,
-    IBanSyncBaseRecordsComponent
+public class BanSyncMutualRecordsListComponentViewModel
+    : BaseViewModel
+    , IBanSyncBaseRecordsComponent
 {
     #region IBanSyncBaseRecordsComponent
     /// <inheritdoc />

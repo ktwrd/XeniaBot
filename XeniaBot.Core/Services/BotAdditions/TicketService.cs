@@ -12,8 +12,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using XeniaBot.Data;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData;
+using XeniaBot.MongoData.Models;
 using XeniaBot.DiscordCache.Models;
 
 namespace XeniaBot.Core.Services.BotAdditions;

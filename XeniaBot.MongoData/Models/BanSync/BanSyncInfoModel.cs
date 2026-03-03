@@ -1,7 +1,7 @@
 ﻿using System;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class BanSyncInfoModel : BaseModel
 {

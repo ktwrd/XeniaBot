@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Discord.WebSocket;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Services;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Services;
 
 namespace XeniaBot.WebPanel.Models;
 

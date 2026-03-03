@@ -4,12 +4,12 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Shared;
-using XeniaBot.Data.Models;
 using System.Data;
 using System.Collections.Generic;
 using NLog;
+using XeniaBot.MongoData.Models;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class BanSyncConfigRepository : BaseRepository<ConfigBanSyncModel>

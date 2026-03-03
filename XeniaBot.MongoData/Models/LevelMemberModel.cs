@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class LevelMemberModel : BaseModel
 {

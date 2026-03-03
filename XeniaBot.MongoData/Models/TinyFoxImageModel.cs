@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class TinyFoxImageModel
 {

@@ -1,7 +1,7 @@
 ﻿using System;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 
-namespace XeniaBot.Data;
+namespace XeniaBot.MongoData;
 
 public class InnerTicketException : Exception
 {

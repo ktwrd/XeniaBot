@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Discord.WebSocket;
-using XeniaBot.Data.Models;
+﻿using Discord.WebSocket;
+using XeniaBot.MongoData.Models;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class ServerBanSyncViewModel : BaseViewModel,
-    IBanSyncBaseRecords
+public class ServerBanSyncViewModel
+    : BaseViewModel
+    , IBanSyncBaseRecords
 {
     public SocketGuildUser User { get; set; }
     public SocketGuild Guild { get; set; }

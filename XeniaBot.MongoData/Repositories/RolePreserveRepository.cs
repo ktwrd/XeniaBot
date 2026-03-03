@@ -5,10 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Driver;
 using NLog;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class RolePreserveRepository : BaseRepository<RolePreserveModel>

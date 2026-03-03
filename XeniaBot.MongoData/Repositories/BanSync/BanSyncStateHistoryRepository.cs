@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using MongoDB.Driver;
-using XeniaBot.Data.Models;
 using XeniaBot.Shared;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Data;
 using NLog;
+using XeniaBot.MongoData.Models;
 
-namespace XeniaBot.Data.Repositories;
+namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
 public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryItemModel>

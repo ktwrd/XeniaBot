@@ -4,10 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Services;
-using XeniaBot.Shared;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.MongoData.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -16,9 +14,9 @@ namespace XeniaBot.WebPanel.Controllers;
 [Controller]
 public class WarnSystemController: BaseXeniaController
 {
-    private readonly ILogger<ServerController> _logger;
+    private readonly ILogger<WarnSystemController> _logger;
 
-    public WarnSystemController(ILogger<ServerController> logger)
+    public WarnSystemController(ILogger<WarnSystemController> logger)
         : base()
     {
         _logger = logger;

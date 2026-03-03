@@ -3,8 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.MongoData.Models;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 

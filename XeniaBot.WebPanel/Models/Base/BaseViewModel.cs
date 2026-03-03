@@ -1,5 +1,5 @@
 ﻿using Discord.WebSocket;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 
 namespace XeniaBot.WebPanel.Models;
 

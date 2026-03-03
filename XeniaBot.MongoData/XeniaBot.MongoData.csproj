@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     
-    <AssemblyName>XeniaBot.Data</AssemblyName>
-    <RootNamespace>XeniaBot.Data</RootNamespace>
+    <AssemblyName>XeniaBot.MongoData</AssemblyName>
+    <RootNamespace>XeniaBot.MongoData</RootNamespace>
 
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
     

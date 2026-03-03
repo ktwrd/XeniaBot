@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;

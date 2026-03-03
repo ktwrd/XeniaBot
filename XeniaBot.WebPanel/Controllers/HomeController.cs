@@ -1,15 +1,9 @@
-﻿using Discord.WebSocket;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using NLog;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using XeniaBot.Data;
-using XeniaBot.Shared.Services;
-using XeniaBot.WebPanel.Extensions;
-using XeniaBot.WebPanel.Helpers;
+using XeniaBot.MongoData;
 using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.Controllers;

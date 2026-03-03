@@ -3,8 +3,8 @@ using Discord.Interactions;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using NLog;
 
 namespace XeniaBot.Core.Modules;

@@ -2,10 +2,9 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
-using XeniaBot.Data;
-using XeniaBot.Data.Services;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 

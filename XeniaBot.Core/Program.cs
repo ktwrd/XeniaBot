@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Services;
 using XeniaBot.Core.LevelSystem.Services;
-using XeniaBot.Data.Services;
+using XeniaBot.MongoData.Services;
 using XeniaBot.Logic.Services;
 using Sentry;
 using NLog;

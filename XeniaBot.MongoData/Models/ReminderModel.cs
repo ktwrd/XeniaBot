@@ -2,7 +2,7 @@
 using kate.shared.Helpers;
 using XeniaBot.Shared.Models;
 
-namespace XeniaBot.Data.Models;
+namespace XeniaBot.MongoData.Models;
 
 public class ReminderModel : BaseModel, IEquatable<ReminderModel>
 {

@@ -1,4 +1,4 @@
-﻿namespace XeniaBot.Data;
+﻿namespace XeniaBot.MongoData;
 
 public enum ListViewStyle
 {

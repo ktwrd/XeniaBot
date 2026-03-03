@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Services;
-using XeniaBot.Shared;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -13,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public partial class AdminController
+partial class AdminController
 {
     /// <summary>
     /// Get information about a Guild

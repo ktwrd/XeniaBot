@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 
-namespace XeniaBot.Data.Services;
+namespace XeniaBot.MongoData.Services;
 
 [XeniaController]
 public class WarnStrikeService : BaseService

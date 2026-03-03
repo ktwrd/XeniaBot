@@ -3,8 +3,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
@@ -23,7 +23,7 @@ public class EconomyModule : InteractionModuleBase
         try
         {
             if (controller == null)
-                throw new Exception("EconomyProfileRepository is null");
+                throw new InvalidOperationException("EconomyProfileRepository is null");
             data = await controller.Get(Context.User.Id, Context.Guild.Id)
                ?? new EconProfileModel()
                {
@@ -33,7 +33,7 @@ public class EconomyModule : InteractionModuleBase
                };
             if (data == null)
             {
-                throw new Exception("Fetched data is null");
+                throw new InvalidOperationException("Fetched data is null");
             }
         }
         catch (Exception ex)
@@ -101,7 +101,7 @@ public class EconomyModule : InteractionModuleBase
         try
         {
             if (controller == null)
-                throw new Exception("EconomyProfileRepository is null");
+                throw new InvalidOperationException("EconomyProfileRepository is null");
 
             var data = await controller.Get(Context.User.Id, Context.Guild.Id)
                ?? new EconProfileModel()
