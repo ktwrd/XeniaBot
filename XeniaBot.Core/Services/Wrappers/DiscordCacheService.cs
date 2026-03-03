@@ -26,15 +26,15 @@ public class DiscordCacheService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(DiscordCacheService));
 
-    public DiscordCacheGenericRepository<CacheMessageModel> CacheMessageConfig;
-    public DiscordCacheGenericRepository<CacheUserModel> CacheUserConfig;
-    public DiscordCacheGenericRepository<CacheGuildMemberModel> CacheGuildMemberConfig;
-    public DiscordCacheGenericRepository<CacheGuildModel> CacheGuildConfig;
+    public DiscordCacheGenericRepository<CacheMessageModel> CacheMessageConfig { get; }
+    public DiscordCacheGenericRepository<CacheUserModel> CacheUserConfig { get; }
+    public DiscordCacheGenericRepository<CacheGuildMemberModel> CacheGuildMemberConfig { get; }
+    public DiscordCacheGenericRepository<CacheGuildModel> CacheGuildConfig { get; }
 
-    public DiscordCacheGenericRepository<CacheForumChannelModel> CacheForumChannelConfig;
-    public DiscordCacheGenericRepository<CacheVoiceChannelModel> CacheVoiceChannelConfig;
-    public DiscordCacheGenericRepository<CacheStageChannelModel> CacheStageChannelConfig;
-    public DiscordCacheGenericRepository<CacheTextChannelModel> CacheTextChannelConfig;
+    public DiscordCacheGenericRepository<CacheForumChannelModel> CacheForumChannelConfig { get; }
+    public DiscordCacheGenericRepository<CacheVoiceChannelModel> CacheVoiceChannelConfig { get; }
+    public DiscordCacheGenericRepository<CacheStageChannelModel> CacheStageChannelConfig { get; }
+    public DiscordCacheGenericRepository<CacheTextChannelModel> CacheTextChannelConfig { get; }
     private readonly UserConfigRepository _userConfig;
     private readonly DiscordSocketClient _client;
     public DiscordCacheService(IServiceProvider services)
@@ -150,18 +150,19 @@ public class DiscordCacheService : BaseService
             {
                 var oldJson = JsonSerializer.Serialize(previous, Program.SerializerOptions);
                 var newJson = JsonSerializer.Serialize(current, Program.SerializerOptions);
-                await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                {
-                    $"Failed to run DiscordCacheService._client_UserUpdated ({current.Id})\n",
-                    "Old JSON:",
-                    "```json",
-                    oldJson,
-                    "```",
-                    "New JSON:",
-                    "```json",
-                    newJson,
-                    "```"
-                }));
+                await DiscordHelper.ReportError(ex, string.Join("\n",
+                    $"Failed to run DiscordCacheService._client_UserUpdated",
+                        "```",
+                        $"Id: {current?.Id}",
+                        $"Display Name: {current?.GlobalName}",
+                        $"Username: {current?.Username}",
+                        $"Created At: {current?.CreatedAt}",
+                        "```"),
+                    new Dictionary<string, string>()
+                    {
+                        {"old.json", oldJson ?? "" },
+                        {"new.json", newJson ?? "" }
+                    });
             }
             catch (Exception iex)
             {
@@ -189,18 +190,20 @@ public class DiscordCacheService : BaseService
             {
                 var oldJson = JsonSerializer.Serialize(previous, Program.SerializerOptions);
                 var newJson = JsonSerializer.Serialize(current, Program.SerializerOptions);
-                await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                {
-                    $"Failed to run DiscordCacheService._client_GuildUpdated ({current.Id})\n",
-                    "Old JSON:",
-                    "```json",
-                    oldJson,
-                    "```",
-                    "New JSON:",
-                    "```json",
-                    newJson,
-                    "```"
-                }));
+                await DiscordHelper.ReportError(ex,
+                    string.Join("\n",
+                    "Failed to run DiscordCacheService._client_GuildUpdated",
+                        "```",
+                        $"Id: {current?.Id}",
+                        $"Name: {current?.Name}",
+                        $"Created At: {current?.CreatedAt}",
+                        $"Owner: {current?.Owner?.DisplayName} ({current?.Owner?.Username}, {current?.Owner?.Id})",
+                        "```"),
+                    new Dictionary<string, string>()
+                    {
+                        {"old.json", oldJson ?? "" },
+                        {"new.json", newJson ?? "" }
+                    });
             }
             catch (Exception iex)
             {
@@ -226,35 +229,40 @@ public class DiscordCacheService : BaseService
             _log.Error(ex, $"Failed to run DiscordCacheService._client_GuildJoined ({current.Id})");
             try
             {
-                string? oldJson = null;
-                try
-                {
-                    oldJson = JsonSerializer.Serialize(current, Program.SerializerOptions);
-                }
-                catch (Exception xxe)
-                {
-                    _log.Error(xxe, $"Failed to serialize {nameof(oldJson)} ({current.GetType()})");
-                    try
-                    { oldJson = JsonSerializer.Serialize(current.DictionarySerialize(), Program.SerializerOptions); }
-                    catch (Exception xie)
+                var newJson = SerializeJsonSafe(current);
+                await DiscordHelper.ReportError(ex,
+                    string.Join("\n",
+                        $"Failed to run DiscordCacheService._client_GuildJoined",
+                        "```",
+                        $"Id: {current?.Id}",
+                        $"Name: {current?.Name}",
+                        $"Created At: {current?.CreatedAt}",
+                        $"Owner: {current?.Owner?.DisplayName} ({current?.Owner?.Username}, {current?.Owner?.Id})",
+                        "```"),
+                    new Dictionary<string, string>()
                     {
-                        _log.Warn(xie, $"can't even do DictionarySerialize");
-                    }
-                }
-                await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                {
-                    $"Failed to run DiscordCacheService._client_GuildJoined ({current.Id})\n",
-                    "Guild JSON:",
-                    "```json",
-                    oldJson ?? "{}",
-                    "```",
-                }));
+                        {"new.json", newJson ?? "" }
+                    });
             }
             catch (Exception iex)
             {
                 _log.Error(iex, "Failed to report error");
             }
         }
+    }
+
+    private string? SerializeJsonSafe<T>(T data)
+    {
+        string? result = null;
+        try
+        {
+            result = JsonSerializer.Serialize(data, Program.SerializerOptions);
+        }
+        catch (Exception ex)
+        {
+            _log.Warn(ex, $"Failed to serialize {typeof(T)}");
+        }
+        return result;
     }
 
     /// <summary>
@@ -274,7 +282,7 @@ public class DiscordCacheService : BaseService
             var data = await CacheGuildMemberConfig.GetLatest(oldMember.Id);
             var currentData = CacheGuildMemberModel.FromExisting(newMember);
             if (currentData == null)
-                throw new NoNullAllowedException("currentData is null");
+                throw new NoNullAllowedException("currentData is null for member ");
             await CacheGuildMemberConfig.Add(currentData);
             OnGuildMemberChange(CacheChangeType.Update,
                 currentData,
@@ -287,18 +295,18 @@ public class DiscordCacheService : BaseService
             {
                 var oldJson = JsonSerializer.Serialize(oldMember.Value, Program.SerializerOptions);
                 var newJson = JsonSerializer.Serialize(newMember, Program.SerializerOptions);
-                await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                {
-                    $"Failed to run DiscordCacheService._client_GuildMemberUpdated ({oldMember.Id} in {newMember?.Guild.Id})\n",
-                    "Old JSON:",
-                    "```json",
-                    oldJson,
-                    "```",
-                    "New JSON:",
-                    "```json",
-                    newJson,
-                    "```"
-                }));
+                await DiscordHelper.ReportError(ex,
+                    string.Join("\n",
+                        $"Failed to run DiscordCacheService._client_GuildMemberUpdated ({oldMember.Id} in {newMember?.Guild.Id})\n",
+                        "```",
+                        $"Guild: {newMember?.Guild.Name} ({newMember?.Guild.Id})",
+                        $"User: {newMember?.DisplayName} ({newMember?.Username}, {newMember?.Id})"
+                        ),
+                    new Dictionary<string, string>()
+                    {
+                        {"old.json", oldJson },
+                        {"new.json", newJson }
+                    });
             }
             catch (Exception iex)
             {
@@ -346,13 +354,16 @@ public class DiscordCacheService : BaseService
                                     _log.Warn(xie, $"can't even do DictionarySerialize");
                                 }
                             }
-                            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                            {
-                                $"Failed to process forum channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
-                                "```json",
-                                channelJson ?? "{}",
-                                "```"
-                            }));
+                            await DiscordHelper.ReportError(ex, string.Join("\n",
+                                $"Failed to process forum channel in DiscordCacheService._client_ChannelUpdated",
+                                    "```",
+                                    $"Channel: {guildChannel.Name} ({guildChannel.Id})",
+                                    $"Guild: {guildChannel.Guild.Name} ({guildChannel.Guild.Id})",
+                                    "```"),
+                                new Dictionary<string, string>()
+                                {
+                                    {"channel.json", channelJson ?? "" }
+                                });
                         }
                         catch (Exception iex)
                         {
@@ -391,13 +402,16 @@ public class DiscordCacheService : BaseService
                                     _log.Warn(xie, $"can't even do DictionarySerialize");
                                 }
                             }
-                            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                            {
-                                $"Failed to process voice channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
-                                "```json",
-                                channelJson ?? "{}",
-                                "```"
-                            }));
+                            await DiscordHelper.ReportError(ex, string.Join("\n",
+                                $"Failed to process voice channel in DiscordCacheService._client_ChannelUpdated",
+                                    "```",
+                                    $"Channel: {guildChannel.Name} ({guildChannel.Id})",
+                                    $"Guild: {guildChannel.Guild.Name} ({guildChannel.Guild.Id})",
+                                    "```"),
+                                new Dictionary<string, string>()
+                                {
+                                    {"channel.json", channelJson ?? "" }
+                                });
                         }
                         catch (Exception iex)
                         {
@@ -436,13 +450,16 @@ public class DiscordCacheService : BaseService
                                     _log.Warn(xie, $"can't even do DictionarySerialize");
                                 }
                             }
-                            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                            {
-                                $"Failed to process text channel in DiscordCacheService._client_ChannelUpdated ({guildChannel.Id})",
-                                "```json",
-                                channelJson ?? "{}",
-                                "```"
-                            }));
+                            await DiscordHelper.ReportError(ex, string.Join("\n",
+                                $"Failed to process text channel in DiscordCacheService._client_ChannelUpdated",
+                                    "```",
+                                    $"Channel: {guildChannel.Name} ({guildChannel.Id})",
+                                    $"Guild: {guildChannel.Guild.Name} ({guildChannel.Guild.Id})",
+                                    "```"),
+                                new Dictionary<string, string>()
+                                {
+                                    {"channel.json", channelJson ?? "" }
+                                });
                         }
                         catch (Exception iex)
                         {
@@ -493,13 +510,16 @@ public class DiscordCacheService : BaseService
                                     _log.Warn(xie, "can't even do DictionarySerialize");
                                 }
                             }
-                            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                            {
-                                $"Failed to process forum channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
-                                "```json",
-                                channelJson ?? "{}",
-                                "```"
-                            }));
+                            await DiscordHelper.ReportError(ex, string.Join("\n",
+                                $"Failed to process forum channel in DiscordCacheService._client_ChannelCreated",
+                                    "```",
+                                    $"Channel: {guildChannel.Name} ({guildChannel.Id})",
+                                    $"Guild: {guildChannel.Guild.Name} ({guildChannel.Guild.Id})",
+                                    "```"),
+                                new Dictionary<string, string>()
+                                {
+                                    {"channel.json", channelJson ?? "" }
+                                });
                         }
                         catch (Exception iex)
                         {
@@ -538,13 +558,17 @@ public class DiscordCacheService : BaseService
                                     _log.Warn(xie, $"can't even do DictionarySerialize");
                                 }
                             }
-                            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                            {
+                            await DiscordHelper.ReportError(ex,
+                                string.Join("\n",
                                 $"Failed to process voice channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
-                                "```json",
-                                channelJson ?? "{}",
-                                "```"
-                            }));
+                                    "```",
+                                    $"Channel: {guildChannel.Name} ({guildChannel.Id})",
+                                    $"Guild: {guildChannel.Guild.Name} ({guildChannel.Guild.Id})",
+                                    "```"),
+                                new Dictionary<string, string>()
+                                {
+                                    {"channel.json", channelJson ?? "" }
+                                });
                         }
                         catch (Exception iex)
                         {
@@ -583,13 +607,17 @@ public class DiscordCacheService : BaseService
                                     _log.Warn(xie, "can't even do DictionarySerialize");
                                 }
                             }
-                            await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                            {
-                                $"Failed to process text channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
-                                "```json",
-                                channelJson ?? "{}",
-                                "```"
-                            }));
+                            await DiscordHelper.ReportError(ex,
+                                string.Join("\n",
+                                    $"Failed to process text channel in DiscordCacheService._client_ChannelCreated ({guildChannel.Id})",
+                                    "```",
+                                    $"Channel: {guildChannel.Name} ({guildChannel.Id})",
+                                    $"Guild: {guildChannel.Guild.Name} ({guildChannel.Guild.Id})",
+                                    "```"),
+                                new Dictionary<string, string>()
+                                {
+                                    {"channel.json", channelJson ?? "" }
+                                });
                         }
                         catch (Exception iex)
                         {
@@ -657,17 +685,24 @@ public class DiscordCacheService : BaseService
                         _log.Warn(xie, $"can't even do DictionarySerialize");
                     }
                 }
-                await DiscordHelper.ReportError(ex, string.Join("\n", new List<string>()
+                IGuild? guild = null;
+                if (message.Channel is IGuildChannel guildChannel)
                 {
-                    $"Failed to run DiscordCacheService._client_MessageUpdated ({message.Id} in {message.Channel.Id})\n",
-                    "Message JSON:",
-                    msgJson != null ? string.Join("\n", new string[]
+                    guild = guildChannel.Guild;
+                }
+                await DiscordHelper.ReportError(ex,
+                    string.Join("\n",
+                        $"Failed to run DiscordCacheService._client_MessageUpdated",
+                        "```",
+                        $"Message Id: {message.Id}",
+                        $"Channel: {message.Channel.Name} ({message.Channel.Id})",
+                        $"Guild: {guild?.Name} ({guild?.Id})",
+                        $"Author: {message.Author.GlobalName} ({message.Author.Username}, {message.Author.Id})",
+                        "```"),
+                    new Dictionary<string, string>()
                     {
-                        "```json",
-                        msgJson,
-                        "```"
-                    }) : ""
-                }));
+                        {"message.json", msgJson ?? ""},
+                    });
             }
             catch (Exception iex)
             {
@@ -705,58 +740,32 @@ public class DiscordCacheService : BaseService
         }
         catch (Exception ex)
         {
-            _log.Error($"Failed to run DiscordCacheService._client_MessageUpdated ({previousMessage.Id} in {channel.Id})");
+            _log.Error(ex, $"Failed to run DiscordCacheService._client_MessageUpdated ({previousMessage.Id} in {channel.Id})");
             try
             {
-                string? msgJson = null;
-                string? channelJson = null;
-                try
+                var msgJson = SerializeJsonSafe(newMessage);
+                var channelJson = SerializeJsonSafe(channel);
+
+                IGuild? guild = null;
+                if (channel is IGuildChannel guildChannel)
                 {
-                    msgJson = JsonSerializer.Serialize(newMessage, Program.SerializerOptions);
-                }
-                catch (Exception xxe)
-                {
-                    _log.Error(xxe, $"Failed to serialize {nameof(newMessage)} ({newMessage.GetType()})");
-                    try
-                    { msgJson = JsonSerializer.Serialize(newMessage.DictionarySerialize(), Program.SerializerOptions); }
-                    catch (Exception xie)
-                    {
-                        _log.Warn(xie, "can't even do DictionarySerialize");
-                    }
+                    guild = guildChannel.Guild;
                 }
 
-                try
-                {
-                    channelJson = JsonSerializer.Serialize(channel, Program.SerializerOptions);
-                }
-                catch (Exception xxe)
-                {
-                    _log.Error(xxe, $"Failed to serialize {nameof(channelJson)} ({channel.GetType()})");
-                    try
-                    { channelJson = JsonSerializer.Serialize(channel.DictionarySerialize(), Program.SerializerOptions); }
-                    catch (Exception xie)
-                    {
-                        _log.Warn(xie, "can't even do DictionarySerialize");
-                    }
-                }
-                await DiscordHelper.ReportError(ex, string.Join("\n", new string[]
-                {
-                    $"Failed to run DiscordCacheService._client_MessageUpdated ({previousMessage.Id} in {channel.Id})\n",
-                    msgJson == null ? "" : string.Join("\n", new string[]
-                    {
-                        "Message JSON:",
-                        "```json",
-                        msgJson,
+                await DiscordHelper.ReportError(ex,
+                    string.Join("\n",
+                        $"Failed to run DiscordCacheService._client_MessageUpdated",
                         "```",
-                    }),
-                    channelJson == null ? "" : string.Join("\n", new string[]
+                        $"Message Id: {newMessage.Id}",
+                        $"Channel: {newMessage.Channel.Name} ({newMessage.Channel.Id})",
+                        $"Guild: {guild?.Name} ({guild?.Id})",
+                        $"Author: {newMessage.Author.GlobalName} ({newMessage.Author.Username}, {newMessage.Author.Id})",
+                        "```"),
+                new Dictionary<string, string>()
                     {
-                        "Channel JSON:",
-                        "```json",
-                        channelJson,
-                        "```"
-                    })
-                }));
+                        {"message.json", msgJson ?? ""},
+                        {"channel.json", channelJson ?? "" }
+                    });
             }
             catch (Exception iex)
             {
@@ -773,7 +782,8 @@ public class DiscordCacheService : BaseService
             await _client_MessageDeleted(msg, channel);
         }
     }
-    private async Task _client_MessageDeleted(Cacheable<IMessage, ulong> message,
+    private async Task _client_MessageDeleted(
+        Cacheable<IMessage, ulong> message,
         Cacheable<IMessageChannel, ulong> channel)
     {
         try
@@ -806,14 +816,14 @@ public class DiscordCacheService : BaseService
             });
             try
             {
-                var msgJson = JsonSerializer.Serialize(message.Value, Program.SerializerOptions);
-                var channelJson = JsonSerializer.Serialize(channel.Value, Program.SerializerOptions);
+                var msgJson = SerializeJsonSafe(message);
+                var channelJson = SerializeJsonSafe(channel);
                 await DiscordHelper.ReportError(ex, 
                     $"Failed to run DiscordCacheService._client_MessageDeleted ({message.Id} in {channel.Id})", 
                     new Dictionary<string, string>()
                     {
-                        {"message.json", msgJson},
-                        {"channel.json", channelJson}
+                        {"message.json", msgJson ?? ""},
+                        {"channel.json", channelJson ?? ""}
                     });
             }
             catch (Exception iex)
