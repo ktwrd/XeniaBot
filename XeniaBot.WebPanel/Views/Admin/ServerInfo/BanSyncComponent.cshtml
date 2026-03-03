@@ -41,6 +41,12 @@
         </div>
         <input type="text" class="form-control" name="Reason" id="setting_bansync_reason" form="settingsBanSync"/>
     </div>
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="setting_bansync_channelid" style="width: 6rem">Channel Id</label>
+        </div>
+        <input type="text" class="form-control" id="setting_bansync_channelid" form="settingsBanSync" readonly value="@Model.BanSyncConfig.LogChannel" />
+    </div>
     <div class="form-check mb-3">
         <input class="form-check-input" name="enable" type="checkbox" value="true" id="settings_bansync_dorefreshbans" checked form="settingsBanSync"/>
         <label class="form-check-label" for="settings_bansync_dorefreshbans">Enable</label>
