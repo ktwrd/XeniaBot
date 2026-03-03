@@ -1,19 +1,22 @@
 ﻿using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using XeniaBot.Shared;
+using NLog;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Data.Models;
-using System.Data;
-using NLog;
+using XeniaBot.Shared;
+using XeniaBot.Shared.Repositories;
 
 namespace XeniaBot.Data.Repositories;
 
 [XeniaController]
-public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
+public class BanSyncInfoRepository
+    : BaseRepository<BanSyncInfoModel>
+    , IBanSyncInfoRepository<BanSyncInfoModel>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly DiscordSocketClient _discord;
@@ -193,8 +196,10 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         var res = await BaseFind(filter, sort_timestamp, limit: 1);
         return await res.FirstOrDefaultAsync();
     }
+    public Task<BanSyncInfoModel?> GetInfo(Guid id, bool allowGhost = false)
+        => GetInfo(id.ToString(), allowGhost);
     
-    public async Task<List<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = false, bool allowGhost = false)
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = false, bool allowGhost = false)
     {
         var result = new List<BanSyncInfoModel>();
         var guild = _discord.GetGuild(guildId);
@@ -286,7 +291,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
 
         return filter;
     }
-    public async Task<List<BanSyncInfoModel>> GetInfoAllInGuildPaginate(ulong guildId,
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoAllInGuildPaginate(ulong guildId,
         int page,
         int pageSize,
         ulong? filterByUserId,
@@ -342,6 +347,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         }
         await collection.InsertOneAsync(data);
     }
+    public Task RemoveInfo(Guid recordId) => RemoveInfo(recordId.ToString());
     public async Task RemoveInfo(string recordId)
     {
         var collection = GetCollection();
