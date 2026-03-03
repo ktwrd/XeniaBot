@@ -46,7 +46,7 @@ public static class Program
         get
         {
             var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
-            DateTime buildDate = new DateTime(2000, 1, 1)
+            DateTime buildDate = ProgramDetails.VersionDateEpoch
                 .AddDays(v?.Build ?? 0)
                 .AddSeconds((v?.Revision ?? 0) * 2);
             return buildDate;
@@ -111,6 +111,8 @@ public static class Program
         {
             Core.MainAsync(args, (s) =>
             {
+                s.AddSingleton(Details);
+                s.WithDatabaseServices();
                 AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, s); // XeniaBot.Shared
                 AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
                 AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", s);

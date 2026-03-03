@@ -1,7 +1,23 @@
-﻿namespace XeniaDiscord.Data;
+﻿using Npgsql;
+using XeniaBot.Shared;
+
+namespace XeniaDiscord.Data;
 
 public static class Extensions
 {
+    public static string ToConnectionString(this PostgresConfigItem config)
+    {
+        var b = new NpgsqlConnectionStringBuilder()
+        {
+            Host = config.Host,
+            Port = config.Port,
+            Username = config.Username,
+            Password = config.Password,
+            Database = config.DatabaseName,
+            ApplicationName = "XeniaDiscord"
+        };
+        return b.ConnectionString;
+    }
     public static ulong ParseRequiredULong(this string? value, string propertyName, bool allowZero = true)
     {
         if (string.IsNullOrEmpty(value?.Trim())) throw new InvalidOperationException($"Property {propertyName} is null or empty");

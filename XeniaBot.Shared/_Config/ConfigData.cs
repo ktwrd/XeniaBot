@@ -20,11 +20,12 @@ public class ConfigData
     /// 6: Add property Developer.GenericLoggingChannelId. No upgrade required.
     /// 7: Add property RefreshFlightCheckOnStart, and RefreshRolePreserveOnStart. No upgrade requied.
     /// 8: Add property RefreshLevelSystemOnStart. No upgrade required.
+    /// 9: Add property Postgres. No upgrade required.
     /// </summary>
     public uint Version
     {
-        get => 8;
-        set { value = 8; }
+        get => 9;
+        set { value = 9; }
     }
 
     /// <summary>
@@ -54,6 +55,7 @@ public class ConfigData
     public LavalinkConfigItem Lavalink { get; set; }
     public GoogleCloudKey? GoogleCloud { get; set; }
     public MongoDBConfigItem MongoDB { get; set; }
+    public PostgresConfigItem Postgres { get; set; }
     public ReminderServiceConfigItem ReminderService { get; set; }
     
     public string? SupportServerUrl { get; set; }
@@ -101,6 +103,7 @@ public class ConfigData
         i.Health = HealthConfigItem.Default();
         i.GoogleCloud = null;
         i.MongoDB = MongoDBConfigItem.Default();
+        i.Postgres = PostgresConfigItem.Default();
         i.ReminderService = ReminderServiceConfigItem.Default();
         i.IsUpgradeAgent = false;
         i.RefreshBansOnStart = true;

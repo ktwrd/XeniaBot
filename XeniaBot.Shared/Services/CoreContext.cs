@@ -52,6 +52,7 @@ public class CoreContext
         {
             GatewayIntents = GatewayIntents.All,
             UseInteractionSnowflakeDate = false,
+            AlwaysDownloadUsers = true,
             ShardId = Config.Data.ShardId
         });
         InitMongoClient();
@@ -103,8 +104,8 @@ public class CoreContext
     public static JsonSerializerOptions SerializerOptions =>
         new JsonSerializerOptions()
         {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
+            IgnoreReadOnlyFields = false,
+            IgnoreReadOnlyProperties = false,
             IncludeFields = true,
             WriteIndented = true,
             ReferenceHandler = ReferenceHandler.Preserve
@@ -128,7 +129,7 @@ public class CoreContext
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to connect to MongoDB Server\n{ex}");
+            Log.Error(ex, $"Failed to connect to MongoDB Server");
             OnQuit(1);
         }
     }
@@ -153,7 +154,8 @@ public class CoreContext
             .AddSingleton<CronDaemon>()
             .AddSingleton(Config)
             .AddSingleton(Config.Data)
-            .AddSingleton(Discord);
+            .AddSingleton(Discord)
+            .AddSingleton<IDiscordClient>(Discord);
 
         var mongoDb = GetDatabase();
         if (mongoDb == null)

@@ -13,6 +13,7 @@ using XeniaBot.Data.Services;
 using XeniaBot.Logic.Services;
 using Sentry;
 using NLog;
+using XeniaDiscord.Common;
 
 namespace XeniaBot.Core;
 
@@ -108,6 +109,7 @@ public static class Program
         Core.StartTimestamp = StartTimestamp;
         Core.MainAsync(args, (s) =>
         {
+            s.WithDatabaseServices();
             AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", s);
             AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
             AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
