@@ -68,7 +68,7 @@
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="Magick.NET-Q16-HDRI-AnyCPU" Version="14.9.1" />
     <PackageReference Include="MimeTypesMap" Version="1.0.9" />
-    <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
+    <PackageReference Include="Sentry.AspNetCore" Version="6.*" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj" />

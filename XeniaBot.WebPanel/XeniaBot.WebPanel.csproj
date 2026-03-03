@@ -35,14 +35,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.3.0" />
+    <PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.*" />
     <PackageReference Include="Markdig" Version="0.43.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.20" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.20" />
-    <PackageReference Include="Microsoft.IdentityModel.Logging" Version="8.14.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.*" />
+    <PackageReference Include="Microsoft.IdentityModel.Logging" Version="8.*" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="6.*" />
-    <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
-    <PackageReference Include="Sentry.NLog" Version="5.16.2" />
+    <PackageReference Include="Sentry.AspNetCore" Version="6.*" />
+    <PackageReference Include="Sentry.NLog" Version="6.*" />
   </ItemGroup>
 
   <ItemGroup>
