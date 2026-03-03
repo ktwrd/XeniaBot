@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33110.190
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11512.155 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Core", "XeniaBot.Core\XeniaBot.Core.csproj", "{344CF567-9405-4F29-881C-41AC53BF6124}"
 EndProject
@@ -23,6 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		CHANGELOG.md = CHANGELOG.md
 		CONTRIBUTING.md = CONTRIBUTING.md
+		Directory.Packages.props = Directory.Packages.props
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
 	EndProjectSection
@@ -32,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{02EA68
 		Dockerfile = Dockerfile
 		WebPanel.Dockerfile = WebPanel.Dockerfile
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.Data", "XeniaDiscord.Data\XeniaDiscord.Data.csproj", "{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -139,6 +142,18 @@ Global
 		{B38442FB-F610-4544-A3ED-E30BF992D294}.Release|arm64.Build.0 = Release|Any CPU
 		{B38442FB-F610-4544-A3ED-E30BF992D294}.Release|x86.ActiveCfg = Release|Any CPU
 		{B38442FB-F610-4544-A3ED-E30BF992D294}.Release|x86.Build.0 = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|arm64.Build.0 = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|x86.Build.0 = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|arm64.ActiveCfg = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|arm64.Build.0 = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|x86.ActiveCfg = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
