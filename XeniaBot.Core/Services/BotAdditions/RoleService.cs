@@ -37,22 +37,38 @@ public class RoleService : BaseService
         return Task.CompletedTask;
     }
 
+    private const string GuildNotFoundForUserTempl
+        = "Guild \"{0}\" ({1}) not found for user \"{2}\" ({3}, {4})";
+    private const string MemberNotFoundInGuildTempl
+        = "Member \"{0}\" ({1}, {2}) not found in guild \"{3}\" ({4})";
+    private static string GuildNotFoundForUserMessage(IGuildUser user)
+        => string.Format(GuildNotFoundForUserTempl,
+                user.Guild.Name, user.Guild.Id,
+                user.DisplayName, user.Username, user.Id);
+    private static string MemberNotFoundInGuildMessage(
+        IGuild guild, IGuildUser user)
+        => string.Format(MemberNotFoundInGuildTempl,
+            user.DisplayName, user.Username, user.Id,
+            guild.Name, guild.Id);
+
     public async Task GrantUser(IGuildUser user, RoleConfigModel model)
     {
         var guild = _client.GetGuild(user.Guild.Id);
         if (guild == null)
-            throw new Exception($"Guild {user.Guild.Id} not found");
+            throw new InvalidOperationException(GuildNotFoundForUserMessage(user));
         var member = guild.GetUser(user.Id);
         if (member == null)
-            throw new Exception($"Member {user.Id} not found in guild {guild.Id}");
+            throw new InvalidOperationException(MemberNotFoundInGuildMessage(guild, user));
 
-        var targetRole = guild.GetRole(model.RoleId);
+        var memberRoleIds = member.Roles.Select(e => e.Id).ToHashSet();
+
+        var targetRole = await guild.GetRoleAsync(model.RoleId);
 
         if (model.BlacklistRoleId != 0)
         {
-            var blacklistRoleId = guild.GetRole(model.BlacklistRoleId);
-            var contains = blacklistRoleId == null ? false : member.Roles.Contains(blacklistRoleId);
-            if (blacklistRoleId == null)
+            var blacklistRole = await guild.GetRoleAsync(model.BlacklistRoleId);
+            var contains = blacklistRole == null ? false : memberRoleIds.Contains(blacklistRole.Id);
+            if (blacklistRole == null)
             {
                 _log.Warn($"RoleConfigModel.BlacklistRoleId {model.BlacklistRoleId} not found for Guild \"{guild.Name}\" ({guild.Id}) for User \"{user}\" ({user.Id})");
             }
@@ -63,9 +79,9 @@ public class RoleService : BaseService
         }
         else if (model.RequiredRoleId != 0)
         {
-            var whitelistRoleId = guild.GetRole(model.RequiredRoleId);
-            var contains = whitelistRoleId == null ? false : member.Roles.Contains(whitelistRoleId);
-            if (whitelistRoleId == null)
+            var whitelistRole = await guild.GetRoleAsync(model.RequiredRoleId);
+            var contains = whitelistRole == null ? false : memberRoleIds.Contains(whitelistRole.Id);
+            if (whitelistRole == null)
             {
                 _log.Warn($"RoleConfigModel.RequiredRoleId not found (guild: {model.GuildId}, role: {model.RequiredRoleId})");
             }

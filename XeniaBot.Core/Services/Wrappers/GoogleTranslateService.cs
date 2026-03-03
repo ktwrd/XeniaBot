@@ -19,7 +19,7 @@ namespace XeniaBot.Core.Services.Wrappers;
 public class GoogleTranslateService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(GoogleTranslateService));
-    private ConfigData _configData;
+    private readonly ConfigData _configData;
     private GoogleCredential _gcsCred;
     private TranslationClient _translateClient;
     public GoogleTranslateService(IServiceProvider services)
@@ -126,7 +126,7 @@ public class GoogleTranslateService : BaseService
             string errorMessage = "Object \"cred\" is null. (Failed to create credentials)";
             _log.Error(errorMessage);
 #if DEBUG
-            throw new Exception(errorMessage);
+            throw new InvalidOperationException(errorMessage);
 #endif
             Program.Quit(1);
             return null;

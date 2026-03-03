@@ -55,7 +55,7 @@ public class GuildGreeterService : BaseService
                 if (dmChannel == null)
                 {
                     createDMChannelError = "Couldn't create DM Channel";
-                    throw new Exception($"{nameof(user.CreateDMChannelAsync)} returned null");
+                    throw new InvalidOperationException($"{nameof(user.CreateDMChannelAsync)} returned null for user \"{user.DisplayName}\" ({user.Username}, {user.Id})");
                 }
                 await dmChannel.SendMessageAsync($"Greeter Message from {user.Guild.Name} ({user.Guild.Id})", embed: embed.Build());
                 return;

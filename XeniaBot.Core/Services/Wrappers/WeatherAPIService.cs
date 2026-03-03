@@ -21,15 +21,6 @@ public class WeatherAPIService : BaseService
     public WeatherAPIService(IServiceProvider services)
         : base(services)
     {
-        serializerOptions = new JsonSerializerOptions()
-        {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
-            IncludeFields = true,
-            WriteIndented = true,
-            ReferenceHandler = ReferenceHandler.Preserve
-        };
-
         _sysconfig = services.GetRequiredService<ConfigData>();
         if (_sysconfig == null)
         {
@@ -42,26 +33,33 @@ public class WeatherAPIService : BaseService
         _log.Debug("Validating WeatherAPI.com API Key");
         Enable = _sysconfig.ApiKeys.Weather != null && ValidateToken(_sysconfig.ApiKeys.Weather);
     }
-    private bool Enable = true;
+    private readonly bool Enable = true;
     protected HttpClient HttpClient = new HttpClient();
-    public JsonSerializerOptions serializerOptions;
+    public static readonly JsonSerializerOptions serializerOptions = new JsonSerializerOptions()
+    {
+        IgnoreReadOnlyFields = false,
+        IgnoreReadOnlyProperties = false,
+        IncludeFields = true,
+        WriteIndented = true,
+        ReferenceHandler = ReferenceHandler.Preserve
+    };
 
     protected bool ValidateToken(string token)
     {
-        if (token.Length < 0)
+        if (string.IsNullOrEmpty(token?.Trim()))
         {
             _log.Debug("false: too short");
             return false;
         }
 
-        WeatherResponse? response = null;
+        WeatherResponse? response;
         try
         {
             response = FetchCurrent("Perth, Western Australia", false).Result;
         }
         catch (Exception ex)
         {
-            _log.Debug($"false: Caught Exception {ex.Message}");
+            _log.Debug(ex, $"false: Caught Exception");
             Debugger.Break();
             return false;
         }
@@ -85,10 +83,10 @@ public class WeatherAPIService : BaseService
         if (!Enable)
         {
             _log.Error("Cannot run function, controller disabled");
-            throw new Exception("Client failed validation when init. Aborting");
+            throw new InvalidOperationException("Client failed validation when init. Aborting");
         }
         _log.Debug($"Query {location} (airQuality: {airQuality})");
-        var url = WeatherAPIEndpoint.Current(_sysconfig.ApiKeys.Weather, location, airQuality);
+        var url = WeatherAPIEndpoint.Current(_sysconfig.ApiKeys.Weather!, location, airQuality);
         var response = await HttpClient.GetAsync(url);
         int statusCode = (int)response.StatusCode;
         bool deser = WeatherAPIEndpoint.StatusCodeError.Contains(statusCode) || WeatherAPIEndpoint.StatusCodeSuccess.Contains(statusCode);
@@ -106,10 +104,10 @@ public class WeatherAPIService : BaseService
         if (!Enable)
         {
             _log.Error("Cannot run function, controller disabled");
-            throw new Exception("Client failed validation when init. Aborting");
+            throw new InvalidOperationException("Client failed validation when init. Aborting");
         }
         _log.Debug($"Requesting autocomplete for \"{query}\"");
-        string url = WeatherAPIEndpoint.Search(_sysconfig.ApiKeys.Weather, query);
+        string url = WeatherAPIEndpoint.Search(_sysconfig.ApiKeys.Weather!, query);
         var response = await HttpClient.GetAsync(url);
         int statusCode = (int)response.StatusCode;
         bool errorDeser = WeatherAPIEndpoint.StatusCodeError.Contains(statusCode);
@@ -141,7 +139,7 @@ public class WeatherAPIService : BaseService
         if (!Enable)
         {
             _log.Error("Cannot run function, controller disabled");
-            throw new Exception("Client failed validation when init. Aborting");
+            throw new InvalidOperationException("Client failed validation when init. Aborting");
         }
 #if DEBUG
         _log.Debug($"Requesting {days}d forecast for \"{location}\". (airQuality: {airQuality}, alerts: {alerts})");
@@ -149,7 +147,7 @@ public class WeatherAPIService : BaseService
         if (days < 1 || days > 10)
             throw new ArgumentException("Argument \"days\" must be >= 1 or <= 10");
 
-        var url = WeatherAPIEndpoint.Forecast(_sysconfig.ApiKeys.Weather, location, days, airQuality, alerts);
+        var url = WeatherAPIEndpoint.Forecast(_sysconfig.ApiKeys.Weather!, location, days, airQuality, alerts);
         var response = await HttpClient.GetAsync(url);
 
         int statusCode = (int)response.StatusCode;

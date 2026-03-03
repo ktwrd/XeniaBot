@@ -21,8 +21,8 @@ namespace XeniaBot.Core
         #region Fields
         public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
         {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
+            IgnoreReadOnlyFields = false,
+            IgnoreReadOnlyProperties = false,
             IncludeFields = true,
             WriteIndented = true,
             ReferenceHandler = ReferenceHandler.Preserve,

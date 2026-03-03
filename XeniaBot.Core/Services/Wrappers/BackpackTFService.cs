@@ -26,7 +26,7 @@ public class BackpackTFService : BaseService
         _apiKey = conf.ApiKeys.BackpackTF ?? "";
     }
 
-    public T ParseResponse<T>(string content)
+    public static T ParseResponse<T>(string content)
         where T : new()
     {
         var obj = JObject.Parse(content);
@@ -44,7 +44,7 @@ public class BackpackTFService : BaseService
     {
         var url = $"https://backpack.tf/api/IGetCurrencies/v1?key={_apiKey}";
         if (_apiKey?.Length < 1)
-            throw new Exception("API Key not provided!");
+            throw new InvalidOperationException("API Key not provided!");
         var response = await _http.GetAsync(url);
         var stringContent = response.Content.ReadAsStringAsync().Result;
         if (response.StatusCode == HttpStatusCode.OK)
@@ -65,20 +65,16 @@ public class BackpackTFService : BaseService
     {
         foreach (var item in currencyItems)
         {
-            if (item.Name == "Mann Co. Supply Crate Key")
+            if (item.Name == "Mann Co. Supply Crate Key" &&
+                item.Price.Currency == "metal")
             {
-                if (item.Price.Currency == "metal")
-                {
-                    RefinedPerKey = item.Price.Value;
-                }
+                RefinedPerKey = item.Price.Value;
             }
 
-            if (item.Name == "Refined Metal")
+            if (item.Name == "Refined Metal" &&
+                item.Price.Currency == "usd")
             {
-                if (item.Price.Currency == "usd")
-                {
-                    DollarPerRefined = item.Price.Value;
-                }
+                DollarPerRefined = item.Price.Value;
             }
         }
         CostLastUpdatedAt = DateTimeOffset.UtcNow;
@@ -102,12 +98,12 @@ public class BackpackTFService : BaseService
         return dollar / DollarPerRefined;
     }
 
-    public decimal CalcDollarToKey(decimal dollar)
+    public static decimal CalcDollarToKey(decimal dollar)
     {
         return dollar / DollarPerKey;
     }
 
-    public decimal CalcKeyToDollar(decimal key)
+    public static decimal CalcKeyToDollar(decimal key)
     {
         return key * DollarPerKey;
     }
@@ -180,33 +176,33 @@ public class BaseBackpackResponse
 public class BackpackCurrencyResponse : BaseBackpackResponse
 {
     [JsonPropertyName("currencies")]
-    public Dictionary<string, BackpackCurrencyItem> Currencies { get; set; }
+    public Dictionary<string, BackpackCurrencyItem> Currencies { get; set; } = [];
 }
 
 public class BackpackCurrencyItem
 {
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = "";
     [JsonPropertyName("quality")]
     public int Quality { get; set; }
     [JsonPropertyName("priceindex")]
-    public string PriceIndex { get; set; }
+    public string PriceIndex { get; set; } = "";
     [JsonPropertyName("single")]
-    public string Single { get; set; }
+    public string Single { get; set; } = "";
     [JsonPropertyName("plural")]
-    public string Plural { get; set; }
+    public string Plural { get; set; } = "";
     [JsonPropertyName("round")]
     public int Round { get; set; }
     [JsonPropertyName("blanket")]
     public int Blanket { get; set; }
     [JsonPropertyName("craftable")]
-    public string Craftable { get; set; }
+    public string Craftable { get; set; } = "";
     [JsonPropertyName("tradable")]
-    public string Tradable { get; set; }
+    public string Tradable { get; set; } = "";
     [JsonPropertyName("defindex")]
     public int DefinedIndex { get; set; }
     [JsonPropertyName("price")]
-    public BackpackCurrencyPrice Price { get; set; }
+    public BackpackCurrencyPrice Price { get; set; } = new();
 }
 
 public class BackpackCurrencyPrice
@@ -214,7 +210,7 @@ public class BackpackCurrencyPrice
     [JsonPropertyName("value")]
     public decimal Value { get; set; }
     [JsonPropertyName("currency")]
-    public string Currency { get; set; }
+    public string Currency { get; set; } = "";
     [JsonPropertyName("difference")]
     public float Difference { get; set; }
     [JsonPropertyName("last_update")]

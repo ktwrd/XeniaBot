@@ -46,7 +46,7 @@ public class RolePreserveService : BaseService
         try
         {
             var guildModel = await _guildConfig.Get(arg.Guild.Id);
-            if (guildModel == null || guildModel.Enable == false)
+            if (guildModel?.Enable != true)
                 return;
             var model = await _config.Get(arg.Id, arg.Guild.Id);
             if (model == null)
@@ -74,7 +74,7 @@ public class RolePreserveService : BaseService
                 }
                 catch (Exception ex)
                 {
-                    _err.ReportException(
+                    await _err.ReportException(
                         ex,
                         $"Failed to grant role {item} in guild {arg.Guild.Name} ({arg.Guild.Id}) for {arg.Username} ({arg.Id})");
                     fail.Add(item);
@@ -89,8 +89,9 @@ public class RolePreserveService : BaseService
                 var channelId = serverLogModel.GetChannel(ServerLogEvent.MemberJoin);
                 var channel = arg.Guild.GetTextChannel(channelId);
 
+                var successCount = success.Count.ToString("n0");
                 var embed = new EmbedBuilder()
-                    .WithDescription($"Added {success.Count} roles successfully.")
+                    .WithDescription($"Added {successCount} roles successfully.")
                     .WithTitle($"Role Preserve - User Joined")
                     .WithColor(new Color(255, 255, 255))
                     .WithCurrentTimestamp();
@@ -186,20 +187,9 @@ public class RolePreserveService : BaseService
     
     public async Task PreserveGuild(SocketGuild guild)
     {
-        var taskList = new List<Task>();
-        foreach (var u in guild.Users)
-        {
-            taskList.Add(new Task(
-                delegate
-                {
-                    PreserveGuildMember(guild.Id, u.Id).Wait();
-                }));
-        }
-
-        foreach (var i in taskList)
-            i.Start();
-        await Task.WhenAll(taskList);
-        _log.Info($"Preserved all roles in Guild \"{guild.Name}\" ({guild.Id}), which archived {taskList.Count} members.");
+        await Task.WhenAll(guild.Users.Select(u => PreserveGuildMember(guild.Id, u.Id)));
+        var memberCount = guild.Users.Count.ToString("n0");
+        _log.Info($"Preserved all roles in Guild \"{guild.Name}\" ({guild.Id}), which archived {memberCount} members.");
     }
 
     public async Task PreserveGuildMember(ulong guildId, ulong userId)
@@ -215,7 +205,7 @@ public class RolePreserveService : BaseService
             {
                 UserId = userId,
                 GuildId = guildId,
-                Roles = roleIdList.ToList()
+                Roles = [..roleIdList]
             };
             await _config.Set(model);
         }

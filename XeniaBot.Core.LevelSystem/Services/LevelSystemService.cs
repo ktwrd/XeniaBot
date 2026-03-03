@@ -1,7 +1,6 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -11,7 +10,6 @@ using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Helpers;
 using XeniaBot.Data.Models;
 using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.LevelSystem.Services;
@@ -20,16 +18,14 @@ namespace XeniaBot.Core.LevelSystem.Services;
 public class LevelSystemService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(LevelSystemService));
-    private IMongoDatabase _db;
-    private DiscordSocketClient _client;
-    private Random _random;
-    private LevelMemberRepository _memberConfig;
-    private LevelSystemConfigRepository _config;
-    private ConfigData _configData;
+    private readonly DiscordSocketClient _client;
+    private readonly Random _random;
+    private readonly LevelMemberRepository _memberConfig;
+    private readonly LevelSystemConfigRepository _config;
+    private readonly ConfigData _configData;
     public LevelSystemService(IServiceProvider services)
         : base(services)
     {
-        _db = services.GetRequiredService<IMongoDatabase>();
         _client = services.GetRequiredService<DiscordSocketClient>();
         _config = services.GetRequiredService<LevelSystemConfigRepository>();
         _memberConfig = services.GetRequiredService<LevelMemberRepository>();
