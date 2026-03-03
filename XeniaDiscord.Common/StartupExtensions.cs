@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using System.ComponentModel;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
@@ -16,6 +17,7 @@ public static class StartupExtensions
             o =>
             {
                 var connectionString = CoreContext.Instance!.Config.Data.Postgres.ToConnectionString();
+                LogManager.GetCurrentClassLogger().Info(connectionString);
                 o.UseNpgsql(connectionString);
 
                 if (options.EnableSensitiveDataLogging)

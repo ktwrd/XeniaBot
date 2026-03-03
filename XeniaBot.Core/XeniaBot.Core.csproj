@@ -16,15 +16,6 @@
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Exceptions\**" />
-    <Compile Remove="obj\**" />
-    <Content Remove="obj\**" />
-    <EmbeddedResource Remove="Exceptions\**" />
-    <EmbeddedResource Remove="obj\**" />
-    <None Remove="Exceptions\**" />
-    <None Remove="obj\**" />
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="Resources\1984.png" />
     <None Remove="Resources\1984cover.png" />
     <None Remove="Resources\1984originaldate.png" />

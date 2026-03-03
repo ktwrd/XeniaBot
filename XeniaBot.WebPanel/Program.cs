@@ -21,6 +21,7 @@ using XeniaBot.MongoData.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
+using XeniaDiscord;
 using XeniaDiscord.Common;
 
 namespace XeniaBot.WebPanel;
@@ -113,11 +114,13 @@ public static class Program
             {
                 s.AddSingleton(Details);
                 s.WithDatabaseServices();
+                XeniaDiscordData.RegisterServices(s);
+                XeniaDiscordCommon.RegisterServices(s);
                 AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, s); // XeniaBot.Shared
                 AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
                 AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", s);
                 return Task.CompletedTask;
-            }).Wait();
+            }).GetAwaiter().GetResult();
         }
         finally
         {

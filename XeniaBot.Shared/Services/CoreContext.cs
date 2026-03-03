@@ -64,7 +64,7 @@ public class CoreContext
             new Thread((ThreadStart)delegate
             {
                 RunServiceReady();
-                Task.Delay(2000).Wait();
+                Task.Delay(2000).GetAwaiter().GetResult();
                 RunServiceDelayedReady();
             }).Start();
         };
@@ -101,8 +101,8 @@ public class CoreContext
     /// </summary>
     public long StartTimestamp { get; set; } = 0;
 
-    public static JsonSerializerOptions SerializerOptions =>
-        new JsonSerializerOptions()
+    public static readonly JsonSerializerOptions SerializerOptions
+        = new()
         {
             IgnoreReadOnlyFields = false,
             IgnoreReadOnlyProperties = false,
@@ -187,7 +187,7 @@ public class CoreContext
     {
         AllBaseServices((item) =>
         {
-            item.InitializeAsync().Wait();
+            item.InitializeAsync().GetAwaiter().GetResult();
             return Task.CompletedTask;
         });
     }
@@ -196,7 +196,7 @@ public class CoreContext
     {
         AllBaseServices((item) =>
         {
-            item.OnReady().Wait();
+            item.OnReady().GetAwaiter().GetResult();
             return Task.CompletedTask;
         });
     }

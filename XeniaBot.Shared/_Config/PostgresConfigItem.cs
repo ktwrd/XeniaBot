@@ -4,7 +4,7 @@ public class PostgresConfigItem
 {
     public string Host { get; set; } = "db";
     public int Port { get; set; } = 5432;
-    public string Username { get; set; } = "xeniadiscord";
+    public string Username { get; set; } = "xeniadiscordmainline";
     public string Password { get; set; } = "password";
     public string DatabaseName { get; set; } = "xeniadiscordmainline";
 
@@ -13,7 +13,7 @@ public class PostgresConfigItem
         i ??= new PostgresConfigItem();
         i.Host = "db";
         i.Port = 5432;
-        i.Username = "xeniadiscord";
+        i.Username = "xeniadiscordmainline";
         i.Password = "password";
         i.DatabaseName = "xeniadiscordmainline";
         return i;

@@ -1,18 +1,19 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Helpers;
-using XeniaBot.Shared;
+using NLog;
+using Sentry;
 using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using XeniaBot.Shared.Services;
+using XeniaBot.Core.Helpers;
 using XeniaBot.Core.LevelSystem.Services;
-using XeniaBot.MongoData.Services;
 using XeniaBot.Logic.Services;
-using Sentry;
-using NLog;
+using XeniaBot.MongoData.Services;
+using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
+using XeniaDiscord;
 using XeniaDiscord.Common;
 
 namespace XeniaBot.Core;
@@ -110,6 +111,8 @@ public static class Program
         Core.MainAsync(args, (s) =>
         {
             s.WithDatabaseServices();
+            XeniaDiscordData.RegisterServices(s);
+            XeniaDiscordCommon.RegisterServices(s);
             AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", s);
             AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
             AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
@@ -124,13 +127,13 @@ public static class Program
         if (e.ExceptionObject is Exception ex)
         {
             SentrySdk.CaptureException(ex);
+            log.Fatal(ex, $"Unhandled exception! ({nameof(e.IsTerminating)}: {e.IsTerminating})");
+            if (Core.Services.GetRequiredService<DiscordService>().IsReady)
+            {
+                DiscordHelper.ReportError(ex, $"Unhandled exception! ({nameof(e.IsTerminating)}: {e.IsTerminating})").Wait();
+            }
         }
-        var except = (Exception)e.ExceptionObject;
-        Console.Error.WriteLine(except);
-        if (Core.Services.GetRequiredService<DiscordService>().IsReady)
-        {
-            DiscordHelper.ReportError(except).Wait();
-        }
+        Console.Error.WriteLine("OH SHIT, UNHANDLED EXCEPTION!!!\n" + e.ExceptionObject?.ToString());
         if (Debug)
         {
             Debugger.Break();
