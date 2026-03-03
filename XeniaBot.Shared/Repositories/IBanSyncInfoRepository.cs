@@ -28,7 +28,7 @@ public interface IBanSyncInfoRepository<TRecord>
         bool ignoreDisabledGuilds = false,
         bool allowGhost = false);
     public Task SetInfo(TRecord data);
-    public Task RemoveInfo(TRecord data);
+    public Task RemoveInfo(Guid recordID);
     public Task<bool> InfoExists(ulong userId, ulong guildId);
     public Task<bool> InfoExists(ulong userId);
 }
