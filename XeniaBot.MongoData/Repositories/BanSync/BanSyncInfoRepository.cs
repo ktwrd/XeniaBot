@@ -82,8 +82,8 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         }
     }
     
-    private SortDefinition<BanSyncInfoModel> sort_timestamp
-        => Builders<BanSyncInfoModel>
+    private static readonly SortDefinition<BanSyncInfoModel> sort_timestamp
+        = Builders<BanSyncInfoModel>
             .Sort
             .Descending(v => v.Timestamp);
 
@@ -95,23 +95,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
             .Filter
             .Empty;
         var res = await BaseFind(filter);
-        return res.ToList();
-    }
-    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId, bool allowGhost = false)
-    {
-        var filter = Builders<BanSyncInfoModel>
-            .Filter
-            .Where(v => v.UserId == userId && v.GuildId == guildId);
-        
-        if (!allowGhost)
-        {
-            filter &= Builders<BanSyncInfoModel>
-                .Filter
-                .Where(v => !v.Ghost);
-        }
-
-        var res = await BaseFind(filter);
-        return res.ToList();
+        return await res.ToListAsync();
     }
 
     /// <summary>
@@ -155,7 +139,23 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         }
 
         var res = await BaseFind(filter);
-        return res.ToList();
+        return await res.ToListAsync();
+    }
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoEnumerable(ulong userId, ulong guildId, bool allowGhost = false)
+    {
+        var filter = Builders<BanSyncInfoModel>
+            .Filter
+            .Where(v => v.UserId == userId && v.GuildId == guildId);
+
+        if (!allowGhost)
+        {
+            filter &= Builders<BanSyncInfoModel>
+                .Filter
+                .Where(v => !v.Ghost);
+        }
+
+        var res = await BaseFind(filter);
+        return await res.ToListAsync();
     }
     public async Task<BanSyncInfoModel?> GetInfo(ulong userId, ulong guildId, bool allowGhost = false)
     {
@@ -169,7 +169,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
                 .Where(v => !v.Ghost);
         }
         var res = await BaseFind(filter, sort_timestamp, limit: 1);
-        return res.FirstOrDefault();
+        return await res.FirstOrDefaultAsync();
     }
     public async Task<BanSyncInfoModel?> GetInfo(BanSyncInfoModel data, bool allowGhost = false)
         => await GetInfo(data.RecordId, allowGhost);
@@ -185,13 +185,13 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
         var filter = Builders<BanSyncInfoModel>
             .Filter
             .Where(v => v.RecordId == id);
-        if (allowGhost == false)
+        if (!allowGhost)
         {
             filter &= Builders<BanSyncInfoModel>.Filter.Where(v => !v.Ghost);
         }
 
         var res = await BaseFind(filter, sort_timestamp, limit: 1);
-        return res.FirstOrDefault();
+        return await res.FirstOrDefaultAsync();
     }
     
     public async Task<List<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = false, bool allowGhost = false)
@@ -211,7 +211,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
             }
             var userResult = await BaseFind(filter);
             var innerUser = new List<BanSyncInfoModel>();
-            foreach (var re in userResult.ToList())
+            foreach (var re in await userResult.ToListAsync())
             {
                 var guildConf = await _banSyncStateController.GetLatest(re.GuildId);
                 if (ignoreDisabledGuilds)
@@ -239,7 +239,7 @@ public class BanSyncInfoRepository : BaseRepository<BanSyncInfoModel>
             .Filter
             .Where(v => v.GuildId == guildId);
         var currentServerResult = await BaseFind(currentServerFilter);
-        foreach (var i in currentServerResult.ToList())
+        foreach (var i in await currentServerResult.ToListAsync())
         {
             result.Add(i);
         }
