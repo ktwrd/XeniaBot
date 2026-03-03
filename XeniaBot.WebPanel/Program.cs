@@ -21,17 +21,17 @@ using XeniaBot.Data.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
+using XeniaDiscord.Common;
+
+namespace XeniaBot.WebPanel;
 
 public static class Program
 {
-    #region Fields
-    /// <summary>
-    /// Created after <see cref="CreateServiceProvider"/> is called in <see cref="MainAsync(string[])"/>
-    /// </summary>
-    public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
+    #region Properties
+    public static readonly JsonSerializerOptions SerializerOptions = new()
     {
-        IgnoreReadOnlyFields = true,
-        IgnoreReadOnlyProperties = true,
+        IgnoreReadOnlyFields = false,
+        IgnoreReadOnlyProperties = false,
         IncludeFields = true,
         WriteIndented = true,
         ReferenceHandler = ReferenceHandler.Preserve
@@ -40,22 +40,46 @@ public static class Program
     /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
     /// </summary>
     public static long StartTimestamp { get; private set; }
-    #endregion
+    public static string VersionFull => $"v{Version?.Major}.{Version?.Minor} ({VersionDate})";
+    public static DateTime VersionDate
+    {
+        get
+        {
+            var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
+            DateTime buildDate = new DateTime(2000, 1, 1)
+                .AddDays(v?.Build ?? 0)
+                .AddSeconds((v?.Revision ?? 0) * 2);
+            return buildDate;
+        }
+    }
+    public static Version? Version
+    {
+        get
+        {
+            var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
+            if (v == null)
+                return null;
+
+            return new Version(v.Major, v.Minor, v.Build, (v.Revision * 2) / 60);
+        }
+    }
     public static ProgramDetails Details => new ProgramDetails()
     {
         VersionRaw = Version,
         StartTimestamp = StartTimestamp,
         Platform = XeniaPlatform.WebPanel,
-        Debug =
-#if DEBUG
-            true
-#else
-            false
-#endif
+        Debug = Debug
     };
+#if DEBUG
+    private const bool Debug = true;
+#else
+    private const bool Debug = false;
+#endif
     public static CoreContext Core { get; private set; }
+    #endregion
     public static void Main(string[] args)
     {
+        StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
@@ -64,26 +88,17 @@ public static class Program
                 Dsn = FeatureFlags.SentryDSN,
                 TracesSampleRate = 1.0,
                 IsGlobalModeEnabled = true,
-#if DEBUG
-                Debug = true
-#else
-                Debug = false
-#endif
+                Debug = Details.Debug
             });
-            LogManager.Configuration.AddSentry(options =>
+            LogManager.Configuration?.AddSentry(options =>
             {
                 options.Dsn = FeatureFlags.SentryDSN;
                 options.TracesSampleRate = 1.0;
                 options.IsGlobalModeEnabled = true;
-#if DEBUG
-                options.Debug = true;
-#else
-                options.Debug = false;
-#endif
+                options.Debug = Details.Debug;
             });
         }
 
-        StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         LogManager.GetLogger("Main").Info($"Running version {Details.VersionRaw}");
         Core = new CoreContext(Details);
         Core.StartTimestamp = StartTimestamp;
@@ -104,31 +119,7 @@ public static class Program
         }
         finally
         {
-            NLog.LogManager.Shutdown();
-        }
-    }
-
-    public static Version? Version
-    {
-        get
-        {
-            var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
-            if (v == null)
-                return null;
-
-            return new Version(v.Major, v.Minor, v.Build, (v.Revision * 2) / 60);
-        }
-    }
-    public static string VersionFull => $"v{Version?.Major}.{Version?.Minor} ({VersionDate})";
-    public static DateTime VersionDate
-    {
-        get
-        {
-            var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
-            DateTime buildDate = new DateTime(2000, 1, 1)
-                .AddDays(v?.Build ?? 0)
-                .AddSeconds((v?.Revision ?? 0) * 2);
-            return buildDate;
+            LogManager.Shutdown();
         }
     }
 
@@ -170,6 +161,7 @@ public static class Program
         builder.Services.AddResponseCompression(options =>
         {
             options.Providers.Add<GzipCompressionProvider>();
+            options.Providers.Add<BrotliCompressionProvider>();
             options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat([
                 // images
                 "image/jpeg",
@@ -177,6 +169,7 @@ public static class Program
                 "image/svg+xml",
                 "image/tiff",
                 "image/webp",
+                "image/gif",
 
                 // fonts
                 "application/font-woff2",
