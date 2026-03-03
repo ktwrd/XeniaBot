@@ -145,7 +145,7 @@ public class WeatherModuleService : BaseService
         return embed;
     }
 
-    public static ComponentBuilder WeatherCurrentComponents(string location, MeasurementSystem system)
+    public ComponentBuilder WeatherCurrentComponents(string location, MeasurementSystem system)
     {
         var builder = new ComponentBuilder();
         builder.AddRow(
@@ -154,7 +154,7 @@ public class WeatherModuleService : BaseService
         return builder;
     }
 
-    public static ComponentBuilder WeatherForecastComponents(string location, MeasurementSystem system)
+    public ComponentBuilder WeatherForecastComponents(string location, MeasurementSystem system)
     {
         var builder = new ComponentBuilder();
         builder.AddRow(

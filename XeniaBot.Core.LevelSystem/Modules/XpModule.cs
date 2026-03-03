@@ -31,18 +31,19 @@ public class XpModule : InteractionModuleBase
         var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
         var metadata = LevelSystemHelper.Generate(data);
 
+        var xp = (data?.Xp ?? 0).ToString("n0");
+        var userLevel = metadata.UserLevel.ToString("n0");
         var embed = new EmbedBuilder()
         {
             Footer = new EmbedFooterBuilder()
             {
                 Text = "XP: Profile"
             },
-            Description = string.Join("\n", new string[]
-            {
-                $"**XP**: {data?.Xp ?? 0}",
+            Description = string.Join("\n",
+                $"**XP**: {xp}",
                 $"**Progress**: {Math.Round(metadata.NextLevelProgress * 100, 3)}% ({metadata.UserXp - metadata.CurrentLevelStart}/{metadata.CurrentLevelEnd})",
-                $"**Level**: {metadata.UserLevel}"
-            })
+                $"**Level**: {userLevel}"
+            )
         };
 
         await Context.Interaction.RespondAsync(embed: embed.Build());
@@ -54,13 +55,13 @@ public class XpModule : InteractionModuleBase
     /// <param name="guildId">GuildId to use</param>
     /// <param name="size"></param>
     /// <returns></returns>
-    public async Task<EmbedBuilder> GenerateServerLeaderboard(ulong guildId, int size = 5)
+    public static async Task<EmbedBuilder> GenerateServerLeaderboard(ulong guildId, int size = 5)
     {
         size = Math.Min(size, 10);
         var embed = new EmbedBuilder()
             .WithTitle("Xp System - Guild Leaderboard");
         
-        var controller = CoreContext.Instance.GetRequiredService<LevelMemberRepository>();
+        var controller = CoreContext.Instance?.GetRequiredService<LevelMemberRepository>();
         if (controller == null)
         {
             embed.WithDescription($"Could not fetch LevelMemberRepository");
@@ -73,9 +74,9 @@ public class XpModule : InteractionModuleBase
         return embed;
     }
 
-    public EmbedBuilder GenerateLeaderboard(EmbedBuilder embed, ICollection<LevelMemberModel> data, int size = 5)
+    public static EmbedBuilder GenerateLeaderboard(EmbedBuilder embed, ICollection<LevelMemberModel> data, int size = 5)
     {
-        size = Math.Min(size, 10);
+        size = Math.Clamp(size, 1, 10);
 
         var resultLines = new List<string>()
         {
@@ -88,12 +89,11 @@ public class XpModule : InteractionModuleBase
         {
             var item = sorted[i];
             var details = LevelSystemHelper.Generate(item.Xp);
-            resultLines.Add(string.Join(' ', new string[]
-            {
+            resultLines.Add(string.Join(' ',
                 RankText[i],
                 $"`{item.Xp}xp, level {details.UserLevel}`",
                 $"<@{item.UserId}>"
-            }));
+            ));
         }
 
         embed.WithDescription(string.Join("\n", resultLines));
@@ -117,7 +117,6 @@ public class XpModule : InteractionModuleBase
                 .WithColor(Color.Red);
             await Context.Interaction.RespondAsync(embed: embed.Build());
             await DiscordHelper.ReportError(ex, Context);
-            return;
         }
     }
 
@@ -125,12 +124,11 @@ public class XpModule : InteractionModuleBase
     [RequireUserPermission(GuildPermission.ManageGuild)]
     public async Task RewardReload()
     {
-            
         var startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance.GetRequiredService<LevelSystemService>();
+            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemService>();
 
             try
             { 
@@ -172,12 +170,12 @@ public class XpModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id) ??
-                        new LevelSystemConfigModel()
-                        {
-                            GuildId = Context.Guild.Id
-                        };
+            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
+            var model = await controller.Get(Context.Guild.Id)
+                ?? new LevelSystemConfigModel()
+                {
+                    GuildId = Context.Guild.Id
+                };
 
             model.LevelUpChannel = logChannel.Id;
             await controller.Set(model);
@@ -209,12 +207,12 @@ public class XpModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id) ??
-                        new LevelSystemConfigModel()
-                        {
-                            GuildId = Context.Guild.Id
-                        };
+            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
+            var model = await controller.Get(Context.Guild.Id)
+                ?? new LevelSystemConfigModel()
+                {
+                    GuildId = Context.Guild.Id
+                };
 
             model.Enable = true;
             await controller.Set(model);
@@ -255,7 +253,7 @@ public class XpModule : InteractionModuleBase
     [SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
     public async Task GlobalLeaderboard()
     {
-        if (!CoreContext.Instance.Config.Data.UserWhitelist.Contains(Context.User.Id))
+        if (CoreContext.Instance?.Config.Data.UserWhitelist.Contains(Context.User.Id) != true)
         {
             await RespondAsync("You do not have access to this command");
             return;
@@ -279,7 +277,7 @@ public class XpModule : InteractionModuleBase
 
 
             var data = await controller.GetAllUsersCombined();
-            GenerateLeaderboard(embed, data.ToArray(), 10);
+            GenerateLeaderboard(embed, data, 10);
             await FollowupAsync(embed: embed.Build());
         }
         catch (Exception ex)
@@ -297,12 +295,12 @@ public class XpModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id) ??
-                        new LevelSystemConfigModel()
-                        {
-                            GuildId = Context.Guild.Id
-                        };
+            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
+            var model = await controller.Get(Context.Guild.Id)
+                ?? new LevelSystemConfigModel()
+                {
+                    GuildId = Context.Guild.Id
+                };
 
             model.Enable = false;
             await controller.Set(model);
@@ -338,12 +336,12 @@ public class XpModule : InteractionModuleBase
             .WithCurrentTimestamp();
         try
         {
-            var controller = CoreContext.Instance.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id) ??
-                        new LevelSystemConfigModel()
-                        {
-                            GuildId = Context.Guild.Id
-                        };
+            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
+            var model = await controller.Get(Context.Guild.Id)
+                ?? new LevelSystemConfigModel()
+                {
+                    GuildId = Context.Guild.Id
+                };
 
             model.ShowLeveUpMessage = value;
             await controller.Set(model);

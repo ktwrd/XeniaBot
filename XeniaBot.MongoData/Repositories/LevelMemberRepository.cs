@@ -75,9 +75,9 @@ public class LevelMemberRepository : BaseRepository<LevelMemberModel>
             .Filter
             .Where(v => v.UserId == userId && v.GuildId == guildId);
         var res = await BaseFind(filter, limit: 1);
-        return res.FirstOrDefault();
+        return await res.FirstOrDefaultAsync();
     }
-    public async Task<ICollection<LevelMemberModel>?> GetAllUsersCombined()
+    public async Task<ICollection<LevelMemberModel>> GetAllUsersCombined()
     {
         var filter = Builders<LevelMemberModel>
             .Filter.Empty;
