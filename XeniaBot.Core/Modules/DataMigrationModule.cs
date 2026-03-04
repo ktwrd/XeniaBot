@@ -124,11 +124,10 @@ public class DataMigrationModule : InteractionModuleBase
                     UserPartialSnapshot = userSnapshot,
                     Source = BanSyncRecordSource.DataMigration_MongoDb
                 };
-                if (string.Equals("<null>", r.Reason, StringComparison.OrdinalIgnoreCase))
-                {
-                    r.Reason = null;
-                }
-                if (string.Equals("<unknown>", r.Reason, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals("null", r.Reason, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals("<null>", r.Reason, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals("<unknown>", r.Reason, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals("No reason given.", r.Reason, StringComparison.OrdinalIgnoreCase))
                 {
                     r.Reason = null;
                 }
