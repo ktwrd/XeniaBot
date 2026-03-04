@@ -1,4 +1,6 @@
-﻿namespace XeniaDiscord.Data.Models.BanSync;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace XeniaDiscord.Data.Models.BanSync;
 
 public class BanSyncGuildSnapshotModel
 {
@@ -13,6 +15,7 @@ public class BanSyncGuildSnapshotModel
     public BanSyncGuildSnapshotModel(BanSyncGuildModel model) : this()
     {
         GuildId = model.GuildId;
+        LogChannelId = model.LogChannelId;
         Enable = model.Enable;
         State = model.State;
         Notes = model.Notes;
@@ -21,7 +24,17 @@ public class BanSyncGuildSnapshotModel
     public Guid Id { get; set; }
     public DateTime Timestamp { get; set; }
 
+    /// <summary>
+    /// Guild Id (ulong as string)
+    /// </summary>
+    [MaxLength(DbGlobals.ulongMaxLength)]
     public string GuildId { get; set; }
+
+    /// <summary>
+    /// Channel Id (ulong as string)
+    /// </summary>
+    [MaxLength(DbGlobals.ulongMaxLength)]
+    public string? LogChannelId { get; set; }
 
     public bool Enable { get; set; }
     public BanSyncGuildState State { get; set; }

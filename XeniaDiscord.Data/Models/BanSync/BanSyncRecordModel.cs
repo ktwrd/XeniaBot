@@ -11,6 +11,7 @@ public class BanSyncRecordModel
     {
         Id = Guid.NewGuid();
         GuildId = "0";
+        GuildName = "";
         UserId = "0";
         CreatedAt = DateTime.UtcNow;
         Source = BanSyncRecordSource.Unknown;
@@ -28,10 +29,20 @@ public class BanSyncRecordModel
     public string GuildId { get; set; }
 
     /// <summary>
+    /// Guild Name
+    /// </summary>
+    public string GuildName { get; set; }
+
+    /// <summary>
     /// User Id (ulong as string)
     /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string UserId { get; set; }
+
+    /// <summary>
+    /// Foreign Key to <see cref="UserPartialSnapshotModel.Id"/>
+    /// </summary>
+    public Guid UserPartialSnapshotId { get; set; }
 
     /// <summary>
     /// Time when this record was created (UTC)
@@ -54,12 +65,14 @@ public class BanSyncRecordModel
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong GetUserId() => UserId.ParseRequiredULong(nameof(UserId), false);
+
+    public UserPartialSnapshotModel UserPartialSnapshot { get; set; } = null!;
 }
 
 public enum BanSyncRecordSource
 {
     Unknown,
-    MongodbImport,
+    DataMigration_MongoDb,
     MemberBanEvent,
     GuildRefresh
 }

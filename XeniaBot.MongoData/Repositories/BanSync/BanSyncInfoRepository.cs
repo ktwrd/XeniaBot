@@ -92,6 +92,13 @@ public class BanSyncInfoRepository
 
     #region Get/Set
     #region Get
+    public async Task<long> Count()
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        return await collection.CountDocumentsAsync(Builders<BanSyncInfoModel>.Filter.Empty);
+    }
     public async Task<ICollection<BanSyncInfoModel>> GetAll()
     {
         var filter = Builders<BanSyncInfoModel>

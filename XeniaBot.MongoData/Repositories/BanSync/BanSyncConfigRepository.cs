@@ -60,6 +60,23 @@ public class BanSyncConfigRepository : BaseRepository<ConfigBanSyncModel>
         }
     }
 
+
+    public async Task<IReadOnlyCollection<ConfigBanSyncModel>> GetAll()
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var result = await BaseFind(Builders<ConfigBanSyncModel>.Filter.Empty);
+        return await result.ToListAsync();
+    }
+    public async Task<long> Count()
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        return await collection.CountDocumentsAsync(Builders<ConfigBanSyncModel>.Filter.Empty);
+    }
+
     public async Task<bool> Exists(ulong guildId)
     {
         var collection = GetCollection();

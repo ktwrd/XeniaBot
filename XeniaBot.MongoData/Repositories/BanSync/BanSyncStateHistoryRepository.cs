@@ -69,6 +69,23 @@ public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryI
         }
     }
 
+
+    public async Task<IReadOnlyCollection<BanSyncStateHistoryItemModel>> GetAll()
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var result = await BaseFind(Builders<BanSyncStateHistoryItemModel>.Filter.Empty);
+        return await result.ToListAsync();
+    }
+    public async Task<long> Count()
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        return await collection.CountDocumentsAsync(Builders<BanSyncStateHistoryItemModel>.Filter.Empty);
+    }
+
     public async Task Add(BanSyncStateHistoryItemModel model)
     {
         var collection = GetCollection();

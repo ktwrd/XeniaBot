@@ -62,6 +62,13 @@
     <PackageReference Include="Sentry.AspNetCore" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj" />
     <ProjectReference Include="..\XeniaBot.Core.Shared\XeniaBot.Core.Shared.csproj" />
     <ProjectReference Include="..\XeniaBot.MongoData\XeniaBot.MongoData.csproj" />
