@@ -30,23 +30,12 @@ public class CoreContext
     {
         if (Instance != null)
         {
-            throw new Exception("An instance of CoreContext exists already.");
+            throw new InvalidOperationException("An instance of CoreContext exists already.");
         }
 
         Details = details;
-
-        RegisteredBaseControllers = new List<Type>();
-
+        RegisteredBaseControllers = [];
         Instance = this;
-    }
-
-    public async Task MainAsync(string[] args, Func<ServiceCollection, Task> beforeServiceBuild)
-    {
-        if (StartTimestamp == 0)
-            StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
-        BsonSerializer.RegisterSerializer(objectSerializer);
-
         Config = new ConfigService(Details);
         Discord = new DiscordSocketClient(new DiscordSocketConfig()
         {
@@ -55,6 +44,15 @@ public class CoreContext
             AlwaysDownloadUsers = true,
             ShardId = Config.Data.ShardId
         });
+    }
+
+    public async Task MainAsync(string[] args, Func<ServiceCollection, Task> beforeServiceBuild)
+    {
+        if (StartTimestamp == 0)
+            StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName?.StartsWith("XeniaBot") == true);
+        BsonSerializer.RegisterSerializer(objectSerializer);
+
         InitMongoClient();
         InitServices(beforeServiceBuild);
 
@@ -83,6 +81,14 @@ public class CoreContext
     /// When not null, it is called after <see cref="DiscordService.Run()"/> in <see cref="MainAsync"/>.
     /// </summary>
     public Func<string[], Task>? AlternativeMain { get; set; }
+    public CoreContextRegisterInteractionModulesDelegate RegisterModules { get; set; } = DefaultRegisterModules;
+    private static async Task DefaultRegisterModules(InteractionService interactions, IServiceProvider services)
+    {
+        foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            await interactions.AddModulesAsync(item, services);
+        }
+    }
     public ProgramDetails Details { get; private set; }
     public ConfigService Config { get; private set; }
     public DiscordSocketClient Discord { get; private set; }
@@ -254,3 +260,5 @@ public class CoreContext
         Config.Write(Config.Data);
     }
 }
+
+public delegate Task CoreContextRegisterInteractionModulesDelegate(InteractionService interactions, IServiceProvider services);

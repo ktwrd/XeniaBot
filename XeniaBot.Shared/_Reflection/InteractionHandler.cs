@@ -6,11 +6,12 @@ using NLog;
 using Sentry;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
+using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Shared;
 
@@ -19,6 +20,7 @@ public class InteractionHandler
     private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(InteractionHandler));
     private readonly InteractionService _interactionService;
     private readonly DiscordSocketClient _client;
+    private readonly CoreContext _coreContext;
     private readonly IServiceProvider _services;
     private readonly ConfigData _configData;
     public InteractionHandler(IServiceProvider services)
@@ -26,6 +28,7 @@ public class InteractionHandler
         _interactionService = services.GetRequiredService<InteractionService>();
         _client = services.GetRequiredService<DiscordSocketClient>();
         _configData = services.GetRequiredService<ConfigData>();
+        _coreContext = services.GetRequiredService<CoreContext>();
         _services = services;
     }
 
@@ -87,17 +90,12 @@ public class InteractionHandler
     }
     public async Task InitializeAsync()
     {
-        var mods = Array.Empty<ModuleInfo>();
-        foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            var x = await _interactionService.AddModulesAsync(item, _services);
-            mods = mods.Concat(x).ToArray();
-        }
+        await _coreContext.RegisterModules(_interactionService, _services);
         var result = await _interactionService.RegisterCommandsGloballyAsync();
         await PostDBL(result);
-
+        
         var lines = new List<string>();
-        foreach (var item in mods)
+        foreach (var item in _interactionService.Modules)
         {
             int count = 0;
             count += item.AutocompleteCommands.Count;
@@ -107,7 +105,7 @@ public class InteractionHandler
             count += item.SlashCommands.Count;
             lines.Add($"- {item.Name} ({count})");
         }
-        Log.Debug($"Loaded [{mods.Count()}] modules\n" + string.Join("\n", lines));
+        Log.Debug($"Loaded [{_interactionService.Modules.Count}] modules\n" + string.Join("\n", lines));
         _client.InteractionCreated += InteractionCreateAsync;
     }
 
@@ -124,8 +122,11 @@ public class InteractionHandler
         }
         catch (Exception ex)
         {
-            Log.Error($"{ex}");
-            SentrySdk.CaptureException(ex);
+            Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                SentryHelper.SetInteractionInfo(scope, interaction);
+            });
         }
     }
 }
