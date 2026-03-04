@@ -98,7 +98,7 @@ public static class Program
                 IsGlobalModeEnabled = true,
                 Debug = ProgramDetails.Debug
             });
-            LogManager.Configuration?.AddSentry(options =>
+            LogManager.Configuration?.AddSentry(static options =>
             {
                 options.Dsn = FeatureFlags.SentryDSN;
                 options.TracesSampleRate = 1.0;
@@ -108,7 +108,11 @@ public static class Program
         }
 
         Core.StartTimestamp = StartTimestamp;
-        Core.MainAsync(args, (s) =>
+        Core.RegisterModules = static async (a, b) =>
+        {
+            await XeniaDiscordInteractions.RegisterModules(a, b);
+        };
+        Core.MainAsync(args, static (s) =>
         {
             s.WithDatabaseServices();
             XeniaDiscordData.RegisterServices(s);

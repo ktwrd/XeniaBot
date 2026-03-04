@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using XeniaBot.Core.Helpers;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
@@ -70,7 +69,7 @@ public class BanSyncModule : InteractionModuleBase
     [SlashCommand("setchannel", "Set the log channel where ban notifications get sent.")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
     public async Task SetChannel(
-        [Discord.Interactions.Summary(description: "Channel where BanSync notifications will be sent to.")]
+        [Summary(description: "Channel where BanSync notifications will be sent to.")]
         [ChannelTypes(ChannelType.Text)]
         ITextChannel logChannel)
     {
@@ -99,6 +98,7 @@ public class BanSyncModule : InteractionModuleBase
         }
         await Context.Interaction.RespondAsync($"Updated Log Channel to <#{logChannel.Id}>");
     }
+    
     [SlashCommand("setguildstate", "Set state field of guild")]
     public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
     {
