@@ -79,6 +79,7 @@ public class BanSyncRecordModel
     public UserPartialSnapshotModel UserPartialSnapshot { get; set; } = null!;
     public BanSyncGuildModel BanSyncGuild { get; set; } = null!;
     public GuildMemberCacheModel? CachedGuildMember { get; set; }
+    public List<GuildMemberCacheModel> CachedGuildMembersByUser { get; set; } = [];
 }
 
 public enum BanSyncRecordSource

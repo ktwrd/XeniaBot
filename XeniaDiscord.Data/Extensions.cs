@@ -39,8 +39,12 @@ public static class DataExtensions
         out IServiceScope? scope)
     {
         scope = null;
-        var result = services.GetService<TService>();
-        if (ReferenceEquals(result, null))
+        TService result;
+        try
+        {
+            result = services.GetRequiredService<TService>();
+        }
+        catch
         {
             scope = services.CreateScope();
             initializeScope(scope!);
@@ -60,7 +64,8 @@ public static class DataExtensions
 
     public static IQueryable<TModel> ApplyPagination<TModel>(this IQueryable<TModel> query, PaginationOptions options)
     {
-        return query.Skip(options.Skip)
+        return query
+            .Skip(options.Skip)
             .Take(options.PageSize);
     }
 }
@@ -86,5 +91,5 @@ public class PaginationOptions
     } = 15;
 
     public int Skip => Page > 1 ? (Page - 1) * PageSize : 0;
-    public int Limit => PageSize;
+    public int Take => PageSize;
 }

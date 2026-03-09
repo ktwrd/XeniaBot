@@ -1,0 +1,42 @@
+﻿@using XeniaBot.WebPanel.Models.BanSyncSearch
+@model MutualRecordsListModel
+@{
+    ViewBag.Title = "BanSync - " + @Model.GuildName;
+    Layout = "_Layout";
+
+    var smalltext = new List<string>();
+    if (Model.MemberCount > 0)
+    {
+        smalltext.Add(Model.MemberCount.Value.ToString("n0") + " members");
+    }
+    if (Model.ThisServerRecordCount > 0)
+    {
+        smalltext.Add(Model.ThisServerRecordCount.ToString("n0") + " records");
+        if (Model.OtherServerRecordCount > 0)
+        {
+            smalltext[^1] += " in your guild";
+        }
+    }
+    if (Model.OtherServerRecordCount > 0)
+    {
+        smalltext.Add(Model.OtherServerRecordCount.ToString("n0") + " records from other servers");
+    }
+
+    var smalltextHtml = string.Join(" &bull; ", smalltext);
+}
+
+<div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark mb-2">
+    <img class="me-3 rounded-circle mr-3" src="@(Model.GuildIconUrl ?? "/DebugEmpty.png")" alt="" width="48" height="48">
+    <div class="lh-1">
+        <h1 class="h6 mb-0 text-white lh-1">@Model.GuildName</h1>
+        <small>
+            @Html.Raw(smalltextHtml)
+            @if (smalltext.Count > 0)
+            {
+                @Html.Raw(" &bull; ")
+            }
+            <a asp-controller="Server" asp-action="Index" asp-route-id="@Model.GuildId">Go Back</a></small>
+    </div>
+</div>
+
+@{ await Html.RenderPartialAsync("_PartialMutualRecordsList", Model.Component); }

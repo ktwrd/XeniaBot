@@ -16,6 +16,7 @@ using NLog.Web;
 using Sentry;
 using System;
 using System.Globalization;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -148,9 +149,13 @@ public static class Program
         builder.Host.UseNLog();
 
         // Add services to the container.
-        builder.Services.AddMvc().AddRazorRuntimeCompilation();
-        builder.Services.AddControllersWithViews();
-        builder.Services.AddAuthentication(options =>
+        builder.Services.AddMvc();
+        builder.Services.AddControllersWithViews().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.WriteIndented = true;
+        });
+        builder.Services
+            .AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
@@ -172,32 +177,61 @@ public static class Program
                         user.GetString("avatar"),
                         (user.GetString("avatar")?.StartsWith("a_") ?? false) ? "gif" : "png"));
             });
-        builder.Services.AddServerSideBlazor();
+        builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddResponseCompression(options =>
         {
             options.Providers.Add<GzipCompressionProvider>();
             options.Providers.Add<BrotliCompressionProvider>();
             options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat([
-                // images
-                "image/jpeg",
-                "image/png",
-                "image/svg+xml",
-                "image/tiff",
-                "image/webp",
-                "image/gif",
-
-                // fonts
+                "application/json", "application/geo+json",
+                "application/json", "application/pdf",
+                "application/sql", "application/toml",
+                "application/octet-stream", "application/xml",
+                "application/wasm",
                 "application/font-woff2",
-                "font/woff",
-                "font/woff2",
-                "font/otf",
 
-                // FE code/styles
-                "text/javascript",
-                "text/css"
+                "audio/aac", "audio/flac",
+                "audio/mp4", "audio/mpeg",
+                "audio/ogg", "audio/opus",
+                "audio/vorbis",
+                "audio/midi", "audio/x-midi",
+
+                "image/apng", "image/avif", "image/bmp",
+                "image/gif", "image/heic", "image/heic-sequence",
+                "image/heif", "image/heif-sequence",
+                "image/jpeg", "image/jxl", "image/png",
+                "image/svg+xml", "image/tiff", "image/tiff-fx",
+                "image/webp", "image/vnd.microsoft.icon",
+
+                "model/mtl", "model/mesh", "model/obj",
+
+                "application/font-woff2",
+                "font/collection", "font/otf",
+                "font/sfnt", "font/ttf",
+                "font/woff", "font/woff2",
+
+                "text/javascript", "text/css",
+                "text/css", "text/rtf",
+                "text/plain", "text/xml",
+                "text/markdown",
+
+
+                "video/mp4", "video/av1",
+                "video/mpeg", "video/mpeg",
+                "video/ogg", "video/quicktime",
+                "video/webm"
             ]);
             options.EnableForHttps = true;
+        });
+        builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
+
+        builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.SmallestSize;
         });
         builder.WebHost.UseSentry(FeatureFlags.SentryDSN);
 
@@ -218,10 +252,12 @@ public static class Program
         }
 
         var app = builder.Build();
-        app.UseStaticFiles();
+        
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
+            app.UseDeveloperExceptionPage();
+            app.UseMigrationsEndPoint();
             IdentityModelEventSource.ShowPII = true;
         }
         else
@@ -233,30 +269,25 @@ public static class Program
         }
 
         // Required to serve files with no extension in the .well-known folder
-        var options = new StaticFileOptions()
+        app.UseStaticFiles(new StaticFileOptions()
         {
             ServeUnknownFileTypes = true,
-        };
+        });
 
-        app.UseStaticFiles(options);
+        app.UseResponseCompression();
 
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 
-        app.MapControllerRoute(
-            name: "default",
-            pattern: "{controller=Home}/{action=Index}/{id?}");
-        app.UseEndpoints(endpoints =>
+        app.UseEndpoints(endpointBuilder =>
         {
-            endpoints.MapControllerRoute(
+            endpointBuilder.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
-            endpoints.MapRazorPages();
-            endpoints.MapDefaultControllerRoute();
+            endpointBuilder.MapRazorPages();
         });
-        app.MapBlazorHub();
 
         await app.RunAsync();
     }

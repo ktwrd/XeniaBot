@@ -167,7 +167,11 @@ public partial class ServerController : BaseXeniaController
         {
             return View("NotFound", "User could not be found.");
         }
-        var user = _discord.GetUser((ulong)userId);
+        var user = _discord.GetUser(userId.Value);
+        if (user == null)
+        {
+            return View("NotFound", "User could not be found.");
+        }
         var data = new ServerListViewModel()
         {
             UserId = (ulong)userId,

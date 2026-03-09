@@ -1,0 +1,36 @@
+﻿@using XeniaBot.WebPanel.Models.BanSyncSearch
+@model MutualRecordsListComponentModel
+
+@if (Model.Items.Count < 1)
+{
+    <div class="px-4 py-5 my-5 text-center">
+        <h4>No Records Found</h4>
+        <p>No members in your server have any records in the database.</p>
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-sm table-fs-listing" id="bansyncRecordList">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Guild</th>
+                <th>Timestamp</th>
+                <th>Reason</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody hx-get="/BanSync/Search/MutualRecords/@Model.GuildId/PageComponent"
+               hx-target="this"
+               hx-swap="innerHTML"
+               hx-trigger="load"
+               hx-indicator="htmx-indicator"
+               id="bansyncRecordListBody">
+        </tbody>
+    </table>
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border htmx-indicator" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+}

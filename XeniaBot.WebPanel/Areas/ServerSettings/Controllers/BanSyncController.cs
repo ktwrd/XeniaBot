@@ -16,6 +16,8 @@ namespace XeniaBot.WebPanel.Areas.ServerSettings.Controllers;
 
 [Controller]
 [Area("ServerSettings")]
+[Route("~/ServerSettings/BanSync")]
+[AuthRequired]
 public class BanSyncController : BaseXeniaController
 {
     private readonly ILogger<BanSyncController> _logger;
@@ -31,7 +33,7 @@ public class BanSyncController : BaseXeniaController
         _bansyncService = services.GetRequiredService<BanSyncService>();
     }
 
-    [HttpGet("~/Server/{guildId}/Settings/BanSync")]
+    [Route("~/Server/{guildId}/Settings/BanSync")]
     [AuthRequired]
     [RestrictToGuild(GuildIdRouteKey = "guildId")]
     public async Task<IActionResult> BanSyncGet(ulong guildId)

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Data.Models.Cache;
 
@@ -42,4 +43,6 @@ public class GuildMemberCacheModel
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public GuildCacheModel Guild { get; set; } = null!;
+
+    public List<BanSyncRecordModel> RelatedBanSyncRecords { get; set; } = [];
 }

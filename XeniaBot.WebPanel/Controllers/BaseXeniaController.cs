@@ -103,7 +103,7 @@ public class BaseXeniaController : Controller
         result = null;
         return true;
     }
-    
+
     /// <summary>
     /// Can a User access a Guild
     /// </summary>

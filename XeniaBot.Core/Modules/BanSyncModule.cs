@@ -136,14 +136,13 @@ public class BanSyncModule : InteractionModuleBase
         try
         {
             await _bansyncService.SetGuildState(guildId, state, reason);
+            await Context.Interaction.RespondAsync($"Set state of `{targetGuild.Name}` to `{state}`");
         }
         catch (Exception ex)
         {
             await Context.Interaction.RespondAsync($"Failed to set guild state\n```\n{ex.Message}\n```", ephemeral: true);
             await DiscordHelper.ReportError(ex, Context);
-            return;
         }
-        await Context.Interaction.RespondAsync($"Set state of `{targetGuild.Name}` to `{state}`", ephemeral: true);
     }
 
     [SlashCommand("request", "Request for this guild to have Ban Sync support")]

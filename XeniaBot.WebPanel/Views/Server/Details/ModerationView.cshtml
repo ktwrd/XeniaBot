@@ -6,11 +6,11 @@
 
     var bansyncComponentUrl = Url.Action(
         "BanSyncGet",
-        "BanSyncController",
+        "BanSync",
         new
         {
-            guildId = Model.Guild.Id,
-            Area = "ServerSettings"
+            Area = "ServerSettings",
+            guildId = Model.Guild.Id
         }
     );
 }
@@ -35,7 +35,7 @@ new List<BreadcrumbItem>()
                  hx-swap="innerHTML"
                  hx-trigger="load"
                  hx-target="this"
-                 hx-indicator="this .htmx-indicator">
+                 hx-indicator=".htmx-indicator">
                 <center><span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span></center>
             </div>
         </div>

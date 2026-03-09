@@ -33,10 +33,10 @@
         </tr>
         </thead>
         <tbody>
-        @foreach (var item in @Model.BanSyncStateHistory.OrderBy(v => v.Timestamp))
+        @foreach (var item in @Model.BanSyncStateHistory)
         {
             <tr>
-                <th>@(AspHelper.DateTimeFromTimestamp(new DateTimeOffset(@item.Timestamp).ToUnixTimeSeconds()).ToString())</th>
+                <th>@item.Timestamp.ToString()</th>
                 <td>@item.Enable</td>
                 <td>@item.State</td>
                 <td><code>@item.Notes</code></td>

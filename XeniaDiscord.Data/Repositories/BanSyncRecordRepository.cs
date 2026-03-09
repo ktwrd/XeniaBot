@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Data.Models.BanSync;
 
@@ -21,11 +22,16 @@ public class BanSyncRecordRepository : IDisposable
     {
         return await _db.BanSyncRecords.LongCountAsync();
     }
+
     private static IQueryable<BanSyncRecordModel> ApplyOptions(
         XeniaDbContext db,
         QueryOptions options)
+        => ApplyOptions(db.BanSyncRecords, options);
+    private static IQueryable<BanSyncRecordModel> ApplyOptions(
+        IQueryable<BanSyncRecordModel> db,
+        QueryOptions options)
     {
-        IQueryable<BanSyncRecordModel> q = db.BanSyncRecords;
+        IQueryable<BanSyncRecordModel> q = db;
         if (options.IgnoreDisabledGuilds)
         {
             q = q.Where(e => e.BanSyncGuild.State == BanSyncGuildState.Active && e.BanSyncGuild.Enable);
@@ -198,6 +204,41 @@ public class BanSyncRecordRepository : IDisposable
             .SetProperty(p => p.Ghost, state));
         await _db.SaveChangesAsync();
     }
+
+    private static IQueryable<BanSyncRecordModel> MutualRecordsQuery(
+        XeniaDbContext db,
+        ulong guildId)
+    {
+        var guildIdStr = guildId.ToString();
+        return db.BanSyncRecords
+            .GroupJoin(
+                db.GuildMemberCache,
+                bsr => new { bsr.UserId, GuildId = guildIdStr },
+                cgm => new { cgm.UserId, cgm.GuildId },
+                (bsr, cgmJoin) => new { bsr, cgmJoin })
+            .SelectMany(
+                e => e.cgmJoin.DefaultIfEmpty(),
+                (row, cgm) => new { row, cgm })
+            .Where(e => e.row.bsr.GuildId == guildIdStr || (e.cgm != null && e.cgm.UserId != null))
+            .Select(e => e.row.bsr)
+            .OrderByDescending(e => e.CreatedAt);
+    }
+
+    public async Task<ICollection<BanSyncRecordModel>> MutualRecords(
+        ulong guildId,
+        PaginationOptions paginationOptions,
+        QueryOptions? queryOptions = null)
+    {
+        return await ApplyOptions(MutualRecordsQuery(_db, guildId), queryOptions ?? new())
+            .AsNoTracking()
+            .ApplyPagination(paginationOptions)
+            .ToListAsync();
+    }
+    public async Task<long> MutualRecordsCount(
+        ulong guildId,
+        QueryOptions? queryOptions = null)
+       => await ApplyOptions(MutualRecordsQuery(_db, guildId), queryOptions ?? new())
+            .LongCountAsync();
 
     public class QueryOptions
     {

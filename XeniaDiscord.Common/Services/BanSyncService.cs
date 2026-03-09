@@ -30,8 +30,8 @@ public class BanSyncService : BaseService
         _client = services.GetRequiredService<DiscordSocketClient>();
         _configData = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
-        _bansyncGuildRepository = services.GetRequiredService<BanSyncGuildRepository>();
-        _bansyncRecordsRepository = services.GetRequiredService<BanSyncRecordRepository>();
+        _bansyncGuildRepository = services.GetRequiredScopedService<BanSyncGuildRepository>(out var _);
+        _bansyncRecordsRepository = services.GetRequiredScopedService<BanSyncRecordRepository>(out var _);
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
 
         _programDetails = services.GetRequiredService<ProgramDetails>();
@@ -80,12 +80,12 @@ public class BanSyncService : BaseService
     }
 
     
-    private static string ParseReason(string? reason)
+    private static string? ParseReason(string? reason)
     {
-        if (string.IsNullOrEmpty(reason))
-            return "<unknown>";
-        else if (reason.Equals("<null>", StringComparison.InvariantCultureIgnoreCase))
-            return "<unknown>";
+        if (string.IsNullOrEmpty(reason?.Trim()) ||
+            reason.Equals("<null>", StringComparison.InvariantCultureIgnoreCase) ||
+            reason.Equals("<unknown>", StringComparison.OrdinalIgnoreCase))
+            return null;
         else
             return reason.Trim();
     }
@@ -167,7 +167,7 @@ public class BanSyncService : BaseService
                 UserId = ban.User.Id.ToString(),
                 Username = ban.User.Username,
                 Discriminator = ban.User.DiscriminatorValue == 0 ? null : ban.User.Discriminator,
-                DisplayName = ban.User.GlobalName
+                DisplayName = string.IsNullOrEmpty(ban.User.GlobalName) ? ban.User.Username : ban.User.GlobalName
             };
             var info = new BanSyncRecordModel()
             {
@@ -212,7 +212,7 @@ public class BanSyncService : BaseService
                 UserId = banInfo.User.Id.ToString(),
                 Username = banInfo.User.Username,
                 Discriminator = banInfo.User.DiscriminatorValue == 0 ? null : banInfo.User.Discriminator,
-                DisplayName = banInfo.User.GlobalName
+                DisplayName = string.IsNullOrEmpty(banInfo.User.GlobalName) ? banInfo.User.Username : banInfo.User.GlobalName
             };
             info = new BanSyncRecordModel()
             {
@@ -223,7 +223,7 @@ public class BanSyncService : BaseService
                 Reason = ParseReason(banInfo.Reason)
             };
             await db.UserPartialSnapshots.AddAsync(partialUserInfo);
-            await _bansyncRecordsRepository.InsertOrUpdate(info);
+            await _bansyncRecordsRepository.InsertOrUpdate(db, info);
 
             await db.SaveChangesAsync();
             await trans.CommitAsync();

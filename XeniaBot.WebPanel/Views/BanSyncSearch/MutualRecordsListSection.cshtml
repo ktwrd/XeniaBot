@@ -1,0 +1,7 @@
+﻿@using XeniaBot.WebPanel.Models.BanSyncSearch
+@model MutualRecordsListComponentModel
+
+@foreach (var row in Model.Rows)
+{
+    await Html.RenderPartialAsync("Row", row);
+}
