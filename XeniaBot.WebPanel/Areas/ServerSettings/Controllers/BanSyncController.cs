@@ -31,7 +31,7 @@ public class BanSyncController : BaseXeniaController
         _bansyncService = services.GetRequiredService<BanSyncService>();
     }
 
-    [HttpGet("~/Server/{id}/Settings/BanSync")]
+    [HttpGet("~/Server/{guildId}/Settings/BanSync")]
     [AuthRequired]
     [RestrictToGuild(GuildIdRouteKey = "guildId")]
     public async Task<IActionResult> BanSyncGet(ulong guildId)
@@ -43,29 +43,26 @@ public class BanSyncController : BaseXeniaController
         return PartialView("BanSyncComponent", model);
     }
 
-    [HttpPost("~/Server/{id}/Settings/BanSync/Request")]
+    [HttpPost("~/Server/{guildId}/Settings/BanSync/Request")]
     [AuthRequired]
-    [RestrictToGuild(GuildIdRouteKey = "id")]
-    public async Task<IActionResult> Request(ulong id)
+    [RestrictToGuild(GuildIdRouteKey = "guildId")]
+    public async Task<IActionResult> RequestFeature(ulong guildId)
     {
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return PartialView("NotFoundPartial", "User not found");
 
-        var guild = _discord.GetGuild(id);
+        var guild = _discord.GetGuild(guildId);
         if (guild == null)
             return PartialView("NotFoundPartial", "Guild not found");
 
         var configData = await _bansyncGuildRepository.GetAsync(guild.Id)
-            ?? new()
-            {
-                GuildId = guild.Id.ToString()
-            };
+            ?? new(guild.Id);
         var logChannelId = configData.GetLogChannelId();
 
         var model = await GetModel(guild);
 
-        if (logChannelId == null || logChannelId == 0)
+        if (logChannelId == null || logChannelId <= 1)
         {
             model.Alert = new()
             {
@@ -84,35 +81,25 @@ public class BanSyncController : BaseXeniaController
             return PartialView("BanSyncComponent", model);
         }
 
+        model.Alert = new()
+        {
+            MessageType = "warning",
+            Message = $"Ban Sync Fail: Unhandled state {configData.State}"
+        };
+
         switch (configData.State)
         {
             case BanSyncGuildState.PendingRequest:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = "Ban Sync access has already been requested"
-                };
+                model.Alert.Message = "Ban Sync access has already been requested";
                 break;
             case BanSyncGuildState.RequestDenied:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = "Ban Sync access has already been requested and denied."
-                };
+                model.Alert.Message = "Ban Sync access has already been requested and denied.";
                 break;
             case BanSyncGuildState.Blacklisted:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = $"Your server has been blacklisted"
-                };
+                model.Alert.Message = $"Your server has been blacklisted";
                 break;
             case BanSyncGuildState.Active:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = $"Your server already has Ban Sync enabled"
-                };
+                model.Alert.Message = $"Your server already has Ban Sync enabled";
                 break;
             case BanSyncGuildState.Unknown:
                 // Request ban sync
@@ -127,7 +114,7 @@ public class BanSyncController : BaseXeniaController
                 }
                 catch (Exception ex)
                 {
-                    await _errorReporting.ReportException(ex, $"Failed to request ban sync access in guild {id}");
+                    await _errorReporting.ReportException(ex, $"Failed to request ban sync access in guild {guildId}");
                     model.Alert = new()
                     {
                         MessageType = "danger",
@@ -135,25 +122,18 @@ public class BanSyncController : BaseXeniaController
                     };
                 }
                 break;
-            default:
-                model.Alert = new()
-                {
-                    MessageType = "warning",
-                    Message = $"Ban Sync Fail: Unhandled state {configData.State}"
-                };
-                break;
         }
         return PartialView("BanSyncComponent", model);
     }
 
-    [HttpPost("~/Server/{id}/Settings/BanSync")]
+    [HttpPost("~/Server/{guildId}/Settings/BanSync")]
     [AuthRequired]
-    [RestrictToGuild(GuildIdRouteKey = "id")]
+    [RestrictToGuild(GuildIdRouteKey = "guildId")]
     public async Task<IActionResult> SaveChanges(
-        ulong id,
+        ulong guildId,
         string? logChannel = null)
     {
-        var guild = _discord.GetGuild(id);
+        var guild = _discord.GetGuild(guildId);
         if (guild == null) return PartialView("NotFoundPartial", "Guild not found");
 
         var model = await GetModel(guild);
@@ -163,14 +143,12 @@ public class BanSyncController : BaseXeniaController
             model.Alert = new()
             {
                 MessageType = "danger",
-                Message = $"Failed to parse Ban Sync Log Channel Id. {logResult.ErrorContent}"
+                Message = $"Failed to parse Ban Sync Log Channel Id.\n{logResult.ErrorContent}"
             };
             return PartialView("BanSyncComponent", model);
         }
-        var guildModel = await _bansyncGuildRepository.GetAsync(guild.Id) ?? new()
-        {
-            GuildId = guild.Id.ToString()
-        };
+        var guildModel = await _bansyncGuildRepository.GetAsync(guild.Id)
+            ?? new(guild.Id);
         guildModel.LogChannelId = logResult.ChannelId.ToString();
         await _bansyncGuildRepository.InsertOrUpdate(guildModel);
 
@@ -185,10 +163,7 @@ public class BanSyncController : BaseXeniaController
     private async Task<BanSyncComponentModel> GetModel(SocketGuild guild)
     {
         var dbmodel = await _bansyncGuildRepository.GetAsync(guild.Id)
-            ?? new()
-            {
-                GuildId = guild.Id.ToString()
-            };
+            ?? new(guild.Id);
 
         return new BanSyncComponentModel()
         {
