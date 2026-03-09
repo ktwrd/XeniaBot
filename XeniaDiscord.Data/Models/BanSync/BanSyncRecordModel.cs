@@ -27,6 +27,7 @@ public class BanSyncRecordModel
     /// <summary>
     /// Guild Id (ulong as string)
     /// </summary>
+    [Required]
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string GuildId { get; set; }
 
@@ -38,6 +39,7 @@ public class BanSyncRecordModel
     /// <summary>
     /// User Id (ulong as string)
     /// </summary>
+    [Required]
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string UserId { get; set; }
 
@@ -76,7 +78,7 @@ public class BanSyncRecordModel
 
     public UserPartialSnapshotModel UserPartialSnapshot { get; set; } = null!;
     public BanSyncGuildModel BanSyncGuild { get; set; } = null!;
-    public GuildMemberCacheModel CachedGuildMember { get; set; } = null!;
+    public GuildMemberCacheModel? CachedGuildMember { get; set; }
 }
 
 public enum BanSyncRecordSource

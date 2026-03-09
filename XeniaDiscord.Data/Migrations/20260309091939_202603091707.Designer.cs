@@ -12,8 +12,8 @@ using XeniaDiscord.Data;
 namespace XeniaDiscord.Data.Migrations
 {
     [DbContext(typeof(XeniaDbContext))]
-    [Migration("20260309074845_PartialSnapshot-Rename-CreatedAt-to-Timestamp")]
-    partial class PartialSnapshotRenameCreatedAttoTimestamp
+    [Migration("20260309091939_202603091707")]
+    partial class _202603091707
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -282,7 +282,14 @@ namespace XeniaDiscord.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("XeniaDiscord.Data.Models.Cache.GuildMemberCacheModel", "CachedGuildMember")
+                        .WithMany()
+                        .HasForeignKey("GuildId", "UserId")
+                        .HasAnnotation("Custom:IsConstrained", false);
+
                     b.Navigation("BanSyncGuild");
+
+                    b.Navigation("CachedGuildMember");
 
                     b.Navigation("UserPartialSnapshot");
                 });

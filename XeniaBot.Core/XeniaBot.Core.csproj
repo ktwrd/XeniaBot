@@ -76,6 +76,7 @@
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Common\XeniaDiscord.Common.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Interactions.DataMigration\XeniaDiscord.Interactions.DataMigration.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Interactions\XeniaDiscord.Interactions.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\VersionAutoIncrement.cs">

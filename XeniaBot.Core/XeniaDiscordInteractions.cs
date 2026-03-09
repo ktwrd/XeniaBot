@@ -6,7 +6,7 @@ using XeniaBot.Shared.Helpers;
 
 namespace XeniaDiscord;
 
-public static class XeniaDiscordInteractions
+public static class XeniaDiscordCoreInteractions
 {
     public static async Task RegisterModules(InteractionService interactions, IServiceProvider services)
     {

@@ -4,7 +4,7 @@ using XeniaBot.Shared;
 
 namespace XeniaDiscord.Data;
 
-public static class Extensions
+public static class DataExtensions
 {
     public static string ToConnectionString(this PostgresConfigItem config)
     {

@@ -1,0 +1,85 @@
+﻿using Discord;
+using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using XeniaBot.Shared;
+using XeniaDiscord.Common.Services;
+using XeniaDiscord.Data;
+
+namespace XeniaDiscord.Common.Handlers;
+
+public class DiscordCacheEventHandler : BaseService
+{
+    private readonly DiscordSocketClient _client;
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
+    private readonly DiscordCacheService _cache;
+    public DiscordCacheEventHandler(IServiceProvider services) : base(services)
+    {
+        _client = services.GetRequiredService<DiscordSocketClient>();
+        _cache = services.GetRequiredService<DiscordCacheService>();
+
+        if (services.GetRequiredService<ProgramDetails>().Platform == XeniaPlatform.Bot)
+        {
+            _client.JoinedGuild += OnGuildJoined;
+            _client.GuildUpdated += OnGuildUpdated;
+
+            _client.UserJoined += OnUserJoined;
+            _client.UserLeft += OnUserLeft;
+        }
+    }
+
+    private async Task OnGuildJoined(SocketGuild guild)
+    {
+        try
+        {
+            await _cache.UpdateGuild(guild);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update Guild \"{guild.Name}\" ({guild.Id})");
+        }
+    }
+
+    private async Task OnGuildUpdated(SocketGuild before, SocketGuild after)
+    {
+        try
+        {
+            await _cache.UpdateGuild(after);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update Guild \"{after.Name}\" ({after.Id})");
+        }
+    }
+
+    private async Task OnUserJoined(SocketGuildUser user)
+    {
+        try
+        {
+            await _cache.UpdateGuildMember(
+                user.Guild, user,
+                DiscordCacheService.UpdateGuildMemberSource.UserJoined);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
+        }
+    }
+
+    private async Task OnUserLeft(SocketGuild guild, SocketUser user)
+    {
+        try
+        {
+            await _cache.UpdateGuildMember(
+                guild, user,
+                DiscordCacheService.UpdateGuildMemberSource.UserLeft);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{guild.Name}\" ({guild.Id})");
+        }
+    }
+}

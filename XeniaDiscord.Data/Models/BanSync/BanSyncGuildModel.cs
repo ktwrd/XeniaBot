@@ -18,6 +18,7 @@ public class BanSyncGuildModel
     /// <summary>
     /// Primary Key: Guild Id (ulong as string)
     /// </summary>
+    [Required]
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string GuildId { get; set; }
 

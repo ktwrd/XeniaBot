@@ -119,6 +119,7 @@ public static class Program
         var transaction = SentryHelper.CreateTransaction();
         try
         {
+            await XeniaDiscordCoreInteractions.RegisterModules(interactions, services);
             await XeniaDiscordInteractions.RegisterModules(interactions, services);
             await XeniaDiscordInteractionsDataMigration.RegisterModules(interactions, services);
         }

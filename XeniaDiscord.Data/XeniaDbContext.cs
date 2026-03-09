@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using XeniaDiscord.Data.Extensions;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.PartialSnapshot;
@@ -97,14 +98,14 @@ public class XeniaDbContext : DbContext
                 .HasForeignKey(e => e.UserPartialSnapshotId)
                 .IsRequired();
             b.HasOne(e => e.BanSyncGuild)
-            .WithMany()
-            .HasForeignKey(e => e.GuildId)
-            .IsRequired();
+                .WithMany()
+                .HasForeignKey(e => e.GuildId)
+                .IsRequired();
 
             b.HasOne(e => e.CachedGuildMember)
-            .WithMany()
-            .HasForeignKey(e => new { e.GuildId, e.UserId })
-            .IsRequired();
+                .WithMany()
+                .HasForeignKey(e => new { e.GuildId, e.UserId })
+                .IsConstrained(false);
         });
         builder.Entity<BanSyncGuildModel>(b =>
         {

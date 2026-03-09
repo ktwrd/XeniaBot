@@ -282,15 +282,7 @@ namespace XeniaDiscord.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("XeniaDiscord.Data.Models.Cache.GuildMemberCacheModel", "CachedGuildMember")
-                        .WithMany()
-                        .HasForeignKey("GuildId", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("BanSyncGuild");
-
-                    b.Navigation("CachedGuildMember");
 
                     b.Navigation("UserPartialSnapshot");
                 });

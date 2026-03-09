@@ -68,8 +68,7 @@ namespace XeniaDiscord.Data.Migrations
                         name: "FK_Cache_GuildMember_Cache_Guild_GuildId",
                         column: x => x.GuildId,
                         principalTable: "Cache_Guild",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -95,14 +94,6 @@ namespace XeniaDiscord.Data.Migrations
                 principalTable: "BanSyncGuilds",
                 principalColumn: "GuildId",
                 onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_BanSyncRecords_Cache_GuildMember_GuildId_UserId",
-                table: "BanSyncRecords",
-                columns: new[] { "GuildId", "UserId" },
-                principalTable: "Cache_GuildMember",
-                principalColumns: new[] { "GuildId", "UserId" },
-                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
@@ -110,10 +101,6 @@ namespace XeniaDiscord.Data.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_BanSyncRecords_BanSyncGuilds_GuildId",
-                table: "BanSyncRecords");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_BanSyncRecords_Cache_GuildMember_GuildId_UserId",
                 table: "BanSyncRecords");
 
             migrationBuilder.DropTable(
