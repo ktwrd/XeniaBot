@@ -1,4 +1,6 @@
-﻿namespace XeniaBot.Shared.Models;
+﻿using System.Text.Json.Serialization;
+
+namespace XeniaBot.Shared.Models;
 
 public class XeniaHealthModel
 {
@@ -14,6 +16,12 @@ public class XeniaHealthModel
     /// Name of this service.
     /// </summary>
     public string ServiceName { get; set; }
+
+    /// <summary>
+    /// Latency to Discord (milliseconds)
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Latency { get; set; }
 
     public XeniaHealthModel()
     {

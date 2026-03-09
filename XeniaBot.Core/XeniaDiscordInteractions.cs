@@ -18,7 +18,6 @@ public static class XeniaDiscordInteractions
             interactions.AddModuleAsync<ConfessionAdminModule>(services),
             interactions.AddModuleAsync<ConfigModule>(services),
             interactions.AddModuleAsync<CounterModule>(services),
-            interactions.AddModuleAsync<DataMigrationModule>(services),
             interactions.AddModuleAsync<DiceModule>(services),
             interactions.AddModuleAsync<DistroWatchModule>(services),
             interactions.AddModuleAsync<EconomyModule>(services),

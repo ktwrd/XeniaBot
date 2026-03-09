@@ -101,31 +101,37 @@ public static class Program
         }
 
         LogManager.GetLogger("Main").Info($"Running version {Details.VersionRaw}");
-        Core = new CoreContext(Details);
-        Core.StartTimestamp = StartTimestamp;
-        Core.AlternativeMain = async (a) =>
+        Core = new CoreContext(Details)
         {
-            await Main_AspNet(a);
-            await Task.Delay(-1);
+            StartTimestamp = StartTimestamp,
+            AlternativeMain = CoreContextAlternativeMain
         };
         try
         {
-            Core.MainAsync(args, (s) =>
-            {
-                s.AddSingleton(Details);
-                s.WithDatabaseServices();
-                XeniaDiscordData.RegisterServices(s);
-                XeniaDiscordCommon.RegisterServices(s);
-                AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, s); // XeniaBot.Shared
-                AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
-                AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", s);
-                return Task.CompletedTask;
-            }).GetAwaiter().GetResult();
+            Core.MainAsync(args, CoreContextBeforeServiceBuild).GetAwaiter().GetResult();
         }
         finally
         {
             LogManager.Shutdown();
+            SentrySdk.Flush();
         }
+    }
+    private static async Task CoreContextAlternativeMain(string[] args)
+    {
+        await Main_AspNet(args);
+        await Task.Delay(-1);
+    }
+    private static Task CoreContextBeforeServiceBuild(ServiceCollection services)
+    {
+        services.AddSingleton(Details);
+        services.WithDatabaseServices();
+        XeniaDiscordData.RegisterServices(services, false); // only allow scoped db stuff for web app
+        XeniaDiscordCommon.RegisterServices(services);
+        XeniaDiscordInteractionsDataMigration.RegisterServices(services);
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, services); // XeniaBot.Shared
+        AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, services); // XeniaBot.Data
+        AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", services);
+        return Task.CompletedTask;
     }
 
     public static async Task Main_AspNet(string[] args)

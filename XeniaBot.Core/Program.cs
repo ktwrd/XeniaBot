@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Discord.Interactions;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Sentry;
 using System;
@@ -12,6 +13,7 @@ using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.Logic.Services;
 using XeniaBot.MongoData.Services;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord;
 using XeniaDiscord.Common;
@@ -88,7 +90,11 @@ public static class Program
 
         StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-        Core = new CoreContext(ProgramDetails);
+        Core = new CoreContext(ProgramDetails)
+        {
+            StartTimestamp = StartTimestamp,
+            RegisterModules = CoreContextRegisterModules
+        };
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
             SentrySdk.Init(new SentryOptions()
@@ -106,24 +112,33 @@ public static class Program
                 options.Debug = ProgramDetails.Debug;
             });
         }
-
-        Core.StartTimestamp = StartTimestamp;
-        Core.RegisterModules = static async (a, b) =>
+        Core.MainAsync(args, CoreContextBeforeServiceBuild).Wait();
+    }
+    private static async Task CoreContextRegisterModules(InteractionService interactions, IServiceProvider services)
+    {
+        var transaction = SentryHelper.CreateTransaction();
+        try
         {
-            await XeniaDiscordInteractions.RegisterModules(a, b);
-        };
-        Core.MainAsync(args, static (s) =>
+            await XeniaDiscordInteractions.RegisterModules(interactions, services);
+            await XeniaDiscordInteractionsDataMigration.RegisterModules(interactions, services);
+        }
+        finally
         {
-            s.WithDatabaseServices();
-            XeniaDiscordData.RegisterServices(s);
-            XeniaDiscordCommon.RegisterServices(s);
-            AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", s);
-            AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
-            AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
-            AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, s); // XeniaBot.Logic
-            AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, s);
-            return Task.CompletedTask;
-        }).Wait();
+            transaction.Finish();
+        }
+    }
+    private static Task CoreContextBeforeServiceBuild(ServiceCollection services)
+    {
+        services.WithDatabaseServices();
+        XeniaDiscordData.RegisterServices(services, true);
+        XeniaDiscordCommon.RegisterServices(services);
+        XeniaDiscordInteractionsDataMigration.RegisterServices(services);
+        AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
+        AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, services); // XeniaBot.Data
+        AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
+        AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, services); // XeniaBot.Logic
+        AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, services);
+        return Task.CompletedTask;
     }
 
     private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)

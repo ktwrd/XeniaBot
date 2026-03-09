@@ -1,18 +1,14 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
+using MongoBanSyncGuildState = XeniaBot.MongoData.Models.BanSyncGuildState;
 
-namespace XeniaBot.Core.Modules;
+namespace XeniaDiscord.Interactions.DataMigration.Modules;
 
 [Group("data-migration", "Used for the MongoDB -> PostgreSQL data migration.")]
 public class DataMigrationModule : InteractionModuleBase
@@ -65,15 +61,7 @@ public class DataMigrationModule : InteractionModuleBase
                     GuildId = m.GuildId.ToString(),
                     LogChannelId = m.LogChannel == 0 ? null : m.LogChannel.ToString(),
                     Enable = m.Enable,
-                    State = m.State switch
-                    {
-                        MongoData.Models.BanSyncGuildState.Unknown => BanSyncGuildState.Unknown,
-                        MongoData.Models.BanSyncGuildState.PendingRequest => BanSyncGuildState.PendingRequest,
-                        MongoData.Models.BanSyncGuildState.RequestDenied => BanSyncGuildState.RequestDenied,
-                        MongoData.Models.BanSyncGuildState.Blacklisted => BanSyncGuildState.Blacklisted,
-                        MongoData.Models.BanSyncGuildState.Active => BanSyncGuildState.Active,
-                        _ => BanSyncGuildState.Unknown
-                    },
+                    State = MapState(m.State),
                     Notes = string.IsNullOrEmpty(m.Reason?.Trim()) ? null : m.Reason
                 }).ToArray();
 
@@ -87,15 +75,7 @@ public class DataMigrationModule : InteractionModuleBase
                     GuildId = m.GuildId.ToString(),
                     LogChannelId = null,
                     Enable = m.Enable,
-                    State = m.State switch
-                    {
-                        MongoData.Models.BanSyncGuildState.Unknown => BanSyncGuildState.Unknown,
-                        MongoData.Models.BanSyncGuildState.PendingRequest => BanSyncGuildState.PendingRequest,
-                        MongoData.Models.BanSyncGuildState.RequestDenied => BanSyncGuildState.RequestDenied,
-                        MongoData.Models.BanSyncGuildState.Blacklisted => BanSyncGuildState.Blacklisted,
-                        MongoData.Models.BanSyncGuildState.Active => BanSyncGuildState.Active,
-                        _ => BanSyncGuildState.Unknown
-                    },
+                    State = MapState(m.State),
                     Notes = m.Reason,
                 })
                 .ToArray();
@@ -119,18 +99,11 @@ public class DataMigrationModule : InteractionModuleBase
                     UserId = m.UserId.ToString(),
                     UserPartialSnapshotId = userSnapshot.Id,
                     CreatedAt = DateTimeOffset.FromUnixTimeSeconds(m.Timestamp).UtcDateTime,
-                    Reason = string.IsNullOrEmpty(m.Reason?.Trim()) ? null : m.Reason?.Trim(),
+                    Reason = MapReason(m.Reason),
                     Ghost = m.Ghost,
                     UserPartialSnapshot = userSnapshot,
                     Source = BanSyncRecordSource.DataMigration_MongoDb
                 };
-                if (string.Equals("null", r.Reason, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals("<null>", r.Reason, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals("<unknown>", r.Reason, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals("No reason given.", r.Reason, StringComparison.OrdinalIgnoreCase))
-                {
-                    r.Reason = null;
-                }
                 userSnapshot.CreatedAt = r.CreatedAt <= DateTime.UnixEpoch ? DateTime.UtcNow : r.CreatedAt;
 
                 // try to persist RecordId if we can
@@ -184,5 +157,29 @@ public class DataMigrationModule : InteractionModuleBase
             .WithTitle(string.Join("/", title))
             .WithDescription(message)
             .Build());
+    }
+
+    private static BanSyncGuildState MapState(MongoBanSyncGuildState state)
+    {
+        return state switch
+        {
+            MongoBanSyncGuildState.Unknown => BanSyncGuildState.Unknown,
+            MongoBanSyncGuildState.PendingRequest => BanSyncGuildState.PendingRequest,
+            MongoBanSyncGuildState.RequestDenied => BanSyncGuildState.RequestDenied,
+            MongoBanSyncGuildState.Blacklisted => BanSyncGuildState.Blacklisted,
+            MongoBanSyncGuildState.Active => BanSyncGuildState.Active,
+            _ => BanSyncGuildState.Unknown
+        };
+    }
+
+    private static string? MapReason(string? reason)
+    {
+        if (string.IsNullOrEmpty(reason?.Trim())) return null;
+        if (string.Equals("<null>", reason?.Trim(), StringComparison.OrdinalIgnoreCase)
+            || string.Equals("<unknown>", reason?.Trim(), StringComparison.OrdinalIgnoreCase)
+            || string.Equals("null", reason?.Trim(), StringComparison.OrdinalIgnoreCase)
+            || string.Equals("No reason given", reason?.Trim(), StringComparison.OrdinalIgnoreCase))
+            return null;
+        return reason.Trim();
     }
 }

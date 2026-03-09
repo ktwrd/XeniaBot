@@ -1,4 +1,6 @@
-﻿using Npgsql;
+﻿using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
+using Npgsql;
 using XeniaBot.Shared;
 
 namespace XeniaDiscord.Data;
@@ -31,4 +33,29 @@ public static class Extensions
             (allowZero || result > 0)) return result;
         return null;
     }
+
+    public static TService GetRequiredScopedService<TService>(
+        this IServiceProvider services,
+        IServiceScopeCallbackDelegate initializeScope,
+        out IServiceScope? scope)
+    {
+        scope = null;
+        var result = services.GetService<TService>();
+        if (ReferenceEquals(result, null))
+        {
+            scope = services.CreateScope();
+            initializeScope(scope!);
+            result = scope.ServiceProvider.GetRequiredService<TService>();
+        }
+        return result;
+    }
+    public static TService GetRequiredScopedService<TService>(
+        this IServiceProvider services,
+        out IServiceScope? scope)
+    {
+        scope = null;
+        return services.GetRequiredScopedService<TService>(IServiceScopeCallbackDelegateDefault, out scope);
+    }
+    private static readonly IServiceScopeCallbackDelegate IServiceScopeCallbackDelegateDefault = scope => { };
 }
+public delegate void IServiceScopeCallbackDelegate(IServiceScope scope);
