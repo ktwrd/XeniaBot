@@ -574,7 +574,7 @@ public class BanSyncService : BaseService
                     "\n" +
                     $"If you need any assistance. Feel free to {contact}.";
                 if (_configData.HasDashboard)
-                    d += $"\n\nIf you would like to check mutual records in your server, you can do so [via the dashboard]({_configData.DashboardUrl}/Server/{guild.Id}/BanSync)";
+                    d += $"\n\nIf you would like to check mutual records in your server, you can do so [via the dashboard]({_configData.DashboardUrl}/Server/{guild.Id}/Moderation).";
                 embed.WithColor(Color.Green)
                     .WithDescription(
                         d);              
