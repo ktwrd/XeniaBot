@@ -2,12 +2,13 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using XeniaBot.MongoData.Models;
-using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
 using Microsoft.Extensions.Logging;
+using XeniaDiscord.Common.Services;
+using BanSyncGuildState = XeniaDiscord.Data.Models.BanSync.BanSyncGuildState;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -25,7 +26,7 @@ partial class AdminController
     public async Task<IActionResult> ServerInfo(ulong id, string? message, string? messageType)
     {
         var model = new AdminServerModel();
-        await AspHelper.FillServerModel(id, model);
+        await AspHelper.FillServerModel(HttpContext.RequestServices, id, model);
         model.Message = message;
         model.MessageType = messageType;
         await PopulateModel(model);

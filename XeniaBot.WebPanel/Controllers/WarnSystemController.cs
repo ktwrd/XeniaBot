@@ -28,7 +28,7 @@ public class WarnSystemController: BaseXeniaController
         var guild = _discord.GetGuild(serverId);
         data.User = guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
         
-        await AspHelper.FillServerModel(serverId, data);
+        await AspHelper.FillServerModel(HttpContext.RequestServices, serverId, data);
         
         return data;
     }
@@ -39,9 +39,9 @@ public class WarnSystemController: BaseXeniaController
     public async Task<IActionResult> GuildWarns(ulong id, string? messageType = null, string? message = null, bool newer_than_enable = false, string? newer_than = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
-        if (userId == null)
+        if (!userId.HasValue)
             return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
+        var user = await _discord.GetUserAsync(userId.Value);
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");

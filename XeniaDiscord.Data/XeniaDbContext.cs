@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
+using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.PartialSnapshot;
 
 namespace XeniaDiscord.Data;
 
@@ -14,26 +15,75 @@ public class XeniaDbContext : DbContext
     }
     public XeniaDbContext CreateSession() => new(_ops);
 
+    #region Partial Snapshots
     public DbSet<UserPartialSnapshotModel> UserPartialSnapshots { get; set; }
+    public DbSet<GuildPartialSnapshotModel> GuildPartialSnapshots { get; set; }
+    #endregion
 
+    #region Discord Cache
+    public DbSet<GuildMemberCacheModel> GuildMemberCache { get; set; }
+    public DbSet<GuildCacheModel> GuildCache { get; set; }
+    #endregion
+
+    #region BanSync
     public DbSet<BanSyncRecordModel> BanSyncRecords { get; set; }
     public DbSet<BanSyncGuildModel> BanSyncGuilds { get; set; }
     public DbSet<BanSyncGuildSnapshotModel> BanSyncGuildSnapshots { get; set; }
+    #endregion
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
+        #region Partial Snapshots
         builder.Entity<UserPartialSnapshotModel>(b =>
         {
             b.ToTable(UserPartialSnapshotModel.TableName).HasKey(e => e.Id);
             b.HasIndex(e => new
             {
-                e.CreatedAt,
+                e.Timestamp,
                 e.UserId
             }).IsDescending();
         });
+        builder.Entity<GuildPartialSnapshotModel>(b =>
+        {
+            b.ToTable(GuildPartialSnapshotModel.TableName).HasKey(e => e.Id);
+            b.HasIndex(e => new
+            {
+                e.Timestamp,
+                e.GuildId
+            }).IsDescending();
+        });
+        #endregion
 
+        #region Discord Cache
+        builder.Entity<GuildCacheModel>(b =>
+        {
+            b.ToTable(GuildCacheModel.TableName).HasKey(e => e.Id);
+
+            b.HasMany(e => e.Members)
+            .WithOne(e => e.Guild)
+            .HasForeignKey(e => e.GuildId)
+            .IsRequired();
+        });
+        builder.Entity<GuildMemberCacheModel>(b =>
+        {
+            b.ToTable(GuildMemberCacheModel.TableName)
+            .HasKey(e => new
+            {
+                e.GuildId,
+                e.UserId
+            });
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.UserId,
+                e.IsMember
+            });
+        });
+        #endregion
+
+        #region BanSync
         builder.Entity<BanSyncRecordModel>(b =>
         {
             b.ToTable(BanSyncRecordModel.TableName).HasKey(e => e.Id);
@@ -46,6 +96,15 @@ public class XeniaDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserPartialSnapshotId)
                 .IsRequired();
+            b.HasOne(e => e.BanSyncGuild)
+            .WithMany()
+            .HasForeignKey(e => e.GuildId)
+            .IsRequired();
+
+            b.HasOne(e => e.CachedGuildMember)
+            .WithMany()
+            .HasForeignKey(e => new { e.GuildId, e.UserId })
+            .IsRequired();
         });
         builder.Entity<BanSyncGuildModel>(b =>
         {
@@ -58,5 +117,6 @@ public class XeniaDbContext : DbContext
             b.ToTable(BanSyncGuildSnapshotModel.TableName).HasKey(e => e.Id);
             b.HasIndex(e => new { e.Timestamp, e.GuildId }).IsDescending();
         });
+        #endregion
     }
 }

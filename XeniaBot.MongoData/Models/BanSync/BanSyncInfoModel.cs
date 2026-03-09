@@ -3,6 +3,7 @@ using XeniaBot.Shared.Models;
 
 namespace XeniaBot.MongoData.Models;
 
+[Obsolete("Use XeniaDiscord.Data.Models.BanSync.BanSyncRecordModel")]
 public class BanSyncInfoModel : BaseModel
 {
     public static string CollectionName => "banSyncInfo";

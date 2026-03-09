@@ -13,9 +13,10 @@ using XeniaBot.MongoData.Services;
 using XeniaBot.DiscordCache.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
-using XeniaBot.WebPanel.Models.Component;
 using MongoDB.Driver;
 using NLog;
+using Microsoft.Extensions.DependencyInjection;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.WebPanel.Helpers;
 
@@ -72,19 +73,19 @@ public static class AspHelper
         {
             LogManager.GetCurrentClassLogger().Error(ex, $"Failed to run {guildId}, {userId}, {permissionRequired}");
             errorReport.ReportException(
-                ex, $"Failed to run AspHelper.CanAccessGuild ({guildId}, {userId}, {permissionRequired})");
+                ex, $"Failed to run AspHelper.CanAccessGuild ({guildId}, {userId}, {permissionRequired})").GetAwaiter().GetResult();
             return false;
         }
     }
-    public static string[] ValidMessageTypes = new string[]
-    {
+    public static readonly HashSet<string> ValidMessageTypes
+        = [
         "primary",
         "secondary",
         "success",
         "danger",
         "warning",
         "info"
-    };
+        ];
 
     public static string GetUserProfilePicture(ulong userId)
     {
@@ -141,64 +142,53 @@ public static class AspHelper
         return channelId.ToString();
     }
 
-    public static async Task FillServerModel(ulong serverId, IBanSyncBaseRecords data, ulong? targetUserId, HttpContext context)
-    {
-        data.FilterRecordsByUserId = targetUserId;
-        var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoRepository>();
-        data.BanSyncRecordCount = await banSyncRecordConfig.GetInfoAllInGuildCount(
-            serverId,
-            targetUserId,
-            allowGhost: AspHelper.IsCurrentUserAdmin(context));
-
-        var banSyncGuildConfig = Program.Core.GetRequiredService<BanSyncStateHistoryRepository>();
-        data.BanSyncGuild = await banSyncGuildConfig.GetLatest(serverId) ?? new BanSyncStateHistoryItemModel()
-        {
-            GuildId = serverId
-        };
-    }
-
-    public static async Task FillServerModel(ulong serverId, IBanSyncBaseRecordsComponent data, int cursor, ulong? targetUserId, HttpContext context)
+    /*public static async Task FillServerModel(
+        ulong serverId,
+        IBanSyncBaseRecordsComponent data,
+        int cursor,
+        ulong? targetUserId,
+        HttpContext context)
     {
         await FillServerModel(serverId, (IBanSyncBaseRecords)data, targetUserId, context);
         data.FilterRecordsByUserId = targetUserId;
         var banSyncRecordConfig = Program.Core.GetRequiredService<BanSyncInfoRepository>();
         data.Items = await banSyncRecordConfig.GetInfoAllInGuildPaginate(
-            serverId, 
+            serverId,
             cursor,
             BanSyncMutualRecordsListComponentViewModel.PageSize, 
             targetUserId,
-            allowGhost: AspHelper.IsCurrentUserAdmin(context));
-    }
-    public static async Task<T> FillServerModel<T>(ulong serverId, T data) where T : IBaseServerModel
+            allowGhost: IsCurrentUserAdmin(context));
+    }*/
+    public static async Task<T> FillServerModel<T>(
+        IServiceProvider services,
+        ulong serverId, T data) where T : IBaseServerModel
     {
-        
-        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        var discord = services.GetRequiredService<DiscordSocketClient>();
         var guild = discord.GetGuild(serverId);
         data.Guild = guild;
 
-        var counterController = Program.Core.GetRequiredService<CounterConfigRepository>();
+        var counterController = services.GetRequiredService<CounterConfigRepository>();
         data.CounterConfig = await counterController.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = serverId
         };
 
-        var banSyncConfig = Program.Core.GetRequiredService<BanSyncConfigRepository>();
-        data.BanSyncConfig = await banSyncConfig.Get(guild.Id) ?? new ConfigBanSyncModel()
+        var bansyncGuildRepo = services.GetRequiredService<BanSyncGuildRepository>();
+        data.BanSyncConfig = await bansyncGuildRepo.GetAsync(guild.Id) ?? new XeniaDiscord.Data.Models.BanSync.BanSyncGuildModel()
         {
-            GuildId = guild.Id
+            GuildId = guild.Id.ToString()
         };
 
-        var banSyncStateHistory = Program.Core.GetRequiredService<BanSyncStateHistoryRepository>();
-        var history = await banSyncStateHistory.GetMany(guild.Id);
-        data.BanSyncStateHistory = history.ToList();
+        var banSyncStateHistory = services.GetRequiredService<BanSyncGuildSnapshotRepository>();
+        data.BanSyncStateHistory = await banSyncStateHistory.GetMany(guild.Id);
 
-        var xpConfig = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
+        var xpConfig = services.GetRequiredService<LevelSystemConfigRepository>();
         data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemConfigModel()
         {
             GuildId = guild.Id
         };
 
-        var logConfig = Program.Core.GetRequiredService<ServerLogRepository>();
+        var logConfig = services.GetRequiredService<ServerLogRepository>();
         data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
         {
             ServerId = guild.Id
@@ -212,36 +202,36 @@ public static class AspHelper
         }
         data.UsersWhoCanAccess = membersWhoCanAccess;
 
-        var greeterConfig = Program.Core.GetRequiredService<GuildGreeterConfigRepository>();
+        var greeterConfig = services.GetRequiredService<GuildGreeterConfigRepository>();
         data.GreeterConfig = await greeterConfig.GetLatest(guild.Id)
             ?? new GuildGreeterConfigModel()
             {
                 GuildId = guild.Id
             };
 
-        var greeterGoodbyeConfig = Program.Core.GetRequiredService<GuildGreetByeConfigRepository>();
+        var greeterGoodbyeConfig = services.GetRequiredService<GuildGreetByeConfigRepository>();
         data.GreeterGoodbyeConfig = await greeterGoodbyeConfig.GetLatest(guild.Id)
             ?? new GuildByeGreeterConfigModel()
             {
                 GuildId = guild.Id
             };
 
-        var warnConfig = Program.Core.GetRequiredService<GuildWarnItemRepository>();
+        var warnConfig = services.GetRequiredService<GuildWarnItemRepository>();
         data.WarnItems = await warnConfig.GetLatestGuildItems(guild.Id) ?? new List<GuildWarnItemModel>();
 
-        var rolePreserveConfig = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
+        var rolePreserveConfig = services.GetRequiredService<RolePreserveGuildRepository>();
         data.RolePreserve = await rolePreserveConfig.Get(guild.Id) ?? new RolePreserveGuildModel()
         {
             GuildId = guild.Id
         };
 
-        var banSyncRecordService = Program.Core.GetRequiredService<BanSyncInfoRepository>();
-        data.BanSyncRecordCount = await banSyncRecordService.CountInGuild(guild.Id);
+        var banSyncRecordService = services.GetRequiredService<BanSyncRecordRepository>();
+        data.BanSyncRecordCount = await banSyncRecordService.CountForGuild(guild.Id);
 
-        var warnStrikeService = Program.Core.GetRequiredService<WarnStrikeService>();
+        var warnStrikeService = services.GetRequiredService<WarnStrikeService>();
         data.WarnStrikeConfig = await warnStrikeService.GetStrikeConfig(guild.Id);
 
-        var confessionRepo = Program.Core.GetRequiredService<ConfessionConfigRepository>();
+        var confessionRepo = services.GetRequiredService<ConfessionConfigRepository>();
         data.ConfessionConfig = await confessionRepo.GetGuild(guild.Id) ?? new ConfessionGuildModel()
         {
             GuildId = guild.Id
@@ -274,15 +264,10 @@ public static class AspHelper
         var assembly = Assembly.GetExecutingAssembly();
         if (prependWebPanelNamespace)
             resourceName = $"XeniaBot.WebPanel.{resourceName}";
-        using (Stream? stream = assembly.GetManifestResourceStream(resourceName))
-        {
-            if (stream == null)
-                return fallbackData;
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                return reader.ReadToEnd();
-            }
-        }
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null) return fallbackData;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
     
 

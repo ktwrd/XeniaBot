@@ -11,6 +11,7 @@ using XeniaBot.MongoData.Models;
 namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
+[Obsolete("Use XeniaDiscord.Data.Repositories.BanSyncGuildSnapshotRepository")]
 public class BanSyncStateHistoryRepository : BaseRepository<BanSyncStateHistoryItemModel>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();

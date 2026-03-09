@@ -1,3 +1,6 @@
+using CronNET;
+using Discord;
+using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -7,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Logging;
+using MongoDB.Driver;
 using NLog;
 using NLog.Web;
 using Sentry;
@@ -17,7 +21,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using XeniaBot.MongoData.Services;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -121,15 +125,16 @@ public static class Program
         await Main_AspNet(args);
         await Task.Delay(-1);
     }
-    private static Task CoreContextBeforeServiceBuild(ServiceCollection services)
+    private static Task CoreContextBeforeServiceBuild(IServiceCollection services)
     {
-        services.AddSingleton(Details);
         services.WithDatabaseServices();
+        services.AddSingleton(Core);
+        services.AddSingleton(Details);
         XeniaDiscordData.RegisterServices(services, false); // only allow scoped db stuff for web app
-        XeniaDiscordCommon.RegisterServices(services);
+        XeniaDiscordCommon.RegisterServices(services, false);
         XeniaDiscordInteractionsDataMigration.RegisterServices(services);
         AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, services); // XeniaBot.Shared
-        AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, services); // XeniaBot.Data
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, services); // XeniaBot.Data
         AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", services);
         return Task.CompletedTask;
     }
@@ -195,20 +200,36 @@ public static class Program
             options.EnableForHttps = true;
         });
         builder.WebHost.UseSentry(FeatureFlags.SentryDSN);
+
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<CoreContext>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<ProgramDetails>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<CronDaemon>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<ConfigService>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<ConfigData>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<DiscordSocketClient>());
+        builder.Services.AddSingleton<IDiscordClient>(Core.Services.GetRequiredService<DiscordSocketClient>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<IMongoDatabase>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<DiscordService>());
+        await CoreContextBeforeServiceBuild(builder.Services);
+
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+        }
+
         var app = builder.Build();
         app.UseStaticFiles();
         // Configure the HTTP request pipeline.
-        if (!app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment())
+        {
+            IdentityModelEventSource.ShowPII = true;
+        }
+        else
         {
             app.UseExceptionHandler("/Home/Error");
             // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
             app.UseSentryTracing();
-        }
-
-        if (app.Environment.IsDevelopment())
-        {
-            IdentityModelEventSource.ShowPII = true;
         }
 
         // Required to serve files with no extension in the .well-known folder

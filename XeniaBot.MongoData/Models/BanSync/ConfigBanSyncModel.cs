@@ -1,8 +1,10 @@
 ﻿using MongoDB.Bson;
+using System;
 using System.ComponentModel;
 
 namespace XeniaBot.MongoData.Models;
 
+[Obsolete("Use XeniaDiscord.Data.Models.BanSync.BanSyncGuildSnapshotModel")]
 public class ConfigBanSyncModel
 {
     [Browsable(false)]
@@ -21,6 +23,8 @@ public class ConfigBanSyncModel
         Reason = "";
     }
 }
+
+[Obsolete("Use XeniaDiscord.Data.Models.BanSync.BanSyncGuildState")]
 public enum BanSyncGuildState
 {
     Unknown = -1,

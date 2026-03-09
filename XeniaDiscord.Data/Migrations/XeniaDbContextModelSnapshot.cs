@@ -92,6 +92,10 @@ namespace XeniaDiscord.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BannedByUserId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -131,20 +135,107 @@ namespace XeniaDiscord.Data.Migrations
                     b.HasIndex("GuildId", "Ghost")
                         .IsDescending();
 
+                    b.HasIndex("GuildId", "UserId");
+
                     b.HasIndex("UserId", "Ghost")
                         .IsDescending();
 
                     b.ToTable("BanSyncRecords", (string)null);
                 });
 
-            modelBuilder.Entity("XeniaDiscord.Data.Models.UserPartialSnapshotModel", b =>
+            modelBuilder.Entity("XeniaDiscord.Data.Models.Cache.GuildCacheModel", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OwnerUserId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("RecordCreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("RecordUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Cache_Guild", (string)null);
+                });
+
+            modelBuilder.Entity("XeniaDiscord.Data.Models.Cache.GuildMemberCacheModel", b =>
+                {
+                    b.Property<string>("GuildId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FirstJoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsMember")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("GuildId", "UserId");
+
+                    b.HasIndex("GuildId", "UserId", "IsMember");
+
+                    b.ToTable("Cache_GuildMember", (string)null);
+                });
+
+            modelBuilder.Entity("XeniaDiscord.Data.Models.PartialSnapshot.GuildPartialSnapshotModel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<string>("GuildId")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp", "GuildId")
+                        .IsDescending();
+
+                    b.ToTable("GuildPartialSnapshot", (string)null);
+                });
+
+            modelBuilder.Entity("XeniaDiscord.Data.Models.PartialSnapshot.UserPartialSnapshotModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Discriminator")
                         .HasMaxLength(8)
@@ -153,6 +244,9 @@ namespace XeniaDiscord.Data.Migrations
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -165,7 +259,7 @@ namespace XeniaDiscord.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt", "UserId")
+                    b.HasIndex("Timestamp", "UserId")
                         .IsDescending();
 
                     b.ToTable("UserPartialSnapshot", (string)null);
@@ -173,13 +267,45 @@ namespace XeniaDiscord.Data.Migrations
 
             modelBuilder.Entity("XeniaDiscord.Data.Models.BanSync.BanSyncRecordModel", b =>
                 {
-                    b.HasOne("XeniaDiscord.Data.Models.UserPartialSnapshotModel", "UserPartialSnapshot")
+                    b.HasOne("XeniaDiscord.Data.Models.BanSync.BanSyncGuildModel", "BanSyncGuild")
+                        .WithMany()
+                        .HasForeignKey("GuildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("XeniaDiscord.Data.Models.PartialSnapshot.UserPartialSnapshotModel", "UserPartialSnapshot")
                         .WithMany()
                         .HasForeignKey("UserPartialSnapshotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("XeniaDiscord.Data.Models.Cache.GuildMemberCacheModel", "CachedGuildMember")
+                        .WithMany()
+                        .HasForeignKey("GuildId", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BanSyncGuild");
+
+                    b.Navigation("CachedGuildMember");
+
                     b.Navigation("UserPartialSnapshot");
+                });
+
+            modelBuilder.Entity("XeniaDiscord.Data.Models.Cache.GuildMemberCacheModel", b =>
+                {
+                    b.HasOne("XeniaDiscord.Data.Models.Cache.GuildCacheModel", "Guild")
+                        .WithMany("Members")
+                        .HasForeignKey("GuildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Guild");
+                });
+
+            modelBuilder.Entity("XeniaDiscord.Data.Models.Cache.GuildCacheModel", b =>
+                {
+                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }

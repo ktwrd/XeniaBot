@@ -14,9 +14,9 @@ using XeniaBot.Shared.Repositories;
 namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
+[Obsolete("Use XeniaDiscord.Data.Repositories.BanSyncRecordRepository")]
 public class BanSyncInfoRepository
     : BaseRepository<BanSyncInfoModel>
-    , IBanSyncInfoRepository<BanSyncInfoModel>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly DiscordSocketClient _discord;
@@ -206,7 +206,10 @@ public class BanSyncInfoRepository
     public Task<BanSyncInfoModel?> GetInfo(Guid id, bool allowGhost = false)
         => GetInfo(id.ToString(), allowGhost);
     
-    public async Task<ICollection<BanSyncInfoModel>> GetInfoAllInGuild(ulong guildId, bool ignoreDisabledGuilds = false, bool allowGhost = false)
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoAllInGuild(
+        ulong guildId,
+        bool ignoreDisabledGuilds = false,
+        bool allowGhost = false)
     {
         var result = new List<BanSyncInfoModel>();
         var guild = _discord.GetGuild(guildId);
@@ -298,7 +301,8 @@ public class BanSyncInfoRepository
 
         return filter;
     }
-    public async Task<ICollection<BanSyncInfoModel>> GetInfoAllInGuildPaginate(ulong guildId,
+    public async Task<ICollection<BanSyncInfoModel>> GetInfoAllInGuildPaginate(
+        ulong guildId,
         int page,
         int pageSize,
         ulong? filterByUserId,
@@ -322,7 +326,8 @@ public class BanSyncInfoRepository
         return result;
     }
 
-    public async Task<long> GetInfoAllInGuildCount(ulong guildId,
+    public async Task<long> GetInfoAllInGuildCount(
+        ulong guildId,
         ulong? filterByUserId,
         bool ignoreDisabledGuilds = false,
         bool allowGhost = false)

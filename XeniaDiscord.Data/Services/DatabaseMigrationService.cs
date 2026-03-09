@@ -9,12 +9,11 @@ namespace XeniaDiscord.Data.Services;
 public class DatabaseMigrationService : BaseService
 {
     private readonly ErrorReportService _err;
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DatabaseMigrationService(IServiceProvider services) : base(services)
     {
         _err = services.GetRequiredService<ErrorReportService>();
     }
-
-    private readonly Logger _log = LogManager.GetCurrentClassLogger();
 
     /// <summary>
     /// Called when all services have been added to the collection.
@@ -23,8 +22,8 @@ public class DatabaseMigrationService : BaseService
     public override async Task InitializeAsync()
     {
         using var scope = _services.CreateScope();
-        _log.Debug("Created scope");
         using var db = scope.ServiceProvider.GetRequiredService<XeniaDbContext>();
+
         var migrationsEnumerable = await db.Database.GetPendingMigrationsAsync();
         var migrationsArray = migrationsEnumerable.ToArray();
         if (migrationsArray.Length < 1)
@@ -32,6 +31,7 @@ public class DatabaseMigrationService : BaseService
             _log.Info("No pending migrations.");
             return;
         }
+
         var migrationCount = migrationsArray.Length.ToString("n0");
         var joined = string.Join("\n", migrationsArray.Select(e => "- " + e));
         _log.Info($"Applying {migrationCount} pending migration(s)\n{joined}");

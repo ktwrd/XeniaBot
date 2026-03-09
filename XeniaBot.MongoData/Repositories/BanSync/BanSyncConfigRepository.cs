@@ -12,6 +12,7 @@ using XeniaBot.MongoData.Models;
 namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
+[Obsolete("Use XeniaDiscord.Data.Repositories.BanSyncGuildRepository")]
 public class BanSyncConfigRepository : BaseRepository<ConfigBanSyncModel>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();

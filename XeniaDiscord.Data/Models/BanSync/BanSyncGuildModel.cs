@@ -10,6 +10,10 @@ public class BanSyncGuildModel
     {
         GuildId = "0";
     }
+    public BanSyncGuildModel(ulong guildId)
+    {
+        GuildId = guildId.ToString();
+    }
 
     /// <summary>
     /// Primary Key: Guild Id (ulong as string)

@@ -34,7 +34,8 @@
                                return new StrippedChannel()
                                {
                                    Id = v.Id,
-                                   Name = v.Name
+                                   Name = v.Name,
+                                   Position = v.Position
                                };
                            }),
                            Categories = StrippedCategory.FromGuild(@Model.Guild),
@@ -60,7 +61,8 @@
                                return new StrippedChannel()
                                {
                                    Id = v.Id,
-                                   Name = v.Name
+                                Name = v.Name,
+                                Position = v.Position
                                };
                            }),
                            Categories = StrippedCategory.FromGuild(@Model.Guild),
@@ -75,5 +77,5 @@
         </div>
     </div>
     <hr/>
-    <input type="submit" class="btn btn-success" value="Save"></input>
+    <button type="submit" class="btn btn-success">Save</button>
 </form>

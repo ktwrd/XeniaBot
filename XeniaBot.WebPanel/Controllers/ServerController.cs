@@ -1,15 +1,20 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using XeniaBot.Data;
 using XeniaBot.MongoData;
+using XeniaBot.MongoData.Services;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -17,10 +22,14 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController : BaseXeniaController
 {
     private readonly ILogger<ServerController> _logger;
+    private readonly ErrorReportService _errorReporting;
 
-    public ServerController(ILogger<ServerController> logger)
+    public ServerController(
+        IServiceProvider services,
+        ILogger<ServerController> logger)
         : base()
     {
+        _errorReporting = services.GetRequiredService<ErrorReportService>();
         _logger = logger;
     }
 

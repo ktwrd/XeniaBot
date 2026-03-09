@@ -1,4 +1,5 @@
 ﻿@using XeniaBot.MongoData.Models
+@using BanSyncGuildState = XeniaDiscord.Data.Models.BanSync.BanSyncGuildState
 @model ServerDetailsViewModel
 
 @if (@Model.BanSyncConfig.State != BanSyncGuildState.Active)
@@ -18,13 +19,13 @@
                 <span class="m-1">Ban Sync is already enabled</span>
                 break;
             case BanSyncGuildState.Blacklisted:
-                <span class="m-1">Server is blacklisted. <pre><code>@Model.BanSyncConfig.Reason</code></pre></span>
+                <span class="m-1">Server is blacklisted. <pre><code>@Model.BanSyncConfig.Notes</code></pre></span>
                 break;
             case BanSyncGuildState.PendingRequest:
                 <span class="m-1">Pending approval</span>
                 break;
             case BanSyncGuildState.RequestDenied:
-                <span class="m-1">Request denied. Reason:</span> <pre><code>@Model.BanSyncConfig.Reason</code></pre>
+                <span class="m-1">Request denied. Reason:</span> <pre><code>@Model.BanSyncConfig.Notes</code></pre>
                 break;
         }
     </form>
@@ -58,7 +59,7 @@
     {
         Channels = StrippedChannel.FromGuild(@Model.Guild),
         Categories = StrippedCategory.FromGuild(@Model.Guild),
-        SelectedChannelId = @Model.BanSyncConfig.LogChannel,
+        SelectedChannelId = @Model.BanSyncConfig.GetLogChannelId(),
         ParentFormId = "bansync_settings_channel",
         Id = "bansync_settings_channel_select",
         Name = "logChannel",

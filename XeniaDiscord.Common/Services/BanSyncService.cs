@@ -1,46 +1,45 @@
 ﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
-using XeniaBot.Shared;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using XeniaBot.MongoData.Models;
-using XeniaBot.MongoData.Repositories;
-using XeniaBot.Shared.Services;
-using Discord.Rest;
 using NLog;
-using System.IO;
+using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
+using XeniaDiscord.Data;
+using XeniaDiscord.Data.Models;
+using XeniaDiscord.Data.Models.BanSync;
+using XeniaDiscord.Data.Models.PartialSnapshot;
+using XeniaDiscord.Data.Repositories;
 
-namespace XeniaBot.MongoData.Services;
+namespace XeniaDiscord.Common.Services;
 
-[XeniaController]
 public class BanSyncService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(BanSyncService));
     private readonly DiscordSocketClient _client;
-    private readonly BanSyncConfigRepository _guildConfigRepo;
     private readonly ConfigData _configData;
-    private readonly BanSyncInfoRepository _banInfoRepo;
     private readonly ErrorReportService _err;
+    private readonly BanSyncGuildRepository _bansyncGuildRepository;
+    private readonly BanSyncRecordRepository _bansyncRecordsRepository;
     private readonly ProgramDetails _programDetails;
+    private readonly XeniaDbContext _db;
     public BanSyncService(IServiceProvider services)
         : base(services)
     {
         _client = services.GetRequiredService<DiscordSocketClient>();
-        _guildConfigRepo = services.GetRequiredService<BanSyncConfigRepository>();
         _configData = services.GetRequiredService<ConfigData>();
-        _banInfoRepo = services.GetRequiredService<BanSyncInfoRepository>();
         _err = services.GetRequiredService<ErrorReportService>();
+        _bansyncGuildRepository = services.GetRequiredService<BanSyncGuildRepository>();
+        _bansyncRecordsRepository = services.GetRequiredService<BanSyncRecordRepository>();
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
 
         _programDetails = services.GetRequiredService<ProgramDetails>();
 
         if (_programDetails.Platform != XeniaPlatform.WebPanel)
         {
-            _client.UserJoined += _client_UserJoined;
-            _client.UserBanned += _client_UserBanned;
+            _client.UserJoined += DiscordClientOnUserJoined;
+            _client.UserBanned += DiscordClientOnUserBanned;
         }
     }
 
@@ -66,7 +65,7 @@ public class BanSyncService : BaseService
                     var guild = _client.GetGuild(guildId);
                     try
                     {
-                        RefreshBans(item).Wait();
+                        RefreshBans(item).GetAwaiter().GetResult();
                     }
                     catch (Exception ex)
                     {
@@ -90,118 +89,166 @@ public class BanSyncService : BaseService
         else
             return reason.Trim();
     }
-    public static bool InfoEquals(BanSyncInfoModel self, BanSyncInfoModel other)
+    public static bool InfoEquals(BanSyncRecordModel self, BanSyncRecordModel other)
     {
         return self.UserId == other.UserId
             && self.GuildId == other.GuildId
             && self.BannedByUserId == other.BannedByUserId
             && ParseReason(self.Reason) == ParseReason(other.Reason);
     }
-    public static bool InfoEquals(BanSyncInfoModel self, RestBan other, ulong otherGuildId)
+    public static bool InfoEquals(BanSyncRecordModel self, RestBan other, ulong otherGuildId)
     {
-        return self.UserId == other.User.Id
-            && self.GuildId == otherGuildId
+        return self.GetUserId() == other.User.Id
+            && self.GetGuildId() == otherGuildId
             && ParseReason(self.Reason) == ParseReason(other.Reason);
     }
 
     public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
     public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
     {
-        var config = await _guildConfigRepo.Get(guild.Id);
+        var config = await _bansyncGuildRepository.GetAsync(guild.Id);
         if (config?.Enable != true || config.State != BanSyncGuildState.Active)
             return;
-        _log.Debug($"Fetching bans for guild \"{guild.Name}\" ({guild.Id})");
+
         const int pageSize = 1000;
         long total = 0;
-        var bans = await guild.GetBansAsync(9223372036854775807, Direction.Before, pageSize).ToListAsync();
-        while (true)
-        {
-            var bansArray = bans.SelectMany(e => e).ToArray();
-            total += bansArray.Length;
-            foreach (var ban in bansArray) await ProcessBanCallback(ban);
-            if (bansArray.Length < pageSize) break;
 
-            bans = await guild.GetBansAsync(bansArray.Min(e => e.User.Id), Direction.Before, pageSize).ToListAsync();
+        _log.Debug($"Fetching bans for guild \"{guild.Name}\" ({guild.Id})");
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var bans = await guild.GetBansAsync(9223372036854775807, Direction.Before, pageSize).ToListAsync();
+            while (true)
+            {
+                var bansArray = bans.SelectMany(e => e).ToArray();
+                total += bansArray.Length;
+                foreach (var ban in bansArray)
+                {
+                    await RefreshBans_ProcessBanCallback(db, ban, guild, ignoreExisting);
+                }
+                if (bansArray.Length < pageSize) break;
+
+                bans = await guild.GetBansAsync(bansArray.Min(e => e.User.Id), Direction.Before, pageSize).ToListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            await trans.RollbackAsync();
+            var msg = $"Failed to pull & insert bans for Guild \"{guild.Name}\" ({guild.Id})";
+            _log.Error(ex, msg);
+            throw new InvalidOperationException(msg, ex);
         }
         var totalStr = total.ToString("n0");
         _log.Debug($"Got {totalStr} records for guild \"{guild.Name}\" ({guild.Id})");
 
-        async Task ProcessBanCallback(RestBan ban)
+    }
+    private async Task RefreshBans_ProcessBanCallback(
+            XeniaDbContext db,
+            RestBan ban,
+            SocketGuild guild,
+            bool ignoreExisting)
+    {
+        try
         {
-            try
+            // only ignore when everything matches and ignoreExisting is true
+            var existing = await _bansyncRecordsRepository.GetInfo(ban.User.Id, guild.Id, new()
             {
-                // only ignore when everything matches and ignoreExisting is true
-                var existing = await _banInfoRepo.GetInfo(ban.User.Id, guild.Id, allowGhost: true);
-                if (ignoreExisting &&
-                    existing != null &&
-                    InfoEquals(existing, ban, guild.Id))
-                {
-                    return;
-                }
-
-                var info = new BanSyncInfoModel()
-                {
-                    UserId = ban.User.Id,
-                    UserName = ban.User.Username,
-                    UserDiscriminator = ban.User.Discriminator,
-                    UserDisplayName = ban.User.GlobalName,
-                    GuildId = guild.Id,
-                    GuildName = guild.Name,
-                    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                    Reason = ParseReason(ban.Reason)
-                };
-                await _banInfoRepo.SetInfo(info);
-            }
-            catch (Exception ex)
+                IncludeGhostedRecords = true
+            });
+            if (ignoreExisting &&
+                existing != null &&
+                InfoEquals(existing, ban, guild.Id))
             {
-                var msg = $"Failed to add ban for {ban?.User.Username} ({ban?.User.Id}) in guild {guild.Name} ({guild.Id})";
-                _log.Error(ex, msg);
-                await _err.ReportException(
-                    ex,
-                    msg);
+                return;
             }
+            var partialUserInfo = new UserPartialSnapshotModel()
+            {
+                UserId = ban.User.Id.ToString(),
+                Username = ban.User.Username,
+                Discriminator = ban.User.DiscriminatorValue == 0 ? null : ban.User.Discriminator,
+                DisplayName = ban.User.GlobalName
+            };
+            var info = new BanSyncRecordModel()
+            {
+                UserId = ban.User.Id.ToString(),
+                GuildId = guild.Id.ToString(),
+                UserPartialSnapshotId = partialUserInfo.Id,
+                GuildName = guild.Name,
+                Reason = ParseReason(ban.Reason)
+            };
+            await db.UserPartialSnapshots.AddAsync(partialUserInfo);
+            await _bansyncRecordsRepository.InsertOrUpdate(db, info);
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to add ban for {ban?.User.Username} ({ban?.User.Id}) in guild {guild.Name} ({guild.Id})";
+            _log.Error(ex, msg);
+            await _err.ReportException(
+                ex,
+                msg);
         }
     }
 
     /// <summary>
     /// Add user to database and notify mutual servers. <see cref="NotifyBan(BanSyncInfoModel)"/>
     /// </summary>
-    public async Task _client_UserBanned(SocketUser user, SocketGuild guild)
+    public async Task DiscordClientOnUserBanned(SocketUser user, SocketGuild guild)
     {
         // Ignore if guild config is disabled
-        var config = await _guildConfigRepo.Get(guild.Id);
+        var config = await _bansyncGuildRepository.GetAsync(guild.Id);
         if (config?.Enable != true || config.State != BanSyncGuildState.Active)
             return;
 
         var banInfo = await guild.GetBanAsync(user);
 
-        var info = new BanSyncInfoModel()
+        BanSyncRecordModel info;
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
         {
-            UserId = user.Id,
-            UserName = user.Username,
-            UserDiscriminator = user.Discriminator,
-            UserDisplayName = user.GlobalName,
-            GuildId = guild.Id,
-            GuildName = guild.Name,
-            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Reason = banInfo?.Reason ?? "<unknown>",
-        };
-        await _banInfoRepo.SetInfo(info);
+            var partialUserInfo = new UserPartialSnapshotModel()
+            {
+                UserId = banInfo.User.Id.ToString(),
+                Username = banInfo.User.Username,
+                Discriminator = banInfo.User.DiscriminatorValue == 0 ? null : banInfo.User.Discriminator,
+                DisplayName = banInfo.User.GlobalName
+            };
+            info = new BanSyncRecordModel()
+            {
+                UserId = banInfo.User.Id.ToString(),
+                GuildId = guild.Id.ToString(),
+                UserPartialSnapshotId = partialUserInfo.Id,
+                GuildName = guild.Name,
+                Reason = ParseReason(banInfo.Reason)
+            };
+            await db.UserPartialSnapshots.AddAsync(partialUserInfo);
+            await _bansyncRecordsRepository.InsertOrUpdate(info);
+
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+        }
+        catch
+        {
+            await trans.RollbackAsync();
+            throw;
+        }
+
         await NotifyBan(info);
     }
 
     /// <summary>
     /// Notify all guilds that the user is in that the user has been banned.
     /// </summary>
-    public async Task NotifyBan(BanSyncInfoModel info)
+    public async Task NotifyBan(BanSyncRecordModel info)
     {
         foreach (var guild in _client.Guilds)
         {
-            var guildConfig = await _guildConfigRepo.Get(guild.Id);
+            var guildConfig = await _bansyncGuildRepository.GetAsync(guild.Id);
             if (guildConfig == null || guildConfig.State != BanSyncGuildState.Active)
                 continue;
 
-            var guildUser = guild.GetUser(info.UserId);
+            var guildUser = guild.GetUser(info.GetUserId());
             if (guildUser == null)
                 continue;
             try
@@ -210,26 +257,26 @@ public class BanSyncService : BaseService
             }
             catch (Exception ex)
             {
-                _log.Error(ex, $"Failed to process record {info.Id} for user {info.UserName} ({info.UserId}) in guild \"{guild.Name}\" ({guild.Id})");
+                _log.Error(ex, $"Failed to process record {info.Id} for user {info.UserPartialSnapshot.Username} ({info.UserId}) in guild \"{guild.Name}\" ({guild.Id})");
             }
         }
     }
 
     private async Task NotifyGuildAboutMutualBan(
-        ConfigBanSyncModel guildConfig,
-        BanSyncInfoModel info,
+        BanSyncGuildModel guildConfig,
+        BanSyncRecordModel info,
         SocketGuild guild,
         SocketGuildUser guildUser)
     {
-        var textChannel = guild.GetTextChannel(guildConfig.LogChannel);
+        var textChannel = guild.GetTextChannel(guildConfig.GetLogChannelId() ?? 0);
         var embed = new EmbedBuilder()
         {
             Title = "User in your server just got banned",
-            Description = $"<@{info.UserId}> just got banned from `{info.GuildName}` at <t:{info.Timestamp}:F>",
+            Description = $"<@{info.UserId}> (`{info.UserPartialSnapshot.Username}`) just got banned from `{info.GuildName}` at <t:{new DateTimeOffset(info.CreatedAt).ToUnixTimeSeconds()}:F>",
         };
 
         MemoryStream? reasonMemoryStream = null;
-        if (info.Reason?.Length > 2000)
+        if (info.Reason?.Length > 1024)
         {
             reasonMemoryStream = new(System.Text.Encoding.UTF8.GetBytes(info.Reason));
         }
@@ -251,7 +298,7 @@ public class BanSyncService : BaseService
                 }
                 catch (Exception ex)
                 {
-                    _log.Warn(ex, $"Failed to dispose reason attachment stream for channel \"{textChannel.Name}\" ({textChannel.Id}) in guild \"{guild.Name}\" ({guild.Id}) to notifiy about user \"{info.UserName}\" ({info.UserId}) getting banned.");
+                    _log.Warn(ex, $"Failed to dispose reason attachment stream for channel \"{textChannel.Name}\" ({textChannel.Id}) in guild \"{guild.Name}\" ({guild.Id}) to notifiy about user \"{info.UserPartialSnapshot.Username}\" ({info.UserId}) getting banned.");
                 }
             }
             else
@@ -268,62 +315,84 @@ public class BanSyncService : BaseService
         }
     }
 
-    private async Task _client_UserJoined(SocketGuildUser arg)
+    private async Task DiscordClientOnUserJoined(SocketGuildUser arg)
     {
-        var guildConfig = await _guildConfigRepo.Get(arg.Guild.Id);
+        var guildConfig = await _bansyncGuildRepository.GetAsync(arg.Guild.Id);
 
         // Check if the guild has config stuff setup
         // If not then we just ignore
         if (guildConfig == null) return;
             
-        if ((guildConfig?.State ?? BanSyncGuildState.Unknown) != BanSyncGuildState.Active)
+        if (guildConfig.State != BanSyncGuildState.Active)
             return;
 
         // Check if config channel has been made, if not then ignore
-        SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig!.LogChannel);
+        SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig.GetLogChannelId().GetValueOrDefault(0));
         if (logChannel == null) return;
 
         // Check if this user has been banned before, if not then ignore
-        var userInfo = (await _banInfoRepo.GetInfoEnumerable(arg.Id)).ToArray();
-        if (userInfo.Length < 1) return;
-
-        userInfo = [.. userInfo.Where(v => !v.Ghost)];
+        var userInfo = await _bansyncRecordsRepository.GetInfoEnumerable(arg.Id,
+            new BanSyncRecordRepository.QueryOptions()
+            {
+                IncludeGhostedRecords = false,
+                IncludeUserPartialSnapshot = true
+            });
+        if (userInfo.Count < 1) return;
 
         // Create embed then send message in log channel.
         var embed = await GenerateEmbed(userInfo);
         await logChannel.SendMessageAsync(embed: embed.Build());
     }
-    public async Task<EmbedBuilder> GenerateEmbed(ICollection<BanSyncInfoModel> data)
+    public async Task<EmbedBuilder> GenerateEmbed(ICollection<BanSyncRecordModel> data)
     {
-        var sortedData = data.OrderByDescending(v => v.Timestamp).ToArray();
-        var last = sortedData.LastOrDefault();
-        var userId = last?.UserId;
-        var user = await _client.GetUserAsync(userId ?? 0);
+        var sortedData = data.OrderByDescending(v => v.CreatedAt).ToArray();
+        var last = sortedData[^1];
+        var userId = last.GetUserId();
+        var user = await _client.GetUserAsync(userId);
         var embed = new EmbedBuilder()
         {
             Title = "User has been banned previously",
             Color = Color.Red
         };
-        var name = user.Username ?? last?.UserName ?? "<Unknown Username>";
-        var discriminator = user.Discriminator ?? last?.UserDiscriminator ?? "0000";
-        embed.WithDescription($"User {name}#{discriminator} ({user.Id}) has been banned from {sortedData.Length} guilds.");
+        var name = user.Username ?? last.UserPartialSnapshot.Username ?? "<Unknown Username>";
+        var discriminator = user.Discriminator ?? last?.UserPartialSnapshot.Discriminator;
+        var usernameFormatted = discriminator == null ? name : $"{name}#{discriminator}";
+        embed.WithDescription($"User {usernameFormatted} ({user.Id}) has been banned from {sortedData.Length} guilds.");
 
         for (int i = 0; i < Math.Min(sortedData.Length, 25); i++)
         {
             var item = sortedData[i];
+            var reason = item.Reason?.Replace("`", "\\`")?.Trim();
+            var ts = $"-# <t:{new DateTimeOffset(item.CreatedAt).ToUnixTimeSeconds()}:F>";
+            var maxLength = FieldContentBanSyncReasonMaxLength(reason, ts) - 3;
+            if (reason != null && reason.Length > maxLength)
+            {
+                reason = reason[..maxLength] + "...";
+            }
 
+            var ra = reason == null
+                ? DefaultReasonText
+                : string.Format(FieldContentReasonTemplate, reason);
+            var fieldContent = string.Join("\n", ra, ts);
             embed.AddField(
                 item.GuildName,
-                string.Join("\n",
-                    "```",
-                    item.Reason.Replace("`", "\\`"),
-                    "```",
-                    $"<t:{item.Timestamp}:F>"
-                ),
+                fieldContent,
                 true);
         }
 
         return embed;
+    }
+
+    private const string DefaultReasonText = "*No reason provided*";
+    private const string FieldContentReasonTemplate = "```\n{0}\n```";
+    private static int FieldContentBanSyncReasonMaxLength(
+        string? reason,
+        string ts)
+    {
+        var nonUserFildContent = string.Join("\n",
+            string.IsNullOrEmpty(reason) ? DefaultReasonText : string.Format(FieldContentReasonTemplate, ""),
+            ts);
+        return 1024 - nonUserFildContent.Length;
     }
 
     public enum BanSyncGuildKind
@@ -339,15 +408,21 @@ public class BanSyncService : BaseService
     {
         var guild = _client.GetGuild(guildId);
 
-        var guildConf = await _guildConfigRepo.Get(guildId);
-        if ((guildConf?.LogChannel ?? 0) == 0)
+        var model = await _bansyncGuildRepository.GetAsync(guildId)
+            ?? new()
+            {
+                GuildId = guildId.ToString()
+            };
+
+        var logChannelId = model.GetLogChannelId();
+        if (!logChannelId.HasValue)
             return BanSyncGuildKind.LogChannelMissing;
 
         try
-        { guild.GetTextChannel(guildConf?.LogChannel ?? 0); }
+        { guild.GetTextChannel(logChannelId.Value); }
         catch
         { return BanSyncGuildKind.LogChannelCannotAccess; }
-        if (guildConf is { State: BanSyncGuildState.Blacklisted })
+        if (model is { State: BanSyncGuildState.Blacklisted })
             return BanSyncGuildKind.Blacklisted;
 
         if (guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
@@ -365,31 +440,35 @@ public class BanSyncService : BaseService
     /// <param name="reason">Required when <paramref name="state"/> is <see cref="BanSyncGuildState.Blacklisted"/> or <see cref="BanSyncGuildState.RequestDenied"/></param>
     /// <returns></returns>
     /// <exception cref="Exception">When <paramref name="reason"/> is empty when required.</exception>
-    public async Task<ConfigBanSyncModel?> SetGuildState(ulong guildId, BanSyncGuildState state, string reason = "", bool doRefreshBans = true)
+    public async Task<BanSyncGuildModel?> SetGuildState(
+        ulong guildId,
+        BanSyncGuildState state,
+        string reason = "",
+        bool doRefreshBans = true)
     {
-        var config = await _guildConfigRepo.Get(guildId);
+        var config = await _bansyncGuildRepository.GetAsync(guildId);
         if (config == null)
             return null;
 
-        var oldConfig = await _guildConfigRepo.Get(guildId);
+        var oldConfig = await _bansyncGuildRepository.GetAsync(guildId);
 
         if (state == BanSyncGuildState.Blacklisted || state == BanSyncGuildState.RequestDenied)
         {
-            if (config.Reason.Length < 1)
+            if (config.Notes?.Length < 1)
                 throw new InvalidOperationException($"Reason parameter is required (GuildId={guildId}, State={state})");
 
-            config.Reason = reason;
+            config.Notes = reason;
             config.Enable = false;
         }
         else if (state == BanSyncGuildState.Active)
         {
-            config.Reason = reason;
+            config.Notes = reason;
         }
 
         config.Enable = state == BanSyncGuildState.Active;
         config.State = state;
 
-        await _guildConfigRepo.Set(config);
+        await _bansyncGuildRepository.InsertOrUpdate(config);
         
         await SetGuildState_Notify(config);
         await SetGuildState_NotifyGuild(config, oldConfig);
@@ -410,11 +489,11 @@ public class BanSyncService : BaseService
         return config;
     }
     
-    protected async Task SetGuildState_Notify(ConfigBanSyncModel model)
+    protected async Task SetGuildState_Notify(BanSyncGuildModel model)
     {
         try
         {
-            var guild = _client.GetGuild(model.GuildId);
+            var guild = _client.GetGuild(model.GetGuildId());
             var logGuild = _client.GetGuild(_configData.BanSync.GuildId);
             var logChannel = logGuild.GetTextChannel(_configData.BanSync.LogChannelId);
 
@@ -425,7 +504,7 @@ public class BanSyncService : BaseService
                     "```",
                     $"Guild: {guild.Name ?? "<null>"} ({model.GuildId})",
                     $"State: {model.State}",
-                    $"Reason: {model.Reason}",
+                    $"Reason: {model.Notes}",
                     "```"
                 ),
                 Url = _configData.HasDashboard ? $"{_configData.DashboardUrl}/Admin/Server/{guild.Id}#settings" : ""
@@ -443,13 +522,20 @@ public class BanSyncService : BaseService
     /// </summary>
     /// <param name="current">Current model content in db.</param>
     /// <param name="previous">Previous model in db before the change was made.</param>
-    protected async Task SetGuildState_NotifyGuild(ConfigBanSyncModel current, ConfigBanSyncModel? previous)
+    protected async Task SetGuildState_NotifyGuild(BanSyncGuildModel current, BanSyncGuildModel? previous)
     {
-        var guild = _client.GetGuild(current.GuildId);
-        var channel = guild.GetTextChannel(current.LogChannel);
-        if (channel == null)
+        SocketGuild guild;
+        SocketTextChannel channel;
+        try
         {
-            _log.Warn($"Failed to get channel {current.LogChannel} in guild {guild.Id} ({guild.Name})");
+            guild = _client.GetGuild(current.GetGuildId())
+                ?? throw new InvalidOperationException($"Failed to get Guild {current.GuildId}");
+            channel = guild.GetTextChannel(current.GetLogChannelId() ?? 0)
+                ?? throw new InvalidOperationException($"Failed to get Channel {current.LogChannelId} in Guild \"{guild.Name}\" ({guild.Id})");
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex);
             return;
         }
 
@@ -559,18 +645,17 @@ public class BanSyncService : BaseService
     /// </summary>
     /// <param name="guildId">GuildId to request the BanSync feature on.</param>
     /// <returns>Updated <see cref="ConfigBanSyncModel"/></returns>
-    public async Task<ConfigBanSyncModel> RequestGuildEnable(ulong guildId)
+    public async Task<BanSyncGuildModel> RequestGuildEnable(ulong guildId)
     {
-        var config = await _guildConfigRepo.Get(guildId);
-        if (config == null)
-        {
-            config = new ConfigBanSyncModel()
+        var config = await _bansyncGuildRepository.GetAsync(guildId)
+            ?? new()
             {
-                GuildId = guildId
+                GuildId = guildId.ToString()
             };
-        }
         // When state is blacklisted/denied/pending, reject
-        if (config.State == BanSyncGuildState.Blacklisted || config.State == BanSyncGuildState.RequestDenied || config.State == BanSyncGuildState.PendingRequest)
+        if (config.State == BanSyncGuildState.Blacklisted ||
+            config.State == BanSyncGuildState.RequestDenied ||
+            config.State == BanSyncGuildState.PendingRequest)
         {
             return config;
         }
@@ -582,20 +667,20 @@ public class BanSyncService : BaseService
             return config;
 
         config.State = BanSyncGuildState.PendingRequest;
-        await _guildConfigRepo.Set(config);
+        await _bansyncGuildRepository.InsertOrUpdate(config);
 
         await RequestGuildEnable_SendNotification(config);
 
-        config = await _guildConfigRepo.Get(guildId);
+        config = await _bansyncGuildRepository.GetAsync(guildId);
 
-        return config ?? throw new InvalidOperationException($"Result model with type {typeof(ConfigBanSyncModel)} is null when it couldn't be where GuildId={guildId})");
+        return config ?? throw new InvalidOperationException($"Result model with type {typeof(BanSyncGuildModel)} is null when it couldn't be where GuildId={guildId})");
     }
     /// <summary>
     /// Send notification to <see cref="BanSyncConfigItem.RequestChannelId."/> that a server has requested the BanSync feature.
     /// </summary>
-    protected async Task RequestGuildEnable_SendNotification(ConfigBanSyncModel model)
+    protected async Task RequestGuildEnable_SendNotification(BanSyncGuildModel model)
     {
-        var guild = _client.GetGuild(model.GuildId);
+        var guild = _client.GetGuild(model.GetGuildId());
         var logGuild = _client.GetGuild(_configData.BanSync.GuildId);
         var logRequestChannel = logGuild.GetTextChannel(_configData.BanSync.RequestChannelId);
         // Fetch first text channel to create invite for

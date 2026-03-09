@@ -3,16 +3,35 @@ using Discord.Interactions;
 using XeniaBot.Core.Helpers;
 using System;
 using System.Threading.Tasks;
-using XeniaBot.MongoData.Models;
-using XeniaBot.MongoData.Repositories;
-using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Services;
+using XeniaDiscord.Data.Repositories;
+using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared;
+using XeniaDiscord.Common.Services;
+using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaBot.Core.Modules;
 
 [Group("bansync", "Sync Bans between servers")]
 public class BanSyncModule : InteractionModuleBase
 {
+    private readonly ConfigData _config;
+    private readonly ErrorReportService _errorReporting;
+
+    private readonly BanSyncService _bansyncService;
+    private readonly BanSyncGuildRepository _guildRepo;
+    private readonly BanSyncRecordRepository _recordRepo;
+
+    public BanSyncModule(IServiceProvider services)
+    {
+        _config = services.GetRequiredService<ConfigData>();
+        _errorReporting = services.GetRequiredService<ErrorReportService>();
+     
+        _bansyncService = services.GetRequiredService<BanSyncService>();
+        _guildRepo = services.GetRequiredService<BanSyncGuildRepository>();
+        _recordRepo = services.GetRequiredService<BanSyncRecordRepository>();
+    }
+
     [SlashCommand("refresh", "Refresh bans in this guild")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     public async Task Refresh()
@@ -20,8 +39,7 @@ public class BanSyncModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = Program.Core.GetRequiredService<BanSyncService>();
-            await controller.RefreshBans(Context.Guild.Id);
+            await _bansyncService.RefreshBans(Context.Guild.Id);
             
             await FollowupAsync(
                 embed: new EmbedBuilder()
@@ -36,11 +54,12 @@ public class BanSyncModule : InteractionModuleBase
             await FollowupAsync(
                 embed: new EmbedBuilder()
                     .WithTitle("BanSync - Action Failed")
-                    .WithDescription("Failed to refresh bans in this guild. `{ex.Message}`")
+                    .WithDescription("Failed to refresh bans in this guild")
+                    .AddField("Error Message", ex.Message[..Math.Min(ex.Message.Length, 1000)])
                     .WithColor(Color.Red)
                     .WithCurrentTimestamp()
                     .Build());
-            await Program.Core.GetRequiredService<ErrorReportService>().ReportError(ex, Context);
+            await _errorReporting.ReportError(ex, Context);
         }
     }
     
@@ -48,22 +67,22 @@ public class BanSyncModule : InteractionModuleBase
     [RequireUserPermission(GuildPermission.BanMembers)]
     public async Task UserDetails(IUser user)
     {
-        var controller = Program.Core.GetRequiredService<BanSyncService>();
-        var infoController = Program.Core.GetRequiredService<BanSyncInfoRepository>();
-        var data = await infoController.GetInfoEnumerable(user.Id);
+        await Context.Interaction.DeferAsync();
+        var data = await _recordRepo.GetInfoEnumerable(user.Id);
 
         if (data.Count == 0)
         {
-            await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
+            await Context.Interaction.FollowupAsync(embed: new EmbedBuilder()
             {
                 Description = $"No bans found for <@{user.Id}> ({user.Id}, {user.Username})",
                 Color = Color.Orange
             }.Build());
-            return;
         }
-
-        var embed = await controller.GenerateEmbed(data);
-        await Context.Interaction.RespondAsync(embed: embed.Build());
+        else
+        {
+            var embed = await _bansyncService.GenerateEmbed(data);
+            await Context.Interaction.FollowupAsync(embed: embed.Build());
+        }
     }
 
     [SlashCommand("setchannel", "Set the log channel where ban notifications get sent.")]
@@ -75,20 +94,10 @@ public class BanSyncModule : InteractionModuleBase
     {
         try
         {
-            var controller = Program.Core.GetRequiredService<BanSyncConfigRepository>();
-            var data = await controller.Get(Context.Guild.Id);
-            if (data == null)
-            {
-                data = new ConfigBanSyncModel()
-                {
-                    GuildId = Context.Guild.Id,
-                    LogChannel = logChannel.Id,
-                    Enable = false
-                };
-            }
-
-            data.LogChannel = logChannel.Id;
-            await controller.Set(data);
+            var data = await _guildRepo.GetAsync(Context.Guild.Id)
+                ?? new(Context.Guild.Id);
+            data.LogChannelId = logChannel.Id.ToString();
+            await _guildRepo.InsertOrUpdate(data);
         }
         catch (Exception ex)
         {
@@ -102,9 +111,9 @@ public class BanSyncModule : InteractionModuleBase
     [SlashCommand("setguildstate", "Set state field of guild")]
     public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
     {
-        if (!Program.Core.Config.Data.UserWhitelist.Contains(Context.User.Id))
+        if (!_config.UserWhitelist.Contains(Context.User.Id))
         {
-            await Context.Interaction.RespondAsync($"Invalid permissions.");
+            await Context.Interaction.RespondAsync("Invalid permissions.");
             return;
         }
         ulong guildId = 0;
@@ -126,8 +135,7 @@ public class BanSyncModule : InteractionModuleBase
 
         try
         {
-            var controller = Program.Core.GetRequiredService<BanSyncService>();
-            await controller.SetGuildState(guildId, state, reason);
+            await _bansyncService.SetGuildState(guildId, state, reason);
         }
         catch (Exception ex)
         {
@@ -142,8 +150,7 @@ public class BanSyncModule : InteractionModuleBase
     [RequireUserPermission(GuildPermission.ManageGuild)]
     public async Task RequestGuild()
     {
-        var controller = Program.Core.GetRequiredService<BanSyncService>();
-        var kind = await controller.GetGuildKind(Context.Guild.Id);
+        var kind = await _bansyncService.GetGuildKind(Context.Guild.Id);
 
         var embed = new EmbedBuilder()
         {
@@ -175,11 +182,11 @@ public class BanSyncModule : InteractionModuleBase
             return;
         }
         
-        ConfigBanSyncModel? guildConfig;
+        BanSyncGuildModel? guildConfig;
         
         try
         {
-            guildConfig = await controller.RequestGuildEnable(Context.Guild.Id);
+            guildConfig = await _bansyncService.RequestGuildEnable(Context.Guild.Id);
         }
         catch (Exception ex)
         {
@@ -198,9 +205,13 @@ public class BanSyncModule : InteractionModuleBase
         }
 
         embed.Description = $"Failed to request BanSync for this guild.\n`{guildConfig.State}`";
-        if (guildConfig.State == BanSyncGuildState.Blacklisted || guildConfig.State == BanSyncGuildState.RequestDenied)
+        if (guildConfig.State == BanSyncGuildState.Blacklisted ||
+            guildConfig.State == BanSyncGuildState.RequestDenied)
         {
-            embed.AddField("Reason", $"```\n{guildConfig.Reason}\n```", true);
+            var notes = guildConfig.Notes?.Trim();
+            if (notes?.Length > 1021)
+                notes = notes[..1021] + "...";
+            embed.AddField("Reason", notes, true);
         }
         await Context.Interaction.RespondAsync(embed: embed.Build());
     }

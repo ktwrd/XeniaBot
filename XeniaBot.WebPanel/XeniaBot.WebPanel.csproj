@@ -41,7 +41,9 @@
     <PackageReference Include="AspNet.Security.OAuth.Discord" />
     <PackageReference Include="Markdig" />
     <PackageReference Include="Microsoft.AspNetCore.Components" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.IdentityModel.Logging" />
     <PackageReference Include="NLog.Web.AspNetCore" />
     <PackageReference Include="Sentry.AspNetCore" />

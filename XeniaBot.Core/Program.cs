@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.Logic.Services;
-using XeniaBot.MongoData.Services;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -127,14 +127,14 @@ public static class Program
             transaction.Finish();
         }
     }
-    private static Task CoreContextBeforeServiceBuild(ServiceCollection services)
+    private static Task CoreContextBeforeServiceBuild(IServiceCollection services)
     {
         services.WithDatabaseServices();
         XeniaDiscordData.RegisterServices(services, true);
-        XeniaDiscordCommon.RegisterServices(services);
+        XeniaDiscordCommon.RegisterServices(services, true);
         XeniaDiscordInteractionsDataMigration.RegisterServices(services);
         AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
-        AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, services); // XeniaBot.Data
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, services); // XeniaBot.Data
         AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
         AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, services); // XeniaBot.Logic
         AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, services);

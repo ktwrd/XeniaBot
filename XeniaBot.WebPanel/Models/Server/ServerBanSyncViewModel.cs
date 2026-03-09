@@ -1,5 +1,5 @@
 ﻿using Discord.WebSocket;
-using XeniaBot.MongoData.Models;
+using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaBot.WebPanel.Models;
 
@@ -11,12 +11,12 @@ public class ServerBanSyncViewModel
     public SocketGuild Guild { get; set; }
     public long BanSyncRecordCount { get; set; }
     public ulong? FilterRecordsByUserId { get; set; }
-    public BanSyncStateHistoryItemModel BanSyncGuild { get; set; }
+    public BanSyncGuildSnapshotModel BanSyncGuild { get; set; }
 }
 
 public interface IBanSyncBaseRecords
 {
     public long BanSyncRecordCount { get; set; }
     public ulong? FilterRecordsByUserId { get; set; }
-    public BanSyncStateHistoryItemModel BanSyncGuild { get; set; }
+    public BanSyncGuildSnapshotModel BanSyncGuild { get; set; }
 }

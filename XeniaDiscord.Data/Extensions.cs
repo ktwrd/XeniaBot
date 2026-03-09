@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 using Npgsql;
 using XeniaBot.Shared;
 
@@ -57,5 +56,35 @@ public static class Extensions
         return services.GetRequiredScopedService<TService>(IServiceScopeCallbackDelegateDefault, out scope);
     }
     private static readonly IServiceScopeCallbackDelegate IServiceScopeCallbackDelegateDefault = scope => { };
+
+
+    public static IQueryable<TModel> ApplyPagination<TModel>(this IQueryable<TModel> query, PaginationOptions options)
+    {
+        return query.Skip(options.Skip)
+            .Take(options.PageSize);
+    }
 }
 public delegate void IServiceScopeCallbackDelegate(IServiceScope scope);
+
+public class PaginationOptions
+{
+    public int Page
+    {
+        get => field;
+        set
+        {
+            field = Math.Max(1, value);
+        }
+    } = 1;
+    public int PageSize
+    {
+        get => field;
+        set
+        {
+            field = Math.Max(1, value);
+        }
+    } = 15;
+
+    public int Skip => Page > 1 ? (Page - 1) * PageSize : 0;
+    public int Limit => PageSize;
+}

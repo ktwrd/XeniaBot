@@ -11,17 +11,27 @@ public static class XeniaDiscordData
         bool includeAsSingleton)
     {
         services.AddScoped<DatabaseMigrationService>();
+
         RegisterRepositories(services, includeAsSingleton);
 
         if (!includeAsSingleton) return;
+
         services.AddSingleton<DatabaseMigrationService>();
     }
     public static void RegisterRepositories(
         IServiceCollection services,
         bool includeAsSingleton = false)
     {
-        services.AddScoped<BanSyncGuildRepository>();
+        services
+            .AddScoped<BanSyncGuildRepository>()
+            .AddScoped<BanSyncRecordRepository>()
+            .AddScoped<BanSyncGuildSnapshotRepository>();
+        
         if (!includeAsSingleton) return;
-        services.AddSingleton<BanSyncGuildRepository>();
+        
+        services
+            .AddSingleton<BanSyncGuildRepository>()
+            .AddSingleton<BanSyncRecordRepository>()
+            .AddSingleton<BanSyncGuildSnapshotRepository>();
     }
 }

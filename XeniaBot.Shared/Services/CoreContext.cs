@@ -163,6 +163,17 @@ public class CoreContext
     /// </summary>
     public void InjectServices(ServiceCollection services, CoreContextBeforeServiceBuildDelegate beforeBuild)
     {
+        InjectServicesDirect(services);
+        beforeBuild(services).GetAwaiter().GetResult();
+
+        RegisteredBaseControllers = [..services.Where(item
+            => item.ServiceType.IsAssignableTo(typeof(BaseService))
+            && !RegisteredBaseControllers.Contains(item.ServiceType)).Select(item => item.ServiceType)];
+        Services = services.BuildServiceProvider();
+        RunServiceInit();
+    }
+    public void InjectServicesDirect(IServiceCollection services)
+    {
         services
             .AddSingleton(this)
             .AddSingleton(Details)
@@ -187,14 +198,6 @@ public class CoreContext
             .AddSingleton<CommandService>()
             .AddSingleton(s)
             .AddSingleton<InteractionHandler>();
-
-        beforeBuild(services).GetAwaiter().GetResult();
-
-        RegisteredBaseControllers = [..services.Where(item
-            => item.ServiceType.IsAssignableTo(typeof(BaseService))
-            && !RegisteredBaseControllers.Contains(item.ServiceType)).Select(item => item.ServiceType)];
-        Services = services.BuildServiceProvider();
-        RunServiceInit();
     }
     private List<Type> RegisteredBaseControllers { get; set; }
 
@@ -261,6 +264,6 @@ public class CoreContext
 }
 
 public delegate Task CoreContextRegisterInteractionModulesDelegate(InteractionService interactions, IServiceProvider services);
-public delegate Task CoreContextBeforeServiceBuildDelegate(ServiceCollection services);
+public delegate Task CoreContextBeforeServiceBuildDelegate(IServiceCollection services);
 // Func<string[], Task>
 public delegate Task CoreContextAlternativeMainDelegate(string[] args);

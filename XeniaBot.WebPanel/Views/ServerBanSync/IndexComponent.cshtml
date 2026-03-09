@@ -16,31 +16,38 @@
                     hx-indicator=".htmx-indicator"</text>
         } }>
         <td>
-            <img src="@(AspHelper.GetUserProfilePicture(item.UserId))"
+            <img src="@(AspHelper.GetUserProfilePicture(item.GetUserId()))"
                  class="card-img-top smallUserIcon" />
-            @item.UserName#@item.UserDiscriminator
+            @item.UserPartialSnapshot.FormatUsername()
         </td>
         <td>
-            <img src="@(AspHelper.GetGuildImage(item.GuildId))"
+            <img src="@(AspHelper.GetGuildImage(item.GetGuildId()))"
                  class="card-img-top smallUserIcon" />
             @item.GuildName
         </td>
         <td>
-            @(AspHelper.DateTimeFromTimestamp(item.Timestamp, true).ToString("yyyy/MM/dd HH:mm:ss tt"))
+            @item.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss tt")
         </td>
         <td>
             <code>
-                @item.Reason.Substring(0, Math.Min(50, item.Reason.Length))
-                @if (@item.Reason.Length > 50)
-                {
-                    <span>...</span>
+                @{
+                    var reasonText = item.Reason?.Trim();
+                    if (reasonText != null)
+                    {
+                        var pl = reasonText.Length;
+                        reasonText = reasonText.Substring(0, Math.Min(50, reasonText.Length));
+                        if (reasonText.Length != pl)
+                        {
+                            reasonText += "...";
+                        }
+                    }
                 }
+                @reasonText
             </code>
         </td>
         <td>
             <a class="btn btn-secondary"
-               asp-area=""
-               asp-route-id="@(item.RecordId)"
+               asp-route-id="@(item.Id)"
                asp-controller="ServerBanSync"
                asp-action="RecordInfo"></a>
         </td>

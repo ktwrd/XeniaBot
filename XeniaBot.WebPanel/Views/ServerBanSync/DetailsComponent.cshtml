@@ -3,15 +3,15 @@
 
 <div class="container">
     <h1 class="mb-0">BanSync Record Details</h1>
-    <sup>@Model.Record.RecordId</sup>
+    <sup>@Model.Record.Id</sup>
     <p>
-        <img src="@(AspHelper.GetUserProfilePicture(Model.Record.UserId))"
+        <img src="@(AspHelper.GetUserProfilePicture(Model.Record.GetUserId()))"
              class="smallUserIcon" />
-        <code alt="@Model.Record.UserId">@Model.Record.UserName#@Model.Record.UserDiscriminator</code>
+        <code alt="@Model.Record.UserId">@Model.Record.UserPartialSnapshot.FormatUsername()</code>
         was banned in 
         <code alt="@Model.Record.GuildId">@Model.Record.GuildName</code>
         at
-        <code>@(AspHelper.DateTimeFromTimestamp(Model.Record.Timestamp, true).ToString("yyyy/MM/dd HH:mm:ss tt"))</code>
+        <code>@Model.Record.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss tt"))</code>
     </p>
     <h4>Reason</h4>
     <textarea class="form-control" readonly>@Model.Record.Reason</textarea>
@@ -21,12 +21,12 @@
         <label for="ghost-record">Set Ghost State</label>
         <div class="btn-group" id="host-record" role="group" aria-label="Ghost Record">
             <a class="btn btn-sm btn-outline-dark"
-               hx-get="/BanSync/Record/@Model.Record.RecordId/Ghost/True"
+               hx-get="/BanSync/Record/@Model.Record.Id/Ghost/True"
                hx-target=".container">
                 True
             </a>
             <a class="btn btn-sm btn-outline-dark"
-               hx-get="/BanSync/Record/@Model.Record.RecordId/Ghost/False"
+               hx-get="/BanSync/Record/@Model.Record.Id/Ghost/False"
                hx-target=".container">
                 False
             </a>

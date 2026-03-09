@@ -29,17 +29,17 @@
             <th>Timestamp</th>
             <td>Enable</td>
             <td>State</td>
-            <td>Reason</td>
+            <td>Notes</td>
         </tr>
         </thead>
         <tbody>
         @foreach (var item in @Model.BanSyncStateHistory.OrderBy(v => v.Timestamp))
         {
             <tr>
-                <th>@(AspHelper.DateTimeFromTimestamp(@item.Timestamp).ToString())</th>
+                <th>@(AspHelper.DateTimeFromTimestamp(new DateTimeOffset(@item.Timestamp).ToUnixTimeSeconds()).ToString())</th>
                 <td>@item.Enable</td>
                 <td>@item.State</td>
-                <td><code>@item.Reason</code></td>
+                <td><code>@item.Notes</code></td>
             </tr>
         }
         </tbody>

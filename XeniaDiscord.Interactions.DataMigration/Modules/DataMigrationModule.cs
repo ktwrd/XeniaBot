@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaDiscord.Data;
-using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
+using XeniaDiscord.Data.Models.PartialSnapshot;
 using MongoBanSyncGuildState = XeniaBot.MongoData.Models.BanSyncGuildState;
 
 namespace XeniaDiscord.Interactions.DataMigration.Modules;
@@ -104,7 +104,7 @@ public class DataMigrationModule : InteractionModuleBase
                     UserPartialSnapshot = userSnapshot,
                     Source = BanSyncRecordSource.DataMigration_MongoDb
                 };
-                userSnapshot.CreatedAt = r.CreatedAt <= DateTime.UnixEpoch ? DateTime.UtcNow : r.CreatedAt;
+                userSnapshot.Timestamp = r.CreatedAt <= DateTime.UnixEpoch ? DateTime.UtcNow : r.CreatedAt;
 
                 // try to persist RecordId if we can
                 if (Guid.TryParse(m.RecordId, out var parsedRecordId) &&

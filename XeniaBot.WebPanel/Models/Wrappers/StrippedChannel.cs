@@ -1,18 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Discord.WebSocket;
+using Discord;
 
 namespace XeniaBot.WebPanel.Models;
 
 public class StrippedChannel
 {
-    public ulong Id { get; set; }
-    public string Name { get; set; }
-    public int Position { get; set; }
+    public required ulong Id { get; set; }
+    public required string Name { get; set; }
+    public required int Position { get; set; }
 
-    public static IEnumerable<StrippedChannel> FromGuild(SocketGuild guild)
+    public static IEnumerable<StrippedChannel> FromGuild(IGuild guild)
     {
-        return guild.Channels.Select((v) =>
+        return guild.GetChannelsAsync().GetAwaiter().GetResult().Select((v) =>
         {
             return new StrippedChannel()
             {

@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.PartialSnapshot;
 
 namespace XeniaDiscord.Data.Models.BanSync;
 
@@ -53,6 +55,12 @@ public class BanSyncRecordModel
     /// Reason why this person was banned.
     /// </summary>
     public string? Reason { get; set; }
+
+    /// <summary>
+    /// User Id that banned <see cref="UserId"/> (ulong as string)
+    /// </summary>
+    [MaxLength(DbGlobals.ulongMaxLength)]
+    public string? BannedByUserId { get; set; }
     
     /// <summary>
     /// Pretend that this record doesn't exist when <see langword="true"/>
@@ -62,11 +70,13 @@ public class BanSyncRecordModel
 
     public BanSyncRecordSource Source { get; set; }
 
-
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong GetUserId() => UserId.ParseRequiredULong(nameof(UserId), false);
+    public ulong? GetBannedByUserId() => BannedByUserId.ParseULong(false);
 
     public UserPartialSnapshotModel UserPartialSnapshot { get; set; } = null!;
+    public BanSyncGuildModel BanSyncGuild { get; set; } = null!;
+    public GuildMemberCacheModel CachedGuildMember { get; set; } = null!;
 }
 
 public enum BanSyncRecordSource
