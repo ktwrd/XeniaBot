@@ -54,28 +54,18 @@ public class BanSyncService : BaseService
             _log.Info($"Skipping ban refresh since it's disabled.");
             return;
         }
-        var taskList = new List<Task>();
-        foreach (var item in _client.Guilds)
+
+        foreach (var guild in _client.Guilds)
         {
-            var guildId = item.Id;
-            taskList.Add(new Task(
-                delegate
-        {
-                    var guild = _client.GetGuild(guildId);
             try
             {
-                        RefreshBans(item).GetAwaiter().GetResult();
+                await RefreshBans(guild);
             }
             catch (Exception ex)
             {
-                        _err.ReportException(ex, $"Failed to run RefreshBans on {guild.Name} {guild.Id}").Wait();
+                _log.Warn(ex, $"Failed to refresh bans for Guild \"{guild.Name}\" ({guild.Id})");
             }
-                }));
         }
-
-        foreach (var i in taskList)
-            i.Start();
-        await Task.WhenAll(taskList);
     }
     
     private static string? ParseReason(string? reason)
