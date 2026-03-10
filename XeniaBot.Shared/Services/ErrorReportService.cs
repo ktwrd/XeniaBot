@@ -229,22 +229,23 @@ public class ErrorReportService : BaseService
         
         if (extraAttachments?.Count > 0)
         {
-            foreach (var pair in extraAttachments)
+            // only take first 9 attachments.
+            // the rest are available in sentry.
+            var attachmentCount = Math.Clamp(9 - extraAttachments.Count - attachments.Count, 0, 9);
+            foreach (var pair in extraAttachments.Take(attachmentCount))
             {
                 var fn = Path.GetFileNameWithoutExtension(pair.Key);
                 var ex = Path.GetExtension(pair.Key);
                 if (string.IsNullOrEmpty(fn)) ex = "attachment";
                 if (string.IsNullOrEmpty(ex)) ex = ".txt";
                 var tgtFn = fn + ex;
-                /*int? c = null;
-                while (attachments.Any(e => e.FileName == tgtFn))
-                {
-                    if (c == null) c = 0;
-                    c++;
-                    
-                    tgtFn = $"{fn} ({c}){ex}";
-                }*/
                 attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(pair.Value)), fileName: tgtFn));
+            }
+            if (attachmentCount < extraAttachments.Count)
+            {
+                var missedCount = extraAttachments.Count - attachmentCount;
+                var plural = missedCount == -1 || missedCount == 1 ? "" : "s";
+                embed.AddField("⚠️ Missing Attachments", "Missing " + missedCount.ToString("n0") + $" attachment{plural} since only 9 can be uploaded in one message.");
             }
         }
 
@@ -310,5 +311,27 @@ public class ErrorReportService : BaseService
                 embed.AddField("Exception", exception);
             }
         }
+    }
+
+    internal static string? SerializeJsonSafe<T>(T data, int? maxDepth = null)
+    {
+        string? result = null;
+        try
+        {
+            var serializerOptions = SerializerOptions;
+            if (maxDepth.HasValue && maxDepth > 0)
+            {
+                serializerOptions = new JsonSerializerOptions(SerializerOptions)
+                {
+                    MaxDepth = maxDepth.Value
+                };
+            }
+            result = JsonSerializer.Serialize(data, serializerOptions);
+        }
+        catch (Exception ex)
+        {
+            _log.Warn(ex, $"Failed to serialize {typeof(T)}");
+        }
+        return result;
     }
 }
