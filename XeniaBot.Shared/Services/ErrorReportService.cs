@@ -192,11 +192,18 @@ public class ErrorReportService : BaseService
     public async Task ReportException(Exception exception, string notes = "",
         IReadOnlyDictionary<string, string>? extraAttachments = null)
     {
-        if (extraAttachments?.Count > 9)
-            throw new ArgumentOutOfRangeException(nameof(extraAttachments), $"Too many attachments! (limit: 9, got: {extraAttachments.Count})");
+        var exceptionJson = SerializeJsonSafe(exception);
         SentrySdk.CaptureException(exception, (scope) =>
         {
             scope.SetExtra("notes", notes);
+            scope.SetExtra("exceptionJson", exceptionJson);
+            if (extraAttachments?.Count > 0)
+            {
+                foreach (var key in extraAttachments.Keys)
+                {
+                    scope.SetExtra($"attachment[{key}]", extraAttachments[key]);
+                }
+            }
         });
         Log.Error($"Exception Reported\n{notes}\n{exception}");
 
@@ -217,14 +224,14 @@ public class ErrorReportService : BaseService
             stack,
             exceptionContent);
 
-        if (notes.Length > 1000)
+        if (notes.Length >= 1024)
         {
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(notes));
             attachments.Add(new FileAttachment(ms, fileName: "notes.txt"));
         }
         else if (notes.Length > 0)
         {
-            embed.AddField("Notes", $"```\n{notes}\n```");
+            embed.AddField("Notes", notes);
         }
         
         if (extraAttachments?.Count > 0)
