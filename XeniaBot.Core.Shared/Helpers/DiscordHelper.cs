@@ -88,6 +88,7 @@ public static class DiscordHelper
     #endregion
 
     #region Error Reporting
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public static async Task ReportError(HttpResponseMessage response, ICommandContext commandContext)
     {
         await ReportError(response,
@@ -96,6 +97,7 @@ public static class DiscordHelper
             commandContext.Channel,
             commandContext.Message);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public static async Task ReportError(HttpResponseMessage response, IInteractionContext context)
     {
         await ReportError(response,
@@ -104,11 +106,13 @@ public static class DiscordHelper
             context.Channel,
             null);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public static async Task ReportError(HttpResponseMessage response, IUser user, IGuild guild, IChannel channel, IMessage? message)
     {
         var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
         await cont.ReportHTTPError(response, user, guild, channel, message);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public static async Task ReportError(Exception response, ICommandContext context)
     {
         await ReportError(response,
@@ -117,6 +121,7 @@ public static class DiscordHelper
             context.Channel,
             context.Message);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public static async Task ReportError(Exception response, IInteractionContext context)
     {
         await ReportError(response,
@@ -125,6 +130,7 @@ public static class DiscordHelper
             context.Channel,
             null);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public static async Task ReportError(Exception response, IUser? user, IGuild? guild, IChannel? channel, IMessage? message)
     {
         SentrySdk.CaptureException(response, (scope) =>
@@ -137,6 +143,7 @@ public static class DiscordHelper
         var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
         await cont.ReportError(response, user, guild, channel, message);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public static async Task ReportError(Exception exception, string extraText = "",
         IReadOnlyDictionary<string, string>? extraAttachments = null)
     {
@@ -147,5 +154,7 @@ public static class DiscordHelper
         var cont = CoreContext.Instance.GetRequiredService<ErrorReportService>();
         await cont.ReportException(exception, extraText, extraAttachments);
     }
+
+    // TODO refactor all usage of ReportError to call ErrorReportService.Submit(ErrorReportBuilder)
     #endregion
 }

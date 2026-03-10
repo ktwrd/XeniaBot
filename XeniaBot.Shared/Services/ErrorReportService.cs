@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using NetVips;
 using NLog;
 using Sentry;
 using System;
@@ -19,7 +20,7 @@ namespace XeniaBot.Shared.Services;
 [XeniaController]
 public class ErrorReportService : BaseService
 {
-    private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(ErrorReportService));
+    private static readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ErrorReportService));
     private readonly DiscordSocketClient _client;
     private readonly ConfigData _config;
 
@@ -30,36 +31,41 @@ public class ErrorReportService : BaseService
         _config = services.GetRequiredService<ConfigData>();
         if (_config == null)
         {
-            Log.Error($"_config is null!");
+            _log.Error($"_config is null!");
             Environment.Exit(1);
         }
         else if (_config.ErrorReporting == null)
         {
-            Log.Error($"_config.ErrorReporting is null!");
+            _log.Error($"_config.ErrorReporting is null!");
             Environment.Exit(1);
         }
         else if (_config.ErrorReporting.GuildId == null)
         {
-            Log.Error($"_config.ErrorReporting.GuildId is null!");
+            _log.Error($"_config.ErrorReporting.GuildId is null!");
             Environment.Exit(1);
         }
         else if (_config.ErrorReporting.ChannelId == null)
         {
-            Log.Error($"_config.ErrorReporting.ChannelId is null!");
+            _log.Error($"_config.ErrorReporting.ChannelId is null!");
             Environment.Exit(1);
         }
     }
 
-    public static JsonSerializerOptions SerializerOptions => new JsonSerializerOptions()
+    public static readonly JsonSerializerOptions SerializerOptions = new()
     {
-        IgnoreReadOnlyFields = true,
-        IgnoreReadOnlyProperties = true,
+        IgnoreReadOnlyFields = false,
+        IgnoreReadOnlyProperties = false,
         IncludeFields = true,
         WriteIndented = true,
-        ReferenceHandler = ReferenceHandler.Preserve
+        ReferenceHandler = ReferenceHandler.Preserve,
+        Converters =
+        {
+            new JsonStringEnumConverter()
+        }
     };
 
     #region HTTP Error Reporting
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public async Task ReportError(HttpResponseMessage response, ICommandContext commandContext)
     {
         await ReportHTTPError(response,
@@ -68,6 +74,7 @@ public class ErrorReportService : BaseService
             commandContext.Channel,
             commandContext.Message);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public async Task ReportError(HttpResponseMessage response, IInteractionContext context)
     {
         await ReportHTTPError(response,
@@ -76,6 +83,7 @@ public class ErrorReportService : BaseService
             context.Channel,
             null);
     }
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public async Task ReportHTTPError(HttpResponseMessage response,
         IUser user,
         IGuild guild,
@@ -128,6 +136,7 @@ public class ErrorReportService : BaseService
     #endregion
 
     #region Report Discord Context Error
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public async Task ReportError(Exception response, ICommandContext context)
     {
         await ReportError(response,
@@ -136,6 +145,8 @@ public class ErrorReportService : BaseService
             context.Channel,
             context.Message);
     }
+
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public async Task ReportError(Exception response, IInteractionContext context)
     {
         await ReportError(response,
@@ -144,6 +155,8 @@ public class ErrorReportService : BaseService
             context.Channel,
             null);
     }
+
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
     public async Task ReportError(Exception response,
         IUser? user,
         IGuild? guild,
@@ -157,7 +170,7 @@ public class ErrorReportService : BaseService
             scope.SetExtra("channel", channel);
             scope.SetExtra("message", message);
         });
-        Log.Error($"Failed to process. User: {user?.Id}, Guild: {guild?.Id}, Channel: {channel?.Id}.\n{response}");
+        _log.Error($"Failed to process. User: {user?.Id}, Guild: {guild?.Id}, Channel: {channel?.Id}.\n{response}");
         var stack = Environment.StackTrace;
         var embed = new EmbedBuilder()
         {
@@ -189,9 +202,78 @@ public class ErrorReportService : BaseService
     }
     #endregion
 
-    public async Task ReportException(Exception exception, string notes = "",
+    /// <summary>
+    /// Submit an error report.
+    /// </summary>
+    public async Task Submit(ErrorReportBuilder errorReportBuilder)
+    {
+        if (errorReportBuilder.Exception != null)
+        {
+            try
+            {
+                SentrySdk.CaptureException(errorReportBuilder.Exception, errorReportBuilder.UpdateSentryScope);
+            }
+            catch (Exception ex)
+            {
+                _log.Fatal(ex, $"Failed to report exception via SentrySdk");
+            }
+            var msg = "Reported Exception";
+            if (!string.IsNullOrEmpty(errorReportBuilder.Notes))
+            {
+                msg += $": {errorReportBuilder.Notes}";
+            }
+            _log.Error(errorReportBuilder.Exception, msg);
+        }
+
+        List<FileAttachment> attachments;
+        EmbedBuilder embed;
+        try
+        {
+            attachments = [];
+            errorReportBuilder.BuildAttachments(ref attachments);
+            embed = errorReportBuilder.BuildEmbed(ref attachments);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to generate attachments & embed");
+            return;
+        }
+        try
+        {
+            var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
+            var textChannel = guild.GetTextChannel(_config.ErrorReporting.ChannelId);
+
+            if (attachments.Count > 0)
+            {
+                await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
+            }
+            else
+            {
+                await textChannel.SendMessageAsync(embed: embed.Build());
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to report error to channel {_config.ErrorReporting.ChannelId} in guild {_config.ErrorReporting.GuildId}");
+        }
+    }
+
+    [Obsolete("Use ErrorReportService.Submit(ErrorReportBuilder)")]
+    public async Task ReportException(
+        Exception exception,
+        string notes = "",
         IReadOnlyDictionary<string, string>? extraAttachments = null)
     {
+        /*
+        var builder = new ErrorReportBuilder()
+            .WithException(exception)
+            .WithNotes(notes);
+        if (extraAttachments != null)
+        {
+            builder.AddAttachments(extraAttachments);
+        }
+        await Submit(builder);
+        */
         var exceptionJson = SerializeJsonSafe(exception);
         SentrySdk.CaptureException(exception, (scope) =>
         {
@@ -205,7 +287,7 @@ public class ErrorReportService : BaseService
                 }
             }
         });
-        Log.Error($"Exception Reported\n{notes}\n{exception}");
+        _log.Error($"Exception Reported\n{notes}\n{exception}");
 
         var stack = Environment.StackTrace;
         var exceptionContent = exception.ToString();
