@@ -2,12 +2,11 @@
 using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 using NLog;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
+using XeniaDiscord.Common.Exceptions;
 using XeniaDiscord.Data;
-using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.PartialSnapshot;
 using XeniaDiscord.Data.Repositories;
@@ -61,16 +60,16 @@ public class BanSyncService : BaseService
             var guildId = item.Id;
             taskList.Add(new Task(
                 delegate
-                {
+        {
                     var guild = _client.GetGuild(guildId);
-                    try
-                    {
+            try
+            {
                         RefreshBans(item).GetAwaiter().GetResult();
-                    }
-                    catch (Exception ex)
-                    {
+            }
+            catch (Exception ex)
+            {
                         _err.ReportException(ex, $"Failed to run RefreshBans on {guild.Name} {guild.Id}").Wait();
-                    }
+            }
                 }));
         }
 
@@ -78,7 +77,6 @@ public class BanSyncService : BaseService
             i.Start();
         await Task.WhenAll(taskList);
     }
-
     
     private static string? ParseReason(string? reason)
     {
@@ -195,6 +193,19 @@ public class BanSyncService : BaseService
     /// </summary>
     public async Task DiscordClientOnUserBanned(SocketUser user, SocketGuild guild)
     {
+        try
+        {
+            await DiscordClientOnUserBannedInternal(user, guild);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex);
+            await _err.ReportException(ex, $"Failed to process event UserBanned for {user} in Guild \"{guild.Name}\" ({guild.Id})");
+        }
+    }
+
+    private async Task DiscordClientOnUserBannedInternal(SocketUser user, SocketGuild guild)
+    {
         // Ignore if guild config is disabled
         var config = await _bansyncGuildRepository.GetAsync(guild.Id);
         if (config?.Enable != true || config.State != BanSyncGuildState.Active)
@@ -202,12 +213,13 @@ public class BanSyncService : BaseService
 
         var banInfo = await guild.GetBanAsync(user);
 
-        BanSyncRecordModel info;
+        BanSyncRecordModel? info = null;
+        UserPartialSnapshotModel? partialUserInfo = null;
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var partialUserInfo = new UserPartialSnapshotModel()
+            partialUserInfo = new UserPartialSnapshotModel()
             {
                 UserId = banInfo.User.Id.ToString(),
                 Username = banInfo.User.Username,
@@ -228,13 +240,26 @@ public class BanSyncService : BaseService
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
-        catch
+        catch (Exception ex)
         {
             await trans.RollbackAsync();
-            throw;
+            throw new BanSyncDbAddRecordFailureException(
+                $"Failed to insert {nameof(BanSyncRecordModel)} and {nameof(UserPartialSnapshotModel)} into database.",
+                ex,
+                user, guild,
+                info, partialUserInfo);
         }
+        try
+        {
 
-        await NotifyBan(info);
+            await NotifyBan(info);
+        }
+        catch (Exception ex)
+        {
+            throw new BanSyncNotifyFailureException(
+                $"Failed to notify guilds about {user} ({user.Id}) being banned in \"{guild.Name}\" ({guild.Id})",
+                ex, info, null, null, null);
+        }
     }
 
     /// <summary>
@@ -242,15 +267,21 @@ public class BanSyncService : BaseService
     /// </summary>
     public async Task NotifyBan(BanSyncRecordModel info)
     {
+        var exceptionList = new List<Exception>();
         foreach (var guild in _client.Guilds)
         {
             var guildConfig = await _bansyncGuildRepository.GetAsync(guild.Id);
             if (guildConfig == null || guildConfig.State != BanSyncGuildState.Active)
                 continue;
 
-            var guildUser = guild.GetUser(info.GetUserId());
-            if (guildUser == null)
-                continue;
+            SocketGuildUser? guildUser = null;
+            try
+            {
+                guildUser = guild.GetUser(info.GetUserId());
+            }
+            catch { }
+            if (guildUser == null) continue;
+
             try
             {
                 await NotifyGuildAboutMutualBan(guildConfig, info, guild, guildUser);
@@ -258,8 +289,18 @@ public class BanSyncService : BaseService
             catch (Exception ex)
             {
                 _log.Error(ex, $"Failed to process record {info.Id} for user {info.UserPartialSnapshot.Username} ({info.UserId}) in guild \"{guild.Name}\" ({guild.Id})");
+                exceptionList.Add(new BanSyncNotifyFailureException(
+                    "Failed to notify guild about mutual ban",
+                    ex,
+                    info, guildConfig, guild, guildUser));
             }
         }
+        if (exceptionList.Count == 1)
+            throw exceptionList[0];
+        else if (exceptionList.Count > 1)
+            throw new AggregateException(
+                $"Failed to notify multiple guilds for BanSyncRecord with Id={info.Id} (user: {info.UserId}, source guild: {info.GuildId})",
+                exceptionList);
     }
 
     private async Task NotifyGuildAboutMutualBan(
@@ -648,10 +689,7 @@ public class BanSyncService : BaseService
     public async Task<BanSyncGuildModel> RequestGuildEnable(ulong guildId)
     {
         var config = await _bansyncGuildRepository.GetAsync(guildId)
-            ?? new()
-            {
-                GuildId = guildId.ToString()
-            };
+            ?? new(guildId);
         // When state is blacklisted/denied/pending, reject
         if (config.State == BanSyncGuildState.Blacklisted ||
             config.State == BanSyncGuildState.RequestDenied ||
@@ -710,7 +748,7 @@ public class BanSyncService : BaseService
                 "```",
                 $"Id: {guild.Id}",
                 $"Name: {guild.Name}",
-                $"Owner: {guild.Owner.Username}#{guild.Owner.Discriminator} ({guild.Owner.Id})",
+                $"Owner: {guild.Owner} ({guild.Owner.Id})",
                 $"Member Count: {guild.MemberCount}",
                 $"Invite: {inviteUrl}",
                 "```"
