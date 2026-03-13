@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using System.Text.Json;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaDiscord.Data;
@@ -18,6 +20,7 @@ public class DataMigrationModule : InteractionModuleBase
     private readonly BanSyncConfigRepository _mongoBanSyncConfigRepository;
     private readonly BanSyncStateHistoryRepository _mongoBanSyncStateHistoryRepository;
     private readonly BanSyncInfoRepository _mongoBanSyncInfoRepository;
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DataMigrationModule(IServiceProvider services)
     {
         _config = services.GetRequiredService<ConfigData>();
@@ -80,6 +83,8 @@ public class DataMigrationModule : InteractionModuleBase
                 })
                 .ToArray();
 
+            var weirdGuildModels = new List<BanSyncGuildModel>();
+
             await SendStatusUpdate($"Mapping BanSync Info Records ({mongoInfoCount})");
             var bansyncRecords = new List<BanSyncRecordModel>(mongoInfo.Count);
             var userPartialSnapshots = new List<UserPartialSnapshotModel>(mongoInfo.Count);
@@ -106,6 +111,16 @@ public class DataMigrationModule : InteractionModuleBase
                 };
                 userSnapshot.Timestamp = r.CreatedAt <= DateTime.UnixEpoch ? DateTime.UtcNow : r.CreatedAt;
 
+                if (!guildSnapshots.Any(e => e.GuildId != r.GuildId)
+                    && !weirdGuildModels.Any(e => e.GuildId != r.GuildId))
+                {
+                    weirdGuildModels.Add(new()
+                    {
+                        GuildId = r.GuildId,
+                        Notes = "From Data Migration: Weird guild, not referenced in MongoDB guilds collection."
+                    });
+                }
+
                 // try to persist RecordId if we can
                 if (Guid.TryParse(m.RecordId, out var parsedRecordId) &&
                     !bansyncRecords.Any(e => e.Id == parsedRecordId))
@@ -118,6 +133,7 @@ public class DataMigrationModule : InteractionModuleBase
 
             await SendStatusUpdate("Inserting Guild Config: " + guildConfig.Length.ToString("n0"));
             await db.BanSyncGuilds.AddRangeAsync(guildConfig);
+            await db.BanSyncGuilds.AddRangeAsync(weirdGuildModels);
             await SendStatusUpdate("Inserting Guild Snapshots: " + guildSnapshots.Length.ToString("n0"));
             await db.BanSyncGuildSnapshots.AddRangeAsync(guildSnapshots);
             await SendStatusUpdate("Inserting User Partial Snapshots: " + userPartialSnapshots.Count.ToString("n0"));
@@ -129,6 +145,20 @@ public class DataMigrationModule : InteractionModuleBase
             await SendStatusUpdate("Commiting transaction");
             await trans.CommitAsync();
             await SendStatusUpdate("Complete!");
+            if (weirdGuildModels.Count > 0)
+            {
+                var json = JsonSerializer.Serialize(weirdGuildModels, new JsonSerializerOptions()
+                {
+                    IncludeFields = true,
+                    IgnoreReadOnlyFields = false,
+                    IgnoreReadOnlyProperties = false,
+                    WriteIndented = true
+                });
+                var tmpFilename = Path.GetTempFileName();
+                await File.WriteAllTextAsync(tmpFilename, json);
+                _log.Info($"Wrote weird guilds to: {tmpFilename}");
+                await Context.Channel.SendFileAsync(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json)), "weird-guilds.json", "There were some weird guilds while doing the migration. Here's the records so any issues can be looked into.");
+            }
         }
         catch (Exception ex)
         {
