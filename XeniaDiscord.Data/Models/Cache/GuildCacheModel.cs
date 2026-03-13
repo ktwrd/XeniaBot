@@ -17,6 +17,11 @@ public class GuildCacheModel
     public DateTime CreatedAt { get; set; }
     public DateTime? JoinedAt { get; set; }
 
+    public string? IconUrl { get; set; }
+    public string? BannerUrl { get; set; }
+    public string? SplashUrl { get; set; }
+    public string? DiscoverySplashUrl { get; set; }
+
     public ulong GetGuildId() => Id.ParseRequiredULong(nameof(Id), false);
     public ulong? GetOwnerUserId() => OwnerUserId?.ParseULong(false);
 

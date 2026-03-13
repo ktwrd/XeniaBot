@@ -1,13 +1,8 @@
-﻿using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using XeniaBot.Shared;
 using XeniaDiscord.Common.Services;
-using XeniaDiscord.Data;
 
 namespace XeniaDiscord.Common.Handlers;
 
@@ -28,6 +23,7 @@ public class DiscordCacheEventHandler : BaseService
 
             _client.UserJoined += OnUserJoined;
             _client.UserLeft += OnUserLeft;
+            _client.UserUpdated += OnUserUpdated;
         }
     }
 
@@ -67,6 +63,14 @@ public class DiscordCacheEventHandler : BaseService
         {
             _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
         }
+        try
+        {
+            await _cache.UpdateUser(user);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update user \"{user}\" ({user.Id})");
+        }
     }
 
     private async Task OnUserLeft(SocketGuild guild, SocketUser user)
@@ -80,6 +84,26 @@ public class DiscordCacheEventHandler : BaseService
         catch (Exception ex)
         {
             _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{guild.Name}\" ({guild.Id})");
+        }
+        try
+        {
+            await _cache.UpdateUser(user);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update user \"{user}\" ({user.Id})");
+        }
+    }
+
+    private async Task OnUserUpdated(SocketUser before, SocketUser after)
+    {
+        try
+        {
+            await _cache.UpdateUser(after);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update user \"{after}\" ({after.Id})");
         }
     }
 }

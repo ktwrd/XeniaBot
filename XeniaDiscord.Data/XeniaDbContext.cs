@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using XeniaDiscord.Data.Extensions;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
@@ -24,6 +25,7 @@ public class XeniaDbContext : DbContext
     #region Discord Cache
     public DbSet<GuildMemberCacheModel> GuildMemberCache { get; set; }
     public DbSet<GuildCacheModel> GuildCache { get; set; }
+    public DbSet<UserCacheModel> UserCache { get; set; }
     #endregion
 
     #region BanSync
@@ -81,6 +83,10 @@ public class XeniaDbContext : DbContext
                 e.UserId,
                 e.IsMember
             });
+        });
+        builder.Entity<UserCacheModel>(b =>
+        {
+            b.ToTable(UserCacheModel.TableName).HasKey(e => e.Id);
         });
         #endregion
 

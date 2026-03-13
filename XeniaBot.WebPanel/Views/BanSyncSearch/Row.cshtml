@@ -1,6 +1,8 @@
 ﻿@using XeniaBot.WebPanel.Helpers
-@using XeniaDiscord.Data.Models.BanSync
 @using XeniaBot.WebPanel.Models.BanSyncSearch
+@using XeniaDiscord.Common.Services
+@using XeniaDiscord.Data.Models.BanSync
+@inject UserCacheService UserCache
 @model RowModel
 
 @{
@@ -28,13 +30,11 @@
     </text>
 } >
     <td>
-        <img src="@AspHelper.GetUserProfilePicture(Model.Record.GetUserId())"
-             class="card-img-top smallUserIcon" />
+            <img src="@(await UserCache.GetDisplayAvatarUrl(Model.Record.GetUserId()) ?? "/DebugEmpty.png")" class="card-img-top smallUserIcon" />
         @Model.Record.UserPartialSnapshot.FormatUsername()
     </td>
     <td>
-        <img src="@AspHelper.GetGuildImage(Model.Record.GetGuildId())"
-             class="card-img-top smallUserIcon" />
+        <img src="@AspHelper.GetGuildImage(Model.Record.GetGuildId())" class="card-img-top smallUserIcon" />
         @Model.Record.GuildName<br/>
         <sup><code>@Model.Record.GuildId</code></sup>
     </td>

@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
@@ -10,9 +11,11 @@ public class DiscordCacheService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly XeniaDbContext _db;
+    private readonly UserCacheService _userCacheService;
     public DiscordCacheService(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out var serviceScope);
+        _userCacheService = (serviceScope?.ServiceProvider ?? services).GetRequiredService<UserCacheService>();
     }
 
     #region Guild
@@ -60,6 +63,10 @@ public class DiscordCacheService
         guildModel.OwnerUserId = guild.OwnerId.ToString();
         guildModel.CreatedAt = guild.CreatedAt.UtcDateTime;
         guildModel.JoinedAt ??= DateTime.UtcNow;
+        guildModel.IconUrl = guild.IconUrl;
+        guildModel.BannerUrl = guild.BannerUrl;
+        guildModel.SplashUrl = guild.SplashUrl;
+        guildModel.DiscoverySplashUrl = guild.DiscoverySplashUrl;
 
         await InsertOrUpdate(db, guildModel);
     }
@@ -131,7 +138,23 @@ public class DiscordCacheService
     }
     #endregion
 
-    private async Task InsertOrUpdate(
+    public async Task UpdateUser(IUser user)
+    {
+        using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
+        {
+            await _userCacheService.UpdateAsync(db, user);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+        }
+        catch
+        {
+            await trans.RollbackAsync();
+        }
+    }
+
+    private static async Task InsertOrUpdate(
         XeniaDbContext db,
         GuildMemberCacheModel model)
     {
@@ -150,7 +173,7 @@ public class DiscordCacheService
             await db.GuildMemberCache.AddAsync(model);
         }
     }
-    private async Task InsertOrUpdate(
+    private static async Task InsertOrUpdate(
         XeniaDbContext db,
         GuildCacheModel model)
     {
@@ -163,6 +186,10 @@ public class DiscordCacheService
                 .SetProperty(p => p.OwnerUserId, model.OwnerUserId)
                 .SetProperty(p => p.CreatedAt, model.CreatedAt)
                 .SetProperty(p => p.JoinedAt, model.JoinedAt)
+                .SetProperty(p => p.IconUrl, model.IconUrl)
+                .SetProperty(p => p.BannerUrl, model.BannerUrl)
+                .SetProperty(p => p.SplashUrl, model.SplashUrl)
+                .SetProperty(p => p.DiscoverySplashUrl, model.DiscoverySplashUrl)
                 .SetProperty(p => p.RecordUpdatedAt, now));
         }
         else
@@ -176,5 +203,13 @@ public class DiscordCacheService
         Unknown,
         UserLeft,
         UserJoined
+    }
+
+    public enum UpdateUserSource
+    {
+        Unknown,
+        UserLeft,
+        UserJoined,
+        UserUpdated
     }
 }
