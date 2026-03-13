@@ -119,5 +119,18 @@ public class XeniaDbContext : DbContext
             b.HasIndex(e => new { e.Timestamp, e.GuildId }).IsDescending();
         });
         #endregion
+        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)]))
+            .HasName("spBanSyncGetMutualRecordsForGuild");
+        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)]))
+            .HasName("spBanSyncGetMutualRecordsForGuild_Paginate");
     }
+
+    public IQueryable<BanSyncRecordModel> spBanSyncGetMutualRecordsForGuild(
+        string guildId)
+        => FromExpression(() => spBanSyncGetMutualRecordsForGuild(guildId));
+    public IQueryable<BanSyncRecordModel> spBanSyncGetMutualRecordsForGuild_Paginate(
+        string guildId,
+        int page,
+        int pageSize = 50)
+        => FromExpression(() => spBanSyncGetMutualRecordsForGuild_Paginate(guildId, page, pageSize));
 }

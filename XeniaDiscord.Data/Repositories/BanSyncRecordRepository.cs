@@ -205,40 +205,42 @@ public class BanSyncRecordRepository : IDisposable
         await _db.SaveChangesAsync();
     }
 
-    private static IQueryable<BanSyncRecordModel> MutualRecordsQuery(
-        XeniaDbContext db,
-        ulong guildId)
-    {
-        var guildIdStr = guildId.ToString();
-        return db.BanSyncRecords
-            .GroupJoin(
-                db.GuildMemberCache,
-                bsr => new { bsr.UserId, GuildId = guildIdStr },
-                cgm => new { cgm.UserId, cgm.GuildId },
-                (bsr, cgmJoin) => new { bsr, cgmJoin })
-            .SelectMany(
-                e => e.cgmJoin.DefaultIfEmpty(),
-                (row, cgm) => new { row, cgm })
-            .Where(e => e.row.bsr.GuildId == guildIdStr || (e.cgm != null && e.cgm.UserId != null))
-            .Select(e => e.row.bsr)
-            .OrderByDescending(e => e.CreatedAt);
-    }
-
     public async Task<ICollection<BanSyncRecordModel>> MutualRecords(
         ulong guildId,
         PaginationOptions paginationOptions,
         QueryOptions? queryOptions = null)
     {
-        return await ApplyOptions(MutualRecordsQuery(_db, guildId), queryOptions ?? new())
+        // check is already done in SP
+        if (queryOptions != null)
+        {
+            queryOptions.IgnoreDisabledGuilds = false;
+            queryOptions.IncludeGhostedRecords = true;
+        }
+        return await ApplyOptions(
+                _db.spBanSyncGetMutualRecordsForGuild_Paginate(
+                guildId.ToString(),
+                paginationOptions.Page - 1,
+                paginationOptions.PageSize),
+                queryOptions ?? new())
             .AsNoTracking()
-            .ApplyPagination(paginationOptions)
             .ToListAsync();
     }
     public async Task<long> MutualRecordsCount(
         ulong guildId,
         QueryOptions? queryOptions = null)
-       => await ApplyOptions(MutualRecordsQuery(_db, guildId), queryOptions ?? new())
+    {
+        // check is already done in SP
+        if (queryOptions != null)
+        {
+            queryOptions.IgnoreDisabledGuilds = false;
+            queryOptions.IncludeGhostedRecords = true;
+        }
+        return await ApplyOptions(
+                _db.spBanSyncGetMutualRecordsForGuild(guildId.ToString()),
+                queryOptions ?? new())
+            .AsNoTracking()
             .LongCountAsync();
+    }
 
     public class QueryOptions
     {
