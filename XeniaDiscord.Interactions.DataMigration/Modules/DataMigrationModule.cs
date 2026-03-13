@@ -111,8 +111,8 @@ public class DataMigrationModule : InteractionModuleBase
                 };
                 userSnapshot.Timestamp = r.CreatedAt <= DateTime.UnixEpoch ? DateTime.UtcNow : r.CreatedAt;
 
-                if (!guildSnapshots.Any(e => e.GuildId != r.GuildId)
-                    && !weirdGuildModels.Any(e => e.GuildId != r.GuildId))
+                if (!guildSnapshots.Any(e => e.GuildId == r.GuildId)
+                    && !weirdGuildModels.Any(e => e.GuildId == r.GuildId))
                 {
                     weirdGuildModels.Add(new()
                     {
