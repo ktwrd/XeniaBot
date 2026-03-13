@@ -11,12 +11,11 @@ public static class XeniaDiscordCommon
         bool includeAsSingleton)
     {
         services.AddSingleton<BanSyncService>()
-            .AddSingleton<DiscordCacheEventHandler>();
-
-        services.AddScoped<DiscordCacheService>()
-            .AddScoped<UserCacheService>();
-        if (!includeAsSingleton) return;
-        services.AddSingleton<DiscordCacheService>()
+            .AddSingleton<DiscordCacheEventHandler>()
             .AddSingleton<UserCacheService>();
+
+        services.AddScoped<DiscordCacheService>();
+        if (!includeAsSingleton) return;
+        services.AddSingleton<DiscordCacheService>();
     }
 }

@@ -21,6 +21,7 @@ public class UserCacheService
     {
         var idStr = id.ToString();
         var dbRecord = await _db.UserCache
+            .AsNoTracking()
             .Where(e => e.Id == idStr)
             .Select(e => new { e.RecordUpdatedAt, e.DisplayAvatarUrl })
             .FirstOrDefaultAsync();

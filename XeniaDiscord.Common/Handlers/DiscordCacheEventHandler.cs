@@ -24,6 +24,7 @@ public class DiscordCacheEventHandler : BaseService
             _client.UserJoined += OnUserJoined;
             _client.UserLeft += OnUserLeft;
             _client.UserUpdated += OnUserUpdated;
+            _client.GuildMemberUpdated += OnGuildMemberUpdated;
         }
     }
 
@@ -48,6 +49,30 @@ public class DiscordCacheEventHandler : BaseService
         catch (Exception ex)
         {
             _log.Fatal(ex, $"Failed to update Guild \"{after.Name}\" ({after.Id})");
+        }
+    }
+
+    private async Task OnGuildMemberUpdated(
+        Discord.Cacheable<SocketGuildUser, ulong> before,
+        SocketGuildUser user)
+    {
+        try
+        {
+            await _cache.UpdateGuildMember(
+                user.Guild, user,
+                DiscordCacheService.UpdateGuildMemberSource.UserJoined);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
+        }
+        try
+        {
+            await _cache.UpdateUser(user);
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, $"Failed to update user \"{user}\" ({user.Id})");
         }
     }
 
