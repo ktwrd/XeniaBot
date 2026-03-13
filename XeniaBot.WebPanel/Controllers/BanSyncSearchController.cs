@@ -140,7 +140,7 @@ public class BanSyncSearchController : BaseXeniaController
         return model;
     }
 
-    public const int MaxPageSize = 50;
+    public const int MaxPageSize = 10;
 
     [HttpPost("Perform")]
     public async Task<IActionResult> PerformSearch()
