@@ -6,6 +6,7 @@ RUN apt-get update \
     apt-transport-https \
     ca-certificates \
     adduser \
+    curl \
     fonts-recommended fontconfig fonts-noto-cjk fonts-noto-cjk-extra fonts-liberation fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*
 ADD localfonts.conf /etc/fonts/local.conf
