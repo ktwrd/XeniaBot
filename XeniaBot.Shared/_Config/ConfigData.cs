@@ -125,7 +125,7 @@ public class ConfigData
         i.ShardId = null;
 
         i.SupportServerUrl = null;
-        i.HasDashboard = false;
+        i.HasDashboardValue = false;
         i.DashboardUrl = null;
         return i;
     }
@@ -216,7 +216,7 @@ public class ConfigData
                 instance.GoogleCloud = v1.GCSKey_Translate;
 
                 instance.SupportServerUrl = v1.SupportServerUrl;
-                instance.HasDashboard = v1.HasDashboard;
+                instance.HasDashboardValue = v1.HasDashboard;
                 instance.DashboardUrl = v1.DashboardLocation;
                 return instance;
             case "2":
