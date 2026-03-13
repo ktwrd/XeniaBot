@@ -3,6 +3,7 @@ using NLog;
 using System;
 using System.ComponentModel;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Shared;
@@ -59,14 +60,25 @@ public class ConfigData
     public ReminderServiceConfigItem ReminderService { get; set; }
     
     public string? SupportServerUrl { get; set; }
-    public bool HasDashboard { get; set; }
+
+    [JsonPropertyName("HasDashboard")]
+    public bool HasDashboardValue { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
+    public bool HasDashboard
+        => HasDashboardValue
+        && !string.IsNullOrEmpty(DashboardUrl)
+        && Uri.TryCreate(DashboardUrl, UriKind.Absolute, out var _);
+
     public string? DashboardUrl { get; set; }
+
     /// <summary>
     /// <para>Is this instance responsible for upgrading database schema?</para>
     ///
     /// <para>Should be enabled on Dashboard when deployed</para>
     /// </summary>
     public bool IsUpgradeAgent { get; set; }
+
     /// <summary>
     /// When set to <see langword="true"/>, this client will refresh bans on startup. Will not apply when not running as a bot.
     /// </summary>
