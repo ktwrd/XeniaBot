@@ -36,7 +36,7 @@ namespace XeniaBot.Core
 
 <#+
 int Major = 1;
-int Minor = 15;
+int Minor = 16;
 
 static DateTime StartedDate = new DateTime(year: 2022, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc);
 int DaysSince = (int)((DateTime.UtcNow - StartedDate).TotalDays);
