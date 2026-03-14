@@ -1,9 +1,12 @@
 ﻿using Discord;
+using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using XeniaBot.Shared;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
 
@@ -11,11 +14,26 @@ public class DiscordCacheService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly XeniaDbContext _db;
-    private readonly UserCacheService _userCacheService;
+
+    private readonly DiscordSocketClient _client;
+    private readonly UserCacheRepository _userCacheRepository;
+    private readonly GuildCacheRepository _guildCacheRepository;
+    private readonly GuildMemberCacheRepository _guildMemberCacheRepository;
+
+    private readonly IMapper<IUser, UserCacheModel> _userMapper;
+    private readonly IMapperMerger<IUser, GuildMemberCacheModel> _memberMergerMapper;
+
     public DiscordCacheService(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var serviceScope);
-        _userCacheService = (serviceScope?.ServiceProvider ?? services).GetRequiredService<UserCacheService>();
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
+
+        _client = services.GetRequiredService<DiscordSocketClient>();
+        _userCacheRepository = services.GetRequiredService<UserCacheRepository>();
+        _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
+        _guildMemberCacheRepository = services.GetRequiredService<GuildMemberCacheRepository>();
+        
+        _userMapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
+        _memberMergerMapper = services.GetRequiredService<IMapperMerger<IUser, GuildMemberCacheModel>>();
     }
 
     #region Guild
@@ -68,14 +86,13 @@ public class DiscordCacheService
         guildModel.SplashUrl = guild.SplashUrl;
         guildModel.DiscoverySplashUrl = guild.DiscoverySplashUrl;
 
-        await InsertOrUpdate(db, guildModel);
+        await _guildCacheRepository.InsertOrUpdate(db, guildModel);
     }
     #endregion
 
     #region Guilld Member
-    public async Task UpdateGuildMember(
-        IGuild guild, IUser user,
-        UpdateGuildMemberSource source = UpdateGuildMemberSource.Unknown)
+    public Task UpdateGuildMember(IGuildUser member) => UpdateGuildMember(member.Guild, member);
+    public async Task UpdateGuildMember(IGuild guild, IUser user)
     {
         using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
@@ -98,7 +115,8 @@ public class DiscordCacheService
         IUser? member = null;
         try
         {
-            member = await guild.GetUserAsync(userId);
+            member = await guild.GetUserAsync(userId)
+                ?? await _client.GetUserAsync(userId);
         }
         catch (Exception ex)
         {
@@ -126,15 +144,18 @@ public class DiscordCacheService
         }
         else
         {
-            if (member is IGuildUser guildUser)
-            {
-                model.JoinedAt = guildUser.JoinedAt.HasValue
-                    ? guildUser.JoinedAt.Value.UtcDateTime
-                    : null;
-            }
-            model.FirstJoinedAt ??= model.JoinedAt;
+            model = _memberMergerMapper.Map(model, member);
         }
-        await InsertOrUpdate(db, model);
+
+        // JUST TO BE SURE!!!
+        model.UserId = userIdStr;
+        model.GuildId = guildIdStr;
+
+        await _guildMemberCacheRepository.InsertOrUpdate(db, model);
+        if (member != null)
+        {
+            await _userCacheRepository.InsertOrUpdate(db, _userMapper.Map(member));
+        }
     }
     #endregion
 
@@ -144,57 +165,14 @@ public class DiscordCacheService
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await _userCacheService.UpdateAsync(db, user);
+            var mapped = _userMapper.Map(user);
+            await _userCacheRepository.InsertOrUpdate(db, mapped);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
         catch
         {
             await trans.RollbackAsync();
-        }
-    }
-
-    private static async Task InsertOrUpdate(
-        XeniaDbContext db,
-        GuildMemberCacheModel model)
-    {
-        var now = DateTime.UtcNow;
-        if (await db.GuildMemberCache.AnyAsync(e => e.GuildId == model.GuildId && e.UserId == model.UserId))
-        {
-            await db.GuildMemberCache.Where(e => e.GuildId == model.GuildId && e.UserId == model.UserId)
-                .ExecuteUpdateAsync(e => e
-                .SetProperty(p => p.IsMember, model.IsMember)
-                .SetProperty(p => p.JoinedAt, model.JoinedAt)
-                .SetProperty(p => p.FirstJoinedAt, model.FirstJoinedAt)
-                .SetProperty(p => p.UpdatedAt, now));
-        }
-        else
-        {
-            await db.GuildMemberCache.AddAsync(model);
-        }
-    }
-    private static async Task InsertOrUpdate(
-        XeniaDbContext db,
-        GuildCacheModel model)
-    {
-        var now = DateTime.UtcNow;
-        if (await db.GuildCache.AnyAsync(e => e.Id == model.Id))
-        {
-            await db.GuildCache.Where(e => e.Id == model.Id)
-                .ExecuteUpdateAsync(e => e
-                .SetProperty(p => p.Name, model.Name)
-                .SetProperty(p => p.OwnerUserId, model.OwnerUserId)
-                .SetProperty(p => p.CreatedAt, model.CreatedAt)
-                .SetProperty(p => p.JoinedAt, model.JoinedAt)
-                .SetProperty(p => p.IconUrl, model.IconUrl)
-                .SetProperty(p => p.BannerUrl, model.BannerUrl)
-                .SetProperty(p => p.SplashUrl, model.SplashUrl)
-                .SetProperty(p => p.DiscoverySplashUrl, model.DiscoverySplashUrl)
-                .SetProperty(p => p.RecordUpdatedAt, now));
-        }
-        else
-        {
-            await db.GuildCache.AddAsync(model);
         }
     }
 

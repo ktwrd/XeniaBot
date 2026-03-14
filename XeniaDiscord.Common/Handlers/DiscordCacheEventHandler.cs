@@ -8,13 +8,13 @@ namespace XeniaDiscord.Common.Handlers;
 
 public class DiscordCacheEventHandler : BaseService
 {
-    private readonly DiscordSocketClient _client;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly DiscordCacheService _cache;
+    private readonly DiscordSocketClient _client;
     public DiscordCacheEventHandler(IServiceProvider services) : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
         _cache = services.GetRequiredService<DiscordCacheService>();
+        _client = services.GetRequiredService<DiscordSocketClient>();
 
         if (services.GetRequiredService<ProgramDetails>().Platform == XeniaPlatform.Bot)
         {
@@ -58,21 +58,11 @@ public class DiscordCacheEventHandler : BaseService
     {
         try
         {
-            await _cache.UpdateGuildMember(
-                user.Guild, user,
-                DiscordCacheService.UpdateGuildMemberSource.UserJoined);
+            await _cache.UpdateGuildMember(user.Guild, user);
         }
         catch (Exception ex)
         {
             _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
-        }
-        try
-        {
-            await _cache.UpdateUser(user);
-        }
-        catch (Exception ex)
-        {
-            _log.Fatal(ex, $"Failed to update user \"{user}\" ({user.Id})");
         }
     }
 
@@ -80,21 +70,11 @@ public class DiscordCacheEventHandler : BaseService
     {
         try
         {
-            await _cache.UpdateGuildMember(
-                user.Guild, user,
-                DiscordCacheService.UpdateGuildMemberSource.UserJoined);
+            await _cache.UpdateGuildMember(user.Guild, user);
         }
         catch (Exception ex)
         {
             _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
-        }
-        try
-        {
-            await _cache.UpdateUser(user);
-        }
-        catch (Exception ex)
-        {
-            _log.Fatal(ex, $"Failed to update user \"{user}\" ({user.Id})");
         }
     }
 
@@ -102,21 +82,11 @@ public class DiscordCacheEventHandler : BaseService
     {
         try
         {
-            await _cache.UpdateGuildMember(
-                guild, user,
-                DiscordCacheService.UpdateGuildMemberSource.UserLeft);
+            await _cache.UpdateGuildMember(guild, user);
         }
         catch (Exception ex)
         {
             _log.Fatal(ex, $"Failed to update Member \"{user.GlobalName}\" ({user.Username}, {user.Id}) in Guild \"{guild.Name}\" ({guild.Id})");
-        }
-        try
-        {
-            await _cache.UpdateUser(user);
-        }
-        catch (Exception ex)
-        {
-            _log.Fatal(ex, $"Failed to update user \"{user}\" ({user.Id})");
         }
     }
 

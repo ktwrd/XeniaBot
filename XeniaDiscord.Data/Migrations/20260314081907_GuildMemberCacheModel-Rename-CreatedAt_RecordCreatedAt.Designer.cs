@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using XeniaDiscord.Data;
@@ -11,9 +12,11 @@ using XeniaDiscord.Data;
 namespace XeniaDiscord.Data.Migrations
 {
     [DbContext(typeof(XeniaDbContext))]
-    partial class XeniaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260314081907_GuildMemberCacheModel-Rename-CreatedAt_RecordCreatedAt")]
+    partial class GuildMemberCacheModelRenameCreatedAt_RecordCreatedAt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,13 +225,10 @@ namespace XeniaDiscord.Data.Migrations
                     b.Property<DateTime?>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Nickname")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("RecordCreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("RecordUpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("GuildId", "UserId");

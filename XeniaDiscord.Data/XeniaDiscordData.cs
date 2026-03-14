@@ -22,16 +22,26 @@ public static class XeniaDiscordData
         IServiceCollection services,
         bool includeAsSingleton = false)
     {
-        services
-            .AddScoped<BanSyncGuildRepository>()
-            .AddScoped<BanSyncRecordRepository>()
-            .AddScoped<BanSyncGuildSnapshotRepository>();
-        
-        if (!includeAsSingleton) return;
-        
-        services
-            .AddSingleton<BanSyncGuildRepository>()
-            .AddSingleton<BanSyncRecordRepository>()
-            .AddSingleton<BanSyncGuildSnapshotRepository>();
+        var types = new[]
+        {
+            typeof(BanSyncGuildRepository),
+            typeof(BanSyncRecordRepository),
+            typeof(BanSyncGuildSnapshotRepository),
+            
+            typeof(GuildCacheRepository),
+            typeof(GuildMemberCacheRepository),
+            typeof(UserCacheRepository),
+        };
+        foreach (var i in types)
+        {
+            if (includeAsSingleton)
+            {
+                services.AddSingleton(i);
+            }
+            else
+            {
+                services.AddScoped(i);
+            }
+        }
     }
 }

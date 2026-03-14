@@ -6,18 +6,18 @@
 
 @foreach (var row in Model.Rows)
 {
-        var nextPageUrl = $"/BanSync/Search/MutualRecords/{Model.GuildId}/PageComponent?page={Model.Page + 1}";
+    var nextPageUrl = $"/BanSync/Search/MutualRecords/{Model.GuildId}/PageComponent?page={Model.Page + 1}";
     
-        var reasonText = row.Record.Reason?.Trim();
-        if (reasonText != null)
+    var reasonText = row.Record.Reason?.Trim();
+    if (reasonText != null)
+    {
+        var pl = reasonText.Length;
+        reasonText = reasonText.Substring(0, Math.Min(50, reasonText.Length));
+        if (reasonText.Length != pl)
         {
-            var pl = reasonText.Length;
-            reasonText = reasonText.Substring(0, Math.Min(50, reasonText.Length));
-            if (reasonText.Length != pl)
-            {
-                reasonText += "...";
-            }
+            reasonText += "...";
         }
+    }
 
     <tr @if (row.IsLast)
     {
