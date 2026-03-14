@@ -20,8 +20,10 @@ public class UserCacheRepository
                 .SetProperty(p => p.Username, model.Username)
                 .SetProperty(p => p.Discriminator, model.Discriminator)
                 .SetProperty(p => p.GlobalName, model.GlobalName)
-                .SetProperty(p => p.RecordUpdatedAt, model.RecordUpdatedAt)
-                .SetProperty(p => p.DisplayAvatarUrl, model.DisplayAvatarUrl));
+                .SetProperty(p => p.DisplayAvatarUrl, model.DisplayAvatarUrl)
+                .SetProperty(p => p.IsBot, model.IsBot)
+                .SetProperty(p => p.IsWebhook, model.IsWebhook)
+                .SetProperty(p => p.RecordUpdatedAt, model.RecordUpdatedAt));
             _log.Debug($"Updated record (Id={model.Id}, Username={model.Username})");
         }
         else

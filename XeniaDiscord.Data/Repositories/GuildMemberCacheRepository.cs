@@ -19,7 +19,10 @@ public class GuildMemberCacheRepository
                 .ExecuteUpdateAsync(e => e
                 .SetProperty(p => p.IsMember, model.IsMember)
                 .SetProperty(p => p.JoinedAt, model.JoinedAt)
+                .SetProperty(p => p.IsBot, model.IsBot)
+                .SetProperty(p => p.IsWebhook, model.IsWebhook)
                 .SetProperty(p => p.FirstJoinedAt, model.FirstJoinedAt)
+                .SetProperty(p => p.Nickname, model.Nickname)
                 .SetProperty(p => p.RecordUpdatedAt, model.RecordUpdatedAt));
             _log.Debug($"Updated record (Id={model.UserId}, GuildId={model.GuildId})");
         }

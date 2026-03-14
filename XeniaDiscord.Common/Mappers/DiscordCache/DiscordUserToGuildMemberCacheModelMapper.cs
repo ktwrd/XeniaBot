@@ -41,11 +41,13 @@ public class DiscordUserToGuildMemberCacheModelMapper
         };
         if (existing != null)
         {
-            result.RecordCreatedAt = existing.RecordCreatedAt;
+            result.GuildId = existing.GuildId;
             result.IsMember = existing.IsMember;
             result.JoinedAt = existing.JoinedAt;
             result.FirstJoinedAt = existing.FirstJoinedAt;
             result.Nickname = existing.Nickname;
+
+            result.RecordCreatedAt = existing.RecordCreatedAt;
         }
 
         if (user is IGuildUser guildUser)
@@ -55,6 +57,7 @@ public class DiscordUserToGuildMemberCacheModelMapper
             result.JoinedAt = guildUser.JoinedAt.HasValue
                 ? guildUser.JoinedAt.Value.UtcDateTime
                 : null;
+            result.IsMember = true;
         }
         else if (existing == null)
         {
@@ -65,6 +68,8 @@ public class DiscordUserToGuildMemberCacheModelMapper
         {
             result.IsMember = false;
         }
+        result.IsBot = user.IsBot;
+        result.IsWebhook = user.IsWebhook;
         result.FirstJoinedAt ??= result.JoinedAt;
         return result;
     }

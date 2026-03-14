@@ -54,6 +54,16 @@ public class UserCacheModel
     public string? DisplayAvatarUrl { get; set; }
 
     /// <summary>
+    /// From: <see cref="IUser.IsBot"/>
+    /// </summary>
+    public bool IsBot { get; set; }
+
+    /// <summary>
+    /// From: <see cref="IUser.IsWebhook"/>
+    /// </summary>
+    public bool IsWebhook { get; set; }
+
+    /// <summary>
     /// UTC Time when this record was first created.
     /// </summary>
     public DateTime RecordCreatedAt { get; set; }

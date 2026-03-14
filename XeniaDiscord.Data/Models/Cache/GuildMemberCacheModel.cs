@@ -43,6 +43,16 @@ public class GuildMemberCacheModel
     public bool IsMember { get; set; }
 
     /// <summary>
+    /// From: <see cref="IUser.IsBot"/>
+    /// </summary>
+    public bool IsBot { get; set; }
+    
+    /// <summary>
+    /// From: <see cref="IUser.IsWebhook"/>
+    /// </summary>
+    public bool IsWebhook { get; set; }
+
+    /// <summary>
     /// UTC Time for when this user joined <see cref="Guild"/>
     /// </summary>
     public DateTime? JoinedAt { get; set; }

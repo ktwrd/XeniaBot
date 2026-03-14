@@ -43,6 +43,8 @@ public class DiscordUserToUserCacheModelMapper
         result.Discriminator = MapDiscriminator(user);
         result.GlobalName = MapGlobalName(user);
         result.RecordUpdatedAt = DateTime.UtcNow;
+        result.IsBot = user.IsBot;
+        result.IsWebhook = user.IsWebhook;
         // doesn't matter if an exception is thrown
         try
         {
