@@ -25,7 +25,7 @@ public class UserCacheService
         _mapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
         _mapperMerger = services.GetRequiredService<IMapperMerger<IUser, UserCacheModel>>();
     }
-    public async Task<string?> GetDisplayAvatarUrl(ulong id)
+    public async Task<string?> GetDisplayAvatarUrl(ulong id, bool saveChages = true)
     {
         var idStr = id.ToString();
         var dbRecord = await _db.UserCache
@@ -33,14 +33,17 @@ public class UserCacheService
             .Where(e => e.Id == idStr)
             .FirstOrDefaultAsync();
         if (dbRecord == null ||
-            dbRecord.RecordUpdatedAt > (DateTime.UtcNow - TimeSpan.FromDays(365)))
+            dbRecord.RecordUpdatedAt < (DateTime.UtcNow - TimeSpan.FromDays(365)))
         {
             var user = await _client.GetUserAsync(id);
             if (user == null) return dbRecord?.DisplayAvatarUrl;
 
             var mapped = dbRecord == null ? _mapper.Map(user) : _mapperMerger.Map(dbRecord, user);
             await _repo.InsertOrUpdate(_db, mapped);
-            await _db.SaveChangesAsync();
+            if (saveChages)
+            {
+                await _db.SaveChangesAsync();
+            }
 
             return mapped.DisplayAvatarUrl;
         }
