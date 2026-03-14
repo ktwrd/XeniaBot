@@ -22,6 +22,7 @@ public class DiscordCacheService
 
     private readonly IMapper<IUser, UserCacheModel> _userMapper;
     private readonly IMapperMerger<IUser, GuildMemberCacheModel> _memberMergerMapper;
+    private readonly IMapperMerger<IGuild, GuildCacheModel> _guildMergerMapper;
 
     public DiscordCacheService(IServiceProvider services)
     {
@@ -34,6 +35,7 @@ public class DiscordCacheService
         
         _userMapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
         _memberMergerMapper = services.GetRequiredService<IMapperMerger<IUser, GuildMemberCacheModel>>();
+        _guildMergerMapper = services.GetRequiredService<IMapperMerger<IGuild, GuildCacheModel>>();
     }
 
     #region Guild
@@ -72,19 +74,9 @@ public class DiscordCacheService
         var guildIdStr = guild.Id.ToString();
         var guildModel = await db.GuildCache.Where(e => e.Id == guildIdStr)
             .FirstOrDefaultAsync()
-            ?? new()
-            {
-                Id = guildIdStr
-            };
+            ?? new(guild.Id);
 
-        guildModel.Name = guild.Name;
-        guildModel.OwnerUserId = guild.OwnerId.ToString();
-        guildModel.CreatedAt = guild.CreatedAt.UtcDateTime;
-        guildModel.JoinedAt ??= DateTime.UtcNow;
-        guildModel.IconUrl = guild.IconUrl;
-        guildModel.BannerUrl = guild.BannerUrl;
-        guildModel.SplashUrl = guild.SplashUrl;
-        guildModel.DiscoverySplashUrl = guild.DiscoverySplashUrl;
+        guildModel = _guildMergerMapper.Map(guildModel, guild);
 
         await _guildCacheRepository.InsertOrUpdate(db, guildModel);
     }

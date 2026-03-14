@@ -24,6 +24,7 @@ public static class XeniaDiscordCommon
     private static void RegisterMappers(IServiceCollection services)
     {
         DiscordUserToUserCacheModelMapper.RegisterService(services);
+        DiscordGuildToGuildCacheModelMapper.RegisterService(services);
         DiscordUserToGuildMemberCacheModelMapper.RegisterService(services);
     }
 }
