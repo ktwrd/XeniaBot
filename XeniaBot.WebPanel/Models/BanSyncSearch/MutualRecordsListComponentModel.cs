@@ -16,6 +16,8 @@ public class MutualRecordsListComponentModel
             GuildId = GuildId,
             IsLast = IsItemLastInList(e.Id)
         });
+    public IReadOnlyDictionary<ulong, string?> UserIdProfileDict { get; set; } = new Dictionary<ulong, string?>();
+    public IReadOnlyDictionary<ulong, string?> GuildIdProfileDict { get; set; } = new Dictionary<ulong, string?>();
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 50;
     public required ulong GuildId { get; set; }

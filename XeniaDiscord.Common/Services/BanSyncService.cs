@@ -3,7 +3,6 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using System.ComponentModel;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Exceptions;
@@ -73,9 +72,12 @@ public class BanSyncService : BaseService
     
     private static string? ParseReason(string? reason)
     {
-        if (string.IsNullOrEmpty(reason?.Trim()) ||
-            reason.Equals("<null>", StringComparison.InvariantCultureIgnoreCase) ||
-            reason.Equals("<unknown>", StringComparison.OrdinalIgnoreCase))
+        reason = reason?.Trim();
+        if (string.IsNullOrEmpty(reason)
+            || string.Equals("<null>", reason, StringComparison.OrdinalIgnoreCase)
+            || string.Equals("<unknown>", reason, StringComparison.OrdinalIgnoreCase)
+            || string.Equals("null", reason, StringComparison.OrdinalIgnoreCase)
+            || string.Equals("No reason given", reason, StringComparison.OrdinalIgnoreCase))
             return null;
         else
             return reason.Trim();
