@@ -8,6 +8,7 @@ using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Exceptions;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.BanSync;
+using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.PartialSnapshot;
 using XeniaDiscord.Data.Repositories;
 
@@ -22,6 +23,7 @@ public class BanSyncService : BaseService
     private readonly ErrorReportService _err;
     private readonly BanSyncGuildRepository _bansyncGuildRepository;
     private readonly BanSyncRecordRepository _bansyncRecordsRepository;
+    private readonly AuditLogEntryCacheRepository _auditLogEntryRepository;
     private readonly ProgramDetails _programDetails;
     private readonly XeniaDbContext _db;
 
@@ -31,9 +33,10 @@ public class BanSyncService : BaseService
         _client = services.GetRequiredService<DiscordSocketClient>();
         _configData = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
-        _bansyncGuildRepository = services.GetRequiredScopedService<BanSyncGuildRepository>(out var _);
-        _bansyncRecordsRepository = services.GetRequiredScopedService<BanSyncRecordRepository>(out var _);
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
+        _bansyncGuildRepository = (scope?.ServiceProvider ?? services).GetRequiredService<BanSyncGuildRepository>();
+        _bansyncRecordsRepository = (scope?.ServiceProvider ?? services).GetRequiredService< BanSyncRecordRepository>();
+        _auditLogEntryRepository = (scope?.ServiceProvider ?? services).GetRequiredService<AuditLogEntryCacheRepository>();
 
         _programDetails = services.GetRequiredService<ProgramDetails>();
 
@@ -217,6 +220,22 @@ public class BanSyncService : BaseService
             return;
 
         var banInfo = await guild.GetBanAsync(user);
+        var relatedAuditLogEntries = new List<RestAuditLogEntry>();
+        RestAuditLogEntry? mostRelevantAuditLogEntry = null;
+        foreach (var page in await guild.GetAuditLogsAsync(50,
+            actionType: ActionType.Ban).ToListAsync())
+        {
+            relatedAuditLogEntries.AddRange(page);
+        }
+
+        foreach (var entry in relatedAuditLogEntries.OrderByDescending(e => e.CreatedAt))
+        {
+            var timeAgo = DateTimeOffset.UtcNow - entry.CreatedAt;
+            if (timeAgo <= TimeSpan.FromMinutes(1))
+            {
+                mostRelevantAuditLogEntry = entry;
+            }
+        }
 
         BanSyncRecordModel? info = null;
         UserPartialSnapshotModel? partialUserInfo = null;
@@ -239,6 +258,17 @@ public class BanSyncService : BaseService
                 GuildName = guild.Name,
                 Reason = ParseReason(banInfo.Reason)
             };
+            AuditLogBanCacheModel? auditLogModel = null;
+            if (mostRelevantAuditLogEntry != null)
+            {
+                auditLogModel = new AuditLogBanCacheModel(mostRelevantAuditLogEntry)
+                {
+                    GuildId = info.GuildId
+                };
+                info.AuditLogBanEntryId = auditLogModel.Id;
+                info.BannedByUserId = auditLogModel.PerformedByUserId;
+                await _auditLogEntryRepository.InsertOrUpdate(db, auditLogModel);
+            }
             await db.UserPartialSnapshots.AddAsync(partialUserInfo);
             await _bansyncRecordsRepository.InsertOrUpdate(db, info);
 
