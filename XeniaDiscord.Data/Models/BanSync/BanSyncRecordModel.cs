@@ -70,6 +70,12 @@ public class BanSyncRecordModel
     [DefaultValue(false)]
     public bool Ghost { get; set; }
 
+    /// <summary>
+    /// Foreign Key to <see cref="AuditLogBanCacheModel.Id"/>
+    /// </summary>
+    [MaxLength(DbGlobals.ulongMaxLength)]
+    public string? AuditLogBanEntryId { get; set; }
+
     public BanSyncRecordSource Source { get; set; }
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);

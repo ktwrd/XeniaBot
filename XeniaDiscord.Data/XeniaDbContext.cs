@@ -26,6 +26,7 @@ public class XeniaDbContext : DbContext
     public DbSet<GuildMemberCacheModel> GuildMemberCache { get; set; }
     public DbSet<GuildCacheModel> GuildCache { get; set; }
     public DbSet<UserCacheModel> UserCache { get; set; }
+    public DbSet<AuditLogBanCacheModel> AuditLogBanEntryCache { get; set; }
     #endregion
 
     #region BanSync
@@ -87,6 +88,10 @@ public class XeniaDbContext : DbContext
         builder.Entity<UserCacheModel>(b =>
         {
             b.ToTable(UserCacheModel.TableName).HasKey(e => e.Id);
+        });
+        builder.AuditLogCacheEntity<AuditLogBanCacheModel>(b =>
+        {
+            b.ToTable(AuditLogBanCacheModel.TableName);
         });
         #endregion
 

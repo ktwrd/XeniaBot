@@ -1,6 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using XeniaBot.Shared;
+using XeniaDiscord.Data.Models.Cache;
 
 namespace XeniaDiscord.Data;
 
@@ -67,6 +70,33 @@ public static class DataExtensions
         return query
             .Skip(options.Skip)
             .Take(options.PageSize);
+    }
+    public static ModelBuilder AuditLogCacheEntity<TEntity>(
+        this ModelBuilder modelBuilder,
+        Action<EntityTypeBuilder<TEntity>> buildAction)
+        where TEntity : BaseAuditLogEntryCacheModel
+    {
+        return modelBuilder.Entity<TEntity>(builder =>
+        {
+            builder.HasKey(e => e.Id);
+            builder.HasIndex(e => new
+            {
+                e.Id,
+                e.GuildId,
+                e.CreatedAt,
+                e.Action
+            });
+            builder.HasIndex(e => new
+            {
+                e.Id,
+                e.GuildId,
+                e.CreatedAt,
+                e.Action,
+                e.PerformedByUserId
+            });
+
+            buildAction(builder);
+        });
     }
 }
 public delegate void IServiceScopeCallbackDelegate(IServiceScope scope);

@@ -24,6 +24,8 @@ public static class XeniaDiscordData
     {
         var types = new[]
         {
+            typeof(AuditLogEntryCacheRepository),
+
             typeof(BanSyncGuildRepository),
             typeof(BanSyncRecordRepository),
             typeof(BanSyncGuildSnapshotRepository),
