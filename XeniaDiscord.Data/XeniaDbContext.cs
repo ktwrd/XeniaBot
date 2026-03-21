@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
 using XeniaDiscord.Data.Extensions;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.PartialSnapshot;
+using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Data;
 
@@ -20,6 +20,15 @@ public class XeniaDbContext : DbContext
     #region Partial Snapshots
     public DbSet<UserPartialSnapshotModel> UserPartialSnapshots { get; set; }
     public DbSet<GuildPartialSnapshotModel> GuildPartialSnapshots { get; set; }
+    #endregion
+
+    #region Snapshots
+    public DbSet<GuildMemberPermissionSnapshotModel> GuildMemberPermissionSnapshots { get; set; }
+    public DbSet<GuildMemberRoleSnapshotModel> GuildMemberRoleSnapshots { get; set; }
+    public DbSet<GuildMemberSnapshotModel> GuildMemberSnapshots { get; set; }
+
+    public DbSet<UserSnapshotModel> UserSnapshots { get; set; }
+    public DbSet<PrimaryGuildSnapshotModel> PrimaryGuildSnapshots { get; set; }
     #endregion
 
     #region Discord Cache
@@ -57,6 +66,59 @@ public class XeniaDbContext : DbContext
                 e.Timestamp,
                 e.GuildId
             }).IsDescending();
+        });
+        #endregion
+
+        #region Snapshots
+        builder.Entity<GuildMemberSnapshotModel>(b =>
+        {
+            b.ToTable(GuildMemberSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.UserId,
+                e.GuildId
+            }).IsDescending();
+
+            b.HasMany(e => e.Roles)
+             .WithOne()
+             .HasForeignKey(e => e.GuildMemberSnapshotId);
+            b.HasMany(e => e.Permissions)
+             .WithOne()
+             .HasForeignKey(e => e.GuildMemberSnapshotId);
+        });
+        builder.Entity<GuildMemberPermissionSnapshotModel>(b =>
+        {
+            b.ToTable(GuildMemberPermissionSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+        });
+        builder.Entity<GuildMemberRoleSnapshotModel>(b =>
+        {
+            b.ToTable(GuildMemberRoleSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+        });
+
+        builder.Entity<UserSnapshotModel>(b =>
+        {
+            b.ToTable(UserSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.UserId
+            }).IsDescending();
+
+            b.HasOne(e => e.PrimaryGuild)
+             .WithOne()
+             .HasForeignKey<UserSnapshotModel>(e => e.PrimaryGuildId);
+        });
+        builder.Entity<PrimaryGuildSnapshotModel>(b =>
+        {
+            b.ToTable(PrimaryGuildSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
         });
         #endregion
 

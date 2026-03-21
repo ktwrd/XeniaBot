@@ -19,8 +19,10 @@ public static class XeniaDiscordCommon
         var types = new[]
         {
             typeof(DiscordCacheService),
+            typeof(DiscordSnapshotService),
+
             typeof(UserCacheService),
-            typeof(GuildCacheService)
+            typeof(GuildCacheService),
         };
         foreach (var t in types)
         {

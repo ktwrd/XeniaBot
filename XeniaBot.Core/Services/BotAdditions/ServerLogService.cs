@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Core.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.Data.Models.Archival;
@@ -14,6 +13,12 @@ using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using NLog;
+using XeniaDiscord.Common.Services;
+
+using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
+using XeniaDiscord.Data.Models.Snapshot;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -24,6 +29,7 @@ public class ServerLogService : BaseService
     private readonly ServerLogRepository _config;
     private readonly DiscordSocketClient _discord;
     private readonly DiscordCacheService _discordCache;
+    private readonly DiscordSnapshotService _discordSnapshot;
     private readonly ErrorReportService _errorService;
     public ServerLogService(IServiceProvider services)
         : base(services)
@@ -31,6 +37,7 @@ public class ServerLogService : BaseService
         _config = services.GetRequiredService<ServerLogRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
+        _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
         _errorService = services.GetRequiredService<ErrorReportService>();
     }
 
@@ -44,10 +51,85 @@ public class ServerLogService : BaseService
         _discord.MessageDeleted += Event_MessageDelete;
         _discordCache.MessageChange += DiscordCacheMessageChangeUpdate;
 
+        _discordSnapshot.GuildMemberUpdated += DiscordSnapshotGuildMemberUpdate;
+
         return Task.CompletedTask;
     }
 
-    
+    private async Task DiscordSnapshotGuildMemberUpdate(
+        GuildMemberSnapshotModel? before,
+        GuildMemberSnapshotModel model)
+    {
+        if (before == null)
+        {
+            _log.Trace($"Event. No before state (guildId={model.GuildId}, userId={model.UserId})");
+            return;
+        }
+        DiscordSnapshotMemberUpdateInfo? info = null;
+        try
+        {
+            var rolesAdded = new List<ulong>();
+            var rolesRemoved = new List<ulong>();
+
+            rolesAdded.AddRange(model.Roles
+                .Where(a => !before.Roles.Any(b => b.RoleId == a.RoleId))
+                .Select(e => e.GetRoleId()));
+
+            rolesRemoved.AddRange(before.Roles
+                .Where(b => !model.Roles.Any(a => a.RoleId == b.RoleId))
+                .Select(e => e.GetRoleId()));
+
+            var permissionsAddedList = new List<GuildPermission>();
+            var permissionsRemovedList = new List<GuildPermission>();
+
+            permissionsAddedList.AddRange(model.Permissions
+                .Where(a => !before.Permissions.Any(b => b.Value == a.Value))
+                .Select(e => e.GetValue()));
+            permissionsRemovedList.AddRange(before.Permissions
+                .Where(b => !model.Permissions.Any(a => a.Value == b.Value))
+                .Select(e => e.GetValue()));
+
+            ulong permissionsAddedRaw = 0;
+            ulong permissionsRemovedRaw = 0;
+            foreach (var value in permissionsAddedList)
+            {
+                permissionsAddedRaw |= (ulong)value;
+            }
+            foreach (var value in permissionsRemovedList)
+            {
+                permissionsRemovedRaw |= (ulong)value;
+            }
+
+            info = new()
+            {
+                RolesAdded = rolesAdded,
+                RolesRemoved = rolesRemoved,
+                PermissionsAdded = permissionsAddedList,
+                PermissionsRemoved = permissionsRemovedList
+            };
+
+            // TODO send message in log channel with updated roles/permissions/nickname
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to handle event for Guild {model.GuildId}";
+            await _errorService.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .AddSerializedAttachment("snapshotInfo.json", info)
+                .AddSerializedAttachment("snapshot.before.json", before)
+                .AddSerializedAttachment("snapshot.after.json", model));
+        }
+    }
+
+    public class DiscordSnapshotMemberUpdateInfo
+    {
+        public required IReadOnlyCollection<ulong> RolesAdded { get; init; }
+        public required IReadOnlyCollection<ulong> RolesRemoved { get; init; }
+        public required IReadOnlyCollection<GuildPermission> PermissionsAdded { get; init; }
+        public required IReadOnlyCollection<GuildPermission> PermissionsRemoved { get; init; }
+    }
+
     private async void DiscordCacheMessageChangeUpdate(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
         try
