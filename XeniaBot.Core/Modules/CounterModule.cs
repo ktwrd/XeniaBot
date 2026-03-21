@@ -10,6 +10,7 @@ using NLog;
 namespace XeniaBot.Core.Modules;
 
 [Group("counter", "Configuration for the Counter module")]
+[CommandContextType(InteractionContextType.Guild)]
 public class CounterModule : InteractionModuleBase
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(CounterModule));

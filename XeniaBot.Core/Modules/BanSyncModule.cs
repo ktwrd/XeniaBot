@@ -17,6 +17,7 @@ using XeniaDiscord.Data.Repositories;
 namespace XeniaBot.Core.Modules;
 
 [Group("bansync", "Sync Bans between servers")]
+[CommandContextType(InteractionContextType.Guild)]
 public class BanSyncModule : InteractionModuleBase
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();

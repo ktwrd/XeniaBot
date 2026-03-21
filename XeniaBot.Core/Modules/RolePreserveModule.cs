@@ -8,7 +8,8 @@ using XeniaBot.MongoData.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
-[Discord.Interactions.Group("rolepreserve", "Configure the RolePreserve module.")]
+[Group("rolepreserve", "Configure the RolePreserve module.")]
+[CommandContextType(InteractionContextType.Guild)]
 public class RolePreserveModule : InteractionModuleBase
 {
     [SlashCommand("enable", "Grant members preserved roles on re-join.")]
