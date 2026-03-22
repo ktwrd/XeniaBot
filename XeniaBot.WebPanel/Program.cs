@@ -89,19 +89,13 @@ public static class Program
         LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
-            SentrySdk.Init(new SentryOptions()
+            SentrySdk.Init(static options =>
             {
-                Dsn = FeatureFlags.SentryDSN,
-                TracesSampleRate = 1.0,
-                IsGlobalModeEnabled = true,
-                Debug = Details.Debug
+                Update(options);
             });
             LogManager.Configuration?.AddSentry(options =>
             {
-                options.Dsn = FeatureFlags.SentryDSN;
-                options.TracesSampleRate = 1.0;
-                options.IsGlobalModeEnabled = true;
-                options.Debug = Details.Debug;
+                Update(options);
             });
         }
 
@@ -120,6 +114,17 @@ public static class Program
             LogManager.Shutdown();
             SentrySdk.Flush();
         }
+    }
+    private static void Update(SentryOptions options)
+    {
+        options.Dsn = FeatureFlags.SentryDSN;
+        options.Release = Version?.ToString();
+        options.SendDefaultPii = true;
+        options.AttachStacktrace = true;
+        options.Environment = Details.Debug ? "production" : "debug";
+        options.TracesSampleRate = 1.0;
+        options.IsGlobalModeEnabled = false;
+        options.Debug = Details.Debug;
     }
     private static async Task CoreContextAlternativeMain(string[] args)
     {

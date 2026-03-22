@@ -100,22 +100,27 @@ public static class Program
         };
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
-            SentrySdk.Init(new SentryOptions()
+            SentrySdk.Init(static options =>
             {
-                Dsn = FeatureFlags.SentryDSN,
-                TracesSampleRate = 1.0,
-                IsGlobalModeEnabled = true,
-                Debug = ProgramDetails.Debug
+                Update(options);
             });
             LogManager.Configuration?.AddSentry(static options =>
             {
-                options.Dsn = FeatureFlags.SentryDSN;
-                options.TracesSampleRate = 1.0;
-                options.IsGlobalModeEnabled = true;
-                options.Debug = ProgramDetails.Debug;
+                Update(options);
             });
         }
         Core.MainAsync(args, CoreContextBeforeServiceBuild).Wait();
+    }
+    private static void Update(SentryOptions options)
+    {
+        options.Dsn = FeatureFlags.SentryDSN;
+        options.Release = VersionRaw;
+        options.SendDefaultPii = true;
+        options.AttachStacktrace = true;
+        options.Environment = ProgramDetails.Debug ? "production" : "debug";
+        options.TracesSampleRate = 1.0;
+        options.IsGlobalModeEnabled = false;
+        options.Debug = ProgramDetails.Debug;
     }
     private static async Task CoreContextRegisterModules(InteractionService interactions, IServiceProvider services)
     {
