@@ -1,13 +1,16 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using NLog;
+using System;
 using System.ComponentModel;
 using System.Text.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Serialization;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Shared;
 
 public class ConfigData
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(ConfigData));
     /// <summary>
     /// Current config version.
     ///
@@ -18,11 +21,12 @@ public class ConfigData
     /// 6: Add property Developer.GenericLoggingChannelId. No upgrade required.
     /// 7: Add property RefreshFlightCheckOnStart, and RefreshRolePreserveOnStart. No upgrade requied.
     /// 8: Add property RefreshLevelSystemOnStart. No upgrade required.
+    /// 9: Add property Postgres. No upgrade required.
     /// </summary>
     public uint Version
     {
-        get => 8;
-        set { value = 8; }
+        get => 9;
+        set { value = 9; }
     }
 
     /// <summary>
@@ -52,17 +56,29 @@ public class ConfigData
     public LavalinkConfigItem Lavalink { get; set; }
     public GoogleCloudKey? GoogleCloud { get; set; }
     public MongoDBConfigItem MongoDB { get; set; }
+    public PostgresConfigItem Postgres { get; set; }
     public ReminderServiceConfigItem ReminderService { get; set; }
     
     public string? SupportServerUrl { get; set; }
-    public bool HasDashboard { get; set; }
+
+    [JsonPropertyName("HasDashboard")]
+    public bool HasDashboardValue { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
+    public bool HasDashboard
+        => HasDashboardValue
+        && !string.IsNullOrEmpty(DashboardUrl)
+        && Uri.TryCreate(DashboardUrl, UriKind.Absolute, out var _);
+
     public string? DashboardUrl { get; set; }
+
     /// <summary>
     /// <para>Is this instance responsible for upgrading database schema?</para>
     ///
     /// <para>Should be enabled on Dashboard when deployed</para>
     /// </summary>
     public bool IsUpgradeAgent { get; set; }
+
     /// <summary>
     /// When set to <see langword="true"/>, this client will refresh bans on startup. Will not apply when not running as a bot.
     /// </summary>
@@ -99,6 +115,7 @@ public class ConfigData
         i.Health = HealthConfigItem.Default();
         i.GoogleCloud = null;
         i.MongoDB = MongoDBConfigItem.Default();
+        i.Postgres = PostgresConfigItem.Default();
         i.ReminderService = ReminderServiceConfigItem.Default();
         i.IsUpgradeAgent = false;
         i.RefreshBansOnStart = true;
@@ -108,7 +125,7 @@ public class ConfigData
         i.ShardId = null;
 
         i.SupportServerUrl = null;
-        i.HasDashboard = false;
+        i.HasDashboardValue = false;
         i.DashboardUrl = null;
         return i;
     }
@@ -199,7 +216,7 @@ public class ConfigData
                 instance.GoogleCloud = v1.GCSKey_Translate;
 
                 instance.SupportServerUrl = v1.SupportServerUrl;
-                instance.HasDashboard = v1.HasDashboard;
+                instance.HasDashboardValue = v1.HasDashboard;
                 instance.DashboardUrl = v1.DashboardLocation;
                 return instance;
             case "2":

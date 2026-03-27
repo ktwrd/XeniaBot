@@ -8,12 +8,14 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using System.Threading;
+using NLog;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
 public class FlightCheckService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(FlightCheckService));
     private readonly DiscordSocketClient _discord;
     private readonly ConfigData _config;
     private readonly ErrorReportService _errReportService;
@@ -37,7 +39,7 @@ public class FlightCheckService : BaseService
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to run {nameof(CheckGuild)} for {arg.Name} ({arg.Id})\n{ex}");
+                _log.Error(ex, $"Failed to run {nameof(CheckGuild)} for {arg.Name} ({arg.Id})");
             }
         }).Start();
         return Task.CompletedTask;
@@ -47,7 +49,7 @@ public class FlightCheckService : BaseService
     {
         if (!_config.RefreshFlightCheckOnStart)
         {
-            Log.WriteLine($"Not going to run since {nameof(_config.RefreshFlightCheckOnStart)} is false");
+            _log.Info($"Not going to run since {nameof(_config.RefreshFlightCheckOnStart)} is false");
             return;
         }
         var taskList = new List<Task>();
@@ -62,8 +64,8 @@ public class FlightCheckService : BaseService
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"Failed to run {nameof(CheckGuild)} for {item.Name} ({item.Id})\n{ex}");
-                await _errReportService.ReportException(ex);
+                    _log.Error(ex, $"Failed to run {nameof(CheckGuild)} for {item.Name} ({item.Id})");
+                    await _errReportService.ReportException(ex);
                 }
             }).Start();
         }
@@ -78,7 +80,7 @@ public class FlightCheckService : BaseService
     /// </summary>
     private async Task CheckGuild(SocketGuild guild)
     {
-        Log.WriteLine($"Running FlightCheck on Guild {guild.Id} \"{guild.Name}\"");
+        _log.Info($"Running FlightCheck on Guild \"{guild.Name}\" ({guild.Id})");
 
         var embed = new EmbedBuilder()
             .WithTitle("FlightCheck")
@@ -101,7 +103,7 @@ public class FlightCheckService : BaseService
                     "",
                     "P.S; If you have any issues, don't hesitate to chat to the dev team with the discord link in my bio!"
                 ));
-            Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\": Permissions invalid");
+            _log.Info($"FlightCheck for {guild.Id} \"{guild.Name}\": Permissions invalid");
         }
 
         try
@@ -109,16 +111,16 @@ public class FlightCheckService : BaseService
             if (embed.Fields.Count > 0)
             {
                 await guild.Owner.SendMessageAsync(embed: embed.Build());
-                Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" failed!");
+                _log.Warn($"FlightCheck for {guild.Id} \"{guild.Name}\" failed!");
             }
             else
             {
-                Log.WriteLine($"FlightCheck for {guild.Id} \"{guild.Name}\" has passed!");
+                _log.Info($"FlightCheck for {guild.Id} \"{guild.Name}\" has passed!");
             }
         }
         catch (Exception ex)
         {
-            Log.Error($"FlightCheck failed for {guild.Id} {guild.Name}\n{ex}");   
+            _log.Error(ex, $"FlightCheck failed for \"{guild.Name}\" ({guild.Id})");
         }
     }
 
@@ -141,8 +143,7 @@ public class FlightCheckService : BaseService
             bool hasPermission = false;
             foreach (var x in permissions)
             {
-                if (hasPermission == true)
-                    continue;
+                if (hasPermission) continue;
                 if (x == i)
                 {
                     hasPermission = true;

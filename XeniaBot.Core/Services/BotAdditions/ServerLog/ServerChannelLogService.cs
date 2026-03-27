@@ -6,7 +6,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Data.Models.Archival;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 

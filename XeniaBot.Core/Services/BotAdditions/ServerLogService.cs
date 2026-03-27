@@ -7,18 +7,20 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Data.Models.Archival;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
+using NLog;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
 public class ServerLogService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogService));
     private readonly ServerLogRepository _config;
     private readonly DiscordSocketClient _discord;
     private readonly DiscordCacheService _discordCache;
@@ -66,11 +68,9 @@ public class ServerLogService : BaseService
 
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Edited")
-                .WithDescription(string.Join("\n", new string[]
-                {
+                .WithDescription(string.Join("\n",
                     $"From: `{author.Username}#{author.Discriminator}`",
-                    $"ID: `{current.AuthorId}`"
-                }))
+                    $"ID: `{current.AuthorId}`"))
                 .WithColor(new Color(255, 255, 255))
                 .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
                 .WithThumbnailUrl(author.GetAvatarUrl());
@@ -79,18 +79,16 @@ public class ServerLogService : BaseService
             else
             {
                 embed.AddField("Difference",
-                    string.Join("\n", new string[]
-                    {
+                    string.Join("\n",
                         "```diff",
                         diffContent,
-                        "```"
-                    }));
+                        "```"));
                 await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
             }
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to handle MessageChangeUpdate event!!\n{ex}");
+            _log.Error(ex, $"Failed to handle MessageChangeUpdate event!!");
             var author = _discord.GetUser(current.AuthorId);
             var guild = _discord.GetGuild(current.GuildId);
             var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
@@ -246,7 +244,7 @@ public class ServerLogService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error("Failed to run.", ex);
+            _log.Error(ex, "Failed to run");
             await _errorService.ReportException(
                 ex,
                 $"Failed run ServerLogService.Event_UserBan.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
@@ -276,7 +274,7 @@ public class ServerLogService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error("Failed to run.", ex);
+            _log.Error(ex, "Failed to run");
             await _errorService.ReportException(
                 ex,
                 $"Failed run ServerLogService.Event_UserBanRemove.\nUser: {user} ({user.Id})\nGuild: {guild.Name} ({guild.Id})");
@@ -297,7 +295,7 @@ public class ServerLogService : BaseService
         {
             if (m.Id == 0)
             {
-                Log.Warn($"message.Id is zero?\nhas type of {message.GetType()}");
+                _log.Warn($"message.Id is zero?\nhas type of {message.GetType()}");
                 return;
             }
             var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(m.Id);
@@ -343,7 +341,7 @@ public class ServerLogService : BaseService
                 $"ChannelId: {socketChannel.Id}",
                 $"Guild: {socketChannel.Guild.Id} ({socketChannel.Guild.Name})",
                 $"MessageId: {message?.Id ?? m.Id}");
-            Log.Error(msg, ex);
+            _log.Error(ex, msg);
             await _errorService.ReportException(
                 ex,
                 msg);
@@ -395,7 +393,7 @@ public class ServerLogService : BaseService
                     $"Guild: {socketChannel?.Guild.Id} ({socketChannel?.Guild.Name})",
                     $"MessageId: {currentMessage?.Id ?? 0}"
                 });
-            Log.Error(msg, ex);
+            _log.Error(ex, msg);
             await _errorService.ReportException(
                 ex,
                 msg);

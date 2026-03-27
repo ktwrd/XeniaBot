@@ -4,7 +4,7 @@ using XeniaBot.Core.Services.BotAdditions;
 using System;
 using System.Text;
 using System.Threading.Tasks;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules

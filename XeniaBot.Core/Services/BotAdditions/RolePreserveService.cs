@@ -7,18 +7,20 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
 using System.Threading;
+using NLog;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
 public class RolePreserveService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(RolePreserveService));
     private readonly DiscordSocketClient _client;
     private readonly RolePreserveRepository _config;
     private readonly RolePreserveGuildRepository _guildConfig;
@@ -44,7 +46,7 @@ public class RolePreserveService : BaseService
         try
         {
             var guildModel = await _guildConfig.Get(arg.Guild.Id);
-            if (guildModel == null || guildModel.Enable == false)
+            if (guildModel?.Enable != true)
                 return;
             var model = await _config.Get(arg.Id, arg.Guild.Id);
             if (model == null)
@@ -61,7 +63,7 @@ public class RolePreserveService : BaseService
                     continue;
                 try
                 {
-                    var existingRole = arg.Guild.GetRole(item);
+                    var existingRole = await arg.Guild.GetRoleAsync(item);
                     if (existingRole.Position > ourHighestRolePos)
                     {
                         fail.Add(item);
@@ -72,7 +74,7 @@ public class RolePreserveService : BaseService
                 }
                 catch (Exception ex)
                 {
-                    _err.ReportException(
+                    await _err.ReportException(
                         ex,
                         $"Failed to grant role {item} in guild {arg.Guild.Name} ({arg.Guild.Id}) for {arg.Username} ({arg.Id})");
                     fail.Add(item);
@@ -87,8 +89,9 @@ public class RolePreserveService : BaseService
                 var channelId = serverLogModel.GetChannel(ServerLogEvent.MemberJoin);
                 var channel = arg.Guild.GetTextChannel(channelId);
 
+                var successCount = success.Count.ToString("n0");
                 var embed = new EmbedBuilder()
-                    .WithDescription($"Added {success.Count} roles successfully.")
+                    .WithDescription($"Added {successCount} roles successfully.")
                     .WithTitle($"Role Preserve - User Joined")
                     .WithColor(new Color(255, 255, 255))
                     .WithCurrentTimestamp();
@@ -128,7 +131,7 @@ public class RolePreserveService : BaseService
     {
         if (!_configData.RefreshRolePreserveOnStart)
         {
-            Log.WriteLine($"Not going to run {nameof(PreserveAll)} since {nameof(_configData.RefreshRolePreserveOnStart)} is set to false");
+            _log.Info($"Not going to run {nameof(PreserveAll)} since {nameof(_configData.RefreshRolePreserveOnStart)} is set to false");
             return Task.CompletedTask;
         }
         new Thread((ThreadStart)async delegate
@@ -139,7 +142,7 @@ public class RolePreserveService : BaseService
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to run {nameof(PreserveAll)}\n{ex}");
+                _log.Error(ex, $"Failed to run {nameof(PreserveAll)}");
             }
         }).Start();
         return Task.CompletedTask;
@@ -184,20 +187,9 @@ public class RolePreserveService : BaseService
     
     public async Task PreserveGuild(SocketGuild guild)
     {
-        var taskList = new List<Task>();
-        foreach (var u in guild.Users)
-        {
-            taskList.Add(new Task(
-                delegate
-                {
-                    PreserveGuildMember(guild.Id, u.Id).Wait();
-                }));
-        }
-
-        foreach (var i in taskList)
-            i.Start();
-        await Task.WhenAll(taskList);
-        Log.Debug($"Guild {guild.Name} ({guild.Id}) Preserved. ({taskList.Count} members)");
+        await Task.WhenAll(guild.Users.Select(u => PreserveGuildMember(guild.Id, u.Id)));
+        var memberCount = guild.Users.Count.ToString("n0");
+        _log.Info($"Preserved all roles in Guild \"{guild.Name}\" ({guild.Id}), which archived {memberCount} members.");
     }
 
     public async Task PreserveGuildMember(ulong guildId, ulong userId)
@@ -213,7 +205,7 @@ public class RolePreserveService : BaseService
             {
                 UserId = userId,
                 GuildId = guildId,
-                Roles = roleIdList.ToList()
+                Roles = [..roleIdList]
             };
             await _config.Set(model);
         }

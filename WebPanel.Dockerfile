@@ -1,23 +1,38 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base-pkg
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    gnupg \
+    apt-transport-https \
+    ca-certificates \
+    adduser \
+    curl \
+    fonts-recommended fontconfig fonts-noto-cjk fonts-noto-cjk-extra fonts-liberation fonts-dejavu \
+    && rm -rf /var/lib/apt/lists/*
+ADD localfonts.conf /etc/fonts/local.conf
+RUN fc-cache -f -v
+
+FROM base-pkg AS base
 WORKDIR /app
 
 EXPOSE 80 8080
 
 # Creates a non-root user with an explicit UID and adds permission to access the /app folder
 # For more info, please refer to https://aka.ms/vscode-docker-dotnet-configure-containers
-RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+RUN /usr/sbin/adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# --- compile project ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 RUN dotnet tool install -g dotnet-t4
 ENV PATH="/root/.dotnet/tools:${PATH}"
 WORKDIR /src
-COPY ["./XeniaBot.WebPanel/XeniaBot.WebPanel.csproj", "./"]
-RUN dotnet restore "XeniaBot.WebPanel.csproj"
-COPY . .
+COPY . ./
+RUN dotnet restore "XeniaBot.WebPanel/XeniaBot.WebPanel.csproj"
 WORKDIR "/src/."
 RUN dotnet build "./XeniaBot.WebPanel/XeniaBot.WebPanel.csproj" -c Release -o /app/build
 
+# --- publish project ---
 FROM build AS publish
 RUN dotnet publish "./XeniaBot.WebPanel/XeniaBot.WebPanel.csproj" -c Release -o /app/publish
 

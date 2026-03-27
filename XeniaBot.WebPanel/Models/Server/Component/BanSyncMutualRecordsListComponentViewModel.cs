@@ -1,17 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using Discord;
+using System.Collections.Generic;
 using System.Linq;
-using Discord;
-using XeniaBot.Data;
-using XeniaBot.Data.Models;
+using XeniaBot.MongoData;
+using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaBot.WebPanel.Models.Component;
 
-public class BanSyncMutualRecordsListComponentViewModel : BaseViewModel,
-    IBanSyncBaseRecordsComponent
+public class BanSyncMutualRecordsListComponentViewModel
+    : BaseViewModel
+    , IBanSyncBaseRecordsComponent
 {
     #region IBanSyncBaseRecordsComponent
     /// <inheritdoc />
-    public IEnumerable<BanSyncInfoModel> Items { get; set; }
+    public IEnumerable<BanSyncRecordModel> Items { get; set; } = [];
     /// <inheritdoc />
     public int Cursor { get; set; }
     #endregion
@@ -29,7 +30,7 @@ public class BanSyncMutualRecordsListComponentViewModel : BaseViewModel,
     /// <summary>
     /// Current guild configuration for the BanSync module.
     /// </summary>
-    public BanSyncStateHistoryItemModel BanSyncGuild { get; set; }
+    public BanSyncGuildSnapshotModel BanSyncGuild { get; set; }
     /// <summary>
     /// All records that are considered a "mutual" record.
     /// </summary>
@@ -55,12 +56,12 @@ public class BanSyncMutualRecordsListComponentViewModel : BaseViewModel,
     /// </summary>
     public int AbsolutePageEndIndex => Items.Count() + AbsoluteStartPageIndex;
 
-    public bool IsItemLast(BanSyncInfoModel item)
+    public bool IsItemLast(BanSyncRecordModel item)
     {
         if (Items.Count() < PageSize)
             return true;
 
-        return Items.ElementAt(Items.Count() - 1).RecordId == item.RecordId;
+        return Items.ElementAt(Items.Count() - 1).Id == item.Id;
     }
 }
 
@@ -69,7 +70,7 @@ public interface IBanSyncBaseRecordsComponent : IBanSyncBaseRecords
     /// <summary>
     /// Items to display for this section for this page.
     /// </summary>
-    public IEnumerable<BanSyncInfoModel> Items { get; set; }
+    public IEnumerable<BanSyncRecordModel> Items { get; set; }
     /// <summary>
     /// Page index, starting from zero.
     /// </summary>

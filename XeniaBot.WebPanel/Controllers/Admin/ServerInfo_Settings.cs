@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
-using XeniaBot.Shared;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models.Component;
+using Microsoft.Extensions.Logging;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public partial class AdminController
+partial class AdminController
 {
     /// <summary>
     /// Save Level System settings for Guild provided.
@@ -61,7 +61,8 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to save level system config\n{ex}");
+            _logger.LogError(ex, "Failed to save Level System config for Guild {GuildId} (channelId={ChannelId}, show={Show}, enable={Enable})",
+                id, channelId, show, enable);
             model.MessageType = "danger";
             model.Message = ex.Message;
             return PartialView("ServerInfo/LevelSystemComponent", model);
@@ -179,13 +180,14 @@ public partial class AdminController
         {
             channelId = ulong.Parse(inputChannelId ?? "0");
             if (channelId == null)
-                throw new Exception("ChannelId is null");
+                throw new ArgumentException($"Value parsed to null ({inputChannelId})", nameof(inputChannelId));
         }
         catch (Exception ex)
         {
             model.MessageType = "danger";
             model.Message = ex.Message;
-            Log.Error(ex);
+            _logger.LogError(ex, "Failed to save counting settings for Guild {GuildId} (inputChannelId={InputChannelId})",
+                id, inputChannelId);
             return PartialView("ServerInfo/CountingComponent", model);
         }
 
@@ -229,7 +231,8 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
-            Log.Error(ex);
+            _logger.LogError(ex, "Failed to update settings for Role Preservation in Guild {GuildId} (enable={Enable})",
+                id, enable);
             model.MessageType = "danger";
             model.Message = ex.Message;
             return PartialView("ServerInfo/RolePreserveComponent", model);

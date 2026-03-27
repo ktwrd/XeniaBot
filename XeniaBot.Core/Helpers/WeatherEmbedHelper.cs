@@ -81,9 +81,7 @@ namespace XeniaBot.Core.Helpers
 
             if (controller == null)
             {
-                Log.Error($"WeatherAPIService is null!");
-                embed.Description = "WeatherAPIService is null!";
-                return embed;
+                throw new InvalidOperationException($"Failed to get service {typeof(WeatherAPIService)}");
             }
 
             WeatherResponse? result = null;
@@ -119,9 +117,7 @@ namespace XeniaBot.Core.Helpers
 
             if (controller == null)
             {
-                Log.Error($"WeatherAPIService is null!");
-                embed.Description = "WeatherAPIService is null!";
-                return embed;
+                throw new InvalidOperationException($"Failed to get service {typeof(WeatherAPIService)}");
             }
 
             WeatherResponse? result = null;

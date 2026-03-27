@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using NLog;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
@@ -109,8 +110,7 @@ public static class AuthAttributeHelper
         
         if (routeDataKey == null)
         {
-            Log.Error("GuildIdRouteKey has not been set!");
-            throw new Exception("GuildIdRouteKey has not been set");
+            throw new ArgumentNullException(nameof(routeDataKey));
         }
         
         ulong? targetGuildId = null;
@@ -120,7 +120,7 @@ public static class AuthAttributeHelper
             {
                 targetGuildId = ulong.Parse(s?.ToString() ?? "0");
                 if (targetGuildId == null || targetGuildId < 1)
-                    throw new Exception("Target Guild must not be null and greater than zero");
+                    throw new InvalidOperationException("Target Guild must not be null and greater than zero");
             }
             catch
             {
@@ -129,7 +129,7 @@ public static class AuthAttributeHelper
         }
         else
         {
-            Log.Warn($"Route Key \"{routeDataKey}\" not found");
+            LogManager.GetCurrentClassLogger().Warn($"Route Key \"{routeDataKey}\" not found");
         }
 
         return targetGuildId;

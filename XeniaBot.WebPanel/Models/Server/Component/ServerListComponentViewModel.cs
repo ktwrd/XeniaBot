@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Discord.WebSocket;
-using XeniaBot.Data;
+using XeniaBot.MongoData;
 
 namespace XeniaBot.WebPanel.Models.Component;
 
 public class ServerListComponentViewModel : BaseViewModel
 {
-    public IEnumerable<ServerListViewModelItem> Items { get; set; }
+    public IEnumerable<ServerListViewModelItem> Items { get; set; } = [];
     public int Cursor { get; set; }
     public bool IsLastPage => Items.Count() < PageSize;
     public ListViewStyle ListStyle { get; set; }

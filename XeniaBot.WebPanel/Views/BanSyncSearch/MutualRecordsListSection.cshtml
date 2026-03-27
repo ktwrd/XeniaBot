@@ -1,0 +1,56 @@
+﻿@using XeniaBot.WebPanel.Helpers
+@using XeniaBot.WebPanel.Models.BanSyncSearch
+@using XeniaDiscord.Common.Services
+@inject UserCacheService UserCache
+@model MutualRecordsListComponentModel
+
+@foreach (var row in Model.Rows)
+{
+    var nextPageUrl = $"/BanSync/Search/MutualRecords/{Model.GuildId}/PageComponent?page={Model.Page + 1}";
+    var userAvatar = Model.UserIdProfileDict.ContainsKey(row.Record.GetUserId()) ? Model.UserIdProfileDict[row.Record.GetUserId()] : null;
+    var guildIcon = Model.GuildIdProfileDict.ContainsKey(row.Record.GetGuildId()) ? Model.GuildIdProfileDict[row.Record.GetGuildId()] : null;
+    userAvatar ??= "/DebugEmpty.png";
+    guildIcon ??= "/DebugEmpty.png";
+    var reasonText = row.Record.Reason?.Trim();
+    if (reasonText != null)
+    {
+        var pl = reasonText.Length;
+        reasonText = reasonText.Substring(0, Math.Min(50, reasonText.Length));
+        if (reasonText.Length != pl)
+        {
+            reasonText += "...";
+        }
+    }
+
+    <tr @if (row.IsLast)
+    {
+        <text>
+        hx-get="@nextPageUrl"
+        hx-trigger="revealed"
+        hx-swap="beforeend"
+        hx-indicator=".htmx-indicator"
+        </text>
+    } >
+        <td>
+            <img src="@userAvatar" class="card-img-top smallUserIcon" />
+            @row.Record.UserPartialSnapshot.FormatUsername()<br/>
+            <sup><code>@row.Record.UserId</code></sup>
+        </td>
+        <td>
+            <img src="@guildIcon" class="card-img-top smallUserIcon" />
+            @row.Record.GuildName<br/>
+            <sup><code>@row.Record.GuildId</code></sup>
+        </td>
+        <td>
+            @row.Record.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss tt")
+        </td>
+        <td>
+            <code>@reasonText</code>
+        </td>
+        <td>
+            <a class="btn btn-secondary" asp-route-id="@row.Record.Id" asp-controller="BanSync" asp-action="Record">
+                <i class="bi bi-info-circle"></i>
+            </a>
+        </td>
+    </tr>
+}

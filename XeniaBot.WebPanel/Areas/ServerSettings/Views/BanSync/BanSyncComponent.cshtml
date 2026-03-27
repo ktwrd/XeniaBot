@@ -1,0 +1,120 @@
+﻿@using XeniaBot.WebPanel.Areas.ServerSettings.Models.BanSync
+@using XeniaBot.WebPanel.Models
+@using XeniaDiscord.Data.Models.BanSync
+@model BanSyncComponentModel
+
+@{
+    var formRequestFeature = Url.Action(
+        "RequestFeature",
+        "BanSync",
+        new
+        {
+            area = "ServerSettings",
+            guildId = Model.Guild.Id
+        }
+    );
+    var formSaveChanges = Url.Action(
+        "SaveChanges",
+        "BanSync",
+        new
+        {
+            area = "ServerSettings",
+            guildId = Model.Guild.Id
+        }
+    );
+}
+
+@if (Model.Alert != null)
+{
+    @await Component.InvokeAsync("Alert", Model.Alert)
+}
+
+@if (@Model.BanSyncGuild.State != BanSyncGuildState.Active)
+{
+    <form class="mb-3" id="bansync_request" enctype="application/x-www-form-urlencoded" method="post"
+          hx-post="@formRequestFeature"
+          hx-swap="innerHTML"
+          hx-indicator="#bansync_request .htmx-indicator">
+        @if (@Model.BanSyncGuild.State == BanSyncGuildState.Unknown)
+        {
+            <button type="submit" class="btn btn-outline-primary">
+                <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Request
+            </button>
+        }
+        else
+        {
+            <button type="submit" class="btn btn-outline-primary" disabled>
+                Request
+            </button>
+        }
+        @switch (@Model.BanSyncGuild.State)
+        {
+            case BanSyncGuildState.Active:
+                <span class="m-1">Ban Sync is already enabled</span>
+                break;
+            case BanSyncGuildState.Blacklisted:
+                <span class="m-1">Server is blacklisted. <pre><code>@Model.BanSyncGuild.Notes</code></pre></span>
+                break;
+            case BanSyncGuildState.PendingRequest:
+                <span class="m-1">Pending approval</span>
+                break;
+            case BanSyncGuildState.RequestDenied:
+                <span class="m-1">Request denied. Reason:</span> <pre><code>@Model.BanSyncGuild.Notes</code></pre>
+                break;
+        }
+    </form>
+    <ul class="list-group mb-3">
+        <li class="list-group-item">
+            @if (@Model.Guild.MemberCount < 35)
+            {
+                <i class="bi bi-x-circle" style="color: var(--red);"></i>
+            }
+            else
+            {
+                <i class="bi bi-check-circle" style="color: var(--green);"></i>
+            }
+            At least 35 members
+        </li>
+        <li class="list-group-item">
+            @if (@Model.Guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
+            {
+                <i class="bi bi-x-circle" style="color: var(--red);"></i>
+            }
+            else
+            {
+                <i class="bi bi-check-circle" style="color: var(--green);"></i>
+            }
+            Guild Older than 6 months
+        </li>
+    </ul>
+}
+
+<form method="post"
+      id="bansync_settings_channel" enctype="application/x-www-form-urlencoded"
+      hx-post="@formSaveChanges"
+      hx-swap="innerHTML"
+      hx-indicator="#bansync_settings_channel .htmx-indicator">
+    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
+    {
+        Channels = StrippedChannel.FromGuild(@Model.Guild),
+        Categories = StrippedCategory.FromGuild(@Model.Guild),
+        SelectedChannelId = @Model.BanSyncGuild.GetLogChannelId(),
+        ParentFormId = "bansync_settings_channel",
+        Id = "bansync_settings_channel_select",
+        Name = "logChannel",
+        DisplayName = "Channel"
+    })
+    <button type="submit" class="btn btn-success">
+        <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Save
+    </button>
+</form>
+@if (@Model.BanSyncGuild.Enable)
+{
+    <hr/>
+    <a asp-controller="BanSyncSearch"
+       asp-route-guildId="@Model.Guild.Id"
+       asp-action="MutualRecords"
+       class="btn btn-outline-primary">See Mutual Records</a>
+}

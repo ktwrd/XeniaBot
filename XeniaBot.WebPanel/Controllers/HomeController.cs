@@ -1,15 +1,10 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Discord.WebSocket;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using XeniaBot.Data;
-using XeniaBot.WebPanel.Extensions;
-using XeniaBot.WebPanel.Helpers;
+using XeniaBot.MongoData;
 using XeniaBot.WebPanel.Models;
-using Log = XeniaBot.Shared.Log;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -94,7 +89,7 @@ public class HomeController : BaseXeniaController
         }
         catch (Exception e)
         {
-            Log.Error(e);
+            _logger.LogError(e, "Failed to save user preferences");
             model.MessageType = "danger";
             model.Message = $"Failed to save preferences. {e.Message}";
             return PartialView("Components/UserConfigComponent", model);

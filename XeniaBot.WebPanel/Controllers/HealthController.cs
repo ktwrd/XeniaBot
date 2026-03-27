@@ -3,6 +3,7 @@ using XeniaBot.Shared.Models;
 
 namespace XeniaBot.WebPanel.Controllers;
 
+[Controller]
 public class HealthController : BaseXeniaController
 {
     public HealthController()

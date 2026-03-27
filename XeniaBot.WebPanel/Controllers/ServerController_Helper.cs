@@ -1,8 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Discord.WebSocket;
-using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -16,7 +12,7 @@ public partial class ServerController
         var guild = _discord.GetGuild(serverId);
         data.User = guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
         
-        await AspHelper.FillServerModel(serverId, data);
+        await AspHelper.FillServerModel(HttpContext.RequestServices, serverId, data);
         
         return data;
     }

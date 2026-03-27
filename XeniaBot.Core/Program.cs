@@ -1,149 +1,189 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Helpers;
-using XeniaBot.Shared;
+﻿using Discord.Interactions;
+using Microsoft.Extensions.DependencyInjection;
+using NLog;
+using Sentry;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using XeniaBot.Shared.Services;
+using XeniaBot.Core.Helpers;
 using XeniaBot.Core.LevelSystem.Services;
-using XeniaBot.Data.Services;
 using XeniaBot.Logic.Services;
-using Sentry;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
+using XeniaBot.Shared.Services;
+using XeniaDiscord;
+using XeniaDiscord.Common;
 
-namespace XeniaBot.Core
+namespace XeniaBot.Core;
+
+public static class Program
 {
-    public static class Program
+    #region Properties
+    private static readonly Logger log = LogManager.GetCurrentClassLogger();
+    public static readonly JsonSerializerOptions SerializerOptions = new()
     {
-        #region Fields
-        public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
-        {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
-            IncludeFields = true,
-            WriteIndented = true,
-            ReferenceHandler = ReferenceHandler.Preserve,
-        };
-        /// <summary>
-        /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
-        /// </summary>
-        public static long StartTimestamp { get; set; }
+        IgnoreReadOnlyFields = false,
+        IgnoreReadOnlyProperties = false,
+        IncludeFields = true,
+        WriteIndented = true,
+        ReferenceHandler = ReferenceHandler.Preserve,
+    };
+    /// <summary>
+    /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
+    /// </summary>
+    public static long StartTimestamp { get; set; }
 
-        public static string Version
+    public static string Version
+    {
+        get
         {
-            get
-            {
-                string result = "";
-                var targetAppend = VersionRaw;
-                result += targetAppend ?? "null_version";
-#if DEBUG
-                result += "-DEBUG";
-#endif
-                return result;
-            }
+            var result = VersionRaw ?? "unknown_version";
+            if (ProgramDetails.Debug) result += "-DEBUG";
+            return result;
         }
-
-        private static string? VersionRaw
+    }
+    private static string? VersionRaw => UnderlyingVersion?.ToString() ?? null;
+    internal static Version? UnderlyingVersion
+    {
+        get
         {
-            get
+            var asm = Assembly.GetAssembly(typeof(Program));
+            var name = asm?.GetName();
+            if (name == null || name.Version == null)
             {
-                return VersionReallyRaw?.ToString() ?? null;
-            }
-        }
-
-        internal static Version? VersionReallyRaw
-        {
-            get
-            {
-                var asm = Assembly.GetAssembly(typeof(Program));
-                var name = asm?.GetName();
-                if (name == null || name.Version == null)
+                if (name == null)
                 {
-                    if (name == null)
-                    {
-                        Log.Warn($"Assembly.GetName() resulted in null (when Assembly is from {asm?.Location})");
-                    }
-                    else if (name.Version == null)
-                    {
-                        Log.Warn($"Assembly.GetName().Version is null (when Assembly is from {asm?.Location})");
-                    }
-                    return null;
+                    log.Warn($"`Assembly.GetName()` resulted in null (assembly: {asm})");
                 }
-                return name.Version;
-            }
-        }
-        #endregion
-        public static CoreContext Core { get; private set; }
-        public static void Main(string[] args)
-        {
-            StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
-            {
-                SentrySdk.Init(new SentryOptions()
+                else if (name.Version == null)
                 {
-                    Dsn = FeatureFlags.SentryDSN,
-                    TracesSampleRate = 1.0,
-                    IsGlobalModeEnabled = true,
-                    #if DEBUG
-                    Debug = true
-                    #else
-                    Debug = false
-                    #endif
-                });
+                    log.Warn($"`Assembly.GetName().Version` is null (assembly: {asm})");
+                }
+                return null;
             }
-
-            Core = new CoreContext(ProgramDetails);
-            Core.StartTimestamp = StartTimestamp;
-            Core.MainAsync(args, (s) =>
-            {
-                AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", s);
-                AttributeHelper.InjectControllerAttributes(typeof(BanSyncService).Assembly, s); // XeniaBot.Data
-                AttributeHelper.InjectControllerAttributes("XeniaBot.Core", s);
-                AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, s); // XeniaBot.Logic
-                AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, s);
-                return Task.CompletedTask;
-            }).Wait();
+            return name.Version;
         }
-
-        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            if (e.ExceptionObject is Exception ex)
-            {
-                SentrySdk.CaptureException(ex);
-            }
-            var except = (Exception)e.ExceptionObject;
-            Console.Error.WriteLine(except);
-            if (Core.Services.GetRequiredService<DiscordService>().IsReady)
-            {
-                DiscordHelper.ReportError(except).Wait();
-            }
+    }
+    public static ProgramDetails ProgramDetails => new()
+    {
+        StartTimestamp = StartTimestamp,
+        VersionRaw = UnderlyingVersion,
+        Platform = XeniaPlatform.Bot,
+        SetStatus = true,
+        PlatformTag = "Master",
+        Debug = Debug
+    };
 #if DEBUG
-            Debugger.Break();
+    private const bool Debug = true;
+#else
+    private const bool Debug = false;
 #endif
-        }
+    public static CoreContext Core { get; private set; }
+    #endregion
+    public static void Main(string[] args)
+    {
+        LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
 
-        public static void Quit(int exitCode = 0)
-        {
-            Core.OnQuit(exitCode);
-        }
-
-        public static ProgramDetails ProgramDetails => new()
+        StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        Core = new CoreContext(ProgramDetails)
         {
             StartTimestamp = StartTimestamp,
-            VersionRaw = VersionReallyRaw,
-            Platform = XeniaPlatform.Bot,
-            SetStatus = true,
-            PlatformTag = "Master",
-            Debug =
-#if DEBUG
-                true
-#else
-                false
-#endif
+            RegisterModules = CoreContextRegisterModules,
+            RegisterDeveloperModules = CoreContextRegisterDeveloperModules
         };
+        if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
+        {
+            SentrySdk.Init(static options =>
+            {
+                Update(options);
+            });
+            LogManager.Configuration?.AddSentry(static options =>
+            {
+                Update(options);
+            });
+        }
+        Core.MainAsync(args, CoreContextBeforeServiceBuild).Wait();
+    }
+    private static void Update(SentryOptions options)
+    {
+        options.Dsn = FeatureFlags.SentryDSN;
+        options.Release = VersionRaw;
+        options.SendDefaultPii = true;
+        options.AttachStacktrace = true;
+        options.Environment = ProgramDetails.Debug ? "production" : "debug";
+        options.TracesSampleRate = 1.0;
+        options.IsGlobalModeEnabled = false;
+        options.Debug = ProgramDetails.Debug;
+    }
+    private static async Task CoreContextRegisterModules(InteractionService interactions, IServiceProvider services)
+    {
+        var transaction = SentryHelper.CreateTransaction();
+        try
+        {
+            await XeniaDiscordCoreInteractions.RegisterModules(interactions, services);
+            await XeniaDiscordInteractions.RegisterModules(interactions, services);
+        }
+        finally
+        {
+            transaction.Finish();
+        }
+    }
+    private static async Task<ModuleInfo[]> CoreContextRegisterDeveloperModules(InteractionService interactions, IServiceProvider services)
+    {
+        var transaction = SentryHelper.CreateTransaction();
+        var result = new List<ModuleInfo>();
+        try
+        {
+            result.AddRange(await XeniaDiscordInteractions.RegisterDeveloperModules(interactions, services));
+            result.AddRange(await XeniaDiscordInteractionsDataMigration.RegisterDeveloperModules(interactions, services));
+        }
+        finally
+        {
+            transaction.Finish();
+        }
+        return result.ToArray();
+    }
+    private static Task CoreContextBeforeServiceBuild(IServiceCollection services)
+    {
+        services.WithDatabaseServices();
+        XeniaDiscordData.RegisterServices(services, true);
+        XeniaDiscordCommon.RegisterServices(services, true);
+        XeniaDiscordInteractionsDataMigration.RegisterServices(services);
+        AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, services); // XeniaBot.Data
+        AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
+        AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, services); // XeniaBot.Logic
+        AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, services);
+        return Task.CompletedTask;
+    }
 
+    private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+        {
+            SentrySdk.CaptureException(ex);
+            log.Fatal(ex, $"Unhandled exception! ({nameof(e.IsTerminating)}: {e.IsTerminating})");
+            if (Core.Services.GetRequiredService<DiscordService>().IsReady)
+            {
+                DiscordHelper.ReportError(ex, $"Unhandled exception! ({nameof(e.IsTerminating)}: {e.IsTerminating})").Wait();
+            }
+        }
+        Console.Error.WriteLine("OH SHIT, UNHANDLED EXCEPTION!!!\n" + e.ExceptionObject?.ToString());
+        if (Debug)
+        {
+            Debugger.Break();
+        }
+    }
+
+    public static void Quit(int exitCode = 0)
+    {
+        Core.OnQuit(exitCode);
     }
 }

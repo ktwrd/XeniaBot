@@ -1,32 +1,31 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
-using XeniaBot.Core.Helpers;
-using XeniaBot.Shared;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using XeniaBot.Data.Helpers;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Repositories;
+using XeniaBot.Core.Helpers;
+using XeniaBot.MongoData.Helpers;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.LevelSystem.Services;
 
 [XeniaController]
 public class LevelSystemService : BaseService
 {
-    private IMongoDatabase _db;
-    private DiscordSocketClient _client;
-    private Random _random;
-    private LevelMemberRepository _memberConfig;
-    private LevelSystemConfigRepository _config;
-    private ConfigData _configData;
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(LevelSystemService));
+    private readonly DiscordSocketClient _client;
+    private readonly Random _random;
+    private readonly LevelMemberRepository _memberConfig;
+    private readonly LevelSystemConfigRepository _config;
+    private readonly ConfigData _configData;
     public LevelSystemService(IServiceProvider services)
         : base(services)
     {
-        _db = services.GetRequiredService<IMongoDatabase>();
         _client = services.GetRequiredService<DiscordSocketClient>();
         _config = services.GetRequiredService<LevelSystemConfigRepository>();
         _memberConfig = services.GetRequiredService<LevelMemberRepository>();
@@ -42,7 +41,7 @@ public class LevelSystemService : BaseService
     {
         if (!_configData.RefreshLevelSystemOnStart)
         {
-            Log.WriteLine($"Not going to run since {nameof(_configData.RefreshLevelSystemOnStart)} is false");
+            _log.Info($"Not going to run since {nameof(_configData.RefreshLevelSystemOnStart)} is false");
             return;
         }
         try
@@ -63,7 +62,7 @@ public class LevelSystemService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to run OnReady.\n{ex}");
+            _log.Error(ex, $"Failed to run OnReady");
         }
     }
 
@@ -118,13 +117,13 @@ public class LevelSystemService : BaseService
                 {
                     if (current.UserLevel >= item.RequiredLevel)
                     {
-                        var role = guild.GetRole(item.RoleId);
+                        var role = await guild.GetRoleAsync(item.RoleId);
                         await member.AddRoleAsync(role);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}\n{ex}");
+                    _log.Error(ex, $"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}");
                     await DiscordHelper.ReportError(
                         ex,
                         $"Failed to grant Role {item.RoleId} to member {model.UserId} in guild {model.GuildId}");
@@ -133,7 +132,7 @@ public class LevelSystemService : BaseService
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to run with user: {model.UserId} and guild {model.GuildId}\n{ex}");
+            _log.Error(ex, $"Failed to run with user: {model.UserId} and guild {model.GuildId}");
         }
     }
 
@@ -148,6 +147,7 @@ public class LevelSystemService : BaseService
             return;
         }
         var context = new SocketCommandContext(_client, message);
+        if (context.Guild == null) return;
         var data = await _memberConfig.Get(message.Author.Id, context.Guild.Id);
         if (data == null)
             data = new LevelMemberModel()
@@ -202,7 +202,7 @@ public class LevelSystemService : BaseService
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to run {nameof(ClientMessageReceived)}\n{ex}");
+                _log.Error(ex, $"Failed to run {nameof(ClientMessageReceived)}");
             }
         })
         {

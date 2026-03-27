@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-using CronNET;
+﻿using CronNET;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -15,6 +7,15 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
+using NLog;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace XeniaBot.Shared.Services;
 
@@ -23,63 +24,82 @@ namespace XeniaBot.Shared.Services;
 /// </summary>
 public class CoreContext
 {
+    private static readonly Logger Log = LogManager.GetLogger("Xenia.CoreContext");
     public static CoreContext? Instance { get; private set; }
     public CoreContext(ProgramDetails details)
     {
         if (Instance != null)
         {
-            throw new Exception("An instance of CoreContext exists already.");
+            throw new InvalidOperationException("An instance of CoreContext exists already.");
         }
 
         Details = details;
-
-        RegisteredBaseControllers = new List<Type>();
-
+        RegisteredBaseControllers = [];
         Instance = this;
-    }
-
-    public async Task MainAsync(string[] args, Func<ServiceCollection, Task> beforeServiceBuild)
-    {
-        if (StartTimestamp == 0)
-            StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var objectSerializer = new ObjectSerializer(type => ObjectSerializer.DefaultAllowedTypes(type) || type.FullName.StartsWith("XeniaBot"));
-        BsonSerializer.RegisterSerializer(objectSerializer);
-
         Config = new ConfigService(Details);
         Discord = new DiscordSocketClient(new DiscordSocketConfig()
         {
             GatewayIntents = GatewayIntents.All,
             UseInteractionSnowflakeDate = false,
+            AlwaysDownloadUsers = true,
             ShardId = Config.Data.ShardId
         });
+    }
+
+    public async Task MainAsync(string[] args, CoreContextBeforeServiceBuildDelegate beforeServiceBuild)
+    {
+        if (StartTimestamp == 0)
+            StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        var objectSerializer = new ObjectSerializer(type
+            => ObjectSerializer.DefaultAllowedTypes(type)
+            || type.FullName?.StartsWith("XeniaBot") == true
+            || type.FullName?.StartsWith("XeniaDiscord") == true);
+        BsonSerializer.RegisterSerializer(objectSerializer);
+
         InitMongoClient();
         InitServices(beforeServiceBuild);
 
-        var discordController = Services.GetRequiredService<DiscordService>();
-        discordController.Ready += (c) =>
-        {
-            new Thread((ThreadStart)delegate
-            {
-                RunServiceReady();
-                Task.Delay(2000).Wait();
-                RunServiceDelayedReady();
-            }).Start();
-        };
-        await discordController.Run();
+        var discordService = Services.GetRequiredService<DiscordService>();
+        discordService.Ready += DiscordServiceOnReady;
+        await discordService.Run();
         if (AlternativeMain != null)
         {
             await AlternativeMain(args);
         }
 
-        if (Config.Data.Health.Enable && Details.Platform == XeniaPlatform.Bot)
+        if (Config.Data.Health.Enable
+            && Details.Platform == XeniaPlatform.Bot)
         {
-            new HealthServer(this, Details.PlatformTag).Run(Config.Data.Health.Port);
+            Services.GetRequiredService<HealthServer>().Run();
         }
+    }
+    private void DiscordServiceOnReady(DiscordService service)
+    {
+        new Thread(DiscordServiceOnReadyThreadHandler)
+        {
+            Name = $"{nameof(CoreContext)}.{nameof(DiscordServiceOnReadyThreadHandler)}"
+        }.Start();
+    }
+    private void DiscordServiceOnReadyThreadHandler()
+    {
+        RunServiceReady();
+        Task.Delay(2000).GetAwaiter().GetResult();
+        RunServiceDelayedReady();
     }
     /// <summary>
     /// When not null, it is called after <see cref="DiscordService.Run()"/> in <see cref="MainAsync"/>.
     /// </summary>
-    public Func<string[], Task>? AlternativeMain { get; set; }
+    public CoreContextAlternativeMainDelegate? AlternativeMain { get; set; }
+    public CoreContextRegisterInteractionModulesDelegate RegisterModules { get; set; } = DefaultRegisterModules;
+    public CoreContextGetDeveloperModulesDelegate? RegisterDeveloperModules { get; set; }
+    private static async Task DefaultRegisterModules(InteractionService interactions, IServiceProvider services)
+    {
+        foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            await interactions.AddModulesAsync(item, services);
+        }
+    }
     public ProgramDetails Details { get; private set; }
     public ConfigService Config { get; private set; }
     public DiscordSocketClient Discord { get; private set; }
@@ -92,17 +112,16 @@ public class CoreContext
         return Services.GetRequiredService<T>();
     }
 
-
     /// <summary>
     /// UTC of <see cref="DateTimeOffset.ToUnixTimeSeconds()"/>
     /// </summary>
     public long StartTimestamp { get; set; } = 0;
 
-    public static JsonSerializerOptions SerializerOptions =>
-        new JsonSerializerOptions()
+    public static readonly JsonSerializerOptions SerializerOptions
+        = new()
         {
-            IgnoreReadOnlyFields = true,
-            IgnoreReadOnlyProperties = true,
+            IgnoreReadOnlyFields = false,
+            IgnoreReadOnlyProperties = false,
             IncludeFields = true,
             WriteIndented = true,
             ReferenceHandler = ReferenceHandler.Preserve
@@ -126,7 +145,7 @@ public class CoreContext
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to connect to MongoDB Server\n{ex}");
+            Log.Error(ex, $"Failed to connect to MongoDB Server");
             OnQuit(1);
         }
     }
@@ -136,14 +155,25 @@ public class CoreContext
     }
 
     #region Services
-    public void InitServices(Func<ServiceCollection, Task> beforeServiceBuild)
+    public void InitServices(CoreContextBeforeServiceBuildDelegate beforeServiceBuild)
     {
         InjectServices(new ServiceCollection(), beforeServiceBuild);
     }
     /// <summary>
     /// Initialize all service-related stuff. <see cref="DiscordService"/> is also created here and added as a singleton to <see cref="Services"/>
     /// </summary>
-    public void InjectServices(ServiceCollection services, Func<ServiceCollection, Task> beforeBuild)
+    public void InjectServices(ServiceCollection services, CoreContextBeforeServiceBuildDelegate beforeBuild)
+    {
+        InjectServicesDirect(services);
+        beforeBuild(services).GetAwaiter().GetResult();
+
+        RegisteredBaseControllers = [..services.Where(item
+            => item.ServiceType.IsAssignableTo(typeof(BaseService))
+            && !RegisteredBaseControllers.Contains(item.ServiceType)).Select(item => item.ServiceType)];
+        Services = services.BuildServiceProvider();
+        RunServiceInit();
+    }
+    public void InjectServicesDirect(IServiceCollection services)
     {
         services
             .AddSingleton(this)
@@ -151,12 +181,14 @@ public class CoreContext
             .AddSingleton<CronDaemon>()
             .AddSingleton(Config)
             .AddSingleton(Config.Data)
-            .AddSingleton(Discord);
+            .AddSingleton(Discord)
+            .AddSingleton<IDiscordClient>(Discord)
+            .AddSingleton<HealthServer>();
 
         var mongoDb = GetDatabase();
         if (mongoDb == null)
         {
-            Log.Error($"FATAL ERROR!!! CoreContext.GetDatabase() returned null!");
+            Log.Error($"FATAL ERROR!!! CoreContext.GetDatabase() returned null! (failed to get mongodb)");
             OnQuit(1);
         }
 
@@ -166,50 +198,31 @@ public class CoreContext
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
             .AddSingleton(s)
-            .AddSingleton<CommandHandler>()
             .AddSingleton<InteractionHandler>();
-
-        beforeBuild(services).Wait();
-
-        RegisteredBaseControllers = new List<Type>();
-        foreach (var item in services)
-        {
-            if (item.ServiceType.IsAssignableTo(typeof(BaseService)) &&
-                !RegisteredBaseControllers.Contains(item.ServiceType))
-            {
-                RegisteredBaseControllers.Add(item.ServiceType);
-            }
-        }
-
-        Services = services.BuildServiceProvider();
-        RunServiceInit();
     }
     private List<Type> RegisteredBaseControllers { get; set; }
 
     private void RunServiceInit()
     {
-        AllBaseServices((item) =>
+        AllBaseServices(async (item) =>
         {
-            item.InitializeAsync().Wait();
-            return Task.CompletedTask;
+            await item.InitializeAsync();
         });
     }
 
     private void RunServiceReady()
     {
-        AllBaseServices((item) =>
+        AllBaseServices(async (item) =>
         {
-            item.OnReady().Wait();
-            return Task.CompletedTask;
+            await item.OnReady();
         });
     }
 
     public void RunServiceDelayedReady()
     {
-        AllBaseServices((item) =>
+        AllBaseServices(async (item) =>
         {
-            item.OnReadyDelay();
-            return Task.CompletedTask;
+            await item.OnReadyDelay();
         });
     }
     /// <summary>
@@ -217,31 +230,24 @@ public class CoreContext
     /// </summary>
     public void AllBaseServices(Func<BaseService, Task> func)
     {
-        var taskList = new List<Task>();
         var ins = new List<BaseService>();
         foreach (var service in RegisteredBaseControllers)
         {
             var svc = Services.GetServices(service);
-            foreach (var item in svc)
+            foreach (var item in svc
+                .Where(e => e != null).Cast<object>())
             {
-                if (item != null && item.GetType().IsAssignableTo(typeof(BaseService)))
+                if (item is BaseService svcItem)
                 {
-                    ins.Add((BaseService)item);
+                    ins.Add(svcItem);
                 }
             }
         }
-        ins = ins.OrderBy(v => v.Priority)
-            .ThenBy(v => v.GetType().AssemblyQualifiedName).ToList();
-        foreach (var item in ins)
-        {
-            taskList.Add(new Task(delegate
-            {
-                func((BaseService)item).Wait();
-            }));
-        }
-        foreach (var i in taskList)
-            i.Start();
-        Task.WaitAll(taskList.ToArray());
+        Task.WhenAll(ins
+            .OrderBy(v => v.Priority)
+            .ThenBy(v => v.GetType().AssemblyQualifiedName)
+            .Select(e => func(e)))
+            .GetAwaiter().GetResult();
     }
     #endregion
 
@@ -257,3 +263,9 @@ public class CoreContext
         Config.Write(Config.Data);
     }
 }
+
+public delegate Task CoreContextRegisterInteractionModulesDelegate(InteractionService interactions, IServiceProvider services);
+public delegate Task<Discord.Interactions.ModuleInfo[]> CoreContextGetDeveloperModulesDelegate(InteractionService interactions, IServiceProvider services);
+public delegate Task CoreContextBeforeServiceBuildDelegate(IServiceCollection services);
+// Func<string[], Task>
+public delegate Task CoreContextAlternativeMainDelegate(string[] args);

@@ -1,0 +1,168 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using MongoDB.Driver;
+using NLog;
+using XeniaBot.MongoData.Models;
+using XeniaBot.Shared;
+
+namespace XeniaBot.MongoData.Repositories;
+
+[XeniaController]
+public class LevelMemberRepository : BaseRepository<LevelMemberModel>
+{
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
+    public LevelMemberRepository(IServiceProvider services)
+        : base(LevelMemberModel.CollectionName, services)
+    {
+        var collection = GetCollection();
+        if (collection == null)
+        {
+            throw new NoNullAllowedException($"{nameof(GetCollection)} returned null");
+        }
+
+        var collectionName = MongoCollectionName;
+
+        var existingIndexes = collection.Indexes.List().ToList();
+        var targetIndexes = new Dictionary<string, IndexKeysDefinition<LevelMemberModel>>()
+        {
+            {
+                collectionName + "_IX_UserIdGuildId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+                    .Descending(e => e.GuildId)
+            },
+            {
+                collectionName + "_IX_UserId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.UserId)
+            },
+            {
+                collectionName + "_IX_GuildId",
+                Builders<LevelMemberModel>
+                    .IndexKeys
+                    .Descending(e => e.GuildId)
+            }
+        };
+        foreach (var (name, idx) in targetIndexes)
+        {
+            if (!existingIndexes.Any(e => e.GetElement("name").Value.AsString == name))
+            {
+                var model = new CreateIndexModel<LevelMemberModel>(idx, new CreateIndexOptions()
+                {
+                    Name = name
+                });
+                try
+                {
+                    collection.Indexes.CreateOne(model);
+                    _log.Info($"{collectionName} - Created index \"{name}\"");
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex, $"{collectionName} - Failed to create index \"{name}\"");
+                }
+            }
+        }
+    }
+    
+    public async Task<LevelMemberModel?> Get(ulong userId, ulong guildId)
+    {
+        var filter = Builders<LevelMemberModel>
+            .Filter
+            .Where(v => v.UserId == userId && v.GuildId == guildId);
+        var res = await BaseFind(filter, limit: 1);
+        return await res.FirstOrDefaultAsync();
+    }
+    public async Task<ICollection<LevelMemberModel>> GetAllUsersCombined()
+    {
+        var filter = Builders<LevelMemberModel>
+            .Filter.Empty;
+        var result = await BaseFind(filter);
+        var data = new Dictionary<ulong, LevelMemberModel>();
+        foreach (var item in result.ToEnumerable())
+        {
+            data.TryAdd(item.UserId, new LevelMemberModel()
+            {
+                UserId = item.UserId
+            });
+            data[item.UserId].Xp += item.Xp;
+        }
+
+        return data.Select(v => v.Value).ToList();
+    }
+    public async Task<ICollection<LevelMemberModel>> GetGuild(ulong guildId)
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var filter = Builders<LevelMemberModel>
+            .Filter
+            .Where(v => v.GuildId == guildId);
+
+        var result = await BaseFind(filter);
+        return await result.ToListAsync();
+    }
+    /// <summary>
+    /// Delete many objects from the database
+    /// </summary>
+    /// <returns>Amount of items deleted</returns>
+    public async Task<long> Delete(ulong? user=null, ulong? guild=null, Func<ulong, bool>? xpFilter=null)
+    {
+        Func<LevelMemberModel, bool> filterFunction = (model) =>
+        {
+            int found = 0;
+            int required = 0;
+
+            required += user == null ? 0 : 1;
+            required += guild == null ? 0 : 1;
+            required += xpFilter == null ? 0 : 1;
+
+            found += user == model.UserId ? 1 : 0;
+            found += guild == model.GuildId ? 1 : 0;
+            if (xpFilter != null)
+            {
+                found += xpFilter(model.Xp) ? 1 : 0;
+            }
+
+            return found >= required;
+        };
+
+        var filter = Builders<LevelMemberModel>
+            .Filter
+            .Where(v => filterFunction(v));
+
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        var count = await collection.CountDocumentsAsync(filter);
+        if (count < 1)
+            return count;
+
+        await collection.DeleteManyAsync(filter);
+        return count;
+    }
+    public async Task Set(LevelMemberModel model)
+    {
+        var filter = Builders<LevelMemberModel>
+            .Filter
+            .Where(v => v.UserId == model.UserId && v.GuildId == model.GuildId);
+        var exists = (await Get(model.UserId, model.GuildId)) != null;
+
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        // Replace if exists, if not then we just insert
+        if (exists)
+        {
+            await collection.ReplaceOneAsync(filter, model);
+        }
+        else
+        {
+            await collection.InsertOneAsync(model);
+        }
+    }
+}

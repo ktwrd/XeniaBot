@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Data.Repositories;
+using NLog;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 
@@ -12,6 +13,7 @@ namespace XeniaBot.Core.Services.BotAdditions;
 [XeniaController]
 public class GuildGreeterService : BaseService
 {
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(GuildGreeterService));
     private readonly GuildGreeterConfigRepository _configWelcomeRepository;
     private readonly GuildGreetByeConfigRepository _configByeRepository;
     private readonly UserConfigRepository _userConfigRepo;
@@ -53,22 +55,22 @@ public class GuildGreeterService : BaseService
                 if (dmChannel == null)
                 {
                     createDMChannelError = "Couldn't create DM Channel";
-                    throw new Exception($"{nameof(user.CreateDMChannelAsync)} returned null");
+                    throw new InvalidOperationException($"{nameof(user.CreateDMChannelAsync)} returned null for user \"{user.DisplayName}\" ({user.Username}, {user.Id})");
                 }
                 await dmChannel.SendMessageAsync($"Greeter Message from {user.Guild.Name} ({user.Guild.Id})", embed: embed.Build());
                 return;
             }
             catch (Exception ex)
             {
-                var msg = $"Failed to create DM Channel for User {user.ToString()} ({user.Id}";
-                Log.Error($"{msg}\n{ex}");
+                var msg = $"Failed to create DM Channel for User {user} ({user.Id})";
+                _log.Error(ex, msg);
                 try
                 {
                     await _errReportService.ReportException(ex, msg);
                 }
                 catch (Exception iex)
                 {
-                    Log.Error($"Failed to report exception\n{iex}");
+                    _log.Error(iex, $"Failed to report exception");
                 }
                 createDMChannelError = ex.Message;
             }

@@ -1,0 +1,11 @@
+﻿@using XeniaBot.WebPanel.Models.BanSync
+@model BanSyncNotEnabledModel
+
+@{
+    ViewBag.Title = "BanSync Not Enabled";
+    Layout = "_Layout";
+}
+
+<h1>BanSync Not Enabled</h1>
+<p>Unable to perform operation since BanSync is not enabled in your guild, <code>@Model.Guild.Name</code> (@Model.Guild.Id)</p>
+<p><a href="https://xenia.kate.pet/guide/about_bansync">More information</a></p>

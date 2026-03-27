@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33110.190
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11512.155
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Core", "XeniaBot.Core\XeniaBot.Core.csproj", "{344CF567-9405-4F29-881C-41AC53BF6124}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Shared", "XeniaBot.Shared\XeniaBot.Shared.csproj", "{419905B5-47CD-4B5C-9E74-F92891C94048}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.Data", "XeniaBot.Data\XeniaBot.Data.csproj", "{DA272C17-4D64-4601-9954-4B4EEB08D351}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.MongoData", "XeniaBot.MongoData\XeniaBot.MongoData.csproj", "{DA272C17-4D64-4601-9954-4B4EEB08D351}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XeniaBot.WebPanel", "XeniaBot.WebPanel\XeniaBot.WebPanel.csproj", "{FD058453-C4F3-4733-896A-957E80B49149}"
 EndProject
@@ -18,6 +18,29 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Core.LevelSystem", "XeniaBot.Core.LevelSystem\XeniaBot.Core.LevelSystem.csproj", "{5AA27627-EA58-4163-B995-4FBCE0B6B3A6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaBot.Core.Shared", "XeniaBot.Core.Shared\XeniaBot.Core.Shared.csproj", "{B38442FB-F610-4544-A3ED-E30BF992D294}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		Directory.Packages.props = Directory.Packages.props
+		LICENSE.txt = LICENSE.txt
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		Dockerfile = Dockerfile
+		WebPanel.Dockerfile = WebPanel.Dockerfile
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.Data", "XeniaDiscord.Data\XeniaDiscord.Data.csproj", "{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.Common", "XeniaDiscord.Common\XeniaDiscord.Common.csproj", "{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.Interactions.DataMigration", "XeniaDiscord.Interactions.DataMigration\XeniaDiscord.Interactions.DataMigration.csproj", "{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.Interactions", "XeniaDiscord.Interactions\XeniaDiscord.Interactions.csproj", "{2F9D059A-570D-4374-BC54-BCE120992AFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -125,9 +148,60 @@ Global
 		{B38442FB-F610-4544-A3ED-E30BF992D294}.Release|arm64.Build.0 = Release|Any CPU
 		{B38442FB-F610-4544-A3ED-E30BF992D294}.Release|x86.ActiveCfg = Release|Any CPU
 		{B38442FB-F610-4544-A3ED-E30BF992D294}.Release|x86.Build.0 = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|arm64.Build.0 = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Debug|x86.Build.0 = Debug|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|arm64.ActiveCfg = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|arm64.Build.0 = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|x86.ActiveCfg = Release|Any CPU
+		{8D8B3B0C-E91E-408B-AA4B-D9808080BC64}.Release|x86.Build.0 = Release|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Debug|arm64.Build.0 = Debug|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Debug|x86.Build.0 = Debug|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Release|arm64.ActiveCfg = Release|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Release|arm64.Build.0 = Release|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Release|x86.ActiveCfg = Release|Any CPU
+		{8CC21AEF-8205-47FC-8DA8-9EAE3E7F9D95}.Release|x86.Build.0 = Release|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Debug|arm64.Build.0 = Debug|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Debug|x86.Build.0 = Debug|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Release|arm64.ActiveCfg = Release|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Release|arm64.Build.0 = Release|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Release|x86.ActiveCfg = Release|Any CPU
+		{A51E9C0E-CFE8-44FB-A5B9-7C6A55CFBAEF}.Release|x86.Build.0 = Release|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Debug|arm64.Build.0 = Debug|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Debug|x86.Build.0 = Debug|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Release|arm64.ActiveCfg = Release|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Release|arm64.Build.0 = Release|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Release|x86.ActiveCfg = Release|Any CPU
+		{2F9D059A-570D-4374-BC54-BCE120992AFD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8BB48EC1-3F3F-4EEE-A426-ACA07AECE046}

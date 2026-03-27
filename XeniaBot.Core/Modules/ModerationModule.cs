@@ -6,14 +6,14 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using XeniaBot.Core.Helpers;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Services;
+using XeniaBot.MongoData.Models;
+using XeniaBot.MongoData.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules;
 
-
+[CommandContextType(InteractionContextType.Guild)]
 public class ModerationModule : InteractionModuleBase
 {
     /// <exception cref="NonfatalException">When failed to fetch client/guild/member. This should be displayed to the user as well as the developers.</exception>

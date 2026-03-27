@@ -1,0 +1,18 @@
+﻿@model NotAuthorizedViewModel?
+@namespace XeniaBot.WebPanel.Views.Shared
+
+<h1>Unauthorized</h1>
+<p>You cannot access this page due to you not being logged in or you don't have the right permissions.</p>
+@if (@Model != null)
+{
+    <hr class="mt-2" />
+    @if (@Model.ShowLoginButton)
+    {
+        <a class="btn btn-success" asp-area="" asp-controller="Authentication" asp-action="SignInDiscord" asp-route-redirect="@Context.Request.Path">Login</a>
+    }
+    <hr class="mb-2" />
+    @if (!string.IsNullOrEmpty(@Model.Message))
+    {
+        <p>@Model.Message</p>
+    }
+}

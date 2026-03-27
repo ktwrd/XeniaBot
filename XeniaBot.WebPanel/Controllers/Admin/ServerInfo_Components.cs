@@ -4,7 +4,7 @@ using XeniaBot.WebPanel.Models.Component;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public partial class AdminController
+partial class AdminController
 {
     [HttpGet("~/Admin/Server/{id}/Settings/LevelSystem/Component")]
     [AuthRequired]

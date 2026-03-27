@@ -3,11 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using kate.shared.Helpers;
+using NLog;
 
 namespace XeniaBot.Shared;
 
 public static class FeatureFlags
 {
+    private static readonly Logger Log = LogManager.GetLogger(nameof(FeatureFlags));
     #region Parsing
     /// <summary>
     /// Parses an environment variable as a boolean. When trimmed&lowercased to `true` it will return true, but anything else will return `false`.
@@ -174,4 +176,6 @@ public static class FeatureFlags
     /// Sentry DSN. Will be disabled when empty or null.
     /// </summary>
     public static string SentryDSN => ParseString("SENTRY_DSN", "");
+
+    public static string NLogFileLocation => ParseString("NLogConfigFile", "nlog.config");
 }

@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.Data.Repositories;
-using XeniaBot.Data.Models;
-using XeniaBot.Data.Services;
-using XeniaBot.Shared;
+using XeniaBot.MongoData.Models;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
+using Microsoft.Extensions.Logging;
+using XeniaDiscord.Common.Services;
+using BanSyncGuildState = XeniaDiscord.Data.Models.BanSync.BanSyncGuildState;
 
 namespace XeniaBot.WebPanel.Controllers;
 
-public partial class AdminController
+partial class AdminController
 {
     /// <summary>
     /// Get information about a Guild
@@ -26,7 +26,7 @@ public partial class AdminController
     public async Task<IActionResult> ServerInfo(ulong id, string? message, string? messageType)
     {
         var model = new AdminServerModel();
-        await AspHelper.FillServerModel(id, model);
+        await AspHelper.FillServerModel(HttpContext.RequestServices, id, model);
         model.Message = message;
         model.MessageType = messageType;
         await PopulateModel(model);
@@ -54,7 +54,7 @@ public partial class AdminController
         }
         catch (Exception ex)
         {
-            Log.Error(ex);
+            _logger.LogError(ex, "Failed to refresh bans for Guild {GuildId}", id);
             await Program.Core.GetRequiredService<ErrorReportService>()
                 .ReportException(ex, $"Failed to refresh bans in {id}");
             model.MessageType = "danger";
@@ -81,11 +81,12 @@ public partial class AdminController
         {
             var res = await controller.SetGuildState(id, state, reason, doRefreshBans);
             if (res == null)
-                throw new Exception("Server Config not found");
+                throw new InvalidOperationException($"Server Config not found for Guild {id}");
         }
         catch (Exception ex)
         {
-            Log.Error(ex);
+            _logger.LogError(ex, "Failed to save bansync state for Guild {GuildId} (state={State}, reason={Reason}, doRefreshBans={DoRefreshBans})",
+                id, state, reason, doRefreshBans);
             model.MessageType = "danger";
             model.Message = ex.Message;
             return PartialView("ServerInfo/BanSyncComponent", model);
