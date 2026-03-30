@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text;
 using Discord;
 using Discord.Interactions;
@@ -42,6 +43,25 @@ public class GuildApprovalAdminModule : InteractionModuleBase
             .WithColor(Color.Blue);
         try
         {
+            var ourUser = await Context.Guild.GetCurrentUserAsync();
+            var ourUserPermissions = ourUser.GuildPermissions.ToList();
+            var missingPermissions = GuildApprovalService.RequiredGuildPermissions.Where(e => !ourUserPermissions.Contains(e)).ToFrozenSet();
+
+            if (missingPermissions.Count > 0)
+            {
+                embed.WithDescription(
+                    string.Join("\n",
+                        $"Missing permissions!",
+                        "```",
+                        string.Join("\n", missingPermissions.Select(e => e.ToString())),
+                        "```",
+                        "Make sure that you directly give Xenia those permissions, and not on a role it has so permission checking is more reliable."))
+                    .WithColor(Color.Red);
+                await FollowupAsync(embed: embed.Build());
+                return;
+            }
+
+
             var guildIdStr = Context.Guild.Id.ToString();
             var model = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr)
                 ?? new()
