@@ -425,6 +425,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         }
         async Task WrapError(Func<Task> callback)
         {
+            // TODO use ExceptionHelper.RetryOnTimedOut
             for (int i = 0; i <= 3; i++)
             {
                 try

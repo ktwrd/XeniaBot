@@ -1,6 +1,7 @@
 using System.Text;
 using Discord;
 using Microsoft.EntityFrameworkCore;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data.Models.GuildApproval;
 
@@ -180,21 +181,11 @@ partial class GuildApprovalService
         }
 
         ITextChannel? textChannel = null;
-        for (int i = 1; i <= 3; i++)
+
+        await ExceptionHelper.RetryOnTimedOut(async () =>
         {
-            try
-            {
-                textChannel = await guild.GetTextChannelAsync(channelId.Value);
-            }
-            catch (Exception ex)
-            {
-                var exStr = ex.ToString();
-                if (!exStr.Contains("timed out", StringComparison.OrdinalIgnoreCase) || i <= 3)
-                {
-                    await SubmitError(ex);
-                }
-            }
-        }
+            textChannel = await guild.GetTextChannelAsync(channelId.Value);
+        });
         if (textChannel == null)
         {
             throw new InvalidOperationException($"Could not find channel: {channelId.Value}");
@@ -209,30 +200,19 @@ partial class GuildApprovalService
         }
 
         var formattedContent = FormatMessageTemplate(config.GreeterMessageTemplate, guild, newUser);
-        for (int i = 1; i <= 3; i++)
+        await ExceptionHelper.RetryOnTimedOut(async () =>
         {
-            try
+            if (config.GreeterAsEmbed)
             {
-                if (config.GreeterAsEmbed)
-                {
-                    await textChannel.SendMessageAsync(
-                        messageContent,
-                        embed: new EmbedBuilder().WithDescription(formattedContent).Build());
-                }
-                else
-                {
-                    await textChannel.SendMessageAsync(messageContent + formattedContent);
-                }
+                await textChannel.SendMessageAsync(
+                    messageContent,
+                    embed: new EmbedBuilder().WithDescription(formattedContent).Build());
             }
-            catch (Exception ex)
+            else
             {
-                var exStr = ex.ToString();
-                if (!exStr.Contains("timed out", StringComparison.OrdinalIgnoreCase) || i <= 3)
-                {
-                    await SubmitError(ex);
-                }
+                await textChannel.SendMessageAsync(messageContent + formattedContent);
             }
-        }
+        });
         async Task SubmitError(Exception ex)
         {
             var msgSuffix = $"in guild \"{guild.Name}\" ({guild.Id}) for user \"{newUser.Username}#{newUser.Discriminator}\" ({newUser.Id})";
