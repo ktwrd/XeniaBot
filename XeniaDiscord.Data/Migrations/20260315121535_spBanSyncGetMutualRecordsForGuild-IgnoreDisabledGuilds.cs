@@ -20,6 +20,7 @@ AS $BODY$
 		return query
 		select bsr.* from ""BanSyncRecords"" bsr
 		left outer join ""Cache_GuildMember"" cgm on cgm.""UserId"" = bsr.""UserId"" and cgm.""GuildId"" = $1
+		left outer join ""BanSyncGuilds"" bsg on bsg.""GuildId"" = bsr.""GuildId""
 		where (bsr.""GuildId"" = $1
 			and bsr.""Ghost"" <> True
 			and bsg.""State"" in (3,4)
@@ -40,6 +41,7 @@ AS $BODY$
 		return query
 		select bsr.* from ""BanSyncRecords"" bsr
 		left outer join ""Cache_GuildMember"" cgm on cgm.""UserId"" = bsr.""UserId"" and cgm.""GuildId"" = $1
+		left outer join ""BanSyncGuilds"" bsg on bsg.""GuildId"" = bsr.""GuildId""
 		where (bsr.""GuildId"" = $1
 			and bsr.""Ghost"" <> True
 			and bsg.""State"" in (3,4)
