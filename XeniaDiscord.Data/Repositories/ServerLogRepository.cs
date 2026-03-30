@@ -1,3 +1,4 @@
+using Discord;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using XeniaDiscord.Data.Models.ServerLog;
@@ -35,6 +36,7 @@ public class ServerLogRepository
         return await Apply(db.ServerLogChannels.Where(e => e.Id == model.Id), options)
             .FirstOrDefaultAsync();
     }
+
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -47,6 +49,25 @@ public class ServerLogRepository
         return await Apply(query, options)
             .ToListAsync();
     }
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        ulong guildId,
+        ulong channelId,
+        ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(_db, guildId, channelId, options);
+    public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        XeniaDbContext db,
+        ulong guildId,
+        ulong channelId,
+        ChannelQueryOptions? options = null)
+    {
+        var guildIdStr = guildId.ToString();
+        var channelIdStr = channelId.ToString();
+        var query = db.ServerLogChannels
+            .Where(e => e.GuildId == guildIdStr && e.ChannelId == channelIdStr);
+        return await Apply(query, options).ToListAsync();
+    }
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(ulong guildId, ServerLogEvent[] events, ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(_db, guildId, events, options);
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -176,15 +197,20 @@ public class ServerLogRepository
         return result;
     }
 
-    public async Task<bool> SetChannelEnabled(ulong guildId, ulong channelId, bool enabled)
+
+    public async Task<ServerLogChannelModel?> AddChannelEvent(
+        ulong guildId,
+        ulong channelId,
+        ServerLogEvent @event,
+        IUser? byUserId = null)
     {
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var result = await SetChannelEnabled(db, guildId, channelId, enabled);
+            var result = await AddChannelEvent(db, guildId, channelId, @event, byUserId);
             await db.SaveChangesAsync();
-            await trans.RollbackAsync();
+            await trans.CommitAsync();
             return result;
         }
         catch
@@ -193,19 +219,34 @@ public class ServerLogRepository
             throw;
         }
     }
-    public async Task<bool> SetChannelEnabled(
+    public async Task<ServerLogChannelModel?> AddChannelEvent(
         XeniaDbContext db,
-        ulong guildId,
-        ulong channelId,
-        bool enabled)
+        ulong guildId, ulong channelId,
+        ServerLogEvent @event,
+        IUser? byUserId = null)
     {
         var guildIdStr = guildId.ToString();
         var channelIdStr = channelId.ToString();
-        return await db.ServerLogChannels.Where(e => e.GuildId == guildIdStr && e.ChannelId == channelIdStr)
-            .ExecuteUpdateAsync(e => e
-                .SetProperty(p => p.Enabled, enabled)) > 0;
-    }
+        if (await db.ServerLogChannels.AnyAsync(e => e.GuildId == guildIdStr && e.ChannelId == channelIdStr && e.Event == @event))
+        {
+            // already exists
+            return null;
+        }
 
+        var model = new ServerLogChannelModel
+        {
+            GuildId = guildIdStr,
+            ChannelId = channelIdStr,
+            Event = @event,
+        };
+        if (byUserId != null)
+        {
+            model.CreatedByUserId = byUserId.Id.ToString();
+        }
+
+        await db.ServerLogChannels.AddAsync(model);
+        return model;
+    }
 
     #region Insert or Update
     public async Task InsertOrUpdate(ServerLogGuildModel model)
@@ -326,6 +367,19 @@ public class ServerLogRepository
         {
             q = q.Include(e => e.GuildCache);
         }
+        if (options.IncludeServerLogGuild)
+        {
+            q = q.Include(e => e.ServerLogGuild);
+            if (options.IncludeGuildCache)
+            {
+                q = q.Include(e => e.ServerLogGuild)
+                    .ThenInclude(e => e.GuildCache);
+            }
+        }
+        if (options.IgnoreDisabledGuilds)
+        {
+            q = q.Where(e => e.ServerLogGuild.Enabled);
+        }
         return q.AsNoTracking();
     }
 
@@ -338,5 +392,7 @@ public class ServerLogRepository
     public class ChannelQueryOptions
     {
         public bool IncludeGuildCache { get; set; } = false;
+        public bool IncludeServerLogGuild {get;set;} = false;
+        public bool IgnoreDisabledGuilds { get; set; } = false;
     }
 }

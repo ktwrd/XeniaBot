@@ -45,10 +45,6 @@ public class ServerLogChannelModel
     /// What event should be sent to this channel?
     /// </summary>
     public ServerLogEvent Event { get; set; }
-    /// <summary>
-    /// Is this event enabled for this channel?
-    /// </summary>
-    public bool Enabled { get; set; }
 
     /// <summary>
     /// UTC Time when this record was created.

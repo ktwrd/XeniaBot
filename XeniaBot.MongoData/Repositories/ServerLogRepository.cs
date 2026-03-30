@@ -9,6 +9,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
+[Obsolete("Use XeniaDiscord.Data.Repositories.ServerLogRepository")]
 public class ServerLogRepository : BaseRepository<ServerLogModel>
 {
     public ServerLogRepository(IServiceProvider services)
