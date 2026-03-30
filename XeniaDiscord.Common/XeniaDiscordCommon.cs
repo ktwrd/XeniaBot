@@ -21,7 +21,9 @@ public static class XeniaDiscordCommon
         {
             typeof(DiscordCacheService),
             typeof(UserCacheService),
-            typeof(GuildCacheService)
+            typeof(GuildCacheService),
+
+            typeof(GuildApprovalService),
         };
         foreach (var t in types)
         {
