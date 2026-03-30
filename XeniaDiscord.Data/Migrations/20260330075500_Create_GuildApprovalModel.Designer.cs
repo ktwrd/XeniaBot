@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using XeniaDiscord.Data;
@@ -11,9 +12,11 @@ using XeniaDiscord.Data;
 namespace XeniaDiscord.Data.Migrations
 {
     [DbContext(typeof(XeniaDbContext))]
-    partial class XeniaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330075500_Create_GuildApprovalModel")]
+    partial class Create_GuildApprovalModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -337,36 +340,6 @@ namespace XeniaDiscord.Data.Migrations
                     b.ToTable("Cache_User", (string)null);
                 });
 
-            modelBuilder.Entity("XeniaDiscord.Data.Models.GuildApproval.GuildApprovalLogEventModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ApprovedByUserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("GuildId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("RecordCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GuildId", "UserId");
-
-                    b.ToTable("GuildApprovalLogEvent", (string)null);
-                });
-
             modelBuilder.Entity("XeniaDiscord.Data.Models.GuildApproval.GuildApprovalModel", b =>
                 {
                     b.Property<string>("GuildId")
@@ -374,10 +347,6 @@ namespace XeniaDiscord.Data.Migrations
                         .HasColumnType("character varying(40)");
 
                     b.Property<string>("ApprovedRoleId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("ApproverRoleId")
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 

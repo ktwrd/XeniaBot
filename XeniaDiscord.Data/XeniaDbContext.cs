@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
 using XeniaDiscord.Data.Extensions;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.GuildApproval;
 using XeniaDiscord.Data.Models.PartialSnapshot;
 
 namespace XeniaDiscord.Data;
@@ -34,6 +34,9 @@ public class XeniaDbContext : DbContext
     public DbSet<BanSyncGuildModel> BanSyncGuilds { get; set; }
     public DbSet<BanSyncGuildSnapshotModel> BanSyncGuildSnapshots { get; set; }
     #endregion
+
+    public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
+    public DbSet<GuildApprovalLogEventModel> GuildApprovalLogEvents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -130,6 +133,34 @@ public class XeniaDbContext : DbContext
             b.HasIndex(e => new { e.Timestamp, e.GuildId }).IsDescending();
         });
         #endregion
+
+        builder.Entity<GuildApprovalModel>(b =>
+        {
+            b.ToTable(GuildApprovalModel.TableName).HasKey(e => e.GuildId); 
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.Enabled
+            });
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.Enabled,
+                e.EnableGreeter
+            });
+        });
+        builder.Entity<GuildApprovalLogEventModel>(b =>
+        {
+            b.ToTable(GuildApprovalLogEventModel.TableName).HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.UserId
+            });
+        });
+
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)]))
             .HasName("spBanSyncGetMutualRecordsForGuild");
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)]))

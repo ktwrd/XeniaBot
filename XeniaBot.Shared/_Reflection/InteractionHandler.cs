@@ -6,6 +6,7 @@ using NLog;
 using Sentry;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -114,6 +115,29 @@ public class InteractionHandler
         }
         Log.Debug($"Loaded [{_interactionService.Modules.Count}] modules\n" + string.Join("\n", lines));
         _client.InteractionCreated += InteractionCreateAsync;
+        _client.ModalSubmitted += ModalSubmittedAsync;
+    }
+
+    private async Task ModalSubmittedAsync(SocketModal interaction)
+    {
+        try
+        {
+            var context = new SocketInteractionContext(
+                _client,
+                interaction);
+            var result = await _interactionService.ExecuteCommandAsync(
+                context,
+                _services);
+            // Debugger.Break();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                SentryHelper.SetInteractionInfo(scope, interaction);
+            });
+        }
     }
 
     private async Task InteractionCreateAsync(SocketInteraction interaction)
