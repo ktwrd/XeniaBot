@@ -3,6 +3,7 @@ using XeniaDiscord.Data.Extensions;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.PartialSnapshot;
+using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Data;
@@ -43,6 +44,11 @@ public class XeniaDbContext : DbContext
     public DbSet<BanSyncRecordModel> BanSyncRecords { get; set; }
     public DbSet<BanSyncGuildModel> BanSyncGuilds { get; set; }
     public DbSet<BanSyncGuildSnapshotModel> BanSyncGuildSnapshots { get; set; }
+    #endregion
+
+    #region Server Log
+    public DbSet<ServerLogChannelModel> ServerLogChannels { get; set; }
+    public DbSet<ServerLogGuildModel> ServerLogGuilds { get; set; }
     #endregion
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -217,6 +223,46 @@ public class XeniaDbContext : DbContext
             b.HasIndex(e => new { e.Timestamp, e.GuildId }).IsDescending();
         });
         #endregion
+
+        #region Server Log
+        builder.Entity<ServerLogGuildModel>(b =>
+        {
+            b.ToTable(ServerLogGuildModel.TableName) 
+            .HasKey(e => e.GuildId);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.Enabled
+            });
+
+            b.HasOne(e => e.GuildCache)
+            .WithMany()
+            .HasForeignKey(e => e.GuildId);
+
+            b.HasMany(e => e.ServerLogChannels)
+            .WithOne()
+            .HasForeignKey(e => e.GuildId);
+        });
+        builder.Entity<ServerLogChannelModel>(b =>
+        {
+            b.ToTable(ServerLogChannelModel.TableName)
+            .HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.ChannelId,
+                e.Event,
+                e.Enabled
+            });
+
+            b.HasOne(e => e.GuildCache)
+            .WithMany()
+            .HasForeignKey(e => e.GuildId);
+        });
+        #endregion
+
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)]))
             .HasName("spBanSyncGetMutualRecordsForGuild");
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)]))
