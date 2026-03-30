@@ -5,6 +5,35 @@ namespace XeniaDiscord.Common.Services;
 
 partial class GuildApprovalService
 {
+    public async Task<EmbedBuilder> ApproveUserEmbed(
+        IGuildUser user,
+        IUser doneByUser,
+        IInteractionContext? context = null)
+    {
+        var embed = new EmbedBuilder()
+            .WithTitle("Approve User")
+            .WithColor(Color.Blue);
+        try
+        {
+            var result = await ApproveUser(user, doneByUser);
+            
+            embed.Color = result.IsSuccess ? Color.Green : Color.Red;
+            embed.WithDescription(result.FormatForEmbed());
+            return embed;
+        }
+        catch (Exception ex)
+        {
+            var errorType = $"{ex.GetType().Name}.{ex.GetType().Name}".Replace("`", "\\`");
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithContext(context)
+                .WithUser(user));
+            return embed
+                .WithDescription(string.Join("\n", $"Failed to approve user: {user.Mention}", $"`{errorType}`"))
+                .WithColor(Color.Red);
+        }
+    }
+
     public async Task<EmbedBuilder> SetApprovedRoleEmbed(
         IGuild guild,
         IRole role,
