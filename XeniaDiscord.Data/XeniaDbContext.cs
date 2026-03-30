@@ -32,6 +32,7 @@ public class XeniaDbContext : DbContext
     #endregion
 
     #region Discord Cache
+    public DbSet<GuildChannelCacheModel> GuildChannelCache { get; set; }
     public DbSet<GuildMemberCacheModel> GuildMemberCache { get; set; }
     public DbSet<GuildCacheModel> GuildCache { get; set; }
     public DbSet<UserCacheModel> UserCache { get; set; }
@@ -98,6 +99,14 @@ public class XeniaDbContext : DbContext
         {
             b.ToTable(GuildMemberRoleSnapshotModel.TableName)
              .HasKey(e => e.RecordId);
+            
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildMemberSnapshotId,
+                e.GuildId,
+                e.UserId
+            }).IsDescending();
         });
 
         builder.Entity<UserSnapshotModel>(b =>
@@ -131,6 +140,22 @@ public class XeniaDbContext : DbContext
             .WithOne(e => e.Guild)
             .HasForeignKey(e => e.GuildId)
             .IsRequired();
+
+            b.HasMany(e => e.Channels)
+            .WithOne(e => e.GuildCache)
+            .HasForeignKey(e => e.GuildId)
+            .IsRequired();
+        });
+        builder.Entity<GuildChannelCacheModel>(b =>
+        {
+            b.ToTable(GuildChannelCacheModel.TableName)
+            .HasKey(e => e.ChannelId);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.ChannelId
+            });
         });
         builder.Entity<GuildMemberCacheModel>(b =>
         {
