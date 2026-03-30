@@ -82,7 +82,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         }
     }
 
-    [SlashCommand("set-role", "Set role to be given to approved users")]
+    [SlashCommand("set-approved-role", "Set role to be given to approved users")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [RequireBotPermission(GuildPermission.ManageRoles)]
     public async Task SetRoleAsync(
