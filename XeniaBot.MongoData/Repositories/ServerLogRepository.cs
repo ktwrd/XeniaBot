@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -29,6 +30,11 @@ public class ServerLogRepository : BaseRepository<ServerLogModel>
                 ServerId = serverId
             };
         return first;
+    }
+    public async Task<List<ServerLogModel>> GetAll()
+    {
+        var result = await BaseFind(Builders<ServerLogModel>.Filter.Empty);
+        return await result.ToListAsync();
     }
 
     public async Task Set(ServerLogModel model)

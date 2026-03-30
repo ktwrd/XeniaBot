@@ -33,6 +33,8 @@ public static class XeniaDiscordData
             typeof(GuildCacheRepository),
             typeof(GuildMemberCacheRepository),
             typeof(UserCacheRepository),
+
+            typeof(ServerLogRepository)
         };
         foreach (var i in types)
         {
