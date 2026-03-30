@@ -50,6 +50,7 @@ public partial class GuildApprovalService
     {
         GuildPermission.ViewAuditLog,
         GuildPermission.ManageRoles,
+        GuildPermission.ModerateMembers,
         
         GuildPermission.SendMessages,
         GuildPermission.ViewChannel,
