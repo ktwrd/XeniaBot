@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -9,6 +10,8 @@ using XeniaDiscord.Common.Services;
 namespace XeniaDiscord.Interactions.Modules;
 
 [Group("cacheadmin", "Cache administration")]
+[DeveloperModule]
+[CommandContextType(InteractionContextType.Guild)]
 public class DiscordCacheAdminModule : InteractionModuleBase
 {
     private readonly ConfigData _config;

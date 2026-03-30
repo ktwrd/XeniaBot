@@ -13,6 +13,8 @@ using MongoBanSyncGuildState = XeniaBot.MongoData.Models.BanSyncGuildState;
 namespace XeniaDiscord.Interactions.DataMigration.Modules;
 
 [Group("data-migration", "Used for the MongoDB -> PostgreSQL data migration.")]
+[DeveloperModule]
+[CommandContextType(InteractionContextType.Guild)]
 public class DataMigrationModule : InteractionModuleBase
 {
     private readonly ConfigData _config;

@@ -8,8 +8,9 @@ using XeniaBot.MongoData.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
-[Discord.Interactions.Group("log", "Configure Server Event Logging")]
+[Group("log", "Configure Server Event Logging")]
 [RequireUserPermission(GuildPermission.ManageGuild)]
+[CommandContextType(InteractionContextType.Guild)]
 public class ServerLogModule : InteractionModuleBase
 {
     private async Task<EmbedBuilder> Logic(ServerLogEvent logEvent, ulong channelId)

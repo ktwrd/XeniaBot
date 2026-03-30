@@ -92,6 +92,7 @@ public class CoreContext
     /// </summary>
     public CoreContextAlternativeMainDelegate? AlternativeMain { get; set; }
     public CoreContextRegisterInteractionModulesDelegate RegisterModules { get; set; } = DefaultRegisterModules;
+    public CoreContextGetDeveloperModulesDelegate? RegisterDeveloperModules { get; set; }
     private static async Task DefaultRegisterModules(InteractionService interactions, IServiceProvider services)
     {
         foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
@@ -264,6 +265,7 @@ public class CoreContext
 }
 
 public delegate Task CoreContextRegisterInteractionModulesDelegate(InteractionService interactions, IServiceProvider services);
+public delegate Task<Discord.Interactions.ModuleInfo[]> CoreContextGetDeveloperModulesDelegate(InteractionService interactions, IServiceProvider services);
 public delegate Task CoreContextBeforeServiceBuildDelegate(IServiceCollection services);
 // Func<string[], Task>
 public delegate Task CoreContextAlternativeMainDelegate(string[] args);

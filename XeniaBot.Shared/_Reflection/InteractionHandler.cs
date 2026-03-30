@@ -6,6 +6,7 @@ using NLog;
 using Sentry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -91,9 +92,15 @@ public class InteractionHandler
     public async Task InitializeAsync()
     {
         await _coreContext.RegisterModules(_interactionService, _services);
-        var result = await _interactionService.RegisterCommandsGloballyAsync();
-        await PostDBL(result);
-        
+        var result = await _interactionService.RegisterCommandsGloballyAsync(deleteMissing: true);
+        if (_coreContext.RegisterDeveloperModules != null)
+        {
+            var devModules = await _coreContext.RegisterDeveloperModules(_interactionService, _services);
+            await _interactionService.AddModulesToGuildAsync(SharedGlobals.InternalGuildId, true, devModules);
+        }
+        // TODO fix. currently doesn't work
+        // await PostDBL(result);
+
         var lines = new List<string>();
         foreach (var item in _interactionService.Modules)
         {

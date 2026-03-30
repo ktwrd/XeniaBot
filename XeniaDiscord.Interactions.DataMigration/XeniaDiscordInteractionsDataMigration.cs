@@ -10,12 +10,15 @@ public static class XeniaDiscordInteractionsDataMigration
     public static void RegisterServices(IServiceCollection services)
     {
     }
-    public static async Task RegisterModules(InteractionService interactions, IServiceProvider services)
+    public static async Task<ModuleInfo[]> RegisterDeveloperModules(InteractionService interactions, IServiceProvider services)
     {
         var transaction = SentryHelper.CreateTransaction();
-        await Task.WhenAll(
-            interactions.AddModuleAsync<DataMigrationModule>(services)
-            );
+        var types = new[]
+        {
+            typeof(DataMigrationModule),
+        };
+        var result = await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();
+        return result;
     }
 }

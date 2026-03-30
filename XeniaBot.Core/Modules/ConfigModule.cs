@@ -18,6 +18,7 @@ public class ConfigModule : InteractionModuleBase
     private CoreContext _core => CoreContext.Instance!;
     [SlashCommand("ticket", "Configure the Ticket Module. To view the current config, run with no options.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [CommandContextType(InteractionContextType.Guild)]
     public async Task TicketConfig(
         [Discord.Interactions.Summary(description: "Parent Category for all channels that will be created when a ticket is made.")]
         [ChannelTypes(ChannelType.Category)] ICategoryChannel? ticketCategory = null,
@@ -69,6 +70,7 @@ public class ConfigModule : InteractionModuleBase
     #region Warn Strike
     [SlashCommand("strike-enable", "Enable Warn Strikes")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [CommandContextType(InteractionContextType.Guild)]
     public async Task WarnStrikeConfigEnable()
     {
         await DeferAsync();
@@ -101,6 +103,7 @@ public class ConfigModule : InteractionModuleBase
 
     [SlashCommand("strike-disable", "Enable Warn Strikes")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [CommandContextType(InteractionContextType.Guild)]
     public async Task WarnStrikeConfigDisable()
     {
         await DeferAsync();
@@ -133,6 +136,7 @@ public class ConfigModule : InteractionModuleBase
 
     [SlashCommand("strike-window", "Set maximum age for a Warn to be Active")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [CommandContextType(InteractionContextType.Guild)]
     public async Task WarnStrikeConfigSetWindow(
         [Summary(description: "Maximum age for a Warn to count as an Active Strike")]
         double days)
@@ -191,6 +195,7 @@ public class ConfigModule : InteractionModuleBase
 
     [SlashCommand("strike-limit", "Set the amount Warns before action should be taken.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [CommandContextType(InteractionContextType.Guild)]
     public async Task WarnStrikeConfigSetLimit(
         [Summary(description: "Maximum amount of warns before action should be taken")]
         int limit)
@@ -240,6 +245,7 @@ public class ConfigModule : InteractionModuleBase
 
     [SlashCommand("strike", "Get current config for Warn Strikes")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [CommandContextType(InteractionContextType.Guild)]
     public async Task WarnStrikeConfigGet()
     {
         await DeferAsync();

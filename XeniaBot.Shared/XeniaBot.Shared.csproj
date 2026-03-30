@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CSharpFunctionalExtensions" />
     <PackageReference Include="DiffPlex" />
     <PackageReference Include="Discord.Net" />
     <PackageReference Include="FastCloner" />

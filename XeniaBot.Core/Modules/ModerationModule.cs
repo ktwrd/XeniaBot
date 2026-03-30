@@ -13,7 +13,7 @@ using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules;
 
-
+[CommandContextType(InteractionContextType.Guild)]
 public class ModerationModule : InteractionModuleBase
 {
     /// <exception cref="NonfatalException">When failed to fetch client/guild/member. This should be displayed to the user as well as the developers.</exception>

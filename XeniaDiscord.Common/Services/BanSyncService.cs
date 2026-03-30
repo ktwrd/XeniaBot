@@ -214,8 +214,17 @@ public class BanSyncService : BaseService
 
     private async Task DiscordClientOnUserBannedInternal(SocketUser user, SocketGuild guild)
     {
-        // Don't send notification if 
         var config = await _bansyncGuildRepository.GetAsync(guild.Id);
+        if (config == null)
+        {
+            config = new BanSyncGuildModel(guild.Id)
+            {
+                Enable = false,
+                State = BanSyncGuildState.Unknown
+            };
+            await _bansyncGuildRepository.InsertOrUpdate(_db, config);
+            await _db.SaveChangesAsync();
+        }
 
         RestBan? banInfo = null;
         try
@@ -224,11 +233,18 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
-            await _err.Submit(new ErrorReportBuilder()
-                .WithException(ex)
-                .WithNotes($"Failed to get ban info for user {user} ({user.Id}) in guild \"{guild.Name}\" ({guild.Id})")
-                .WithUser(user)
-                .WithGuild(guild));
+            var msg = $"Failed to get ban info for user {user} ({user.Id}) in guild \"{guild.Name}\" ({guild.Id})";
+            if (config.Enable || config.State == BanSyncGuildState.Active)
+            {
+                await _err.Submit(new ErrorReportBuilder()
+                    .WithException(ex)
+                    .WithNotes(msg)
+                    .WithUser(user)
+                    .WithGuild(guild));
+            }
+            {
+                _log.Warn(ex, msg);
+            }
         }
         RestAuditLogEntry? mostRelevantAuditLogEntry = null;
         try

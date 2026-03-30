@@ -3,7 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Sentry;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -93,26 +95,32 @@ public static class Program
         Core = new CoreContext(ProgramDetails)
         {
             StartTimestamp = StartTimestamp,
-            RegisterModules = CoreContextRegisterModules
+            RegisterModules = CoreContextRegisterModules,
+            RegisterDeveloperModules = CoreContextRegisterDeveloperModules
         };
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
-            SentrySdk.Init(new SentryOptions()
+            SentrySdk.Init(static options =>
             {
-                Dsn = FeatureFlags.SentryDSN,
-                TracesSampleRate = 1.0,
-                IsGlobalModeEnabled = true,
-                Debug = ProgramDetails.Debug
+                Update(options);
             });
             LogManager.Configuration?.AddSentry(static options =>
             {
-                options.Dsn = FeatureFlags.SentryDSN;
-                options.TracesSampleRate = 1.0;
-                options.IsGlobalModeEnabled = true;
-                options.Debug = ProgramDetails.Debug;
+                Update(options);
             });
         }
         Core.MainAsync(args, CoreContextBeforeServiceBuild).Wait();
+    }
+    private static void Update(SentryOptions options)
+    {
+        options.Dsn = FeatureFlags.SentryDSN;
+        options.Release = VersionRaw;
+        options.SendDefaultPii = true;
+        options.AttachStacktrace = true;
+        options.Environment = ProgramDetails.Debug ? "production" : "debug";
+        options.TracesSampleRate = 1.0;
+        options.IsGlobalModeEnabled = false;
+        options.Debug = ProgramDetails.Debug;
     }
     private static async Task CoreContextRegisterModules(InteractionService interactions, IServiceProvider services)
     {
@@ -121,12 +129,26 @@ public static class Program
         {
             await XeniaDiscordCoreInteractions.RegisterModules(interactions, services);
             await XeniaDiscordInteractions.RegisterModules(interactions, services);
-            await XeniaDiscordInteractionsDataMigration.RegisterModules(interactions, services);
         }
         finally
         {
             transaction.Finish();
         }
+    }
+    private static async Task<ModuleInfo[]> CoreContextRegisterDeveloperModules(InteractionService interactions, IServiceProvider services)
+    {
+        var transaction = SentryHelper.CreateTransaction();
+        var result = new List<ModuleInfo>();
+        try
+        {
+            result.AddRange(await XeniaDiscordInteractions.RegisterDeveloperModules(interactions, services));
+            result.AddRange(await XeniaDiscordInteractionsDataMigration.RegisterDeveloperModules(interactions, services));
+        }
+        finally
+        {
+            transaction.Finish();
+        }
+        return result.ToArray();
     }
     private static Task CoreContextBeforeServiceBuild(IServiceCollection services)
     {
