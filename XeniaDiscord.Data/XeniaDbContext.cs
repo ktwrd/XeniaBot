@@ -36,6 +36,7 @@ public class XeniaDbContext : DbContext
     #endregion
 
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
+    public DbSet<GuildApprovalLogEventModel> GuildApprovalLogEvents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -147,6 +148,16 @@ public class XeniaDbContext : DbContext
                 e.GuildId,
                 e.Enabled,
                 e.EnableGreeter
+            });
+        });
+        builder.Entity<GuildApprovalLogEventModel>(b =>
+        {
+            b.ToTable(GuildApprovalLogEventModel.TableName).HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.UserId
             });
         });
 
