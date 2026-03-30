@@ -15,7 +15,6 @@ public class ServerLogChannelModel
         Id = Guid.NewGuid();
         GuildId = "0";
         ChannelId = "0";
-        Enabled = false;
 
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = CreatedAt;

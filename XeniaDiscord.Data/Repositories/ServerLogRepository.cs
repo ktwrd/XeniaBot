@@ -313,7 +313,6 @@ public class ServerLogRepository
             await db.ServerLogChannels.Where(e => e.Id == model.Id)
                 .ExecuteUpdateAsync(e => e
                     .SetProperty(p => p.Event, model.Event)
-                    .SetProperty(p => p.Enabled, model.Enabled)
                     .SetProperty(p => p.UpdatedAt, model.UpdatedAt)
                     .SetProperty(p => p.UpdatedByUserId, model.UpdatedByUserId));
             _log.Debug($"Updated record (GuildId={model.GuildId},ChannelId={model.ChannelId},Event={model.Event})");

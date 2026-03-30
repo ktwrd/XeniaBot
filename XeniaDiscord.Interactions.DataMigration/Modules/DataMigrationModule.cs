@@ -172,6 +172,34 @@ public class DataMigrationModule : InteractionModuleBase
         }
     }
     
+    [SlashCommand("srvlog-cfg", "Configuration for Server Logging")]
+    public async Task ServerLogConfig()
+    {
+        if (!_config.UserWhitelist.Contains(Context.User.Id))
+        {
+            await Context.Interaction.RespondAsync("Invalid permissions.");
+            return;
+        }
+        await Context.Interaction.RespondAsync("Started processing. You'll get updates about anything.");
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
+        {
+            // TODO migrate mongodb server log config to EF Core
+            
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await Context.Channel.SendFileAsync(
+                new MemoryStream(System.Text.Encoding.UTF8.GetBytes(ex.ToString())),
+                "exception.txt",
+                "Failed to migrate data!");
+            await trans.RollbackAsync();
+        }
+    }
+
     private async Task SendStatusUpdate(
         string message)
     {
