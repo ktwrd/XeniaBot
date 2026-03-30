@@ -34,78 +34,8 @@ public class GuildApprovalModule : InteractionModuleBase
             .WithColor(Color.Blue);
         try
         {
-            var guildIdStr = Context.Guild.Id.ToString();
-            var config = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr);
-
-            if (config == null)
-            {
-                embed.WithDescription($"Approval system has not been configured.").WithColor(Color.Red);
-                await FollowupAsync(embed: embed.Build());
-                return;
-            }
-            if (!config.Enabled)
-            {
-                embed.WithDescription("Approval system is not enabled.").WithColor(Color.Red);
-                await FollowupAsync(embed: embed.Build());
-                return;
-            }
-
-            var roleId = config.GetApprovedRoleId();
-            if (!roleId.HasValue)
-            {
-                embed.WithDescription("\"Approved Role\" has not been configured.").WithColor(Color.Red);
-                await FollowupAsync(embed: embed.Build());
-                return;
-            }
-            var role = await Context.Guild.GetRoleAsync(roleId.Value);
-            if (role == null)
-            {
-                embed.WithDescription($"Could not find role: `{roleId.Value}` <@&{roleId.Value}>").WithColor(Color.Red);
-                await FollowupAsync(embed: embed.Build());
-                return;
-            }
-
-            var targetFormatted = user.Username + (string.IsNullOrEmpty(user.Discriminator.Trim('0')?.Trim()) ? "" : $"#{user.Discriminator}");
-            var invokerFormatted = Context.User.Username + (string.IsNullOrEmpty(Context.User.Discriminator.Trim('0')?.Trim()) ? "" : $"#{Context.User.Discriminator}");
-            if (user.RoleIds.Contains(role.Id))
-            {
-                embed.WithDescription($"User already has been approved!\n-# user: `{targetFormatted}` ({user.Id})\n-# role: {role.Mention}")
-                .WithColor(Color.Orange);
-            }
-            else
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    try
-                    {
-                        await user.AddRoleAsync(role);
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        if (!ex.ToString().ToLower().Contains("timed out"))
-                        {
-                            break;
-                        }
-                        else if (i == 2)
-                        {
-                            throw;
-                        }
-                    }
-                }
-                embed.WithDescription($"User {invokerFormatted} ({Context.User.Id})\nHas approved {user.Mention} ({targetFormatted}, {user.Id})")
-                .WithColor(Color.Green);
-            }
-            try
-            {
-                await _service.SendGreeterMessage(Context.Guild, user);
-            }
-            catch (Exception ex)
-            {
-                _log.Warn(ex, $"Failed to send greeter message for user \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{Context.Guild.Name}\" ({Context.Guild.Id})");
-            }
+            embed = await _service.ApproveUserEmbed(user, Context.User, Context);
             await FollowupAsync(embed: embed.Build());
-            return;
         }
         catch (Exception ex)
         {
