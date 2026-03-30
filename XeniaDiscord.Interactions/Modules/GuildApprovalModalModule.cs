@@ -61,6 +61,7 @@ public class GuildApprovalModalModule : InteractionModuleBase
             return;
         }
 
+            await DeferAsync();
         var guildIdStr = Context.Guild.Id.ToString();
         var model = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr)
             ?? new()
@@ -92,12 +93,12 @@ public class GuildApprovalModalModule : InteractionModuleBase
                 .WithContext(Context)
                 .AddSerializedAttachment("modal.json", modal)
                 .AddSerializedAttachment("guildApprovalModel.json", model));
-            await RespondAsync("Failed to save greeter configuration\n-# This error has been reported to the developers.");
+            await FollowupAsync("Failed to save greeter configuration\n-# This error has been reported to the developers.");
             return;
         }
         try
         {
-            await RespondAsync("Successfully updated greeter configuration");
+            await FollowupAsync("Successfully updated greeter configuration");
         }
         catch (Exception ex)
         {
@@ -119,7 +120,6 @@ public class GuildApprovalModalModule : InteractionModuleBase
         _log.Trace("Handling modal...");
         try
         {
-            await DeferAsync();
             await HandleSetupGreeterModalInternal(modal);
         }
         catch (Exception ex)
@@ -147,7 +147,7 @@ public class GuildApprovalModalModule : InteractionModuleBase
         [RequiredInput(false)]
         [ModalTextInput("greeter-message", style: TextInputStyle.Paragraph)]
         [InputLabel("Message Template", "Message template for when greeting approved users.")]
-        public string GreeterMessageTemplate { get; set; }= "Heya {user_mention}, welcome to {server_name}!";
+        public string GreeterMessageTemplate { get; set; }= "Heya {user_mention}, welcome to {guild_name}!";
 
         [ModalSelectMenu("greeter-message-as-embed")]
         [InputLabel("Greeter - Display as Embed", "Render the parsed greeter template as an embed, instead of a standard message.")]
