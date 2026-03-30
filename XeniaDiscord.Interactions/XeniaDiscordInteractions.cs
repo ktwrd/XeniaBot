@@ -11,6 +11,9 @@ public static class XeniaDiscordInteractions
         var transaction = SentryHelper.CreateTransaction();
         var types = new Type[]
         {
+            typeof(GuildApprovalModule),
+            typeof(GuildApprovalModalModule),
+            typeof(GuildApprovalAdminModule),
         };
         await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();
