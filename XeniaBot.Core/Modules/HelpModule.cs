@@ -20,12 +20,14 @@ public class HelpModule : InteractionModuleBase
         await Context.Interaction.RespondAsync(embed: embed.Build());
     }
 
-    [SlashCommand("bansync", "Usage for the Ban Sync module")]
+    [SlashCommand("bansync", "Usage for the BanSync module")]
     public async Task BanSync()
     {
         var embed = DiscordHelper.BaseEmbed()
-            .WithTitle("Help - Ban Sync")
+            .WithTitle("Help - BanSync")
             .WithDescription(string.Join("\n\n",
+                "> **Developer Note:**\n> Yes, we're aware that the name \"BanSync\" is a bit confusing when you find out that Xenia *doesn't* automatically ban people. " +
+                "All you get is a notification that someone in your server, was banned in another server that Xenia is in. [There's currently an issue on our Github to resolve this](https://github.com/ktwrd/XeniaBot/issues/54), and it is open for suggestions.",
                 "The Ban Sync module is used to notify other server operators when a member was banned in your server (only if that member is also in the other peoples servers).",
                 "For more information, check out the [Ban Sync Guide](https://xenia.kate.pet/guide/about_bansync)."));
         await Context.Interaction.RespondAsync(embed: embed.Build());

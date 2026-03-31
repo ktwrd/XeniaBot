@@ -16,7 +16,7 @@ using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
-[Group("bansync", "Sync Bans between servers")]
+[Group("bansync", "Recieve ban notifications across guilds")]
 [CommandContextType(InteractionContextType.Guild)]
 public class BanSyncModule : InteractionModuleBase
 {
@@ -185,7 +185,7 @@ public class BanSyncModule : InteractionModuleBase
         }
     }
 
-    [SlashCommand("request", "Request for this guild to have Ban Sync support")]
+    [SlashCommand("request", "Request for this guild to have BanSync support")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     public async Task RequestGuild()
     {
