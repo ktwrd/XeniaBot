@@ -83,9 +83,23 @@ public class CoreContext
     }
     private void DiscordServiceOnReadyThreadHandler()
     {
-        RunServiceReady();
+        try
+        {
+            RunServiceReady();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Failed to run " + nameof(RunServiceReady));
+        }
         Task.Delay(2000).GetAwaiter().GetResult();
-        RunServiceDelayedReady();
+        try
+        {
+            RunServiceDelayedReady();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Failed to run " + nameof(RunServiceDelayedReady));
+        }
     }
     /// <summary>
     /// When not null, it is called after <see cref="DiscordService.Run()"/> in <see cref="MainAsync"/>.
@@ -208,6 +222,7 @@ public class CoreContext
         {
             await item.InitializeAsync();
         });
+        Log.Info("Done");
     }
 
     private void RunServiceReady()
@@ -216,6 +231,7 @@ public class CoreContext
         {
             await item.OnReady();
         });
+        Log.Info("Done - Bot is online!");
     }
 
     public void RunServiceDelayedReady()
@@ -224,30 +240,34 @@ public class CoreContext
         {
             await item.OnReadyDelay();
         });
+        Log.Info("Done");
     }
     /// <summary>
     /// For every registered class that extends <see cref="BaseService"/>, call <paramref name="func"/> with the argument as the target controller.
     /// </summary>
     public void AllBaseServices(Func<BaseService, Task> func)
     {
-        var ins = new List<BaseService>();
-        foreach (var service in RegisteredBaseControllers)
+        var targetServices = new List<BaseService>();
+        foreach (var service in RegisteredBaseControllers.Where(e => typeof(BaseService).IsAssignableFrom(e)))
         {
             var svc = Services.GetServices(service);
-            foreach (var item in svc
-                .Where(e => e != null).Cast<object>())
+            foreach (var item in svc.Where(e => e != null).Cast<object>())
             {
                 if (item is BaseService svcItem)
                 {
-                    ins.Add(svcItem);
+                    targetServices.Add(svcItem);
                 }
             }
         }
-        Task.WhenAll(ins
+        Task.WhenAll(targetServices
             .OrderBy(v => v.Priority)
             .ThenBy(v => v.GetType().AssemblyQualifiedName)
-            .Select(e => func(e)))
+            .Select(ProcessItem))
             .GetAwaiter().GetResult();
+        async Task ProcessItem(BaseService svc)
+        {
+            await func(svc);
+        }
     }
     #endregion
 
