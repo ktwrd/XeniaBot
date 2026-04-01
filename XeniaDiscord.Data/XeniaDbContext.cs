@@ -173,6 +173,7 @@ public class XeniaDbContext : DbContext
                 e.InteractionGroup,
                 e.InteractionName,
                 e.GuildId,
+                e.ChannelId,
                 e.UserId
             });
         });
