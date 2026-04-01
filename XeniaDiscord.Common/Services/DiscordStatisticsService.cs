@@ -50,6 +50,18 @@ public class DiscordStatisticsService : BaseService
                 "guild_id"
             ],
             publish: false);
+        _statGuildChannels = _prom.CreateGauge(
+            "xenia_discord_guild_channel_count",
+            "Amount of channels that Xenia is in (per guild)",
+            publish: false);
+        _statChannels = _prom.CreateGauge(
+            "xenia_discord_channels",
+            "Amount of channels that Xenia is in. Includes channels in guilds",
+            labelNames: [
+                "guild_name",
+                "guild_id"
+            ],
+            publish: false);
         _statDiscordLatency = _prom.CreateGauge(
             "xenia_discord_latency",
             "Latency (ms) to Discord",
@@ -87,6 +99,25 @@ public class DiscordStatisticsService : BaseService
                 "author_name"
             ],
             publish: false);
+        _statBanSyncRecords = _prom.CreateGauge(
+            "xenia_discord_bansync_records",
+            "BanSync Records",
+            labelNames: [
+                "guild_id",
+                "guild_name"
+            ],
+            publish: false);
+        _statBanSyncGuilds = _prom.CreateGauge(
+            "xenia_discord_bansync_guilds",
+            "BanSync Guilds",
+            labelNames: [
+                "state"
+            ],
+            publish: false);
+        _statBanSyncGuildSnapshots = _prom.CreateGauge(
+            "xenia_discord_bansync_guilds",
+            "BanSync Guild Snapshots",
+            publish: false);
     }
 
     public override async Task InitializeAsync()
@@ -102,9 +133,15 @@ public class DiscordStatisticsService : BaseService
 
     private readonly Gauge _statGuilds;
     private readonly Gauge _statGuildMemberCount;
+    private readonly Gauge _statGuildChannels;
+    private readonly Gauge _statChannels;
     private readonly Gauge _statDiscordLatency;
     private readonly Counter _statInteractions;
     private readonly Counter _statMessages;
+
+    private readonly Gauge _statBanSyncRecords;
+    private readonly Gauge _statBanSyncGuilds;
+    private readonly Gauge _statBanSyncGuildSnapshots;
 
     #region Collection Thread
     private bool CollectionThreadExists = false;
@@ -178,7 +215,9 @@ public class DiscordStatisticsService : BaseService
 
         var taskList = new[]
         {
-            ReloadMetrics_GuildCount()
+            ReloadMetrics_GuildCount(),
+            ReloadMetrics_GuildChannels(),
+            ReloadMetrics_Channels()
         };
         await Task.WhenAll(taskList);
     }
@@ -193,6 +232,82 @@ public class DiscordStatisticsService : BaseService
             ReloadMetrics_Latency()
         };
         await Task.WhenAll(tasks);
+    }
+
+    private async Task ReloadMetrics_Channels()
+    {
+        if (!_configData.Prometheus.Enable) return;
+
+        long count = (await _client.GetGroupChannelsAsync()).Count();
+        count += _client.PrivateChannels.Count;
+        count += _client.Guilds.Select(e => e.Channels.Count).Sum();
+
+        _statChannels.Set(count);
+    }
+    private async Task ReloadMetrics_GuildChannels()
+    {
+        if (!_configData.Prometheus.Enable) return;
+
+        await Task.WhenAll(_client.Guilds.Select(UpdateGuild));
+
+        async Task UpdateGuild(SocketGuild guild)
+        {
+            var guildIdStr = guild.Id.ToString();
+            var name = await _db.GuildPartialSnapshots.AsNoTracking()
+                .Where(e => e.GuildId == guildIdStr)
+                .OrderByDescending(e => e.Timestamp)
+                .Select(e => e.Name)
+                .FirstOrDefaultAsync();
+            var guildName = guild.Name ?? name ?? guildIdStr;
+
+            _statGuildMemberCount.WithLabels(
+                guildIdStr,
+                guildName,
+                "text"
+            ).Set(guild.TextChannels.Count);
+            _statGuildChannels.WithLabels(
+                guildIdStr,
+                guildName,
+                "stage"
+                ).Set(guild.StageChannels.Count);
+            _statGuildChannels.WithLabels(
+                guildIdStr,
+                guildName,
+                "category"
+                ).Set(guild.CategoryChannels.Count);
+            _statGuildChannels.WithLabels(
+                guildIdStr,
+                guildName,
+                "thread"
+                ).Set(guild.ThreadChannels.Count);
+            _statGuildChannels.WithLabels(
+                guildIdStr,
+                guildName,
+                "forum"
+                ).Set(guild.ForumChannels.Count);
+            _statGuildChannels.WithLabels(
+                guildIdStr,
+                guildName,
+                "media"
+                ).Set(guild.MediaChannels.Count);
+            _statGuildChannels.WithLabels(
+                guildIdStr,
+                guildName,
+                "all"
+                ).Set(guild.Channels.Count);
+            var otherCount = guild.Channels.Count
+                - (guild.TextChannels.Count
+                 + guild.StageChannels.Count
+                 + guild.CategoryChannels.Count
+                 + guild.ThreadChannels.Count
+                 + guild.ForumChannels.Count
+                 + guild.MediaChannels.Count);
+            _statGuildChannels.WithLabels(
+                guildIdStr,
+                guildName,
+                "other"
+                ).Set(otherCount);
+        }
     }
     
     /// <summary>
@@ -250,6 +365,28 @@ public class DiscordStatisticsService : BaseService
         if (!string.IsNullOrEmpty(interaction.User.Discriminator?.Trim('0')))
             usernameFormatted += $"#{interaction.User.Discriminator}";
 
+        var guildIdStr = interaction.GuildId?.ToString();
+        string? guildName = guildIdStr;
+        if (guildIdStr != null)
+        {
+            guildName = guild?.Name;
+            if (guildName != null)
+            {
+                guildName = await _db.GuildPartialSnapshots.AsNoTracking()
+                    .Where(e => e.GuildId == guildIdStr)
+                    .OrderByDescending(e => e.Timestamp)
+                    .Select(e => e.Name)
+                    .FirstOrDefaultAsync();
+            }
+        }
+
+        var channelIdStr = interaction.ChannelId?.ToString();
+        string? channelName = null;
+        if (channelIdStr != null && interaction.Channel != null)
+        {
+            channelName = interaction.Channel.Name;
+        }
+
         var interactionName = interaction.Data.Name;
         var interactionGroup = string.Empty;
 
@@ -268,12 +405,12 @@ public class DiscordStatisticsService : BaseService
         }
 
         _statInteractions.WithLabels(
-            guild?.Name ?? "<None>",
-            interaction.GuildId.GetValueOrDefault(0).ToString(),
+            guildName ?? "",
+            guildIdStr ?? "",
             usernameFormatted,
             interaction.User.Id.ToString(),
-            interaction.Channel.Id.ToString(),
-            interaction.Channel.Name,
+            channelName ?? "",
+            channelIdStr ?? "",
             interactionGroup,
             interactionName,
             interaction.Data.Id.ToString()
@@ -282,8 +419,6 @@ public class DiscordStatisticsService : BaseService
         await using var trans = await _db.Database.BeginTransactionAsync();
         try
         {
-            var guildIdStr = guild?.Id.ToString();
-            var channelIdStr = interaction.ChannelId.ToString();
             string authorIdStr = interaction.User.Id.ToString();
             if (await _db.InteractionStatistics.AnyAsync(e
                 => e.InteractionGroup == interactionGroup
@@ -336,7 +471,6 @@ public class DiscordStatisticsService : BaseService
 
     private Task OnMessageReceived(SocketMessage message)
     {
-
         var usernameFormatted = message.Author.Username;
         if (!string.IsNullOrEmpty(message.Author.Discriminator?.Trim('0')))
             usernameFormatted += $"#{message.Author.Discriminator}";
