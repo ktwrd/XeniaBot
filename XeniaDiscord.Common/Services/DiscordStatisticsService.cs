@@ -217,7 +217,9 @@ public class DiscordStatisticsService : BaseService
         {
             ReloadMetrics_GuildCount(),
             ReloadMetrics_GuildChannels(),
-            ReloadMetrics_Channels()
+            ReloadMetrics_Channels(),
+
+            ReloadMetrics_BanSync()
         };
         await Task.WhenAll(taskList);
     }
@@ -233,16 +235,69 @@ public class DiscordStatisticsService : BaseService
         };
         await Task.WhenAll(tasks);
     }
-
-    private async Task ReloadMetrics_Channels()
+    private async Task ReloadMetrics_BanSync()
     {
         if (!_configData.Prometheus.Enable) return;
 
-        long count = (await _client.GetGroupChannelsAsync()).Count();
+        await Task.WhenAll(
+            PerformRecordsByGuild(),
+            PerformGuildsByState(),
+            PerformGuildSnapshots());
+
+        async Task PerformRecordsByGuild()
+        {
+            var recordByGuilds = await _db.BanSyncRecords
+                .Where(e => e.BanSyncGuild != null && e.BanSyncGuild.State == XeniaDiscord.Data.Models.BanSync.BanSyncGuildState.Active)
+                .GroupBy(e => e.GuildId)
+                .Select(e => new {
+                    GuildId = e.Key,
+                    Count = e.Count()
+                })
+                .ToListAsync();
+            var guildIds = recordByGuilds.Select(e => e.GuildId).Where(e => e != null).Distinct().ToList();
+            var guildSnapshots = await _db.GuildPartialSnapshots
+                .DistinctBy(e => e.GuildId)
+                .Where(e => guildIds.Contains(e.GuildId))
+                .Select(e => new { e.GuildId, e.Name })
+                .ToListAsync();
+            foreach (var group in recordByGuilds)
+            {
+                var name = guildSnapshots.FirstOrDefault(e => e.GuildId == group.GuildId)?.Name;
+                _statBanSyncRecords.WithLabels(group.GuildId, name ?? group.GuildId).Set(group.Count);
+            }
+        }
+        async Task PerformGuildsByState()
+        {
+            var guildsByState = await _db.BanSyncGuilds
+                .GroupBy(e => e.State)
+                .Select(e => new {
+                    State = e.Key,
+                    Count = e.Count()
+                })
+                .ToListAsync();
+            foreach (var group in guildsByState)
+            {
+                _statBanSyncGuilds.WithLabels(group.State.ToString()).Set(group.Count);
+            }
+        }
+        async Task PerformGuildSnapshots()
+        {
+            var guildSnapshotCount = await _db.BanSyncGuildSnapshots.LongCountAsync();
+            _statBanSyncGuildSnapshots.Set(guildSnapshotCount);
+        }
+    }
+    private Task ReloadMetrics_Channels()
+    {
+        if (!_configData.Prometheus.Enable) return Task.CompletedTask;
+
+        long count = 0;
+        count += _client.GroupChannels.Count;
         count += _client.PrivateChannels.Count;
         count += _client.Guilds.Select(e => e.Channels.Count).Sum();
 
         _statChannels.Set(count);
+
+        return Task.CompletedTask;
     }
     private async Task ReloadMetrics_GuildChannels()
     {
