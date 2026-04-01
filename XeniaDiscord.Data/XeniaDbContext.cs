@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using XeniaDiscord.Data.Extensions;
+using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.GuildApproval;
@@ -37,6 +38,8 @@ public class XeniaDbContext : DbContext
 
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
     public DbSet<GuildApprovalLogEventModel> GuildApprovalLogEvents { get; set; }
+
+    public DbSet<InteractionStatisticModel> InteractionStatistics { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -160,6 +163,20 @@ public class XeniaDbContext : DbContext
                 e.UserId
             });
         });
+
+        #region Statistics
+        builder.Entity<InteractionStatisticModel>(b =>
+        {
+            b.ToTable(InteractionStatisticModel.TableName).HasKey(e => e.Id);
+            b.HasIndex(e => new
+            {
+                e.InteractionGroup,
+                e.InteractionName,
+                e.GuildId,
+                e.UserId
+            });
+        });
+        #endregion
 
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)]))
             .HasName("spBanSyncGetMutualRecordsForGuild");

@@ -13,6 +13,7 @@ public static class XeniaDiscordCommon
     {
         services.AddSingleton<BanSyncService>()
                 .AddSingleton<ValidationService>()
+                .AddSingleton<DiscordStatisticsService>()
                 .AddSingleton<DiscordCacheEventHandler>();
 
         RegisterMappers(services);
