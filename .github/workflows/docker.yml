@@ -49,6 +49,10 @@ jobs:
         with:
           push: true
           tags: |
+            ktwrd/xenia-discord:dev
+            ktwrd/xenia-discord:latest
+            ktwrd/xenia-discord:dev-${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord:latest-${{ env.CONTAINER_VERSION }}
             ghcr.io/ktwrd/xenia-discord:dev
             ghcr.io/ktwrd/xenia-discord:latest
             ghcr.io/ktwrd/xenia-discord:dev-${{ env.CONTAINER_VERSION }}
@@ -60,6 +64,10 @@ jobs:
         with:
           push: true
           tags: |
+            ktwrd/xenia-discord-dash:dev
+            ktwrd/xenia-discord-dash:latest
+            ktwrd/xenia-discord-dash:dev-${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord-dash:latest-${{ env.CONTAINER_VERSION }}
             ghcr.io/ktwrd/xenia-discord-dash:dev
             ghcr.io/ktwrd/xenia-discord-dash:latest
             ghcr.io/ktwrd/xenia-discord-dash:dev-${{ env.CONTAINER_VERSION }}
@@ -72,6 +80,10 @@ jobs:
         with:
           push: true
           tags: |
+            ktwrd/xenia-discord:${{ env.TAG }}
+            ktwrd/xenia-discord:${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord:stable
+            ktwrd/xenia-discord:stable-${{ env.CONTAINER_VERSION }}
             ghcr.io/ktwrd/xenia-discord:${{ env.TAG }}
             ghcr.io/ktwrd/xenia-discord:${{ env.CONTAINER_VERSION }}
             ghcr.io/ktwrd/xenia-discord:stable
@@ -83,6 +95,10 @@ jobs:
         with:
           push: true
           tags: |
+            ktwrd/xenia-discord-dash:${{ env.TAG }}
+            ktwrd/xenia-discord-dash:${{ env.CONTAINER_VERSION }}
+            ktwrd/xenia-discord-dash:stable
+            ktwrd/xenia-discord-dash:stable-${{ env.CONTAINER_VERSION }}
             ghcr.io/ktwrd/xenia-discord-dash:${{ env.TAG }}
             ghcr.io/ktwrd/xenia-discord-dash:${{ env.CONTAINER_VERSION }}
             ghcr.io/ktwrd/xenia-discord-dash:stable
