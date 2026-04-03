@@ -1,3 +1,4 @@
+using System.Text;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -5,20 +6,29 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Prometheus;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
+using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Common.Services;
 
 [XeniaController]
-public class DiscordStatisticsService : BaseService
+public sealed class DiscordStatisticsService : BaseService
 {
-    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly DiscordSocketClient _client;
     private readonly ConfigData _configData;
     private readonly PrometheusService _prom;
     private readonly ProgramDetails _details;
     private readonly XeniaDbContext _db;
+    private readonly IServiceScope? _dbScope;
+    public void Shutdown()
+    {
+        _prom.ServerStart -= InitializePrometheus;
+        _prom.ReloadMetrics -= ReloadMetrics;
+        _dbScope?.Dispose();
+    }
     public DiscordStatisticsService(IServiceProvider services) : base(services)
     {
         _details = services.GetRequiredService<ProgramDetails>();
@@ -27,7 +37,7 @@ public class DiscordStatisticsService : BaseService
         _client = services.GetRequiredService<DiscordSocketClient>();
 
         _prom = services.GetRequiredService<PrometheusService>();
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out _dbScope);
 
         // Prometheus Events
         _prom.ServerStart += InitializePrometheus;
@@ -156,7 +166,7 @@ public class DiscordStatisticsService : BaseService
         new Thread(() =>
         {
             _collectionThreadExists = true;
-            Log.Info("Created thread");
+            _log.Info("Created thread");
             while (true)
             {
                 try
@@ -166,7 +176,7 @@ public class DiscordStatisticsService : BaseService
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn(ex, $"Failed to call {nameof(MetricCollectionThreadCallback)}");
+                    _log.Warn(ex, $"Failed to call {nameof(MetricCollectionThreadCallback)}");
                     Task.Delay(500).Wait();
                 }
             }
@@ -245,22 +255,16 @@ public class DiscordStatisticsService : BaseService
         };
         await Task.WhenAll(tasks);
     }
-    private async Task ReloadMetrics_BanSync()
+    private async Task ReloadMetrics_BanSyncRecordsByGuild()
     {
-        if (!_configData.Prometheus.Enable) return;
-
-        await Task.WhenAll(
-            PerformRecordsByGuild(),
-            PerformGuildsByState(),
-            PerformGuildSnapshots());
-
-        async Task PerformRecordsByGuild()
+        using var trans = SentryHelper.CreateTransaction();
+        try
         {
             await using var db = _db.CreateSession();
             var recordByGuilds = await db.BanSyncRecords
                 .AsNoTracking()
                 .Include(e => e.BanSyncGuild)
-                .Where(e => e.BanSyncGuild != null && e.BanSyncGuild.State == XeniaDiscord.Data.Models.BanSync.BanSyncGuildState.Active)
+                .Where(e => e.BanSyncGuild != null && e.BanSyncGuild.State == BanSyncGuildState.Active)
                 .GroupBy(e => e.GuildId)
                 .Select(e => new {
                     GuildId = e.Key,
@@ -279,8 +283,19 @@ public class DiscordStatisticsService : BaseService
                 var name = guildSnapshots.FirstOrDefault(e => e.GuildId == group.GuildId)?.Name;
                 _statBanSyncRecords.WithLabels(group.GuildId, name ?? group.GuildId).Set(group.Count);
             }
+            trans.Finish();
         }
-        async Task PerformGuildsByState()
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to make metrics");
+            trans.Finish(ex);
+        }
+    }
+    
+    private async Task ReloadMetrics_BanSyncGuildsByState()
+    {
+        var trans = SentryHelper.CreateTransaction();
+        try
         {
             await using var db = _db.CreateSession();
             var guildsByState = await db.BanSyncGuilds
@@ -295,13 +310,38 @@ public class DiscordStatisticsService : BaseService
             {
                 _statBanSyncGuilds.WithLabels(group.State.ToString()).Set(group.Count);
             }
+            trans.Finish();
         }
-        async Task PerformGuildSnapshots()
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to make metrics");
+            trans.Finish(ex);
+        }
+    }
+    private async Task ReloadMetrics_BanSyncGuildSnapshots()
+    {
+        var trans = SentryHelper.CreateTransaction();
+        try
         {
             await using var db = _db.CreateSession();
             var guildSnapshotCount = await db.BanSyncGuildSnapshots.AsNoTracking().LongCountAsync();
             _statBanSyncGuildSnapshots.Set(guildSnapshotCount);
+            trans.Finish();
         }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to make metrics");
+            trans.Finish(ex);
+        }
+    }
+    private async Task ReloadMetrics_BanSync()
+    {
+        if (!_configData.Prometheus.Enable) return;
+
+        await Task.WhenAll(
+            ReloadMetrics_BanSyncRecordsByGuild(),
+            ReloadMetrics_BanSyncGuildsByState(),
+            ReloadMetrics_BanSyncGuildSnapshots());
     }
     private Task ReloadMetrics_Channels()
     {
@@ -319,87 +359,81 @@ public class DiscordStatisticsService : BaseService
     private async Task ReloadMetrics_GuildChannels()
     {
         if (!_configData.Prometheus.Enable) return;
-        
-        await using var db = _db.CreateSession();
-        foreach (var guild in _client.Guilds)
+        var trans = SentryHelper.CreateTransaction();
+        try
         {
-            var guildIdStr = guild.Id.ToString();
-            var name = await db.GuildPartialSnapshots.AsNoTracking()
-                .Where(e => e.GuildId == guildIdStr)
-                .OrderByDescending(e => e.Timestamp)
-                .Select(e => e.Name)
-                .FirstOrDefaultAsync();
-            var guildName = guild.Name ?? name ?? guildIdStr;
-
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "text"
-            ).Set(guild.TextChannels.Count);
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "stage"
-                ).Set(guild.StageChannels.Count);
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "category"
-                ).Set(guild.CategoryChannels.Count);
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "thread"
-                ).Set(guild.ThreadChannels.Count);
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "forum"
-                ).Set(guild.ForumChannels.Count);
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "media"
-                ).Set(guild.MediaChannels.Count);
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "all"
-                ).Set(guild.Channels.Count);
-            var allCh = guild.TextChannels.Select(e => e.Id)
-                .Concat(guild.StageChannels.Select(e => e.Id))
-                .Concat(guild.CategoryChannels.Select(e => e.Id))
-                .Concat(guild.ThreadChannels.Select(e => e.Id))
-                .Concat(guild.ForumChannels.Select(e => e.Id))
-                .Concat(guild.MediaChannels.Select(e => e.Id))
-                .Distinct()
-                .Count();
-            var otherCount = guild.Channels.Count - allCh;
-            _statGuildChannels.WithLabels(
-                guildName,
-                guildIdStr,
-                "other"
-                ).Set(otherCount);
+            await using var db = _db.CreateSession();
+            foreach (var guild in _client.Guilds)
+            {
+                var guildIdStr = guild.Id.ToString();
+                var name = await db.GuildPartialSnapshots.AsNoTracking()
+                    .Where(e => e.GuildId == guildIdStr)
+                    .OrderByDescending(e => e.Timestamp)
+                    .Select(e => e.Name)
+                    .FirstOrDefaultAsync();
+                var guildName = guild.Name ?? name ?? guildIdStr;
+                var groups = new (long Count, string Ident)[]
+                {
+                    (guild.TextChannels.Count, "text"),
+                    (guild.StageChannels.Count, "stage"),
+                    (guild.CategoryChannels.Count, "category"),
+                    (guild.ThreadChannels.Count, "thread"),
+                    (guild.ForumChannels.Count, "forum"),
+                    (guild.MediaChannels.Count, "media"),
+                    (guild.Channels.Count, "all"),
+                    (guild.Channels.Count, "other"),
+                };
+                groups[^1].Count = guild.TextChannels.Select(e => e.Id)
+                    .Concat(guild.StageChannels.Select(e => e.Id))
+                    .Concat(guild.CategoryChannels.Select(e => e.Id))
+                    .Concat(guild.ThreadChannels.Select(e => e.Id))
+                    .Concat(guild.ForumChannels.Select(e => e.Id))
+                    .Concat(guild.MediaChannels.Select(e => e.Id))
+                    .Distinct()
+                    .Count();
+                foreach (var (count, ident) in groups)
+                {
+                    _statGuildChannels.WithLabels(
+                        guildName,
+                        guildIdStr,
+                        ident).Set(count);
+                }
+            }
+            trans.Finish();
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to make metrics");
+            trans.Finish(ex);
         }
     }
     
     /// <summary>
     /// Update <see cref="_statGuilds"/> and <see cref="_statGuildMemberCount"/>
     /// </summary>
-    private async Task ReloadMetrics_GuildCount()
+    private Task ReloadMetrics_GuildCount()
     {
-        if (!_configData.Prometheus.Enable) return;
+        if (!_configData.Prometheus.Enable) return Task.CompletedTask;
 
-        foreach (var guild in _client.Guilds)
+        var trans = SentryHelper.CreateTransaction();
+        try
         {
-            _statGuildMemberCount.WithLabels(
-                guild.Name,
-                guild.Id.ToString())
-                .Set(guild.Users.Count);
+            foreach (var guild in _client.Guilds)
+            {
+                _statGuildMemberCount.WithLabels(
+                        guild.Name,
+                        guild.Id.ToString())
+                    .Set(guild.Users.Count);
+            }
+            _statGuilds.Set(_client.Guilds.Count);
+            trans.Finish();
         }
-        _statGuilds.Set(_client.Guilds.Count);
-
-        Log.Trace("done");
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to make metrics");
+            trans.Finish(ex);
+        }
+        return Task.CompletedTask;
     }
     
     private string[] _metricsLatencyStrings = [];
@@ -407,9 +441,9 @@ public class DiscordStatisticsService : BaseService
     {
         if (!_configData.Prometheus.Enable) return Task.CompletedTask;
 
-        string usernameFormatted = "";
-        string displayName = "";
-        string userId = "";
+        var usernameFormatted = "";
+        var displayName = "";
+        var userId = "";
         var latency = _client.Latency;
         if (_client.CurrentUser != null)
         {
@@ -439,29 +473,34 @@ public class DiscordStatisticsService : BaseService
     }
     #endregion
 
-    private async Task OnSlashCommandExecuted(SocketSlashCommand interaction)
+    private sealed record SlashCommandInteractionInfo(
+        string? GuildName,
+        string? GuildId,
+        string? ChannelName,
+        string? ChannelId,
+        string AuthorUsername,
+        string AuthorId,
+        string? InteractionGroup,
+        string InteractionName,
+        string InteractionId);
+    
+    private async Task<SlashCommandInteractionInfo> GetInfo(SocketSlashCommand interaction)
     {
-        if (!_configData.Prometheus.Enable) return;
-        if (_details.Platform != XeniaPlatform.Bot) return;
-
-        SocketGuild? guild = interaction.GuildId.HasValue ? _client.GetGuild(interaction.GuildId.Value) : null;
+        var guild = interaction.GuildId.HasValue ? _client.GetGuild(interaction.GuildId.Value) : null;
         var usernameFormatted = interaction.User.Username;
         if (!string.IsNullOrEmpty(interaction.User.Discriminator?.Trim('0')))
             usernameFormatted += $"#{interaction.User.Discriminator}";
 
         var guildIdStr = interaction.GuildId?.ToString();
-        string? guildName = guildIdStr;
+        var guildName = guildIdStr;
         if (guildIdStr != null)
         {
-            guildName = guild?.Name;
-            if (guildName == null)
-            {
-                guildName = await _db.GuildPartialSnapshots.AsNoTracking()
+            guildName = guild?.Name
+                ?? await _db.GuildPartialSnapshots.AsNoTracking()
                     .Where(e => e.GuildId == guildIdStr)
                     .OrderByDescending(e => e.Timestamp)
                     .Select(e => e.Name)
                     .FirstOrDefaultAsync();
-            }
         }
 
         var channelIdStr = interaction.ChannelId?.ToString();
@@ -471,7 +510,7 @@ public class DiscordStatisticsService : BaseService
             channelName = interaction.Channel.Name;
         }
 
-        var interactionName = interaction.Data.Name;
+        var interactionNameBuilder = new StringBuilder(interaction.Data.Name);
         var interactionGroup = string.Empty;
 
         if (interaction.Data is IApplicationCommandInteractionData data)
@@ -480,71 +519,86 @@ public class DiscordStatisticsService : BaseService
             foreach (var opt in data.Options)
             {
                 any = true;
-                interactionName += $" {opt.Name}";
+                interactionNameBuilder.Append($" {opt.Name}");
             }
             if (any)
             {
                 interactionGroup = data.Name;
             }
         }
-
-        _statInteractions.WithLabels(
-            guildName ?? "",
-            guildIdStr ?? "",
+        
+        return new SlashCommandInteractionInfo(
+            guildName,
+            guildIdStr,
+            channelName,
+            channelIdStr,
             usernameFormatted,
             interaction.User.Id.ToString(),
-            channelName ?? "",
-            channelIdStr ?? "",
-            interactionGroup,
-            interactionName,
-            interaction.Data.Id.ToString()
+            string.IsNullOrEmpty(interactionGroup) ? null : interactionGroup,
+            interactionNameBuilder.ToString(),
+            interaction.Id.ToString());
+    }
+    private async Task OnSlashCommandExecutedThread(SocketSlashCommand interaction)
+    {
+        var info = await GetInfo(interaction);
+
+        _statInteractions.WithLabels(
+            info.GuildName ?? "",
+            info.GuildId ?? "",
+            info.AuthorUsername,
+            info.AuthorId,
+            info.ChannelName ?? "",
+            info.ChannelId ?? "",
+            info.InteractionGroup ?? "",
+            info.InteractionName,
+            info.InteractionId
         ).Inc();
 
-        await using var trans = await _db.Database.BeginTransactionAsync();
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            string authorIdStr = interaction.User.Id.ToString();
-            if (await _db.InteractionStatistics.AnyAsync(e
-                => e.InteractionGroup == interactionGroup
-                && e.InteractionName == interactionName
-                && e.GuildId == guildIdStr
-                && e.ChannelId == channelIdStr
-                && e.UserId == authorIdStr))
+            if (await db.InteractionStatistics.AnyAsync(e
+                => e.InteractionGroup == info.InteractionGroup
+                && e.InteractionName == info.InteractionName
+                && e.GuildId == info.GuildId
+                && e.ChannelId == info.ChannelId
+                && e.UserId == info.AuthorId))
             {
-                if (guildIdStr == null && channelIdStr == null)
+                if (info.GuildId == null && info.ChannelId == null)
                 {
-                    await _db.Database.ExecuteSqlAsync(
-                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {interactionGroup} AND \"InteractionName\" = {interactionName} AND \"GuildId\" IS NULL AND \"ChannelId\" IS NULL AND \"UserId\" = {authorIdStr};");
+                    await db.Database.ExecuteSqlAsync(
+                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {info.InteractionGroup} AND \"InteractionName\" = {info.InteractionName} AND \"GuildId\" IS NULL AND \"ChannelId\" IS NULL AND \"UserId\" = {info.AuthorId};");
                 }
-                else if (guildIdStr == null && channelIdStr != null)
+                else if (info.GuildId == null && info.ChannelId != null)
                 {
-                    await _db.Database.ExecuteSqlAsync(
-                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {interactionGroup} AND \"InteractionName\" = {interactionName} AND \"GuildId\" = {guildIdStr} AND \"ChannelId\" IS NULL AND \"UserId\" = {authorIdStr};");
+                    await db.Database.ExecuteSqlAsync(
+                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {info.InteractionGroup} AND \"InteractionName\" = {info.InteractionName} AND \"GuildId\" = {info.GuildId} AND \"ChannelId\" IS NULL AND \"UserId\" = {info.AuthorId};");
                 }
-                else if (guildIdStr != null && channelIdStr == null)
+                else if (info.GuildId != null && info.ChannelId == null)
                 {
-                    await _db.Database.ExecuteSqlAsync(
-                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {interactionGroup} AND \"InteractionName\" = {interactionName} AND \"GuildId\" IS NULL AND \"ChannelId\" = {channelIdStr} AND \"UserId\" = {authorIdStr};");
+                    await db.Database.ExecuteSqlAsync(
+                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {info.InteractionGroup} AND \"InteractionName\" = {info.InteractionName} AND \"GuildId\" IS NULL AND \"ChannelId\" = {info.ChannelId} AND \"UserId\" = {info.AuthorId};");
                 }
                 else
                 {
-                    await _db.Database.ExecuteSqlAsync(
-                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {interactionGroup} AND \"InteractionName\" = {interactionName} AND \"GuildId\" = {guildIdStr} AND \"ChannelId\" = {channelIdStr} AND \"UserId\" = {authorIdStr};");
+                    await db.Database.ExecuteSqlAsync(
+                        $"UPDATE public.\"Statistics_Interactions\" SET \"Count\" = \"Count\" + 1 WHERE \"InteractionGroup\" = {info.InteractionGroup} AND \"InteractionName\" = {info.InteractionName} AND \"GuildId\" = {info.GuildId} AND \"ChannelId\" = {info.ChannelId} AND \"UserId\" = {info.AuthorId};");
                 }
             }
             else
             {
-                await _db.InteractionStatistics.AddAsync(new Data.Models.InteractionStatisticModel()
+                await db.InteractionStatistics.AddAsync(new Data.Models.InteractionStatisticModel()
                 {
-                    InteractionGroup = interactionGroup,
-                    InteractionName = interactionName,
-                    GuildId = guildIdStr,
-                    ChannelId = channelIdStr,
-                    UserId = authorIdStr,
+                    InteractionGroup = info.InteractionGroup,
+                    InteractionName = info.InteractionName,
+                    GuildId = info.GuildId,
+                    ChannelId = info.ChannelId,
+                    UserId = info.AuthorId,
                     Count = 1
                 });
             }
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
         catch
@@ -552,33 +606,63 @@ public class DiscordStatisticsService : BaseService
             await trans.RollbackAsync();
         }
     }
+    private Task OnSlashCommandExecuted(SocketSlashCommand interaction)
+    {
+        if (!_configData.Prometheus.Enable || _details.Platform != XeniaPlatform.Bot) return Task.CompletedTask;
+        var trans = SentryHelper.CreateTransaction();
+        new Thread(() =>
+        {
+            try
+            {
+                OnSlashCommandExecutedThread(interaction).GetAwaiter().GetResult();
+                trans.Finish();
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "Failed to make metrics");
+                trans.Finish(ex);
+            }
+        }).Start();
+        return Task.CompletedTask;
+    }
 
     private Task OnMessageReceived(SocketMessage message)
     {
-        var usernameFormatted = message.Author.Username;
-        if (!string.IsNullOrEmpty(message.Author.Discriminator?.Trim('0')))
-            usernameFormatted += $"#{message.Author.Discriminator}";
-        var labels = new[]
+        if (!_configData.Prometheus.Enable || _details.Platform != XeniaPlatform.Bot) return Task.CompletedTask;
+        var trans = SentryHelper.CreateTransaction();
+        try
         {
-            string.Empty,                   // guild_id
-            string.Empty,                   // guild_name
-            string.Empty,                   // channel_id
-            string.Empty,                   // channel_name
-            message.Author.Id.ToString(),   // author_id
-            usernameFormatted               // author_name
-        };
-        if (message.Channel is SocketGuildChannel guildChannel)
-        {
-            labels[0] = guildChannel.Guild.Id.ToString();
-            labels[1] = guildChannel.Guild.Name;
-        }
-        if (message.Channel != null)
-        {
-            labels[2] = message.Channel.Id.ToString();
-            labels[3] = message.Channel.Name;
-        }
+            var usernameFormatted = message.Author.Username;
+            if (!string.IsNullOrEmpty(message.Author.Discriminator?.Trim('0')))
+                usernameFormatted += $"#{message.Author.Discriminator}";
+            var labels = new[]
+            {
+                string.Empty,                   // guild_id
+                string.Empty,                   // guild_name
+                string.Empty,                   // channel_id
+                string.Empty,                   // channel_name
+                message.Author.Id.ToString(),   // author_id
+                usernameFormatted               // author_name
+            };
+            if (message.Channel is SocketGuildChannel guildChannel)
+            {
+                labels[0] = guildChannel.Guild.Id.ToString();
+                labels[1] = guildChannel.Guild.Name;
+            }
+            if (message.Channel != null)
+            {
+                labels[2] = message.Channel.Id.ToString();
+                labels[3] = message.Channel.Name;
+            }
 
-        _statMessages.WithLabels(labels).Inc();
+            _statMessages.WithLabels(labels).Inc();
+            trans.Finish();
+        }
+        catch (Exception ex)
+        {
+            trans.Finish(ex);
+            _log.Error(ex, "Failed to make metrics");
+        }
 
         return Task.CompletedTask;
     }
