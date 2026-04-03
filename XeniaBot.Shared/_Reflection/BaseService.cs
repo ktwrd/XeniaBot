@@ -3,40 +3,58 @@ using System.Threading.Tasks;
 
 namespace XeniaBot.Shared;
 
-public abstract class BaseService
+public abstract class BaseService : IBaseService
 {
     public int Priority { get; protected set; }
-    protected IServiceProvider _services;
+    protected IServiceProvider Services { get; }
     protected BaseService(IServiceProvider services)
     {
         Priority = Int32.MaxValue;
-        _services = services;
+        Services = services;
     }
 
-    /// <summary>
-    /// Called when all services have been added to the collection.
-    /// </summary>
-    /// <returns></returns>
+    /// <inheritdoc/>
     public virtual Task InitializeAsync()
     {
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Called when discord is ready
-    /// </summary>
-    /// <returns></returns>
+    /// <inheritdoc/>
     public virtual Task OnReady()
     {
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Called when discord is ready, but with a 2s delay.
-    /// </summary>
-    /// <returns></returns>
+    /// <inheritdoc/>
     public virtual Task OnReadyDelay()
     {
         return Task.CompletedTask;
     }
+}
+public interface IBaseService : IXeniaOnInitialized, IXeniaOnReady, IXeniaOnReadyDelay
+{
+    public int Priority { get; }
+}
+
+public interface IXeniaOnInitialized
+{
+    /// <summary>
+    /// Called once the Service Provider has been built, before logging into Discord.
+    /// </summary>
+    public Task InitializeAsync();
+}
+public interface IXeniaOnReady
+{
+    /// <summary>
+    /// Called once the Discord Client is ready
+    /// </summary>
+    public Task OnReady();
+}
+public interface IXeniaOnReadyDelay
+{
+    /// <summary>
+    /// Called 2s after all instances of <see cref="IXeniaOnReady"/> has been called, which themselves get called once Discord is ready.
+    /// </summary>
+    /// <returns></returns>
+    public Task OnReadyDelay();
 }

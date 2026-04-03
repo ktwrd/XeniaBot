@@ -170,7 +170,7 @@ public class XeniaVersionService : BaseService
             return;
         }
 
-        var reminderRepo = _services.GetRequiredService<ReminderRepository>();
+        var reminderRepo = Services.GetRequiredService<ReminderRepository>();
         if (reminderRepo == null)
             throw new NoNullAllowedException("ReminderRepository is null");
 
