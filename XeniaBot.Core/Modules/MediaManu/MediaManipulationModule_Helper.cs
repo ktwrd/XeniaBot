@@ -19,8 +19,8 @@ public partial class MediaManipulationModule
             var outputLocation = GetFontLocation(pair.Key);
             if (File.Exists(outputLocation))
                 continue;
-            using var stream = MediaResources.GetStream("XeniaBot.Core.Resources." + pair.Value);
-            using var fs = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
+            await using var stream = MediaResources.GetStream("XeniaBot.Core.Resources." + pair.Value);
+            await using var fs = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
             await stream.CopyToAsync(fs);
         }
     }

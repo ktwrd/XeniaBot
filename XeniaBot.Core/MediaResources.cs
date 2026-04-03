@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -17,10 +16,6 @@ public static class MediaResources
             var resourceName = names.FirstOrDefault(e => e == name);
             if (resourceName == null)
             {
-                if (asm == typeof(MediaResources).Assembly)
-                {
-                    Debugger.Break();
-                }
                 continue;
             }
             var stream = asm.GetManifestResourceStream(resourceName);
