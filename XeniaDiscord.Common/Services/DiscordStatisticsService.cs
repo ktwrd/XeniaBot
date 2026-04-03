@@ -47,12 +47,17 @@ public class DiscordStatisticsService : BaseService
             "Amount of users per guild",
             labelNames: [
                 "guild_name",
-                "guild_id"
+                "guild_id",
             ],
             publish: false);
         _statGuildChannels = _prom.CreateGauge(
             "xenia_discord_guild_channel_count",
             "Amount of channels that Xenia is in (per guild)",
+            labelNames: [
+                "guild_name",
+                "guild_id",
+                "channel_type"
+            ],
             publish: false);
         _statChannels = _prom.CreateGauge(
             "xenia_discord_channels",
@@ -144,13 +149,13 @@ public class DiscordStatisticsService : BaseService
     private readonly Gauge _statBanSyncGuildSnapshots;
 
     #region Collection Thread
-    private bool CollectionThreadExists = false;
+    private bool _collectionThreadExists = false;
     private void CreateCollectionThread()
     {
-        if (CollectionThreadExists) return;
+        if (_collectionThreadExists) return;
         new Thread(() =>
         {
-            CollectionThreadExists = true;
+            _collectionThreadExists = true;
             Log.Info("Created thread");
             while (true)
             {
@@ -165,7 +170,7 @@ public class DiscordStatisticsService : BaseService
                     Task.Delay(500).Wait();
                 }
             }
-            CollectionThreadExists = false;
+            _collectionThreadExists = false;
         })
         {
             Name = $"{nameof(DiscordStatisticsService)}.MetricCollectionThread"
@@ -188,11 +193,16 @@ public class DiscordStatisticsService : BaseService
                         i = 1;
                     }
                 }
+                i++;
                 await Task.Delay(5_000);
             }
             else
             {
                 await Task.Delay(60_000);
+            }
+            if (!_collectionThreadExists)
+            {
+                break;
             }
         }
     }
@@ -246,7 +256,10 @@ public class DiscordStatisticsService : BaseService
 
         async Task PerformRecordsByGuild()
         {
-            var recordByGuilds = await _db.BanSyncRecords
+            await using var db = _db.CreateSession();
+            var recordByGuilds = await db.BanSyncRecords
+                .AsNoTracking()
+                .Include(e => e.BanSyncGuild)
                 .Where(e => e.BanSyncGuild != null && e.BanSyncGuild.State == XeniaDiscord.Data.Models.BanSync.BanSyncGuildState.Active)
                 .GroupBy(e => e.GuildId)
                 .Select(e => new {
@@ -254,9 +267,10 @@ public class DiscordStatisticsService : BaseService
                     Count = e.Count()
                 })
                 .ToListAsync();
-            var guildIds = recordByGuilds.Select(e => e.GuildId).Where(e => e != null).Distinct().ToList();
-            var guildSnapshots = await _db.GuildPartialSnapshots
-                .DistinctBy(e => e.GuildId)
+            var guildIds = recordByGuilds.Select(e => e.GuildId).Distinct().ToList();
+            var guildSnapshots = await db.GuildPartialSnapshots
+                .AsNoTracking()
+                .OrderByDescending(e => e.Timestamp)
                 .Where(e => guildIds.Contains(e.GuildId))
                 .Select(e => new { e.GuildId, e.Name })
                 .ToListAsync();
@@ -268,7 +282,9 @@ public class DiscordStatisticsService : BaseService
         }
         async Task PerformGuildsByState()
         {
-            var guildsByState = await _db.BanSyncGuilds
+            await using var db = _db.CreateSession();
+            var guildsByState = await db.BanSyncGuilds
+                .AsNoTracking()
                 .GroupBy(e => e.State)
                 .Select(e => new {
                     State = e.Key,
@@ -282,7 +298,8 @@ public class DiscordStatisticsService : BaseService
         }
         async Task PerformGuildSnapshots()
         {
-            var guildSnapshotCount = await _db.BanSyncGuildSnapshots.LongCountAsync();
+            await using var db = _db.CreateSession();
+            var guildSnapshotCount = await db.BanSyncGuildSnapshots.AsNoTracking().LongCountAsync();
             _statBanSyncGuildSnapshots.Set(guildSnapshotCount);
         }
     }
@@ -302,64 +319,65 @@ public class DiscordStatisticsService : BaseService
     private async Task ReloadMetrics_GuildChannels()
     {
         if (!_configData.Prometheus.Enable) return;
-
-        await Task.WhenAll(_client.Guilds.Select(UpdateGuild));
-
-        async Task UpdateGuild(SocketGuild guild)
+        
+        await using var db = _db.CreateSession();
+        foreach (var guild in _client.Guilds)
         {
             var guildIdStr = guild.Id.ToString();
-            var name = await _db.GuildPartialSnapshots.AsNoTracking()
+            var name = await db.GuildPartialSnapshots.AsNoTracking()
                 .Where(e => e.GuildId == guildIdStr)
                 .OrderByDescending(e => e.Timestamp)
                 .Select(e => e.Name)
                 .FirstOrDefaultAsync();
             var guildName = guild.Name ?? name ?? guildIdStr;
 
-            _statGuildMemberCount.WithLabels(
-                guildIdStr,
+            _statGuildChannels.WithLabels(
                 guildName,
+                guildIdStr,
                 "text"
             ).Set(guild.TextChannels.Count);
             _statGuildChannels.WithLabels(
-                guildIdStr,
                 guildName,
+                guildIdStr,
                 "stage"
                 ).Set(guild.StageChannels.Count);
             _statGuildChannels.WithLabels(
-                guildIdStr,
                 guildName,
+                guildIdStr,
                 "category"
                 ).Set(guild.CategoryChannels.Count);
             _statGuildChannels.WithLabels(
-                guildIdStr,
                 guildName,
+                guildIdStr,
                 "thread"
                 ).Set(guild.ThreadChannels.Count);
             _statGuildChannels.WithLabels(
-                guildIdStr,
                 guildName,
+                guildIdStr,
                 "forum"
                 ).Set(guild.ForumChannels.Count);
             _statGuildChannels.WithLabels(
-                guildIdStr,
                 guildName,
+                guildIdStr,
                 "media"
                 ).Set(guild.MediaChannels.Count);
             _statGuildChannels.WithLabels(
-                guildIdStr,
                 guildName,
+                guildIdStr,
                 "all"
                 ).Set(guild.Channels.Count);
-            var otherCount = guild.Channels.Count
-                - (guild.TextChannels.Count
-                 + guild.StageChannels.Count
-                 + guild.CategoryChannels.Count
-                 + guild.ThreadChannels.Count
-                 + guild.ForumChannels.Count
-                 + guild.MediaChannels.Count);
+            var allCh = guild.TextChannels.Select(e => e.Id)
+                .Concat(guild.StageChannels.Select(e => e.Id))
+                .Concat(guild.CategoryChannels.Select(e => e.Id))
+                .Concat(guild.ThreadChannels.Select(e => e.Id))
+                .Concat(guild.ForumChannels.Select(e => e.Id))
+                .Concat(guild.MediaChannels.Select(e => e.Id))
+                .Distinct()
+                .Count();
+            var otherCount = guild.Channels.Count - allCh;
             _statGuildChannels.WithLabels(
-                guildIdStr,
                 guildName,
+                guildIdStr,
                 "other"
                 ).Set(otherCount);
         }
@@ -372,40 +390,51 @@ public class DiscordStatisticsService : BaseService
     {
         if (!_configData.Prometheus.Enable) return;
 
-        await Task.WhenAll(_client.Guilds.Select(UpdateGuild));
+        foreach (var guild in _client.Guilds)
+        {
+            _statGuildMemberCount.WithLabels(
+                guild.Name,
+                guild.Id.ToString())
+                .Set(guild.Users.Count);
+        }
         _statGuilds.Set(_client.Guilds.Count);
 
-        async Task UpdateGuild(SocketGuild guild)
-        {
-            var guildIdStr = guild.Id.ToString();
-            var name = await _db.GuildPartialSnapshots.AsNoTracking()
-                .Where(e => e.GuildId == guildIdStr)
-                .OrderByDescending(e => e.Timestamp)
-                .Select(e => e.Name)
-                .FirstOrDefaultAsync();
-            _statGuildMemberCount.WithLabels(
-                guild.Name ?? name ?? guildIdStr,
-                guildIdStr
-            ).Set(guild.Users.Count);
-        }
+        Log.Trace("done");
     }
+    
+    private string[] _metricsLatencyStrings = [];
     private Task ReloadMetrics_Latency()
     {
         if (!_configData.Prometheus.Enable) return Task.CompletedTask;
 
-        var usernameFormatted = _client.CurrentUser.Username;
-        if (!string.IsNullOrEmpty(_client.CurrentUser.Discriminator.Trim('0')))
-            usernameFormatted += $"#{_client.CurrentUser.Discriminator}";
-        var displayName = usernameFormatted;
-        if (!string.IsNullOrEmpty(_client.CurrentUser.GlobalName))
-            displayName = _client.CurrentUser.GlobalName;
-
-        _statDiscordLatency.WithLabels(
-            _client.CurrentUser.Id.ToString(),
+        string usernameFormatted = "";
+        string displayName = "";
+        string userId = "";
+        var latency = _client.Latency;
+        if (_client.CurrentUser != null)
+        {
+            userId = _client.CurrentUser.Id.ToString();
+            usernameFormatted = _client.CurrentUser.Username;
+            if (!string.IsNullOrEmpty(_client.CurrentUser.Discriminator.Trim('0')))
+                usernameFormatted += $"#{_client.CurrentUser.Discriminator}";    
+            displayName = usernameFormatted;
+            if (!string.IsNullOrEmpty(_client.CurrentUser.GlobalName))
+                displayName = _client.CurrentUser.GlobalName;
+        }
+        
+        var connectionState = _client.ConnectionState.ToString();
+        if (_metricsLatencyStrings.Length == 4 &&
+            connectionState != _metricsLatencyStrings[3])
+        {
+            _statDiscordLatency.RemoveLabelled(_metricsLatencyStrings);
+        }
+        _metricsLatencyStrings = [
+            userId,
             usernameFormatted,
             displayName,
             _client.ConnectionState.ToString()
-        ).Set(_client.Latency);
+        ];
+        _statDiscordLatency.WithLabels(_metricsLatencyStrings).Set(latency);
         return Task.CompletedTask;
     }
     #endregion
@@ -425,7 +454,7 @@ public class DiscordStatisticsService : BaseService
         if (guildIdStr != null)
         {
             guildName = guild?.Name;
-            if (guildName != null)
+            if (guildName == null)
             {
                 guildName = await _db.GuildPartialSnapshots.AsNoTracking()
                     .Where(e => e.GuildId == guildIdStr)
