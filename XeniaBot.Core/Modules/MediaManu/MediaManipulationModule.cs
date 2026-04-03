@@ -15,6 +15,43 @@ namespace XeniaBot.Core.Modules;
 public partial class MediaManipulationModule : InteractionModuleBase
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(MediaManipulationModule));
+    private static byte[] CompressInputImage(byte[] inputImage)
+    {
+        using var stream = new MemoryStream(inputImage);
+        var optimizer = new ImageOptimizer()
+        {
+            IgnoreUnsupportedFormats = true,
+            OptimalCompression = true
+        };
+        optimizer.Compress(stream);
+        return stream.ToArray();
+    }
+    private static byte[] ResizeInputImage(byte[] inputImage, uint maxDimension = 900)
+    {
+        using var inputImageStream = new MemoryStream(inputImage);
+        using var img = new MagickImage(inputImageStream);
+        if (img.Width < maxDimension && img.Height < maxDimension)
+        {
+            return inputImage;
+        }
+        using var resultStream = new MemoryStream(20_000_000);
+        var size = new MagickGeometry(maxDimension, maxDimension)
+        {
+            IgnoreAspectRatio = false
+        };
+        img.Resize(size);
+        img.Write(resultStream);
+
+        resultStream.Seek(0, SeekOrigin.Begin);
+        var optimizer = new ImageOptimizer()
+        {
+            IgnoreUnsupportedFormats = true,
+            OptimalCompression = true
+        };
+        optimizer.Compress(resultStream);
+        
+        return resultStream.ToArray();
+    }
     [SlashCommand("caption", "Add a caption to a piece of media")]
     public async Task Caption(string caption,
         IAttachment attachment,
@@ -26,15 +63,15 @@ public partial class MediaManipulationModule : InteractionModuleBase
         var embed = new EmbedBuilder()
             .WithTitle("Media Caption")
             .WithCurrentTimestamp();
-        byte[] dataBytes = Array.Empty<byte>();
-        string fileType = "";
+        byte[] dataBytes;
+        string fileType;
         try
         {
             (dataBytes, fileType) = await MediaManipulationHelper.GetUrlBytes(attachment);
-            if (fileType.Length < 1)
-                throw new Exception("Invalid attachment type");
+            if (string.IsNullOrEmpty(fileType))
+                throw new InvalidOperationException("Invalid attachment MIME type (it's nothing?)");
             if (dataBytes.Length < 1)
-                throw new Exception("Empty data");
+                throw new InvalidOperationException("Attachment has no data!");
         }
         catch (Exception ex)
         {
@@ -46,13 +83,14 @@ public partial class MediaManipulationModule : InteractionModuleBase
 
         try
         {
-            var originalData = new MemoryStream(dataBytes);
+            var compressedBytes = ResizeInputImage(dataBytes);
+            var originalData = new MemoryStream(compressedBytes);
 
             await AttemptFontExtract();
 
             var opts = new VOption();
             opts.Add("access", 1);
-            bool isAnimated = MediaManipulationHelper.IsAnimatedType(fileType);
+            var isAnimated = MediaManipulationHelper.IsAnimatedType(fileType);
             if (isAnimated)
             {
                 opts.Add("n", -1);
@@ -128,14 +166,15 @@ public partial class MediaManipulationModule : InteractionModuleBase
         catch (Exception ex)
         {
             Log.Error(ex);
-            embed.WithDescription($"Failed to run task.\n```\n{ex.Message}\n```").WithColor(Color.Red);
+            embed.WithDescription("Failed to run task!")
+                .AddField("Error Message", ex.Message[..Math.Min(1000, ex.Message.Length)])
+                .WithColor(Color.Red);
             await FollowupAsync(embed: embed.Build());
             await DiscordHelper.ReportError(ex, Context);
         }
     }
 
-    public async Task<NVImage> Watermark(NVImage source,
-        NVImage watermark,
+    public record WatermarkOptions(
         int gravity,
         bool isGif,
         bool resize = false,
@@ -143,32 +182,36 @@ public partial class MediaManipulationModule : InteractionModuleBase
         bool append = false,
         bool alpha = false,
         bool flip = false,
-        bool mc = false)
+        bool mc = false);
+    
+    public async Task<NVImage> Watermark(NVImage source,
+        NVImage watermark,
+        WatermarkOptions opts)
     {
         int width = source.Width;
         int pageHeight = source.PageHeight;
         int nPages = NetVipsHelper.GetNPages(source);
 
-        if (flip)
+        if (opts.flip)
         {
             watermark = watermark.Flip(Enums.Direction.Horizontal);
         }
 
-        if (resize && append)
+        if (opts.resize && opts.append)
         {
             watermark = watermark.Resize((double)width / (double)watermark.Width);
         }
-        else if (resize && yscale > 0)
+        else if (opts.resize && opts.yscale > 0)
         {
-            watermark = watermark.Resize((double)width / (double)watermark.Width, vscale: (double)(pageHeight * yscale) / (double)watermark.Height);
-        } else if (resize)
+            watermark = watermark.Resize((double)width / (double)watermark.Width, vscale: (double)(pageHeight * opts.yscale) / (double)watermark.Height);
+        } else if (opts.resize)
         {
             watermark = watermark.Resize((double)pageHeight / (double)watermark.Height);
         }
 
         int x = 0;
         int y = 0;
-        switch (gravity)
+        switch (opts.gravity)
         {
             case 1:
                 break;
@@ -204,14 +247,14 @@ public partial class MediaManipulationModule : InteractionModuleBase
         NVImage? frame = null;
         for (int i = 0; i < nPages; i++)
         {
-            var imgFrame = isGif ? source.Crop(0, i * pageHeight, width, pageHeight) : source;
-            if (append)
+            var imgFrame = opts.isGif ? source.Crop(0, i * pageHeight, width, pageHeight) : source;
+            if (opts.append)
             {
                 var appended = imgFrame.Join(watermark, direction: Enums.Direction.Vertical, expand: true);
                 addedHeight = watermark.Height;
                 img[i] = imgFrame;
             }
-            else if (mc)
+            else if (opts.mc)
             {
                 var padded = imgFrame.Embed(0, 0, width, pageHeight + 15, background: WhiteRGBA);
                 var composited = padded.Composite2(
@@ -222,7 +265,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
             else
             {
                 NVImage? composited = null;
-                if (alpha)
+                if (opts.alpha)
                 {
                     if (i == 0)
                     {
@@ -294,7 +337,8 @@ public partial class MediaManipulationModule : InteractionModuleBase
 
         try
         {
-            var originalData = new MemoryStream(dataBytes);
+            var compressedBytes = ResizeInputImage(dataBytes);
+            var originalData = new MemoryStream(compressedBytes);
 
             await AttemptFontExtract();
 
@@ -311,8 +355,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
                 ? NVImage.NewFromStream(MediaResources.ImageSpeech)
                 : NVImage.NewFromStream(MediaResources.ImageSpeechBubble));
             var final = await Watermark(
-                sourceImage, watermark, 2, isAnimated, resize: true, yscale: 0.2f, alpha: alpha, flip: flip);
-
+                sourceImage, watermark, new WatermarkOptions(2, isAnimated, resize: true, yscale: 0.2f, alpha: alpha, flip: flip));
 
             using var resultStream = new MemoryStream(isAnimated || saveAsGif
                 ? final.GifsaveBuffer(dither: 1, effort: 2, bitdepth: 8, interlace: true, reuse: true)
@@ -332,7 +375,9 @@ public partial class MediaManipulationModule : InteractionModuleBase
         catch (Exception ex)
         {
             Log.Error(ex);
-            embed.WithDescription($"Failed to run task.\n```\n{ex.Message}\n```").WithColor(Color.Red);
+            embed.WithDescription($"Failed to run task!")
+                .AddField("Error Message", ex.Message[..Math.Min(1000, ex.Message.Length)])
+                .WithColor(Color.Red);
             await FollowupAsync(embed: embed.Build());
             await DiscordHelper.ReportError(ex, Context);
         }
