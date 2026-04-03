@@ -9,6 +9,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
+using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Common.Services;
@@ -588,7 +589,7 @@ public sealed class DiscordStatisticsService : BaseService
             }
             else
             {
-                await db.InteractionStatistics.AddAsync(new Data.Models.InteractionStatisticModel()
+                await db.InteractionStatistics.AddAsync(new InteractionStatisticModel()
                 {
                     InteractionGroup = info.InteractionGroup,
                     InteractionName = info.InteractionName,
