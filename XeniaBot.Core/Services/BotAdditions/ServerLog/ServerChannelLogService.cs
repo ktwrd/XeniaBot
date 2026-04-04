@@ -9,6 +9,7 @@ using XeniaBot.Data.Models.Archival;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
+using XeniaDiscord.Data.Models.ServerLog;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -48,7 +49,7 @@ public class ServerChannelLogService : BaseService
             string previousName = previous?.Name ?? "<null>";
             if (previousName.Length < 1)
                 previousName = "<empty>";
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel Name Changed")
                 .WithDescription($"<#{current.Snowflake}> changed to `{current.Name}` from `{previousName}`")
                 .WithCurrentTimestamp()
@@ -93,7 +94,7 @@ public class ServerChannelLogService : BaseService
         
         if (currentNsfw != previousNsfw)
         {
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel NSFW State changed")
                 .WithDescription($"<#{current.Snowflake}> set to `{currentNsfw}` from `{previousNsfw}`")
                 .WithCurrentTimestamp()
@@ -108,7 +109,7 @@ public class ServerChannelLogService : BaseService
             currentTopic ??= "";
             currentTopic = currentTopic.Length > 0 ? $"`{currentTopic}`" : "<empty>";
             
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel Topic changed")
                 .WithDescription($"<#{current.Snowflake}>")
                 .AddField("Previous", previousTopic)
@@ -120,7 +121,7 @@ public class ServerChannelLogService : BaseService
         if (currentCategory != previousCategory)
         {
             var pc = previousCategory == null ? "<null>" : $"<#{previousCategory}>";
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel Category changed")
                 .WithDescription($"<#{current.Snowflake}>. Moved to <#{currentCategory}> from {pc}")
                 .WithCurrentTimestamp()
@@ -153,7 +154,7 @@ public class ServerChannelLogService : BaseService
 
         if (currentBitrate != previousBitrate)
         {
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel Bitrate changed")
                 .WithDescription($"<#{current.Snowflake}>. to `{currentBitrate}` from `{previousBitrate}`")
                 .WithCurrentTimestamp()
@@ -162,7 +163,7 @@ public class ServerChannelLogService : BaseService
 
         if (currentUserLimit != previousUserLimit)
         {
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel User Limit changed")
                 .WithDescription($"<#{current.Snowflake}>. to `{currentUserLimit}` from `{previousUserLimit}`")
                 .WithCurrentTimestamp()
@@ -171,7 +172,7 @@ public class ServerChannelLogService : BaseService
 
         if (currentQuality != previousQuality)
         {
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel Video Quality changed")
                 .WithDescription($"<#{current.Snowflake}>. to `{currentQuality}` from `{previousQuality}`")
                 .WithCurrentTimestamp()
@@ -180,7 +181,7 @@ public class ServerChannelLogService : BaseService
 
         if (currentRegion != previousRegion)
         {
-            await _serverLog.EventHandle(current.Guild.Snowflake, (v) => v.ChannelEditChannel, new EmbedBuilder()
+            await _serverLog.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
                 .WithTitle("Channel Region changed")
                 .WithDescription($"<#{current.Snowflake}>. to `{currentRegion}` from `{previousRegion}`")
                 .WithCurrentTimestamp()
@@ -197,7 +198,7 @@ public class ServerChannelLogService : BaseService
             .WithTitle("Channel Deleted")
             .WithDescription($"<#{channel.Id}> {guildChannel.Name}")
             .WithColor(Color.Red);
-        await _serverLog.EventHandle(guildChannel.Guild.Id, (v) => v.ChannelDeleteChannel, embed);
+        await _serverLog.EventHandle(guildChannel.Guild.Id, ServerLogEvent.ChannelEdit, embed);
     }
 
     private async Task _discord_ChannelCreated(SocketChannel channel)
@@ -208,7 +209,7 @@ public class ServerChannelLogService : BaseService
             .WithTitle("Channel Created")
             .WithDescription($"<#{channel.Id}> {guildChannel.Name}")
             .WithColor(Color.Blue);
-        await _serverLog.EventHandle(guildChannel.Guild.Id, (v) => v.ChannelCreateChannel, embed);
+        await _serverLog.EventHandle(guildChannel.Guild.Id, ServerLogEvent.ChannelEdit, embed);
     }
     private async Task _discord_UserVoiceStateUpdated(
         SocketUser user,
@@ -249,6 +250,6 @@ public class ServerChannelLogService : BaseService
             if (currentChannel.Id != previousChannel.Id)
                 embed.Description += $" Switched from <#{previousChannel.Id}> to <#{currentChannel.Id}>";
         
-        await _serverLog.EventHandle(guildUser.Guild.Id, (v) => v.MemberVoiceChangeChannel, embed);
+        await _serverLog.EventHandle(guildUser.Guild.Id, ServerLogEvent.MemberVoiceChange, embed);
     }
 }

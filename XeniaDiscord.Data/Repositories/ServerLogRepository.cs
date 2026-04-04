@@ -1,5 +1,7 @@
 using Discord;
+using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaDiscord.Data.Models.ServerLog;
 
@@ -8,10 +10,14 @@ namespace XeniaDiscord.Data.Repositories;
 public class ServerLogRepository
 {
     private readonly XeniaDbContext _db;
+    private readonly GuildCacheRepository _guildCacheRepo;
+    private readonly DiscordSocketClient _discordClient;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public ServerLogRepository(IServiceProvider services)
     {
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
+        _guildCacheRepo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildCacheRepository>();
+        _discordClient = services.GetRequiredService<DiscordSocketClient>();
     }
 
     public Task<ServerLogGuildModel?> GetGuild(ulong guildId, GuildQueryOptions? options = null)
@@ -233,6 +239,26 @@ public class ServerLogRepository
             return null;
         }
 
+        IGuild? guild = null;
+        try
+        {
+            guild = _discordClient.GetGuild(guildId);
+        }
+        catch (Exception ex)
+        {
+            _log.Warn(ex, $"Failed to get Guild: {guildId}");
+        }
+        await _guildCacheRepo.Ensure(db, guildId, guild);
+        
+        if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr))
+        {
+            await db.ServerLogGuilds.AddAsync(new ServerLogGuildModel()
+            {
+                GuildId = guildIdStr,
+                Enabled = true
+            });
+        }
+        
         var model = new ServerLogChannelModel
         {
             GuildId = guildIdStr,
@@ -269,10 +295,9 @@ public class ServerLogRepository
         XeniaDbContext db,
         ServerLogGuildModel model)
     {
-        var guildIdStr = model.GuildId.ToString();
-        if (await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr))
+        if (await db.ServerLogGuilds.AnyAsync(e => e.GuildId == model.GuildId))
         {
-            await db.ServerLogGuilds.Where(e => e.GuildId == guildIdStr)
+            await db.ServerLogGuilds.Where(e => e.GuildId == model.GuildId)
                 .ExecuteUpdateAsync(e => e
                     .SetProperty(p => p.Enabled, model.Enabled));
             _log.Debug($"Updated record (GuildId={model.GuildId})");
@@ -304,6 +329,14 @@ public class ServerLogRepository
         XeniaDbContext db,
         ServerLogChannelModel model)
     {
+        if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == model.GuildId))
+        {
+            await db.ServerLogGuilds.AddAsync(new ServerLogGuildModel
+            {
+                GuildId = model.GuildId,
+                Enabled = true
+            });
+        }
         if (await db.ServerLogChannels.AnyAsync(e => e.Id == model.Id))
         {
             if (model.UpdatedAt == model.CreatedAt)

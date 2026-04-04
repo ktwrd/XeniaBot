@@ -1,24 +1,25 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
-using XeniaBot.MongoData.Models;
 using XeniaBot.Data.Models.Archival;
-using XeniaBot.MongoData.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
-using NLog;
 using XeniaDiscord.Common.Services;
+using XeniaDiscord.Data.Models.ServerLog;
+using XeniaDiscord.Data.Models.Snapshot;
+using XeniaDiscord.Data.Repositories;
+using NLog;
 
 using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
-using XeniaDiscord.Data.Models.Snapshot;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -26,7 +27,7 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class ServerLogService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogService));
-    private readonly ServerLogRepository _config;
+    private readonly ServerLogRepository _serverLogRepo;
     private readonly DiscordSocketClient _discord;
     private readonly DiscordCacheService _discordCache;
     private readonly DiscordSnapshotService _discordSnapshot;
@@ -34,7 +35,7 @@ public class ServerLogService : BaseService
     public ServerLogService(IServiceProvider services)
         : base(services)
     {
-        _config = services.GetRequiredService<ServerLogRepository>();
+        _serverLogRepo = services.GetRequiredService<ServerLogRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
         _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
@@ -130,104 +131,78 @@ public class ServerLogService : BaseService
         public required IReadOnlyCollection<GuildPermission> PermissionsRemoved { get; init; }
     }
 
-    private async void DiscordCacheMessageChangeUpdate(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
+    internal async Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder embed, Dictionary<string, string>? attachments = null)
     {
-        try
+        var targetChannels = await _serverLogRepo.GetChannelsForGuild(serverId, [@event, ServerLogEvent.Fallback]);
+        var guild = _discord.GetGuild(serverId);
+        if (guild == null) return;
+        foreach (var channel in targetChannels)
         {
-            if (type != MessageChangeType.Update)
-                return;
-
-            var previousContent = previous?.Content ?? "";
-            var currentContent = current.Content ?? "";
-            if (previousContent == currentContent)
-                return;
-
-            var author = _discord.GetUser(current.AuthorId);
-            if (author == null)
-                return;
-
-            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
-
-            var embed = DiscordHelper.BaseEmbed()
-                .WithTitle("Message Edited")
-                .WithDescription(string.Join("\n",
-                    $"From: `{author.Username}#{author.Discriminator}`",
-                    $"ID: `{current.AuthorId}`"))
-                .WithColor(new Color(255, 255, 255))
-                .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
-                .WithThumbnailUrl(author.GetAvatarUrl());
-            if (diffContent.Length >= 1000)
-                await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
-            else
+            try
             {
-                embed.AddField("Difference",
-                    string.Join("\n",
-                        "```diff",
-                        diffContent,
-                        "```"));
-                await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
+                await ProcessForModel(channel);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to send event {@event} to channel {channel.ChannelId} in guild \"{guild.Name}\" ({guild.Id})");
             }
         }
-        catch (Exception ex)
+        async Task ProcessForModel(ServerLogChannelModel channelModel)
         {
-            _log.Error(ex, $"Failed to handle MessageChangeUpdate event!!");
-            var author = _discord.GetUser(current.AuthorId);
-            var guild = _discord.GetGuild(current.GuildId);
-            var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
-            IMessage? msg = null;
-            if (channel != null)
-                msg = await channel.GetMessageAsync(current.Snowflake);
-            await DiscordHelper.ReportError(ex, author, guild, channel, msg);
-        }
-    }
-    internal async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed, string? attachmentContent = null, string? attachmentName = null)
-    {
-        var data = await _config.Get(serverId);
-
-        // Server not setup for logs, aborting.
-        if (data == null)
-            return;
-
-        var targetChannel = selectChannel(data) ?? data.DefaultLogChannel;
-        if (targetChannel == null || targetChannel == 0)
-            return;
-
-        var server = _discord.GetGuild(serverId);
-        var logChannel = server.GetTextChannel(targetChannel);
-        if (logChannel == null)
-            return;
-        try
-        {
-
-            if (attachmentContent == null)
-            {
-                await logChannel.SendMessageAsync(embed: embed.Build());
-                return;
-            }
-
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(attachmentContent));
+            var logChannel = guild.GetTextChannel(channelModel.GetChannelId());
+            if (logChannel == null) return;
             
-            await logChannel.SendFileAsync(ms, attachmentName ?? "content.txt", embed: embed.Build());
-        }
-        catch (Exception e)
-        {
-            if (e.Message.Contains("Missing Access") || e.Message.Contains("50001") || e.Message.Contains("50013"))
+            await ExceptionHelper.RetryOnTimedOut(async () =>
             {
-                await server.Owner.SendMessageAsync(
-                    string.Join(
-                        "\n", new string[]
-                        {
-                            "Heya!", "",
-                            $"Xenia does not have access to send log events in a channel in the server `{server.Name}`, which you own.",
-                            "",
-                            "In order for the logging feature to work, make sure that Xenia has access to the following permissions.",
-                            "- View Channel",
-                            "- Send Messages",
-                            "- Embed Links",
-                            "", $"Channel affected: https://discord.com/channels/{server.Id}/{targetChannel}"
-                        }));
+                await ProcessForModelInner(logChannel);
+            });
+        }
+        async Task ProcessForModelInner(SocketTextChannel logChannel)
+        {
+            try
+            {
+                var attachmentList = new List<FileAttachment>();
+                foreach (var pair in attachments ?? [])
+                {
+                    attachmentList.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(pair.Value)), pair.Key));
+                }
+                if (attachmentList.Count < 1)
+                {
+                    await logChannel.SendMessageAsync(embed: embed.Build());
+                    return;
+                }
+
+                await logChannel.SendFilesAsync(attachmentList, embed: embed.Build());
             }
-            throw;
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Missing Access") || ex.Message.Contains("50001") || ex.Message.Contains("50013"))
+                {
+                    try
+                    {
+                        await guild.Owner.SendMessageAsync(
+                            string.Join(
+                                "\n",
+                                "Heya!", "",
+                                $"Xenia does not have access to send log events in a channel in the server `{guild.Name}`, which you own.",
+                                "",
+                                "In order for the logging feature to work, make sure that Xenia has access to the following permissions.",
+                                "- View Channel",
+                                "- Send Messages",
+                                "- Embed Links",
+                                "", $"Channel affected: https://discord.com/channels/{guild.Id}/{logChannel.Id}"
+                            ));
+                    }
+                    catch (Exception exx)
+                    {
+                        _log.Error(exx, $"Failed to DM owner of guild \"{guild.Name}\" ({guild.Id}), {guild.Owner.Username} ({guild.OwnerId}) about not having the correct permissions in channel \"{logChannel.Name}\" ({logChannel.Id})");
+                    }
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
     }
 
@@ -239,24 +214,24 @@ public class ServerLogService : BaseService
             var userSafe = user.Username.Replace("`", "\\`");
             var embed = new EmbedBuilder()
                 .WithTitle("User Joined")
-                .WithDescription(
-                    $"<@{user.Id}>" +
-                    string.Join(
-                        "\n",
-                            "```",
-                            $"{userSafe}#{user.Discriminator}", $"ID: {user.Id}",
-                            "```"
-                        ))
+                .WithDescription(string.Join("\n",
+                    user.Mention,
+                    "```",
+                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Username: {userSafe}#{user.Discriminator}",
+                    $"ID: {user.Id}",
+                    "```"
+                ))
                 .AddField(
-                    "Account Age", string.Join(
-                        "\n",
+                    "Account Age",
+                    string.Join("\n",
                             TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
                             $"`{user.CreatedAt}`"
-                        ))
+                    ))
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Green);
 
-            await EventHandle(user.Guild.Id, (v) => v.MemberJoinChannel, embed);
+            await EventHandle(user.Guild.Id, ServerLogEvent.MemberJoin, embed);
         }
         catch (Exception ex)
         {
@@ -274,7 +249,8 @@ public class ServerLogService : BaseService
             var description = string.Join("\n",
                 $"<@{user.Id}>",
                 "```",
-                $"{userSafe}#{user.Discriminator}",
+                $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                $"Username: {userSafe}#{user.Discriminator}",
                 $"ID: {user.Id}",
                 "```");
 
@@ -289,7 +265,7 @@ public class ServerLogService : BaseService
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
 
-            await EventHandle(guild.Id, (v) => v.MemberLeaveChannel, embed);
+            await EventHandle(guild.Id, ServerLogEvent.MemberLeave, embed);
         }
         catch (Exception ex)
         {
@@ -305,12 +281,13 @@ public class ServerLogService : BaseService
         {
             var userSafe = user.Username.Replace("`", "\\`");
             var banDetails = await guild.GetBanAsync(user.Id);
-            var reason = banDetails.Reason ?? "<Unknown Reason>";
             var embed = new EmbedBuilder()
                 .WithTitle("User Banned")
-                .WithDescription($"<@{user.Id}>" + string.Join("\n",
+                .WithDescription(string.Join("\n",
+                    user.Mention,
                     "```",
-                    $"{userSafe}#{user.Discriminator}",
+                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Username: {userSafe}#{user.Discriminator}",
                     $"ID: {user.Id}",
                     "```"
                 ))
@@ -318,11 +295,14 @@ public class ServerLogService : BaseService
                     TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
                     $"`{user.CreatedAt}`"
                 ))
-                .AddField("Ban Reason", $"```\n{reason}\n```")
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
+            if (!string.IsNullOrEmpty(banDetails?.Reason?.Trim()))
+            {
+                embed.AddField("Ban Reason", banDetails.Reason);
+            }
 
-            await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+            await EventHandle(guild.Id, ServerLogEvent.MemberBan, embed);
         }
         catch (Exception ex)
         {
@@ -336,12 +316,13 @@ public class ServerLogService : BaseService
     {
         try
         {
-            var userSafe = user.Username.Replace("`", "\\`");
+            var userSafe = user.Username.Replace("`", "'");
             var embed = new EmbedBuilder()
                 .WithTitle("User Unbanned")
                 .WithDescription($"<@{user.Id}>" + string.Join("\n",
                     "```",
-                    $"{userSafe}#{user.Discriminator}",
+                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Username: {userSafe}#{user.Discriminator}",
                     $"ID: {user.Id}",
                     "```"
                 ))
@@ -352,7 +333,7 @@ public class ServerLogService : BaseService
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
 
-            await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+            await EventHandle(guild.Id, ServerLogEvent.MemberBan, embed);
         }
         catch (Exception ex)
         {
@@ -371,8 +352,7 @@ public class ServerLogService : BaseService
         var message = await m.GetOrDownloadAsync();
         var channel = await c.GetOrDownloadAsync();
         
-        if (channel == null || (channel is SocketGuildChannel socketChannel) == false)
-            return;
+        if (channel is not SocketGuildChannel socketChannel) return;
         try
         {
             if (m.Id == 0)
@@ -404,17 +384,33 @@ public class ServerLogService : BaseService
             if (author != null)
                 embed.WithThumbnailUrl(author.GetAvatarUrl());
 
-            var targetFieldMessageContent = $"```\n{messageContent}\n```";
-
-            if (targetFieldMessageContent.Length is < 1024 and > 0)
-                embed.AddField("Content", targetFieldMessageContent);
-            else if (targetFieldMessageContent.Length > 1024)
+            var attachments = new Dictionary<string, string>();
+            if (messageContent.Length > 1024)
             {
                 embed.AddField("Content", "Attached to this message");
-                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed, messageContent, "content.txt");
-                return;
+                attachments.Add("content.txt", messageContent);
             }
-            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed);
+            else if (messageContent.Length > 0)
+            {
+                embed.AddField("Content", messageContent);
+            }
+            
+            if (funkyMessage?.Attachments?.Count > 0)
+            {
+                var attachmentUrls = string.Join("\n",
+                    funkyMessage.Attachments
+                    .Select(e => string.IsNullOrEmpty(e.Filename) ? (e.ProxyUrl ?? e.Url) : $"[{e.Filename}]({e.ProxyUrl ?? e.Url})")
+                    .Distinct().ToList());
+                if (attachmentUrls.Length > 1024)
+                {
+                    attachments.Add("attachmentUrls.txt", attachmentUrls);
+                }
+                else if (attachmentUrls.Length > 0)
+                {
+                    embed.AddField("Attachments", attachmentUrls);
+                }
+            }
+            await EventHandle(socketChannel.Guild.Id, ServerLogEvent.MessageDelete, embed, attachments);
         }
         catch (Exception ex)
         {
@@ -429,56 +425,61 @@ public class ServerLogService : BaseService
                 msg);
         }
     }
-
-    private async Task Event_MessageEdit(Cacheable<IMessage, ulong> previousMessage, SocketMessage currentMessage,
-        IMessageChannel channel)
+    private async void DiscordCacheMessageChangeUpdate(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
-        var socketChannel = channel as SocketGuildChannel;
         try
         {
-            
-            var previousContent = previousMessage.Value?.Content ?? "";
-            var storedData = await _discordCache.CacheMessageConfig.GetLatest(currentMessage.Id);
-            if (previousContent == currentMessage.Content)
+            if (type != MessageChangeType.Update)
                 return;
-            var diffContent = string.Join(
-                "\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentMessage?.Content ?? ""));
+
+            var previousContent = previous?.Content ?? "";
+            var currentContent = current.Content ?? "";
+            if (previousContent == currentContent)
+                return;
+
+            var author = await ExceptionHelper.RetryOnTimedOut<IUser?>(async () => await _discord.GetUserAsync(current.AuthorId));
+            if (author == null)
+                return;
+
+            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
+
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Edited")
-                .WithDescription($"From `{currentMessage.Author.Username}#{currentMessage.Author.Discriminator}`\nID: `{currentMessage.Author.Id}`")
+                .WithDescription(string.Join("\n",
+                    $"From: `{author.Username}#{author.Discriminator}`",
+                    $"ID: `{current.AuthorId}`"))
                 .WithColor(new Color(255, 255, 255))
-                .WithUrl($"https://discord.com/channels/{socketChannel.Guild.Id}/{socketChannel.Id}/{currentMessage.Id}")
-                .WithThumbnailUrl(currentMessage.Author.GetAvatarUrl());
-            if (diffContent.Length < 1000)
+                .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
+                .WithThumbnailUrl(author.GetAvatarUrl());
+
+            var attachments = new Dictionary<string, string>();
+            if (diffContent.Length >= 1000)
             {
-                embed
-                    .AddField("Difference", string.Join("\n",
-                        new string[]
-                        {
-                            "```",
-                            diffContent,
-                            "```",
-                        }));
-                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed);
+                embed.AddField("Difference", "Attached as `diff.txt`");
+                attachments.Add("diff.txt", diffContent);
             }
             else
             {
-                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed, diffContent, "diff.txt");
+                embed.AddField(
+                    "Difference",
+                    string.Join("\n",
+                        "```diff",
+                        diffContent,
+                        "```"));
             }
+            
+            await EventHandle(current.GuildId, ServerLogEvent.MessageEdit, embed, attachments);
         }
         catch (Exception ex)
         {
-            var msg = string.Join(
-                "\n", new string[]
-                {
-                    "Failed run ServerLogService.Event_MessageDelete.", $"ChannelId: {socketChannel?.Id}",
-                    $"Guild: {socketChannel?.Guild.Id} ({socketChannel?.Guild.Name})",
-                    $"MessageId: {currentMessage?.Id ?? 0}"
-                });
-            _log.Error(ex, msg);
-            await _errorService.ReportException(
-                ex,
-                msg);
+            _log.Error(ex, $"Failed to handle MessageChangeUpdate event!!");
+            var author = _discord.GetUser(current.AuthorId);
+            var guild = _discord.GetGuild(current.GuildId);
+            var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
+            IMessage? msg = null;
+            if (channel != null)
+                msg = await channel.GetMessageAsync(current.Snowflake);
+            await DiscordHelper.ReportError(ex, author, guild, channel, msg);
         }
     }
     #endregion
