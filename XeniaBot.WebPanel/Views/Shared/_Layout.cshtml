@@ -20,6 +20,8 @@
 </header>
 <div class="container">
     <main role="main" class="pb-3">
+        <div class="toast-container" aria-live="polite" aria-atomic="true">
+        </div>
         @if (@Model != null)
         {
             if (typeof(BaseViewModel).IsAssignableFrom(@Model.GetType()) || @Model.GetType() == typeof(BaseViewModel))
