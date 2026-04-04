@@ -4,6 +4,7 @@ using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Services;
 using XeniaBot.WebPanel.Models.Component.FunView;
 using XeniaDiscord.Data.Models.BanSync;
+using XeniaDiscord.Data.Models.ServerLog;
 
 namespace XeniaBot.WebPanel.Models;
 
@@ -28,7 +29,7 @@ public class ServerDetailsViewModel : BaseViewModel,
             XpConfig = value;
         }
     }
-    public ServerLogModel LogConfig { get; set; }
+    public ServerLogGuildModel LogConfig { get; set; }
     public ICollection<BanSyncGuildSnapshotModel> BanSyncStateHistory { get; set; } = [];
     public GuildGreeterConfigModel GreeterConfig { get; set; }
     public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }

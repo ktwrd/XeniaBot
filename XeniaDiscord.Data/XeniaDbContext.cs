@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using XeniaDiscord.Data.Extensions;
+using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.GuildApproval;
 using XeniaDiscord.Data.Models.PartialSnapshot;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
@@ -51,6 +53,11 @@ public class XeniaDbContext : DbContext
     public DbSet<ServerLogGuildModel> ServerLogGuilds { get; set; }
     #endregion
 
+    public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
+    public DbSet<GuildApprovalLogEventModel> GuildApprovalLogEvents { get; set; }
+
+    public DbSet<InteractionStatisticModel> InteractionStatistics { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -262,6 +269,50 @@ public class XeniaDbContext : DbContext
         });
         #endregion
 
+        #region Guild User Approval
+        builder.Entity<GuildApprovalModel>(b =>
+        {
+            b.ToTable(GuildApprovalModel.TableName).HasKey(e => e.GuildId); 
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.Enabled
+            });
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.Enabled,
+                e.EnableGreeter
+            });
+        });
+        builder.Entity<GuildApprovalLogEventModel>(b =>
+        {
+            b.ToTable(GuildApprovalLogEventModel.TableName).HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.UserId
+            });
+        });
+        #endregion
+
+        #region Statistics
+        builder.Entity<InteractionStatisticModel>(b =>
+        {
+            b.ToTable(InteractionStatisticModel.TableName).HasKey(e => e.Id);
+            b.HasIndex(e => new
+            {
+                e.InteractionGroup,
+                e.InteractionName,
+                e.GuildId,
+                e.ChannelId,
+                e.UserId
+            });
+        });
+        #endregion
+        
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)]))
             .HasName("spBanSyncGetMutualRecordsForGuild");
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)]))

@@ -10,6 +10,8 @@
 <form id="log_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_LogSystem" asp-route-id="@Model.Guild.Id">
     <div class="row">
         <div class="col">
+            <text>TODO</text>
+            @** TODO - Use new dynamic-ish event handlers
             <div class="input-group mb-3">
                 @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
                 {
@@ -74,6 +76,7 @@
                        })
                 </div>
             }
+            **@
         </div>
     </div>
     <hr/>
