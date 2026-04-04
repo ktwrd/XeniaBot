@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Services;
 
@@ -239,17 +240,20 @@ public class ErrorReportService : BaseService
         }
         try
         {
-            var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
-            var textChannel = guild.GetTextChannel(_config.ErrorReporting.ChannelId);
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+            {
+                var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
+                var textChannel = guild.GetTextChannel(_config.ErrorReporting.ChannelId);
 
-            if (attachments.Count > 0)
-            {
-                await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
-            }
-            else
-            {
-                await textChannel.SendMessageAsync(embed: embed.Build());
-            }
+                if (attachments.Count > 0)
+                {
+                    await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
+                }
+                else
+                {
+                    await textChannel.SendMessageAsync(embed: embed.Build());
+                }
+            });
         }
         catch (Exception ex)
         {
