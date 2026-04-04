@@ -44,13 +44,13 @@ public class DiscordCacheService
     }
 
     #region Guild
-    public async Task UpdateGuild(IGuild guild, bool includeSnapsnots = false)
+    public async Task UpdateGuild(IGuild guild)
     {
         using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await UpdateGuild(db, guild, includeSnapsnots);
+            await UpdateGuild(db, guild);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
@@ -62,8 +62,7 @@ public class DiscordCacheService
 
     public async Task UpdateGuild(
         XeniaDbContext db,
-        IGuild guild,
-        bool includeSnapsnots)
+        IGuild guild)
     {
         foreach (var member in await guild.GetUsersAsync())
         {
@@ -75,19 +74,6 @@ public class DiscordCacheService
             {
                 _log.Warn(ex, $"Failed to update member \"{member.GlobalName}\" ({member.Username}, {member.Id}) in guild \"{guild.Name}\" ({guild.Id})");
             }
-
-            if (includeSnapsnots)
-            {
-                try
-                {
-                    var mapped = _guildMemberSnapshotMapper.Map(member);
-                    await _db.AddAsync(mapped);
-                }
-                catch (Exception ex)
-                {
-                    _log.Warn(ex, $"Failed to create snapshot of member \"{member.GlobalName}\" ({member.Username}, {member.Id}) in Guild \"{guild.Name}\" ({guild.Id})");
-                }
-            }
         }
 
         var guildIdStr = guild.Id.ToString();
@@ -98,22 +84,6 @@ public class DiscordCacheService
         guildModel = _guildMergerMapper.Map(guildModel, guild);
 
         await _guildCacheRepository.InsertOrUpdate(db, guildModel);
-
-        if (includeSnapsnots)
-        {
-            foreach (var role in guild.Roles)
-            {
-                try
-                {
-                    var mapped = _guildRoleSnapshotMapper.Map(role);
-                    await db.AddAsync(mapped);
-                }
-                catch (Exception ex)
-                {
-                    _log.Warn(ex, $"Failed to create snapshot of role \"{role.Name}\" ({role.Id}) in Guild \"{guild.Name}\" ({guild.Id})");
-                }
-            }
-        }
     }
     #endregion
 

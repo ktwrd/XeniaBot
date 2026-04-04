@@ -6,6 +6,7 @@ using NLog;
 using System.Diagnostics;
 using XeniaBot.Shared;
 using XeniaDiscord.Common.Services;
+using XeniaDiscord.Data;
 
 namespace XeniaDiscord.Interactions.Modules;
 
@@ -15,12 +16,16 @@ namespace XeniaDiscord.Interactions.Modules;
 public class DiscordCacheAdminModule : InteractionModuleBase
 {
     private readonly ConfigData _config;
+    private readonly XeniaDbContext _db;
+    private readonly DiscordSnapshotService _snapshotService;
     private readonly DiscordCacheService _discordCacheService;
     private readonly DiscordSocketClient _client;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DiscordCacheAdminModule(IServiceProvider services)
     {
         _config = services.GetRequiredService<ConfigData>();
+        _db = services.GetRequiredService<XeniaDbContext>();
+        _snapshotService = services.GetRequiredService<DiscordSnapshotService>();
         _discordCacheService = services.GetRequiredService<DiscordCacheService>();
         _client = services.GetRequiredService<DiscordSocketClient>();
     }
@@ -53,9 +58,22 @@ public class DiscordCacheAdminModule : InteractionModuleBase
             }
             var sw = new Stopwatch();
             sw.Start();
+            await using var db = _db.CreateSession();
+            await using var trans = await db.Database.BeginTransactionAsync();
             try
             {
-                await _discordCacheService.UpdateGuild(guild, includeSnapsnots);
+                await _discordCacheService.UpdateGuild(db, guild);
+                if (includeSnapsnots)
+                {
+                    await _snapshotService.UpdateGuild(db, guild);
+                }
+                await db.SaveChangesAsync();
+                await trans.CommitAsync();
+            }
+            catch
+            {
+                await trans.RollbackAsync();
+                throw;
             }
             finally
             {
@@ -96,9 +114,22 @@ public class DiscordCacheAdminModule : InteractionModuleBase
         {
             var sw = new Stopwatch();
             sw.Start();
+            await using var db = _db.CreateSession();
+            await using var trans = await db.Database.BeginTransactionAsync();
             try
             {
-                await _discordCacheService.UpdateGuild(Context.Guild, includeSnapsnots);
+                await _discordCacheService.UpdateGuild(db, Context.Guild);
+                if (includeSnapsnots)
+                {
+                    await _snapshotService.UpdateGuild(db, Context.Guild);
+                }
+                await db.SaveChangesAsync();
+                await trans.CommitAsync();
+            }
+            catch
+            {
+                await trans.RollbackAsync();
+                throw;
             }
             finally
             {
@@ -131,19 +162,32 @@ public class DiscordCacheAdminModule : InteractionModuleBase
         {
             var sw = new Stopwatch();
             sw.Start();
+            await using var db = _db.CreateSession();
+            await using var trans = await db.Database.BeginTransactionAsync();
             try
             {
                 foreach (var guild in _client.Guilds)
                 {
                     try
                     {
-                        await _discordCacheService.UpdateGuild(guild, includeSnapsnots);
+                        await _discordCacheService.UpdateGuild(db, guild);
+                        if (includeSnapsnots)
+                        {
+                            await _snapshotService.UpdateGuild(db, guild);
+                        }
                     }
                     catch (Exception ex)
                     {
                         throw new InvalidOperationException($"Failed to update Guild \"{guild.Name}\" ({guild.Id})", ex);
                     }
                 }
+                await db.SaveChangesAsync();
+                await trans.CommitAsync();
+            }
+            catch
+            {
+                await trans.RollbackAsync();
+                throw;
             }
             finally
             {
