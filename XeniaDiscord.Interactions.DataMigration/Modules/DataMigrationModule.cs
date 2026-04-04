@@ -56,18 +56,18 @@ public class DataMigrationModule : InteractionModuleBase
         try
         {
             var mongoGuildConfigCount = (await _mongoBanSyncConfigRepository.Count()).ToString("n0");
-            await SendStatusUpdate($"Pulling MongoDB Records: Guild Config ({mongoGuildConfigCount})");
+            await SendStatusUpdate($"Pulling MongoDB Records: Guild Config ({mongoGuildConfigCount})", StatusUpdateType.Downloading);
             var mongoGuildConfig = await _mongoBanSyncConfigRepository.GetAll();
             
             var mongoGuildStateCount = (await _mongoBanSyncStateHistoryRepository.Count()).ToString("n0");
-            await SendStatusUpdate($"Pulling MongoDB Records: Guild State ({mongoGuildStateCount})");
+            await SendStatusUpdate($"Pulling MongoDB Records: Guild State ({mongoGuildStateCount})", StatusUpdateType.Downloading);
             var mongoGuildState = await _mongoBanSyncStateHistoryRepository.GetAll();
 
             var mongoInfoCount = (await _mongoBanSyncInfoRepository.Count()).ToString("n0");
-            await SendStatusUpdate($"Pulling MongoDB Records: Info ({mongoInfoCount})");
+            await SendStatusUpdate($"Pulling MongoDB Records: Info ({mongoInfoCount})", StatusUpdateType.Downloading);
             var mongoInfo = await _mongoBanSyncInfoRepository.GetAll();
 
-            await SendStatusUpdate("Mapping Guild Config");
+            await SendStatusUpdate("Mapping Guild Config", StatusUpdateType.Mapping);
             var guildConfig = mongoGuildConfig.DistinctBy(e => e.GuildId)
                 .Where(e => e.GuildId > 0)
                 .Select(m => new BanSyncGuildModel
@@ -79,7 +79,7 @@ public class DataMigrationModule : InteractionModuleBase
                     Notes = string.IsNullOrEmpty(m.Reason?.Trim()) ? null : m.Reason
                 }).ToArray();
 
-            await SendStatusUpdate("Mapping Guild State to Guild Snapshot");
+            await SendStatusUpdate("Mapping Guild State to Guild Snapshot", StatusUpdateType.Mapping);
             var guildSnapshots = mongoGuildState
                 .OrderByDescending(e => e.Timestamp)
                 .DistinctBy(e => new { e.GuildId, e.Timestamp })
@@ -96,7 +96,7 @@ public class DataMigrationModule : InteractionModuleBase
 
             var weirdGuildModels = new List<BanSyncGuildModel>();
 
-            await SendStatusUpdate($"Mapping BanSync Info Records ({mongoInfoCount})");
+            await SendStatusUpdate($"Mapping BanSync Info Records ({mongoInfoCount})", StatusUpdateType.Mapping);
             var bansyncRecords = new List<BanSyncRecordModel>(mongoInfo.Count);
             var userPartialSnapshots = new List<UserPartialSnapshotModel>(mongoInfo.Count);
             foreach (var m in mongoInfo.OrderByDescending(e => e.Timestamp))
@@ -142,20 +142,20 @@ public class DataMigrationModule : InteractionModuleBase
                 userPartialSnapshots.Add(userSnapshot);
             }
 
-            await SendStatusUpdate("Inserting Guild Config: " + guildConfig.Length.ToString("n0"));
+            await SendStatusUpdate("Inserting Guild Config: " + guildConfig.Length.ToString("n0"), StatusUpdateType.Inserting);
             await db.BanSyncGuilds.AddRangeAsync(guildConfig);
             await db.BanSyncGuilds.AddRangeAsync(weirdGuildModels);
-            await SendStatusUpdate("Inserting Guild Snapshots: " + guildSnapshots.Length.ToString("n0"));
+            await SendStatusUpdate("Inserting Guild Snapshots: " + guildSnapshots.Length.ToString("n0"), StatusUpdateType.Inserting);
             await db.BanSyncGuildSnapshots.AddRangeAsync(guildSnapshots);
-            await SendStatusUpdate("Inserting User Partial Snapshots: " + userPartialSnapshots.Count.ToString("n0"));
+            await SendStatusUpdate("Inserting User Partial Snapshots: " + userPartialSnapshots.Count.ToString("n0"), StatusUpdateType.Inserting);
             await db.UserPartialSnapshots.AddRangeAsync(userPartialSnapshots);
-            await SendStatusUpdate("Inserting BanSync Records: " + bansyncRecords.Count.ToString("n0"));
+            await SendStatusUpdate("Inserting BanSync Records: " + bansyncRecords.Count.ToString("n0"), StatusUpdateType.Inserting);
             await db.BanSyncRecords.AddRangeAsync(bansyncRecords);
-            await SendStatusUpdate("Saving Changes");
+            await SendStatusUpdate("Saving Changes", StatusUpdateType.Commiting);
             await db.SaveChangesAsync();
-            await SendStatusUpdate("Commiting transaction");
+            await SendStatusUpdate("Commiting transaction", StatusUpdateType.Commiting);
             await trans.CommitAsync();
-            await SendStatusUpdate("Complete!");
+            await SendStatusUpdate("Complete!", StatusUpdateType.Done);
             if (weirdGuildModels.Count > 0)
             {
                 var json = JsonSerializer.Serialize(weirdGuildModels, new JsonSerializerOptions()
@@ -194,20 +194,18 @@ public class DataMigrationModule : InteractionModuleBase
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            // TODO migrate mongodb server log config to EF Core
-            
             var mongoDataCount = (await _mongoServerLogRepository.Count()).ToString("n0");
-            await SendStatusUpdate($"Pulling MongoDB Records ({mongoDataCount})");
+            await SendStatusUpdate($"Pulling MongoDB Records ({mongoDataCount})", StatusUpdateType.Downloading);
             var mongoData = await _mongoServerLogRepository.GetAll();
             
-            await SendStatusUpdate("Mapping Models");
+            await SendStatusUpdate("Mapping Models", StatusUpdateType.Mapping);
             var channelModels = new List<ServerLogChannelModel>();
             var guildModels = new List<ServerLogGuildModel>();
             var existingGuildIds = await db.GuildCache.AsNoTracking().Select(e => e.Id).ToListAsync();
             var missingGuildIds = mongoData.Select(e => e.ServerId.ToString()).Distinct().Where(e => !existingGuildIds.Contains(e)).ToList();
             if (missingGuildIds.Count > 0)
             {
-                await SendStatusUpdate($"Mapping Models: Guild Cache ({missingGuildIds.Count})");
+                await SendStatusUpdate($"Mapping Models: Guild Cache ({missingGuildIds.Count})", StatusUpdateType.Mapping);
             }
             
             var guildCache = new List<GuildCacheModel>();
@@ -282,21 +280,21 @@ public class DataMigrationModule : InteractionModuleBase
             
             if (guildCache.Count > 0)
             {
-                await SendStatusUpdate("Inserting Guild Cache: " + guildCache.Count.ToString("n0"));
+                await SendStatusUpdate("Inserting Guild Cache: " + guildCache.Count.ToString("n0"), StatusUpdateType.Inserting);
                 await db.GuildCache.AddRangeAsync(guildCache);
             }
             
-            await SendStatusUpdate("Inserting Server Log Guilds: " + guildModels.Count.ToString("n0"));
+            await SendStatusUpdate("Inserting Server Log Guilds: " + guildModels.Count.ToString("n0"), StatusUpdateType.Inserting);
             await db.ServerLogGuilds.AddRangeAsync(guildModels);
             
-            await SendStatusUpdate("Inserting Server Log Channels: " + channelModels.Count.ToString("n0"));
+            await SendStatusUpdate("Inserting Server Log Channels: " + channelModels.Count.ToString("n0"), StatusUpdateType.Inserting);
             await db.ServerLogChannels.AddRangeAsync(channelModels);
             
-            await SendStatusUpdate("Saving Changes");
+            await SendStatusUpdate("Saving Changes", StatusUpdateType.Commiting);
             await db.SaveChangesAsync();
-            await SendStatusUpdate("Commiting transaction");
+            await SendStatusUpdate("Commiting transaction", StatusUpdateType.Commiting);
             await trans.CommitAsync();
-            await SendStatusUpdate("Complete!");
+            await SendStatusUpdate("Complete!", StatusUpdateType.Done);
         }
         catch (Exception ex)
         {
@@ -309,7 +307,8 @@ public class DataMigrationModule : InteractionModuleBase
     }
 
     private async Task SendStatusUpdate(
-        string message)
+        string message,
+        StatusUpdateType status)
     {
         var title = new List<string>();
         if (Context.Interaction.Data is IApplicationCommandInteractionData data)
@@ -320,11 +319,27 @@ public class DataMigrationModule : InteractionModuleBase
                 title.Add(opt.Name);
             }
         }
+        var content = status switch
+        {
+            StatusUpdateType.Downloading => "📥",
+            StatusUpdateType.Mapping => "🔀",
+            StatusUpdateType.Inserting => "➕",
+            StatusUpdateType.Commiting => "💾",
+            StatusUpdateType.Done => "✔️"
+        } + " " + message;
         await Context.Channel.SendMessageAsync(
             embed: new EmbedBuilder()
             .WithTitle(string.Join("/", title))
-            .WithDescription(message)
+            .WithDescription(content)
             .Build());
+    }
+    private enum StatusUpdateType
+    {
+        Downloading,
+        Mapping,
+        Inserting,
+        Commiting,
+        Done
     }
 
     private static BanSyncGuildState MapState(MongoBanSyncGuildState state)
@@ -342,12 +357,14 @@ public class DataMigrationModule : InteractionModuleBase
 
     private static string? MapReason(string? reason)
     {
-        if (string.IsNullOrEmpty(reason?.Trim())) return null;
-        if (string.Equals("<null>", reason?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || string.Equals("<unknown>", reason?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || string.Equals("null", reason?.Trim(), StringComparison.OrdinalIgnoreCase)
-            || string.Equals("No reason given", reason?.Trim(), StringComparison.OrdinalIgnoreCase))
+        reason = reason?.Trim();
+        if (reason == null
+            || string.IsNullOrEmpty(reason)) return null;
+        if (string.Equals("<null>", reason, StringComparison.OrdinalIgnoreCase)
+            || string.Equals("<unknown>", reason, StringComparison.OrdinalIgnoreCase)
+            || string.Equals("null", reason, StringComparison.OrdinalIgnoreCase)
+            || string.Equals("No reason given", reason, StringComparison.OrdinalIgnoreCase))
             return null;
-        return reason.Trim();
+        return reason;
     }
 }
