@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using XeniaBot.MongoData.Models;
@@ -6,6 +9,7 @@ using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Services;
 using Microsoft.Extensions.Logging;
+using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -29,15 +33,23 @@ public partial class ServerController
     [HttpPost("~/Server/{id}/Settings/Log")]
     [AuthRequired]
     [RestrictToGuild(GuildIdRouteKey = "id")]
-    public async Task<IActionResult> SaveSettings_LogSystem(ulong id, SettingLogSystemData data)
+    public async Task<IActionResult> SaveSettings_LogSystem(
+        ulong id,
+        [FromForm] string jsonData)
     {
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return View("NotFound", "Guild not found");
 
+        string? jsonStringData = null;
+        List<JsTypeServerLogConfigItem>? data = null;
         try
         {
-            var controller = Program.Core.GetRequiredService<ServerLogRepository>();
+            jsonStringData = Encoding.UTF8.GetString(Convert.FromBase64String(jsonData));
+            data = JsonSerializer.Deserialize<List<JsTypeServerLogConfigItem>>(jsonStringData);
+            // TODO overwrite stuff in ServerLogRepository for channels with whatever is here
+            // ALSO make sure to overwrite the "Id" property when mapping
+            /*var controller = Program.Core.GetRequiredService<ServerLogRepository>();
             var currentConfig = await controller.Get(guild.Id) ?? new ServerLogModel()
             {
                 ServerId = guild.Id
@@ -53,14 +65,15 @@ public partial class ServerController
             currentConfig.SetChannel(ServerLogEvent.ChannelEdit, data.ChannelEditChannel);
             currentConfig.SetChannel(ServerLogEvent.ChannelDelete, data.ChannelDeleteChannel);
             currentConfig.SetChannel(ServerLogEvent.MemberVoiceChange, data.MemberVoiceChangeChannel);
-            await controller.Set(currentConfig);
+            await controller.Set(currentConfig);*/
         }
         catch (Exception ex)
         {
+            // TODO use ErrorReportService.Submit
             Program.Core.GetRequiredService<ErrorReportService>()?
                 .ReportException(ex, $"Failed to save logging settings");
-            _logger.LogError(ex, "Failed to save logging settings for Guild {GuldId} (data={Data})",
-                id, data);
+            _logger.LogError(ex, "Failed to save logging settings for Guild {GuildId}: {Data}",
+                id, jsonStringData);
             return await ModerationView(id,
                 messageType: "danger",
                 message: $"Failed to save Logging settings. {ex.Message}");

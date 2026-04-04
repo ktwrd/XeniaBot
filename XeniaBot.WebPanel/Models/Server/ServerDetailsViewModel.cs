@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Discord.WebSocket;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Services;
@@ -43,4 +44,38 @@ public class ServerDetailsViewModel : BaseViewModel,
     {
         return WarnStrikeService.IsWarnActive(model, WarnStrikeConfig);
     }
+}
+
+public class JsTypeServerLogChannelItem
+{
+    [JsonPropertyName("category")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? IsCategory {get;set;}
+
+    [JsonPropertyName("text")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? IsText {get;set;}
+
+    [JsonPropertyName("voice")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? IsVoice {get;set;}
+
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = "0";
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+
+    [JsonPropertyName("children")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ICollection<JsTypeServerLogChannelItem>? Children { get; set; }
+}
+public class JsTypeServerLogConfigItem
+{
+    [JsonPropertyName("id")]
+    public required string Id { get; set; }
+    [JsonPropertyName("channelId")]
+    public required string ChannelId { get; set; }
+    [JsonPropertyName("event")]
+    public required string Event { get; set; }
 }

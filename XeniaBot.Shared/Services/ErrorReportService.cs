@@ -273,11 +273,11 @@ public class ErrorReportService : BaseService
         }
         await Submit(builder);
         */
-        var exceptionJson = SerializeJsonSafe(exception);
+        // var exceptionJson = SerializeJsonSafe(exception);
         SentrySdk.CaptureException(exception, (scope) =>
         {
             scope.SetExtra("notes", notes);
-            scope.SetExtra("exceptionJson", exceptionJson);
+            // scope.SetExtra("exceptionJson", exceptionJson);
             if (extraAttachments?.Count > 0)
             {
                 foreach (var key in extraAttachments.Keys)
