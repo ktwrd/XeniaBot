@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Common.Handlers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
+using XeniaDiscord.Common.Mappers.DiscordSnapshot;
 using XeniaDiscord.Common.Services;
 
 namespace XeniaDiscord;
@@ -45,5 +46,7 @@ public static class XeniaDiscordCommon
         DiscordUserToUserCacheModelMapper.RegisterService(services);
         DiscordGuildToGuildCacheModelMapper.RegisterService(services);
         DiscordUserToGuildMemberCacheModelMapper.RegisterService(services);
+
+        GuildUserToSnapshotModelMapper.RegisterService(services);
     }
 }

@@ -1,4 +1,5 @@
 using Discord;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaDiscord.Data.Models.Snapshot;
 
@@ -7,6 +8,11 @@ namespace XeniaDiscord.Common.Mappers.DiscordSnapshot;
 public class GuildUserToSnapshotModelMapper
     : IMapper<IGuildUser, GuildMemberSnapshotModel>
 {
+    public static void RegisterService(IServiceCollection services)
+    {
+        services.AddSingleton<GuildUserToSnapshotModelMapper>()
+                .AddSingleton<IMapper<IGuildUser, GuildMemberSnapshotModel>, GuildUserToSnapshotModelMapper>();
+    }
     public GuildMemberSnapshotModel Map(IGuildUser source) => InternalMap(source);
     private static GuildMemberSnapshotModel InternalMap(
         IGuildUser? member)

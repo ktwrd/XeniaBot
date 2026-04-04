@@ -37,6 +37,13 @@ public class ServerLogRepository : BaseRepository<ServerLogModel>
         var result = await BaseFind(Builders<ServerLogModel>.Filter.Empty);
         return await result.ToListAsync();
     }
+    public async Task<long> Count()
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        return await collection.CountDocumentsAsync(Builders<ServerLogModel>.Filter.Empty);
+    }
 
     public async Task Set(ServerLogModel model)
     {

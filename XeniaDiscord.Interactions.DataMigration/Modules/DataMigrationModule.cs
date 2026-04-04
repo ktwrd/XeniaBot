@@ -3,12 +3,17 @@ using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System.Text.Json;
+using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.BanSync;
+using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.PartialSnapshot;
+using XeniaDiscord.Data.Models.ServerLog;
 using MongoBanSyncGuildState = XeniaBot.MongoData.Models.BanSyncGuildState;
+using MongoServerLogRepository = XeniaBot.MongoData.Repositories.ServerLogRepository;
 
 namespace XeniaDiscord.Interactions.DataMigration.Modules;
 
@@ -22,6 +27,8 @@ public class DataMigrationModule : InteractionModuleBase
     private readonly BanSyncConfigRepository _mongoBanSyncConfigRepository;
     private readonly BanSyncStateHistoryRepository _mongoBanSyncStateHistoryRepository;
     private readonly BanSyncInfoRepository _mongoBanSyncInfoRepository;
+    private readonly MongoServerLogRepository _mongoServerLogRepository;
+    private readonly DiscordSocketClient _discord;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DataMigrationModule(IServiceProvider services)
     {
@@ -31,6 +38,8 @@ public class DataMigrationModule : InteractionModuleBase
         _mongoBanSyncConfigRepository = services.GetRequiredService<BanSyncConfigRepository>();
         _mongoBanSyncStateHistoryRepository = services.GetRequiredService<BanSyncStateHistoryRepository>();
         _mongoBanSyncInfoRepository = services.GetRequiredService<BanSyncInfoRepository>();
+        _mongoServerLogRepository = services.GetRequiredService<MongoServerLogRepository>();
+        _discord = services.GetRequiredService<DiscordSocketClient>();
     }
 
     [SlashCommand("bansync", "Migrate all BanSync-related tables")]
@@ -187,8 +196,107 @@ public class DataMigrationModule : InteractionModuleBase
         {
             // TODO migrate mongodb server log config to EF Core
             
+            var mongoDataCount = (await _mongoServerLogRepository.Count()).ToString("n0");
+            await SendStatusUpdate($"Pulling MongoDB Records ({mongoDataCount})");
+            var mongoData = await _mongoServerLogRepository.GetAll();
+            
+            await SendStatusUpdate("Mapping Models");
+            var channelModels = new List<ServerLogChannelModel>();
+            var guildModels = new List<ServerLogGuildModel>();
+            var existingGuildIds = await db.GuildCache.AsNoTracking().Select(e => e.Id).ToListAsync();
+            var missingGuildIds = mongoData.Select(e => e.ServerId.ToString()).Distinct().Where(e => !existingGuildIds.Contains(e)).ToList();
+            if (missingGuildIds.Count > 0)
+            {
+                await SendStatusUpdate($"Mapping Models: Guild Cache ({missingGuildIds.Count})");
+            }
+            
+            var guildCache = new List<GuildCacheModel>();
+            foreach (var guildIdStr in missingGuildIds)
+            {
+                var guildId = guildIdStr.ParseRequiredULong(nameof(guildIdStr), false);
+                var guild = _discord.GetGuild(guildId);
+                if (guild == null)
+                {
+                    guildCache.Add(new GuildCacheModel(guildId)
+                    {
+                        CreatedAt = SnowflakeUtils.FromSnowflake(guildId).UtcDateTime
+                    });
+                }
+                else
+                {
+                    guildCache.Add(new GuildCacheModel(guildId)
+                    {
+                        Name = guild.Name,
+                        OwnerUserId = guild.OwnerId.ToString(),
+                        CreatedAt = SnowflakeUtils.FromSnowflake(guildId).UtcDateTime,
+                        IconUrl = guild.IconUrl,
+                        BannerUrl = guild.BannerUrl,
+                        SplashUrl = guild.SplashUrl,
+                        DiscoverySplashUrl = guild.DiscoverySplashUrl
+                    });
+                }
+            }
+
+            mongoData.Reverse();
+            foreach (var mongoModel in mongoData.DistinctBy(e => e.ServerId))
+            {
+                var model = new ServerLogGuildModel()
+                {
+                    GuildId = mongoModel.ServerId.ToString(),
+                    Enabled = true
+                };
+                guildModels.Add(model);
+                if (mongoModel.DefaultLogChannel > 0)
+                {
+                    channelModels.Add(new ServerLogChannelModel()
+                    {
+                        GuildId = model.GuildId,
+                        ChannelId = mongoModel.DefaultLogChannel.ToString(),
+                        Event = ServerLogEvent.Fallback,
+                    });
+                }
+                AddChannel(mongoModel.MemberJoinChannel, ServerLogEvent.MemberJoin);
+                AddChannel(mongoModel.MemberLeaveChannel, ServerLogEvent.MemberLeave);
+                AddChannel(mongoModel.MemberBanChannel, ServerLogEvent.MemberBan);
+                AddChannel(mongoModel.MemberKickChannel, ServerLogEvent.MemberKick);
+                AddChannel(mongoModel.MessageEditChannel, ServerLogEvent.MessageEdit);
+                AddChannel(mongoModel.MessageDeleteChannel, ServerLogEvent.MessageDelete);
+                AddChannel(mongoModel.ChannelCreateChannel, ServerLogEvent.ChannelCreate);
+                AddChannel(mongoModel.ChannelEditChannel, ServerLogEvent.ChannelEdit);
+                AddChannel(mongoModel.ChannelDeleteChannel, ServerLogEvent.ChannelDelete);
+                AddChannel(mongoModel.MemberVoiceChangeChannel, ServerLogEvent.MemberVoiceChange);
+                
+                void AddChannel(ulong? channelId, ServerLogEvent mappedEvent)
+                {
+                    if (channelId.HasValue && channelId.Value > 0)
+                    {
+                        channelModels.Add(new ServerLogChannelModel()
+                        {
+                            GuildId = model.GuildId,
+                            ChannelId = channelId.Value.ToString(),
+                            Event = mappedEvent
+                        });
+                    }
+                }
+            }
+            
+            if (guildCache.Count > 0)
+            {
+                await SendStatusUpdate("Inserting Guild Cache: " + guildCache.Count.ToString("n0"));
+                await db.GuildCache.AddRangeAsync(guildCache);
+            }
+            
+            await SendStatusUpdate("Inserting Server Log Guilds: " + guildModels.Count.ToString("n0"));
+            await db.ServerLogGuilds.AddRangeAsync(guildModels);
+            
+            await SendStatusUpdate("Inserting Server Log Channels: " + channelModels.Count.ToString("n0"));
+            await db.ServerLogChannels.AddRangeAsync(channelModels);
+            
+            await SendStatusUpdate("Saving Changes");
             await db.SaveChangesAsync();
+            await SendStatusUpdate("Commiting transaction");
             await trans.CommitAsync();
+            await SendStatusUpdate("Complete!");
         }
         catch (Exception ex)
         {
