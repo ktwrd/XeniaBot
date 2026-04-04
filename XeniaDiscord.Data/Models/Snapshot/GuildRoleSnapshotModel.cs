@@ -18,31 +18,35 @@ public class GuildRoleSnapshotModel
         Position = 0;
         RecordCreatedAt = DateTime.UtcNow;
     }
-    public GuildRoleSnapshotModel(IRole role)
-    {
-        GuildId = role.Guild.Id.ToString();
-        RoleId = role.Id.ToString();
-        Name = role.Name;
-        CreatedAt = role.CreatedAt.UtcDateTime;
-        PermissionsValue = role.Permissions.RawValue.ToString();
-        Position = role.Position;
-        IconHash = string.IsNullOrEmpty(role.Icon) ? null : role.Icon;
-        IsManaged = role.IsManaged;
-        IsMentionable = role.IsMentionable;
-        IsHoisted = role.IsHoisted;
-        RecordCreatedAt = DateTime.UtcNow;
-    }
 
     public Guid Id { get; set; }
 
+    /// <summary>
+    /// UTC Time of when this record was created.
+    /// </summary>
+    public DateTime RecordCreatedAt { get; set; }
+
+    /// <summary>
+    /// Guild Id (ulong as string)
+    /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string GuildId { get; set; }
 
+    /// <summary>
+    /// Role Id (ulong as string)
+    /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string RoleId { get; set; }
 
-    public string Name { get; set; }
+    /// <summary>
+    /// Role Name
+    /// </summary>
+    [MaxLength(200)]
+    public string? Name { get; set; }
 
+    /// <summary>
+    /// UTC Time of when this role was created (inferred from snowflake)
+    /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
@@ -55,16 +59,13 @@ public class GuildRoleSnapshotModel
 
     public RoleFlags Flags { get; set; }
 
+    // TODO find the actual max length. idk what it is
+    [MaxLength(200)]
     public string? IconHash { get; set; }
 
     public bool IsManaged { get; set; }
     public bool IsMentionable { get; set; }
     public bool IsHoisted { get; set; }
-
-    /// <summary>
-    /// UTC Time of when this record was created.
-    /// </summary>
-    public DateTime RecordCreatedAt { get; set; }
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong GetRoleId() => RoleId.ParseRequiredULong(nameof(RoleId), false);
