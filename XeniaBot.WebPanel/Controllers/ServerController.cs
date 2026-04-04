@@ -7,13 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using XeniaBot.Data;
 using XeniaBot.MongoData;
-using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
+using XeniaDiscord.Data;
 using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.WebPanel.Controllers;
@@ -22,14 +21,20 @@ namespace XeniaBot.WebPanel.Controllers;
 public partial class ServerController : BaseXeniaController
 {
     private readonly ILogger<ServerController> _logger;
+    private readonly XeniaDbContext _db;
     private readonly ErrorReportService _errorReporting;
+    private readonly GuildCacheRepository _guildCacheRepo;
+    private readonly ServerLogRepository _serverLogRepository;
 
     public ServerController(
         IServiceProvider services,
         ILogger<ServerController> logger)
         : base()
     {
+        _db = services.GetRequiredService<XeniaDbContext>();
         _errorReporting = services.GetRequiredService<ErrorReportService>();
+        _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
+        _serverLogRepository = services.GetRequiredService<ServerLogRepository>();
         _logger = logger;
     }
 
