@@ -134,7 +134,8 @@ public class DiscordSnapshotService : BaseService
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await _cacheService.UpdateGuild(db, guild, true);
+            await UpdateGuild(db, guild);
+            await _cacheService.UpdateGuild(db, guild);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
@@ -282,6 +283,55 @@ public class DiscordSnapshotService : BaseService
             return;
         }
         GuildRoleUpdated?.Invoke(modelBefore, model);
+    }
+
+    public async Task UpdateGuild(
+        XeniaDbContext db,
+        IGuild guild)
+    {
+        var members = new List<GuildMemberSnapshotModel>();
+        var roles = new List<GuildRoleSnapshotModel>();
+        foreach (var member in await guild.GetUsersAsync())
+        {
+            try
+            {
+                var mapped = _guildMemberMapper.Map(member);
+                members.Add(mapped);
+            }
+            catch (Exception ex)
+            {
+                _log.Warn(ex, $"Failed to map member \"{member.GlobalName}\" ({member.Username}, {member.Id}) for Guild \"{guild.Name}\" ({guild.Id})");
+            }
+        }
+        foreach (var role in guild.Roles)
+        {
+            try
+            {
+                var mapped = _roleMapper.Map(role);
+                roles.Add(mapped);
+            }
+            catch (Exception ex)
+            {
+                _log.Warn(ex, $"Failed to map role \"{role.Name}\" ({role.Id}) for Guild \"{guild.Name}\" ({guild.Id})");
+            }
+        }
+
+        try
+        {
+            await db.AddRangeAsync(members);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, $"Failed to save members for Guild \"{guild.Name}\" ({guild.Id})");
+        }
+        try
+        {
+            await db.AddRangeAsync(roles);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, $"Failed to save roles for Guild \"{guild.Name}\" ({guild.Id})");
+        }
     }
 }
 
