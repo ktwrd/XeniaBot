@@ -29,6 +29,10 @@ public class GuildUserToSnapshotModelMapper
         instance.Username = NOETrim(member.Username);
         instance.Discriminator = GetDiscriminator(member);
         instance.Nickname = NOETrim(member.Nickname);
+        if (string.IsNullOrEmpty(instance.Nickname))
+            instance.Nickname = NOETrim(member.GlobalName);
+        if (string.IsNullOrEmpty(instance.Nickname))
+            instance.Nickname = null;
         instance.IsSelfDeafened = member.IsSelfDeafened;
         instance.IsSelfMuted = member.IsSelfMuted;
         instance.IsSuppressed = member.IsSuppressed;

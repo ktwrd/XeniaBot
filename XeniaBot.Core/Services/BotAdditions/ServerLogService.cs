@@ -1,12 +1,15 @@
+using CSharpFunctionalExtensions;
+using Discord;
+using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.DiscordCache.Models;
@@ -14,11 +17,10 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Services;
+using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
-using NLog;
-
 using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
 
 namespace XeniaBot.Core.Services.BotAdditions;
@@ -32,6 +34,7 @@ public class ServerLogService : BaseService
     private readonly DiscordCacheService _discordCache;
     private readonly DiscordSnapshotService _discordSnapshot;
     private readonly ErrorReportService _errorService;
+    private readonly XeniaDbContext _db;
     public ServerLogService(IServiceProvider services)
         : base(services)
     {
@@ -40,6 +43,7 @@ public class ServerLogService : BaseService
         _discordCache = services.GetRequiredService<DiscordCacheService>();
         _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
         _errorService = services.GetRequiredService<ErrorReportService>();
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
     }
 
     public override Task InitializeAsync()
@@ -61,6 +65,7 @@ public class ServerLogService : BaseService
         GuildMemberSnapshotModel? before,
         GuildMemberSnapshotModel model)
     {
+        var guildIdStr = model.GuildId;
         if (before == null)
         {
             _log.Trace($"Event. No before state (guildId={model.GuildId}, userId={model.UserId})");
@@ -69,16 +74,19 @@ public class ServerLogService : BaseService
         DiscordSnapshotMemberUpdateInfo? info = null;
         try
         {
-            var rolesAdded = new List<ulong>();
-            var rolesRemoved = new List<ulong>();
+            // disabled in guild, ignore
+            if (!await _db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
+
+            var rolesAdded = new List<(ulong, GuildRoleSnapshotModel?)>();
+            var rolesRemoved = new List<(ulong, GuildRoleSnapshotModel?)>();
 
             rolesAdded.AddRange(model.Roles
                 .Where(a => !before.Roles.Any(b => b.RoleId == a.RoleId))
-                .Select(e => e.GetRoleId()));
+                .Select(e => (e.GetRoleId(), e.GuildRoleSnapshot)));
 
             rolesRemoved.AddRange(before.Roles
                 .Where(b => !model.Roles.Any(a => a.RoleId == b.RoleId))
-                .Select(e => e.GetRoleId()));
+                .Select(e => (e.GetRoleId(), e.GuildRoleSnapshot)));
 
             var permissionsAddedList = new List<GuildPermission>();
             var permissionsRemovedList = new List<GuildPermission>();
@@ -106,10 +114,106 @@ public class ServerLogService : BaseService
                 RolesAdded = rolesAdded,
                 RolesRemoved = rolesRemoved,
                 PermissionsAdded = permissionsAddedList,
-                PermissionsRemoved = permissionsRemovedList
+                PermissionsRemoved = permissionsRemovedList,
+                SnapshotBefore = before,
+                Snapshot = model
             };
 
-            // TODO send message in log channel with updated roles/permissions/nickname
+            if (!info.AnyUpdates)
+            {
+                _log.Trace($"No permission/role updates for snapshot (RecordId={model.RecordId}, UserId={model.UserId}, GuildId={model.GuildId})");
+                return;
+            }
+            
+            var events = await _db.ServerLogChannels
+                .Where(e => e.GuildId == guildIdStr)
+                .Select(e => e.Event)
+                .Distinct().ToListAsync();
+            if (events.Contains(ServerLogEvent.MemberRoleAdded) ||
+                events.Contains(ServerLogEvent.MemberRoleRemoved) ||
+                events.Contains(ServerLogEvent.MemberRoleUpdated) ||
+                events.Contains(ServerLogEvent.MemberPermissionsUpdated))
+            {
+                if (events.Contains(ServerLogEvent.MemberRoleUpdated) &&
+                    !events.Contains(ServerLogEvent.MemberRoleAdded) &&
+                    !events.Contains(ServerLogEvent.MemberRoleRemoved))
+                {
+                    await SendAs(GetRolesUpdated(), ServerLogEvent.MemberRoleUpdated);
+                }
+                else
+                {
+                    if (info.RolesAdded.Count > 0)
+                    {
+                        await SendAs(GetRolesAdded(), ServerLogEvent.MemberRoleAdded);
+                    }
+                    if (info.RolesRemoved.Count > 0)
+                    {
+                        await SendAs(GetRolesRemoved(), ServerLogEvent.MemberRoleRemoved);
+                    }
+                }
+                if (info.AnyPermissions)
+                {
+                    var (permEmbed, permAtt) = GetPermissionsUpdated();
+                    await EventHandle(model.GetGuildId(), ServerLogEvent.MemberPermissionsUpdated, [permEmbed], permAtt);
+                }
+            }
+            else if (events.Contains(ServerLogEvent.Fallback) || events.Contains(ServerLogEvent.MemberUpdated))
+            {
+                await SendAs(GetCombined(), ServerLogEvent.MemberUpdated);
+            }
+
+            async Task SendAs((EmbedBuilder, List<FileAttachment>) tuple, ServerLogEvent @event)
+            {
+                var (embed, att) = tuple;
+                await EventHandle(model.GetGuildId(), @event, [embed], att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetCombined()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                    .WithTitle("Member Updated");
+                info.WithPermissionsUpdated(embed, att);
+                info.WithRolesAdded(embed, att);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetRolesUpdated()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                    .WithTitle("User Roles Updated");
+                info.WithRolesAdded(embed, att);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetRolesAdded()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                        .WithTitle("User Roles Added")
+                        .WithColor(Color.Blue);
+                info.WithRolesAdded(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetRolesRemoved()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                        .WithTitle("User Roles Removed")
+                        .WithColor(Color.Blue);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetPermissionsUpdated()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                        .WithTitle("User Permissions Updated")
+                        .WithColor(Color.Blue);
+                info.WithRolesAdded(embed, att);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
         }
         catch (Exception ex)
         {
@@ -123,15 +227,218 @@ public class ServerLogService : BaseService
         }
     }
 
-    public class DiscordSnapshotMemberUpdateInfo
+    private static EmbedBuilder CreateEmbed(GuildMemberSnapshotModel snapshot)
     {
-        public required IReadOnlyCollection<ulong> RolesAdded { get; init; }
-        public required IReadOnlyCollection<ulong> RolesRemoved { get; init; }
-        public required IReadOnlyCollection<GuildPermission> PermissionsAdded { get; init; }
-        public required IReadOnlyCollection<GuildPermission> PermissionsRemoved { get; init; }
+        return new EmbedBuilder()
+            .WithDescription(string.Join("\n",
+                $"<@{snapshot.UserId}>",
+                "```",
+                $"Display Name: {snapshot.Nickname ?? snapshot.Username}",
+                $"Username: {snapshot.Username}",
+                $"Id: {snapshot.UserId}",
+                "```"))
+            .WithColor(Color.Blue)
+            .WithCurrentTimestamp()
+            .WithThumbnailUrl(snapshot.AvatarUrl);
     }
 
-    internal async Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder embed, Dictionary<string, string>? attachments = null)
+    public class DiscordSnapshotMemberUpdateInfo
+    {
+        public required IReadOnlyCollection<(ulong RoleId, GuildRoleSnapshotModel? Role)> RolesAdded { get; init; }
+        public required IReadOnlyCollection<(ulong RoleId, GuildRoleSnapshotModel? Role)> RolesRemoved { get; init; }
+        public required IReadOnlyCollection<GuildPermission> PermissionsAdded { get; init; }
+        public required IReadOnlyCollection<GuildPermission> PermissionsRemoved { get; init; }
+        public required GuildMemberSnapshotModel? SnapshotBefore { get; init; }
+        public required GuildMemberSnapshotModel Snapshot { get; init; }
+
+        public bool AnyUpdates
+            => RolesAdded.Count > 0
+            || RolesRemoved.Count > 0
+            || AnyPermissions;
+        public bool AnyPermissions
+            => PermissionsAdded.Count > 0
+            || PermissionsRemoved.Count > 0;
+
+        public EmbedBuilder WithRolesAdded(EmbedBuilder embed, List<FileAttachment> attachments)
+        {
+            if (RolesAdded.Count < 1) return embed;
+
+            var added = string.Join("\n", RolesAdded.Select(e => $"<@&{e.RoleId}>"));
+            var diffAdd = string.Join("\n", RolesAdded.Select(role => $"{role.RoleId} - {role.Role?.Name}"));
+            if (added.Length < 1024)
+            {
+                embed.AddField("Roles Added", added, true);
+            }
+            else if (added.Length >= 1024)
+            {
+                embed.AddField("Roles Added", "-# Attached as `roles-added.txt`", true);
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(diffAdd)), "roles-added.txt"));
+            }
+            return embed;
+        }
+        public EmbedBuilder WithRolesRemoved(EmbedBuilder embed, List<FileAttachment> attachments)
+        {
+            if (RolesRemoved.Count < 1) return embed;
+
+            var content = string.Join("\n", RolesRemoved.Select(e => $"<@&{e.RoleId}>"));
+            var fileContent = string.Join("\n", RolesRemoved.Select(role => $"{role.RoleId} - {role.Role?.Name}"));
+            if (content.Length < 1024)
+            {
+                embed.AddField("Roles Removed", content, true);
+            }
+            else if (content.Length >= 1024)
+            {
+                embed.AddField("Roles Removed", "-# Attached as `roles-removed.txt`", true);
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(fileContent)), "roles-removed.txt"));
+            }
+            return embed;
+        }
+        public EmbedBuilder WithPermissionsAdded(EmbedBuilder embed, List<FileAttachment> attachments)
+        {
+            if (PermissionsAdded.Count < 1) return embed;
+            var content = string.Join("\n", PermissionsAdded.Select(e => e.ToString()));
+            if (content.Length >= 1024)
+            {
+                embed.AddField(
+                    $"Permissions Added ({PermissionsAdded.Count})",
+                    "-# Attached as `permissions-added.txt`",
+                    true);
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(content)), "permissions-added.txt"));
+            }
+            else if (content.Length > 0)
+            {
+                embed.AddField(
+                    $"Permissions Added ({PermissionsAdded.Count})",
+                    content,
+                    true);
+            }
+            return embed;
+        }
+        public EmbedBuilder WithPermissionsRemoved(EmbedBuilder embed, List<FileAttachment> attachments)
+        {
+            if (PermissionsRemoved.Count < 1) return embed;
+            var content = string.Join("\n", PermissionsRemoved.Select(e => e.ToString()));
+            if (content.Length >= 1024)
+            {
+                embed.AddField(
+                    $"Permissions Removed ({PermissionsRemoved.Count})",
+                    "-# Attached as `permissions-removed.txt`",
+                    true);
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(content)), "permissions-removed.txt"));
+            }
+            else if (content.Length > 0)
+            {
+                embed.AddField(
+                    $"Permissions Removed ({PermissionsRemoved.Count})",
+                    content,
+                    true);
+            }
+            return embed;
+        }
+        public EmbedBuilder WithPermissionsUpdated(EmbedBuilder embed, List<FileAttachment> attachments)
+        {
+            if (!AnyPermissions) return embed;
+
+            var added = string.Join("\n", PermissionsAdded.Select(e => e.ToString()));
+            var removed = string.Join("\n", PermissionsRemoved.Select(e => e.ToString()));
+            var diffAdd = string.Join("\n", PermissionsAdded.Select(e => "+ " + e.ToString()));
+            var diffRem = string.Join("\n", PermissionsRemoved.Select(e => "- " + e.ToString()));
+            var content = new List<string>();
+            if (!string.IsNullOrEmpty(diffAdd)) content.Add(diffAdd);
+            if (!string.IsNullOrEmpty(diffRem)) content.Add(diffRem);
+            var diff = string.Join("\n", content);
+            
+            if (!FieldNeedAttachment(diff, "diff", true))
+            {
+                embed.AddField("User Permissions", "```diff\n" + diff + "\n```");
+            }
+            else if (added.Length < 1024 && removed.Length < 1024)
+            {
+                if (!string.IsNullOrEmpty(added))
+                    embed.AddField("Added", added);
+                if (!string.IsNullOrEmpty(removed))
+                    embed.AddField("Removed", removed);
+            }
+            else
+            {
+                embed.AddField(
+                    "User Permissions",
+                    "> Too many permissions were updated! They've been attached as `permissions.diff`");
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(diff)), "permissions.diff"));
+            }
+
+            return embed;
+        }
+
+        public EmbedBuilder[] CreateEmbed(List<FileAttachment> attachments)
+        {
+            var result = new List<EmbedBuilder>(2);
+            if (PermissionsAdded.Count > 0 || PermissionsRemoved.Count > 0)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("User Permissions Updated")
+                    .WithDescription(string.Join("\n",
+                        $"<@{Snapshot.UserId}>",
+                        "```",
+                        $"Display Name: {Snapshot.Nickname ?? Snapshot.Username}",
+                        $"Username: {Snapshot.Username}",
+                        $"Id: {Snapshot.UserId}",
+                        "```"))
+                    .WithColor(Color.Orange)
+                    .WithCurrentTimestamp();
+                WithPermissionsUpdated(embed, attachments);
+                result.Add(embed);
+            }
+
+            if (RolesAdded.Count > 0 && RolesRemoved.Count > 0)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("User Roles Updated")
+                    .WithDescription(string.Join("\n",
+                        $"<@{Snapshot.UserId}>",
+                        "```",
+                        $"Display Name: {Snapshot.Nickname ?? Snapshot.Username}",
+                        $"Username: {Snapshot.Username}",
+                        $"Id: {Snapshot.UserId}",
+                        "```"))
+                    .WithColor(Color.Orange)
+                    .WithCurrentTimestamp();
+                WithRolesAdded(embed, attachments);
+                WithRolesRemoved(embed, attachments);
+                result.Add(embed);
+            }
+
+            return [.. result];
+        }
+        private static bool FieldNeedAttachment(string content, string? codeAsType = null, bool code = false)
+        {
+            if (string.IsNullOrEmpty(codeAsType) && !code)
+                return content.Length >= 1024;
+            var sb = new StringBuilder("```");
+            if (!string.IsNullOrEmpty(codeAsType))
+                sb.Append(codeAsType);
+            sb.AppendLine();
+            sb.Append(content);
+            sb.AppendLine();
+            sb.Append("```");
+            return sb.Length >= 1024;
+        }
+    }
+
+    internal Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder embed, Dictionary<string, string>? attachments = null)
+    {
+        return EventHandle(serverId, @event, [embed], attachments);
+    }
+    internal Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder[] embeds, Dictionary<string, string>? attachments = null)
+    {
+        return EventHandle(
+            serverId,
+            @event,
+            embeds,
+            attachments?.Select(e => new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(e.Value)), e.Key))
+            .ToList());
+    }
+    internal async Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder[] embeds, List<FileAttachment>? attachments = null)
     {
         var targetChannels = await _serverLogRepo.GetChannelsForGuild(serverId, [@event, ServerLogEvent.Fallback]);
         var guild = _discord.GetGuild(serverId);
@@ -161,18 +468,13 @@ public class ServerLogService : BaseService
         {
             try
             {
-                var attachmentList = new List<FileAttachment>();
-                foreach (var pair in attachments ?? [])
+                if (attachments?.Count < 1)
                 {
-                    attachmentList.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(pair.Value)), pair.Key));
-                }
-                if (attachmentList.Count < 1)
-                {
-                    await logChannel.SendMessageAsync(embed: embed.Build());
+                    await logChannel.SendMessageAsync(embeds: embeds.Select(e => e.Build()).ToArray());
                     return;
                 }
 
-                await logChannel.SendFilesAsync(attachmentList, embed: embed.Build());
+                await logChannel.SendFilesAsync(attachments, embeds: embeds.Select(e => e.Build()).ToArray());
             }
             catch (Exception ex)
             {

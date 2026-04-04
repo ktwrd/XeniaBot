@@ -3,9 +3,11 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using System.Data;
 using XeniaBot.Shared;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
@@ -23,7 +25,8 @@ public class DiscordCacheService
     private readonly IMapper<IUser, UserCacheModel> _userMapper;
     private readonly IMapperMerger<IUser, GuildMemberCacheModel> _memberMergerMapper;
     private readonly IMapperMerger<IGuild, GuildCacheModel> _guildMergerMapper;
-
+    private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberSnapshotMapper;
+    private readonly IMapper<IRole, GuildRoleSnapshotModel> _guildRoleSnapshotMapper;
     public DiscordCacheService(IServiceProvider services)
     {
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
@@ -36,16 +39,18 @@ public class DiscordCacheService
         _userMapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
         _memberMergerMapper = services.GetRequiredService<IMapperMerger<IUser, GuildMemberCacheModel>>();
         _guildMergerMapper = services.GetRequiredService<IMapperMerger<IGuild, GuildCacheModel>>();
+        _guildMemberSnapshotMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
+        _guildRoleSnapshotMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
     }
 
     #region Guild
-    public async Task UpdateGuild(IGuild guild)
+    public async Task UpdateGuild(IGuild guild, bool includeSnapsnots = false)
     {
         using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await UpdateGuild(db, guild);
+            await UpdateGuild(db, guild, includeSnapsnots);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
@@ -57,7 +62,8 @@ public class DiscordCacheService
 
     public async Task UpdateGuild(
         XeniaDbContext db,
-        IGuild guild)
+        IGuild guild,
+        bool includeSnapsnots)
     {
         foreach (var member in await guild.GetUsersAsync())
         {
@@ -69,6 +75,19 @@ public class DiscordCacheService
             {
                 _log.Warn(ex, $"Failed to update member \"{member.GlobalName}\" ({member.Username}, {member.Id}) in guild \"{guild.Name}\" ({guild.Id})");
             }
+
+            if (includeSnapsnots)
+            {
+                try
+                {
+                    var mapped = _guildMemberSnapshotMapper.Map(member);
+                    await _db.AddAsync(mapped);
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn(ex, $"Failed to create snapshot of member \"{member.GlobalName}\" ({member.Username}, {member.Id}) in Guild \"{guild.Name}\" ({guild.Id})");
+                }
+            }
         }
 
         var guildIdStr = guild.Id.ToString();
@@ -79,6 +98,22 @@ public class DiscordCacheService
         guildModel = _guildMergerMapper.Map(guildModel, guild);
 
         await _guildCacheRepository.InsertOrUpdate(db, guildModel);
+
+        if (includeSnapsnots)
+        {
+            foreach (var role in guild.Roles)
+            {
+                try
+                {
+                    var mapped = _guildRoleSnapshotMapper.Map(role);
+                    await db.AddAsync(mapped);
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn(ex, $"Failed to create snapshot of role \"{role.Name}\" ({role.Id}) in Guild \"{guild.Name}\" ({guild.Id})");
+                }
+            }
+        }
     }
     #endregion
 

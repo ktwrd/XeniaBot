@@ -47,6 +47,7 @@ public static class XeniaDiscordCommon
         DiscordGuildToGuildCacheModelMapper.RegisterService(services);
         DiscordUserToGuildMemberCacheModelMapper.RegisterService(services);
 
+        RoleToSnapshotModelMapper.RegisterService(services);
         GuildUserToSnapshotModelMapper.RegisterService(services);
     }
 }
