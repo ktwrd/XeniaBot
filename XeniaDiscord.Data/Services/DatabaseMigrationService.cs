@@ -21,7 +21,7 @@ public class DatabaseMigrationService : BaseService
     /// <returns></returns>
     public override async Task InitializeAsync()
     {
-        using var scope = _services.CreateScope();
+        using var scope = Services.CreateScope();
         using var db = scope.ServiceProvider.GetRequiredService<XeniaDbContext>();
 
         var migrationsEnumerable = await db.Database.GetPendingMigrationsAsync();

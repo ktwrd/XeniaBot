@@ -37,9 +37,9 @@ namespace XeniaBot.Core
 <#+
 int Major = 1;
 int Minor = 16;
-
+static DateTimeOffset NowDate = DateTimeOffset.UtcNow;
 static DateTime StartedDate = new DateTime(year: 2022, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc);
-int DaysSince = (int)((DateTime.UtcNow - StartedDate).TotalDays);
-int Minutes = (int)DateTime.UtcNow.TimeOfDay.TotalMinutes;
-long Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+int DaysSince = Convert.ToInt32(Math.Round((NowDate - StartedDate).TotalDays));
+int Minutes = Convert.ToInt32(Math.Round(NowDate.TimeOfDay.TotalMinutes));
+long Timestamp = NowDate.ToUnixTimeSeconds();
 #>

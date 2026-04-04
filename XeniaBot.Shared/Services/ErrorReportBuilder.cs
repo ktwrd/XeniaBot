@@ -21,6 +21,7 @@ public class ErrorReportBuilder
     private IChannel? _channel = null;
     private IUser? _user = null;
     private IMessage? _message = null;
+    private IRole? _role = null;
 
     private ICommandContext? _commandContext = null;
     private IInteractionContext? _interactionContext = null;
@@ -148,6 +149,14 @@ public class ErrorReportBuilder
             extra["message.channel.id"] = _message.Channel.Id.ToString();
             extra["message.channel.name"] = string.IsNullOrEmpty(_message.Channel.Name) ? string.Empty : _message.Channel.Name;
         }
+        if (_role != null)
+        {
+            extra["role.id"] = _role.Id.ToString();
+            extra["role.name"] = _role.Name;
+            extra["role.is_managed"] = _role.IsManaged.ToString();
+            extra["role.guild.id"] = _role.Guild.Id.ToString();
+            extra["role.guild.name"] = _role.Guild.Name;
+        }
         if (_commandContext != null)
         {
             extra["commandContext"] = ErrorReportService.SerializeJsonSafe(_commandContext) ?? "";
@@ -220,12 +229,17 @@ public class ErrorReportBuilder
         _message = message;
         return this;
     }
-    public ErrorReportBuilder WithContext(ICommandContext commandContext)
+    public ErrorReportBuilder WithRole(IRole? role)
+    {
+        _role = role;
+        return this;
+    }
+    public ErrorReportBuilder WithContext(ICommandContext? commandContext)
     {
         _commandContext = commandContext;
         return this;
     }
-    public ErrorReportBuilder WithContext(IInteractionContext interactionContext)
+    public ErrorReportBuilder WithContext(IInteractionContext? interactionContext)
     {
         _interactionContext = interactionContext;
         return this;

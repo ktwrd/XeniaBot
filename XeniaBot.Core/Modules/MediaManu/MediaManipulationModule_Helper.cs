@@ -19,8 +19,8 @@ public partial class MediaManipulationModule
             var outputLocation = GetFontLocation(pair.Key);
             if (File.Exists(outputLocation))
                 continue;
-            using var stream = MediaResources.GetStream("XeniaBot.Core.Resources." + pair.Value);
-            using var fs = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
+            await using var stream = MediaResources.GetStream("XeniaBot.Core.Resources." + pair.Value);
+            await using var fs = new FileStream(outputLocation, FileMode.Create, FileAccess.Write);
             await stream.CopyToAsync(fs);
         }
     }
@@ -29,7 +29,7 @@ public partial class MediaManipulationModule
         {"font_arial", "arial.ttf"},
         {"font_AtkinsonHyperlegible_Bold", "AtkinsonHyperlegible-Bold.ttf"},
         {"font_caption", "caption.otf"},
-        {"font_chirp_regular_web", "chip-regular-web.woff2"},
+        {"font_chirp_regular_web", "chirp-regular-web.woff2"},
         {"font_HelveticaNeue", "HelveticaNeue.otf"},
         {"font_ImpactMix", "ImpactMix.ttf"},
         {"font_TAHOMABD", "TAHOMABD.TTF"},

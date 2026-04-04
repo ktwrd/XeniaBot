@@ -12,7 +12,9 @@ public static class XeniaDiscordCommon
         bool includeAsSingleton)
     {
         services.AddSingleton<BanSyncService>()
-            .AddSingleton<DiscordCacheEventHandler>();
+                .AddSingleton<ValidationService>()
+                .AddSingleton<DiscordStatisticsService>()
+                .AddSingleton<DiscordCacheEventHandler>();
 
         RegisterMappers(services);
 
@@ -23,6 +25,7 @@ public static class XeniaDiscordCommon
 
             typeof(UserCacheService),
             typeof(GuildCacheService),
+            typeof(GuildApprovalService),
         };
         foreach (var t in types)
         {

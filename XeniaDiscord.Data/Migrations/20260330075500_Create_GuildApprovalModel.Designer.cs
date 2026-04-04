@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using XeniaDiscord.Data;
@@ -11,9 +12,11 @@ using XeniaDiscord.Data;
 namespace XeniaDiscord.Data.Migrations
 {
     [DbContext(typeof(XeniaDbContext))]
-    partial class XeniaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330075500_Create_GuildApprovalModel")]
+    partial class Create_GuildApprovalModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -337,36 +340,6 @@ namespace XeniaDiscord.Data.Migrations
                     b.ToTable("Cache_User", (string)null);
                 });
 
-            modelBuilder.Entity("XeniaDiscord.Data.Models.GuildApproval.GuildApprovalLogEventModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ApprovedByUserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("GuildId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("RecordCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GuildId", "UserId");
-
-                    b.ToTable("GuildApprovalLogEvent", (string)null);
-                });
-
             modelBuilder.Entity("XeniaDiscord.Data.Models.GuildApproval.GuildApprovalModel", b =>
                 {
                     b.Property<string>("GuildId")
@@ -374,10 +347,6 @@ namespace XeniaDiscord.Data.Migrations
                         .HasColumnType("character varying(40)");
 
                     b.Property<string>("ApprovedRoleId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("ApproverRoleId")
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
@@ -412,44 +381,6 @@ namespace XeniaDiscord.Data.Migrations
                     b.HasIndex("GuildId", "Enabled", "EnableGreeter");
 
                     b.ToTable("GuildApproval", (string)null);
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.InteractionStatisticModel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ChannelId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<long>("Count")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("GuildId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("InteractionGroup")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("InteractionName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InteractionGroup", "InteractionName", "GuildId", "ChannelId", "UserId");
-
-                    b.ToTable("Statistics_Interactions", (string)null);
                 });
 
             modelBuilder.Entity("XeniaDiscord.Data.Models.PartialSnapshot.GuildPartialSnapshotModel", b =>
@@ -512,258 +443,6 @@ namespace XeniaDiscord.Data.Migrations
                     b.ToTable("UserPartialSnapshot", (string)null);
                 });
 
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.GuildMemberPermissionSnapshotModel", b =>
-                {
-                    b.Property<Guid>("RecordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("GuildId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<Guid>("GuildMemberSnapshotId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("RecordCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("RecordId");
-
-                    b.HasIndex("GuildMemberSnapshotId");
-
-                    b.ToTable("Snapshot_GuildMemberPermission", (string)null);
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.GuildMemberRoleSnapshotModel", b =>
-                {
-                    b.Property<Guid>("RecordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("GuildId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<Guid>("GuildMemberSnapshotId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("RecordCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("RecordId");
-
-                    b.HasIndex("GuildMemberSnapshotId");
-
-                    b.ToTable("Snapshot_GuildMemberRole", (string)null);
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.GuildMemberSnapshotModel", b =>
-                {
-                    b.Property<Guid>("RecordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Discriminator")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
-                    b.Property<int>("Flags")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("GuildAvatarId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("GuildId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<bool>("IsDeafened")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsMuted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool?>("IsPending")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsSelfDeafened")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsSelfMuted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsStreaming")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsSuppressed")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("JoinedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Nickname")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("PublicFlags")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("RecordCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("TimedOutUntil")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("VoiceChannelId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("RecordId");
-
-                    b.HasIndex("RecordCreatedAt", "UserId", "GuildId")
-                        .IsDescending();
-
-                    b.ToTable("Snapshot_GuildMember", (string)null);
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.PrimaryGuildSnapshotModel", b =>
-                {
-                    b.Property<Guid>("RecordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("BadgeHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("BadgeUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("GuildId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<bool?>("IdentityEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("RecordCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Tag")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("RecordId");
-
-                    b.ToTable("Snapshot_PrimaryGuild", (string)null);
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.UserSnapshotModel", b =>
-                {
-                    b.Property<Guid>("RecordId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AvatarDecorationHash")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AvatarDecorationSkuId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AvatarDecorationUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AvatarId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AvatarUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DefaultAvatarUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Discriminator")
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
-
-                    b.Property<string>("DisplayAvatarUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("GlobalName")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsBot")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsWebhook")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid?>("PrimaryGuildId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("PublicFlags")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("RecordCreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("RecordId");
-
-                    b.HasIndex("PrimaryGuildId")
-                        .IsUnique();
-
-                    b.HasIndex("RecordCreatedAt", "UserId")
-                        .IsDescending();
-
-                    b.ToTable("Snapshot_User", (string)null);
-                });
-
             modelBuilder.Entity("BanSyncRecordModelGuildMemberCacheModel", b =>
                 {
                     b.HasOne("XeniaDiscord.Data.Models.BanSync.BanSyncRecordModel", null)
@@ -816,43 +495,9 @@ namespace XeniaDiscord.Data.Migrations
                     b.Navigation("Guild");
                 });
 
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.GuildMemberPermissionSnapshotModel", b =>
-                {
-                    b.HasOne("XeniaDiscord.Data.Models.Snapshot.GuildMemberSnapshotModel", null)
-                        .WithMany("Permissions")
-                        .HasForeignKey("GuildMemberSnapshotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.GuildMemberRoleSnapshotModel", b =>
-                {
-                    b.HasOne("XeniaDiscord.Data.Models.Snapshot.GuildMemberSnapshotModel", null)
-                        .WithMany("Roles")
-                        .HasForeignKey("GuildMemberSnapshotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.UserSnapshotModel", b =>
-                {
-                    b.HasOne("XeniaDiscord.Data.Models.Snapshot.PrimaryGuildSnapshotModel", "PrimaryGuild")
-                        .WithOne()
-                        .HasForeignKey("XeniaDiscord.Data.Models.Snapshot.UserSnapshotModel", "PrimaryGuildId");
-
-                    b.Navigation("PrimaryGuild");
-                });
-
             modelBuilder.Entity("XeniaDiscord.Data.Models.Cache.GuildCacheModel", b =>
                 {
                     b.Navigation("Members");
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.Snapshot.GuildMemberSnapshotModel", b =>
-                {
-                    b.Navigation("Permissions");
-
-                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

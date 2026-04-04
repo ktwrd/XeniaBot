@@ -3,6 +3,8 @@ name: .NET Core Desktop
 on:
   push:
     branches: [ "main", "develop", "reborn" ]
+  pull_request:
+    branches: [ "main", "develop", "reborn" ]
 
 jobs:
 
