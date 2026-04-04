@@ -270,12 +270,11 @@ public class CoreContext
 
     private void BeforeQuit()
     {
-        Config.Write(Config.Data);
+        Config.Write();
     }
 }
 
 public delegate Task CoreContextRegisterInteractionModulesDelegate(InteractionService interactions, IServiceProvider services);
 public delegate Task<Discord.Interactions.ModuleInfo[]> CoreContextGetDeveloperModulesDelegate(InteractionService interactions, IServiceProvider services);
 public delegate Task CoreContextBeforeServiceBuildDelegate(IServiceCollection services);
-// Func<string[], Task>
 public delegate Task CoreContextAlternativeMainDelegate(string[] args);

@@ -1,6 +1,5 @@
 ﻿using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Services;
@@ -26,11 +24,20 @@ public class ConfigService
         Data = FetchConfig(details);
         if (!FeatureFlags.ConfigReadOnly)
         {
+            Write();
+        }
+    }
+    public ConfigData Data { get; private set; }
+
+    #region Read/Write
+    public void Write()
+    {
+        if (!FeatureFlags.ConfigReadOnly)
+        {
             Write(Data);
         }
     }
-    #region Read/Write
-    public void Write(ConfigData? configData)
+    private static void Write(ConfigData? configData)
     {
         if (FeatureFlags.ConfigReadOnly)
         {
@@ -49,37 +56,35 @@ public class ConfigService
     }
     #endregion
 
-    public string FetchConfigContent()
+    private static string FetchConfigContent()
     {
         // Check if config is set from environment
         if (FeatureFlags.ConfigFromEnvironment)
         {
-            return FetchEnvConfig();
+            return GetConfigFromEnvironment();
         }
         else
         {
-            return FetchFileConfig();
+            return GetConfigFromFile();
         }
     }
-    
-    public ConfigData Data { get; private set; }
 
-    public ConfigData FetchConfig(ProgramDetails details)
+    private static ConfigData FetchConfig(ProgramDetails details)
     {
         var stringContent = FetchConfigContent();
 
-        var obj = JObject.Parse(stringContent);
-        var v = obj["Version"]?.ToString();
-        switch (obj["Version"]?.ToString() ?? "")
+        var minimal = JsonSerializer.Deserialize<MinimalConfigData>(stringContent);
+        switch (minimal?.Version?.ToString()?.Trim())
         {
             case "":
             case "1":
-                var oldConf = JsonSerializer.Deserialize<ConfigDataV1>(stringContent, SerializerOptions);
-                ValidateConfigV1(oldConf, details);
+                ValidateConfigV1(
+                    JsonSerializer.Deserialize<ConfigDataV1>(stringContent, SerializerOptions) ?? new(),
+                    details);
                 break;
         }
-        
-        var config = new ConfigData();
+
+        ConfigData config;
         try
         {
             config = ConfigData.Migrate(stringContent);
@@ -95,26 +100,31 @@ public class ConfigService
         return config;
     }
 
-    public void ValidateConfigV1(ConfigDataV1 config, ProgramDetails details)
+    private static void ValidateConfigV1(ConfigDataV1 config, ProgramDetails details)
     {
-        var defaultData = JsonSerializer.Deserialize<Dictionary<string, object>>(
-            JsonSerializer.Serialize(new ConfigDataV1(), SerializerOptions), SerializerOptions) ?? new Dictionary<string, object>();
+        var defaultData = DefaultDictionaryConfigDataV1();
 
         var keysToValidate = ConfigDataV1.RequiredKeys.ToList();
         if (details.Platform == XeniaPlatform.Bot)
-            keysToValidate = keysToValidate.Concat(ConfigDataV1.RequiredBotKeys).ToList();
+            keysToValidate.AddRange(ConfigDataV1.RequiredBotKeys);
         else if (details.Platform == XeniaPlatform.WebPanel)
-            keysToValidate = keysToValidate.Concat(ConfigDataV1.RequiredDashKeys).ToList();
+            keysToValidate.AddRange(ConfigDataV1.RequiredDashKeys);
         
-        var (baseValidateMissing, baseValidateNotChanged) = ValidateConfigKeysV1(config, defaultData, keysToValidate.ToArray());
+        var (baseValidateMissing, baseValidateNotChanged) = ValidateConfigKeysV1(config, defaultData, [..keysToValidate]);
         if (baseValidateMissing > 0 || baseValidateNotChanged > 0)
         {
             Log.Error("There are multiple issues with your config file. Please resolve them.");
             Environment.Exit(11);
         }
     }
+    private static Dictionary<string, object> DefaultDictionaryConfigDataV1()
+    {
+        var json = JsonSerializer.Serialize(new ConfigDataV1(), SerializerOptions);
+        return JsonSerializer.Deserialize<Dictionary<string, object>>(json, SerializerOptions)
+            ?? new();
+    }
 
-    private (int, int) ValidateConfigKeysV1(ConfigDataV1 source, Dictionary<string, object> clean, string[] keys)
+    private static ValidateConfigKeysV1Result ValidateConfigKeysV1(ConfigDataV1 source, Dictionary<string, object> clean, string[] keys)
     {
         var missing = new List<string>();
         var notChanged = new List<string>();
@@ -129,32 +139,32 @@ public class ConfigService
                 continue;
             }
 
-            if (clean.TryGetValue(i, out var v))
+            if (clean.TryGetValue(i, out var v) &&
+                sourceDict[i] == v)
             {
-                if (sourceDict[i] == v)
-                {
-                    notChanged.Add(i);
-                    Log.Warn($"source[{i}] not changed");
-                }
+                notChanged.Add(i);
+                Log.Warn($"source[{i}] not changed");
             }
         }
         
         if (missing.Count > 0)
-            Log.Error($"There are {missing.Count} item");
+            Log.Error($"Missing {missing.Count} item{XeniaHelper.Pluralize(missing.Count)}");
         if (notChanged.Count > 0)
-            Log.Error($"{notChanged.Count} item{XeniaHelper.Pluralize(missing.Count)} that haven't changed");
-        return (missing.Count, notChanged.Count);
+            Log.Error($"{notChanged.Count} item{XeniaHelper.Pluralize(missing.Count)} that haven't changed\nKeys: " + string.Join(", ", notChanged));
+        return new(missing.Count, notChanged.Count);
     }
 
-    public static JsonSerializerOptions SerializerOptions =>
-        new JsonSerializerOptions()
+    private sealed record ValidateConfigKeysV1Result(int Missing, int NotChanged);
+
+    public static readonly JsonSerializerOptions SerializerOptions =
+        new()
         {
             IncludeFields = true,
             WriteIndented = true,
             ReferenceHandler = ReferenceHandler.Preserve
         };
     
-    private string FetchFileConfig()
+    private static string GetConfigFromFile()
     {
         var data = new ConfigData();
         if (!File.Exists(FeatureFlags.ConfigLocation))
@@ -165,7 +175,7 @@ public class ConfigService
         return File.ReadAllText(FeatureFlags.ConfigLocation);
     }
 
-    private string FetchEnvConfig()
+    private static string GetConfigFromEnvironment()
     {
         var content = FeatureFlags.ConfigContent;
         if (FeatureFlags.ConfigContentIsBase64)
@@ -176,7 +186,7 @@ public class ConfigService
             }
             catch (Exception ex)
             {
-                throw new Exception("Failed to decode envconfig from Base64 to String", ex);
+                throw new InvalidOperationException($"Failed to decode envconfig from Base64 to String\nContent: {content}", ex);
             }
         }
 
