@@ -1,8 +1,9 @@
-using System;
-using System.Reflection;
-using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace XeniaBot.Shared;
 
@@ -14,27 +15,13 @@ public static class AttributeHelper
         var classes = GetTypesWithAttribute<XeniaControllerAttribute>(assembly);
         foreach (var item in classes)
         {
-            
-            var registered = false;
             var descriptor = new ServiceDescriptor(item, item, ServiceLifetime.Singleton);
-            if (typeof(BaseService).IsAssignableFrom(item))
+            if (!services.Any(e
+                => e.ServiceType == descriptor.ServiceType
+                && e.ImplementationType == descriptor.ImplementationType
+                && e.Lifetime == descriptor.Lifetime))
             {
-                var indirectDescriptor = new ServiceDescriptor(typeof(BaseService), item, ServiceLifetime.Singleton);
-                if (!services.Contains(indirectDescriptor))
-                {
-                    services.AddSingleton(indirectDescriptor);
-                    registered = true;
-                }
-            }
-
-            if (!services.Contains(descriptor))
-            {
-                services.AddSingleton(item);
-                registered = true;
-            }
-
-            if (registered)
-            {
+                services.Add(descriptor);
                 Log.Trace($"Registered type: {item}");
             }
         }
@@ -52,7 +39,7 @@ public static class AttributeHelper
     public static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly)
     {
         foreach(Type type in assembly.GetTypes()) {
-            if (type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableTo(typeof(BaseService))) {
+            if (type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableTo(typeof(IBaseService)) && type != typeof(IBaseService)) {
                 yield return type;
             }
         }
