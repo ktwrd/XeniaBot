@@ -13,12 +13,14 @@ public class GuildMemberRoleSnapshotModel : IGuildMemberRoleSnapshot
         UserId = "0";
         GuildId = "0";
         RoleId = "0";
+        GuildRoleSnapshot = null;
     }
 
     /// <inheritdoc/>
     public Guid RecordId { get; set; }
     /// <inheritdoc/>
     public Guid GuildMemberSnapshotId { get; set; }
+    public Guid? GuildRoleSnapshotId { get; set; }
     /// <inheritdoc/>
     public DateTime RecordCreatedAt { get; set; }
     /// <inheritdoc/>
@@ -37,6 +39,8 @@ public class GuildMemberRoleSnapshotModel : IGuildMemberRoleSnapshot
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     /// <inheritdoc/>
     public ulong GetRoleId() => RoleId.ParseRequiredULong(nameof(RoleId), false);
+
+    public GuildRoleSnapshotModel? GuildRoleSnapshot { get; set; }
 }
 
 public interface IGuildMemberRoleSnapshot : ISnapshot

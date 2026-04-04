@@ -19,4 +19,10 @@ public enum ServerLogEvent
     MemberRoleAdded,
     MemberRoleRemoved,
     MemberRoleUpdated,
+    MemberPermissionsUpdated,
+    MemberUpdated,
+
+    RoleCreate,
+    RoleEdit,
+    RoleDelete
 }
