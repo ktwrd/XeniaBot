@@ -87,7 +87,7 @@ public class DiscordSnapshotService : BaseService
             }
             catch (Exception ex)
             {
-                _log.Error(ex, $"Failed to process role {role.Name} ({role.Id}) in guild {role.Guild.Name} ({role.Guild.Id})")
+                _log.Error(ex, $"Failed to process role {role.Name} ({role.Id}) in guild {role.Guild.Name} ({role.Guild.Id})");
             }
         }).Start();
         return Task.CompletedTask;
@@ -103,7 +103,7 @@ public class DiscordSnapshotService : BaseService
             }
             catch (Exception ex)
             {
-                _log.Error(ex, $"Failed to process role {role.Name} ({role.Id}) in guild {role.Guild.Name} ({role.Guild.Id})")
+                _log.Error(ex, $"Failed to process role {role.Name} ({role.Id}) in guild {role.Guild.Name} ({role.Guild.Id})");
             }
         }).Start();
         return Task.CompletedTask;
