@@ -1,63 +1,3 @@
-const channelData = [
-    {
-        text: true,
-        name: 'announcements',
-        id: '1489810615961911358'
-    },
-    {
-        category: true,
-        name: 'Text Channels',
-        id: '1480501353003618366',
-        children: [
-            {
-                text: true,
-                name: 'general',
-                id: '1480501353003618368'
-            }
-        ]
-    },
-    {
-        category: true,
-        name: 'Voice Channels',
-        id: '1480501353003618367',
-        children: [
-            {
-                voice: true,
-                name: 'General',
-                id: '1480501353003618369'
-            }
-        ]
-    },
-    {
-        category: true,
-        name: 'Staff',
-        id: '1488132607249092668',
-        children: [
-            {
-                text: true,
-                name: 'staff',
-                id: '1489810637847527444'
-            },
-            {
-                text: true,
-                name: 'approver-log',
-                id: '1488132701046308914'
-            },
-            {
-                text: true,
-                name: 'logs',
-                id: '1489810661088301217'
-            },
-            {
-                text: true,
-                name: 'logs-member',
-                id: '1489810680579096597'
-            }
-        ]
-    }
-];
-// console.log(btoa(JSON.stringify(channelData)));
-
 const serverLogEvents = [
     'Fallback',
 
@@ -116,7 +56,7 @@ const serverLogLogic = {
         if (typeof attrValue !== 'string') {
             throw new Error(`invalid type "${typeof attrValue}" on attribute "${this._an_channelData}" from element "${this._qs_configElement}"`);
         }
-        let contentRaw = '[]';
+        let contentRaw;
         try {
             contentRaw = atob(attrValue);
         } catch (err) {
@@ -128,9 +68,7 @@ const serverLogLogic = {
         } catch (err) {
             throw new Error(`failed to parse content in value from attribute "${this._an_channelData}" on element "${this._qs_configElement}"\n${err}\n\n-- content --\n${contentRaw}`);
         }
-        content = this.validateChannelData(content);
-        return content;
-        // this.writeChannelElements(content);
+        return this.validateChannelData(content);
     },
     /**
      * @param {any} channelData 
@@ -328,7 +266,7 @@ const serverLogLogic = {
      * @returns {ServerLogChannelItem|null}
      */
     channelFromId: function(id) {
-        for (const channel of channelData) {
+        for (const channel of this.getChannelData()) {
             const x = this.channelFromId_inner(channel, id);
             if (x) return x;
         }
@@ -354,7 +292,6 @@ const serverLogLogic = {
      */
     writeChannelElements: function(config) {
         const elements = [];
-        const elementsDbg = [];
         let currentChannelId = null;
         const sortedConfig = config.sort((a, b) => {
             const nameA = a.channelId.toUpperCase(); // ignore upper and lowercase
@@ -394,8 +331,10 @@ const serverLogLogic = {
             deleteElem.setAttribute('class', 'btn btn-danger btn-sm');
             deleteElem.innerHTML = '<i class="bi bi-trash3-fill"></i>';
             deleteElem.title = 'Remove';
+            const self = this;
             $(deleteElem).click(() => {
-                document.getElementById('server-log-channel-list').removeChild(row);
+                row.remove();
+                self.writeChannelElements(self.readConfigFromElements());
             });
             buttonsElem.appendChild(deleteElem);
 
@@ -403,7 +342,6 @@ const serverLogLogic = {
             row.appendChild(eventElem);
             row.appendChild(buttonsElem);
             elements.push(row);
-            elementsDbg.push({row, item, channel});
         }
         const target = document.getElementById('server-log-channel-list');
         target.innerHTML = '';
@@ -473,7 +411,7 @@ const serverLogLogic = {
     },
     initEventSelect: function () {
         const eventSelect = document.getElementById('server-log-select-event');
-        for (const child of eventSelect.children) { eventSelect.removeChild(child); }
+        eventSelect.innerHTML = '';
 
         if (eventSelect.children.length < 1) {
             const elem = document.createElement('option');
@@ -492,7 +430,7 @@ const serverLogLogic = {
     },
     initChannelSelect: function () {
         const channelSelect = document.getElementById('server-log-select-channel');
-        for (const child of channelSelect.children) { channelSelect.removeChild(child); }
+        channelSelect.innerHTML = '';
 
         if (channelSelect.children.length < 1) {
             const elem = document.createElement('option');
@@ -503,7 +441,7 @@ const serverLogLogic = {
             channelSelect.appendChild(elem);
         }
 
-        for (const channel of channelData) {
+        for (const channel of this.getChannelData()) {
             const elem = this.generateChannelElement(channel);
             if (!elem) continue;
             channelSelect.appendChild(elem);
@@ -546,6 +484,7 @@ const serverLogLogic = {
         try {
             this.readConfigFromInput();
         } catch (err) {
+            console.error(err);
             xeniaDiscord.createBootstrapToast({
                 title: 'Server Log - Failed to load data',
                 innerHTML: err.toString().replace('<', '&lt;').replaceAll('>', '&gt;').replace('\n', '<br>'),
