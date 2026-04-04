@@ -61,6 +61,7 @@ public class GuildMemberSnapshotModel : IGuildMemberSnapshot
     public Discord.UserProperties? PublicFlags { get; set; }
     /// <inheritdoc/>
     public bool? IsPending { get; set; }
+    public string? AvatarUrl { get; set; }
 
     /// <inheritdoc/>
     public ulong GetUserId() => UserId.ParseRequiredULong(nameof(UserId), false);

@@ -1,6 +1,8 @@
 using Discord;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Common.Mappers.DiscordSnapshot;
@@ -8,6 +10,7 @@ namespace XeniaDiscord.Common.Mappers.DiscordSnapshot;
 public class GuildUserToSnapshotModelMapper
     : IMapper<IGuildUser, GuildMemberSnapshotModel>
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
     public static void RegisterService(IServiceCollection services)
     {
         services.AddSingleton<GuildUserToSnapshotModelMapper>()
@@ -37,6 +40,16 @@ public class GuildUserToSnapshotModelMapper
             instance.VoiceChannelId = member.VoiceChannel.Id.ToString();
         }
         instance.GuildAvatarId = NOETrim(member.GuildAvatarId);
+        try
+        {
+            instance.AvatarUrl = ExceptionHelper.RetryOnTimedOut(async () => member.GetDisplayAvatarUrl()).GetAwaiter().GetResult();
+            if (string.IsNullOrEmpty(instance.AvatarUrl?.Trim()))
+                instance.AvatarUrl = null;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn(ex, $"Failed to get Display Avatar for User {member.Username} ({member.Id}) in Guild \"{member.Guild.Name}\" ({member.Guild.Id})");
+        }
         instance.JoinedAt = member.JoinedAt.HasValue ? member.JoinedAt.Value.UtcDateTime : null;
         instance.TimedOutUntil = member.TimedOutUntil.HasValue ? member.TimedOutUntil.Value.UtcDateTime : null;
         instance.Flags = member.Flags;
