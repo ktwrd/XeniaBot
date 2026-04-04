@@ -18,7 +18,7 @@ public static class XeniaDiscordData
         if (!includeAsSingleton) return;
 
         services.AddSingleton<DatabaseMigrationService>()
-            .AddSingleton<BaseService>(svc => svc.GetRequiredService<DatabaseMigrationService>());
+                .AddSingleton<IBaseService, DatabaseMigrationService>();
     }
     public static void RegisterRepositories(
         IServiceCollection services,
