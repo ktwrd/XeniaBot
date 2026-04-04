@@ -16,6 +16,7 @@ public class DiscordSnapshotService : BaseService
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly XeniaDbContext _db;
     private readonly DiscordSocketClient _client;
+    private readonly DiscordCacheService _cacheService;
     private readonly IMapper<IRole, GuildRoleSnapshotModel> _roleMapper;
     private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberMapper;
 
@@ -24,6 +25,7 @@ public class DiscordSnapshotService : BaseService
     {
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
         _client = services.GetRequiredService<DiscordSocketClient>();
+        _cacheService = services.GetRequiredService<DiscordCacheService>();
 
         _roleMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
         _guildMemberMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
@@ -33,6 +35,7 @@ public class DiscordSnapshotService : BaseService
         var programDetails = services.GetRequiredService<ProgramDetails>();
         if (programDetails.Platform == XeniaPlatform.Bot)
         {
+            _client.JoinedGuild += OnGuildJoined;
             _client.UserJoined += OnGuildMemberJoined;
             _client.GuildMemberUpdated += OnGuildMemberUpdated;
             _client.RoleCreated += OnGuildRoleCreated;
@@ -42,6 +45,22 @@ public class DiscordSnapshotService : BaseService
 
     public event DiscordSnapshotComparisonDelegate<GuildMemberSnapshotModel>? GuildMemberUpdated;
     public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleUpdated;
+
+    private Task OnGuildJoined(SocketGuild guild)
+    {
+        new Thread(() =>
+        {
+            try
+            {
+                ProcessGuild(guild).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to process Guild \"{guild.Name}\" ({guild.Id})");
+            }
+        }).Start();
+        return Task.CompletedTask;
+    }
 
     private Task OnGuildMemberJoined(SocketGuildUser member)
     {
@@ -107,6 +126,23 @@ public class DiscordSnapshotService : BaseService
             }
         }).Start();
         return Task.CompletedTask;
+    }
+
+    private async Task ProcessGuild(SocketGuild guild)
+    {
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
+        {
+            await _cacheService.UpdateGuild(db, guild, true);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await trans.RollbackAsync();
+            _log.Error(ex, $"Failed to pull data for Guild \"{guild.Name}\" ({guild.Id})");
+        }
     }
 
     private async Task ProcessGuildMember(SocketGuildUser socketMemberAfter)
