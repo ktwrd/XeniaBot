@@ -16,6 +16,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Services;
 
@@ -209,38 +210,59 @@ public class CoreContext
         var s = new InteractionService(Discord);
 
         services.AddSingleton(mongoDb)
+            .AddSingleton(s)
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
-            .AddSingleton(s)
             .AddSingleton<InteractionHandler>();
     }
     private List<Type> RegisteredBaseControllers { get; set; }
 
     private void RunServiceInit()
     {
-        AllBaseServices(async (item) =>
+        using var trans = SentryHelper.CreateTransaction();
+        try
         {
-            await item.InitializeAsync();
-        });
-        Log.Info("Done");
+            AllBaseServices(item => item.InitializeAsync());
+            trans.Finish();
+            Log.Info("Done");
+        }
+        catch (Exception ex)
+        {
+            trans.Finish(ex);
+            throw;
+        }
     }
 
     private void RunServiceReady()
     {
-        AllBaseServices(async (item) =>
+        using var trans = SentryHelper.CreateTransaction();
+        try
         {
-            await item.OnReady();
-        });
-        Log.Info("Done - Bot is online!");
+            AllBaseServices(svc => svc.OnReady());
+            trans.Finish();
+            Log.Info("Done - Bot is online!");
+        }
+        catch (Exception ex)
+        {
+            trans.Finish(ex);
+            throw;
+        }
     }
 
     public void RunServiceDelayedReady()
     {
-        AllBaseServices(async (item) =>
+        using var trans = SentryHelper.CreateTransaction();
+        try
         {
-            await item.OnReadyDelay();
-        });
-        Log.Info("Done");
+            AllBaseServices(svc => svc.OnReadyDelay());
+            trans.Finish();
+            Log.Info("Done");
+        }
+        catch (Exception ex)
+        {
+            trans.Finish(ex);
+            throw;
+        }
     }
     /// <summary>
     /// For every registered class that extends <see cref="IBaseService"/>,
