@@ -26,30 +26,44 @@ public class DiscordCacheAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("update-guild", "Update cache for specific guild")]
-    public async Task UpdateGuild(string guildIdStr)
+    public async Task UpdateGuild(
+        string guildIdStr,
+        bool includeSnapsnots = false)
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
         {
             await Context.Interaction.RespondAsync("Invalid permissions.");
             return;
         }
+        if (!ulong.TryParse(guildIdStr, out var guildId))
+        {
+            await Context.Interaction.FollowupAsync($"Could not parse the provided Guild Id\n{guildIdStr}");
+            return;
+        }
 
         await DeferAsync();
         try
         {
-            var guildId = ulong.Parse(guildIdStr);
             var guild = await Context.Client.GetGuildAsync(guildId);
             if (guild == null)
             {
-                await Context.Interaction.FollowupAsync($"Could not find guild `{guildId}`");
+                await Context.Interaction.FollowupAsync($"Could not find guild: `{guildId}`\n" +
+                    "-# I might not be a member of it anymore.");
                 return;
             }
             var sw = new Stopwatch();
             sw.Start();
-            await _discordCacheService.UpdateGuild(guild);
-            sw.Stop();
+            try
+            {
+                await _discordCacheService.UpdateGuild(guild, includeSnapsnots);
+            }
+            finally
+            {
+                sw.Stop();
+            }
             var duration = Math.Round(sw.Elapsed.TotalMilliseconds / 1000f, 3);
-            await Context.Interaction.FollowupAsync($"Updated Guild \"{guild.Name}\" ({guild.Id}) in {duration}s");
+            var name = guild.Name.Replace("`", "'");
+            await Context.Interaction.FollowupAsync($"Updated Guild `{name}` (`{guild.Id}`) in {duration}s");
         }
         catch (Exception ex)
         {
@@ -57,12 +71,14 @@ public class DiscordCacheAdminModule : InteractionModuleBase
             await Context.Interaction.FollowupWithFileAsync(
                 new MemoryStream(System.Text.Encoding.UTF8.GetBytes(ex.ToString())),
                 "exception.txt",
-                "Failed to update current guild.");
+                $"Failed to update guild: `{guildId}`");
         }
     }
 
     [SlashCommand("update-current-guild", "Update cache for current guild")]
-    public async Task UpdateCurrentGuild()
+    public async Task UpdateCurrentGuild(
+        [Summary(description: "Snapshot tables will be updated when this is enabled.")]
+        bool includeSnapsnots = false)
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
         {
@@ -80,8 +96,14 @@ public class DiscordCacheAdminModule : InteractionModuleBase
         {
             var sw = new Stopwatch();
             sw.Start();
-            await _discordCacheService.UpdateGuild(Context.Guild);
-            sw.Stop();
+            try
+            {
+                await _discordCacheService.UpdateGuild(Context.Guild, includeSnapsnots);
+            }
+            finally
+            {
+                sw.Stop();
+            }
             var duration = Math.Round(sw.Elapsed.TotalMilliseconds / 1000f, 3);
             await Context.Interaction.FollowupAsync($"Done! Took {duration}s");
         }
@@ -96,7 +118,7 @@ public class DiscordCacheAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("update-all-guilds", "Update all guilds")]
-    public async Task UpdateAllGuilds()
+    public async Task UpdateAllGuilds(bool includeSnapsnots = false)
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
         {
@@ -109,18 +131,24 @@ public class DiscordCacheAdminModule : InteractionModuleBase
         {
             var sw = new Stopwatch();
             sw.Start();
-            foreach (var guild in _client.Guilds)
+            try
             {
-                try
+                foreach (var guild in _client.Guilds)
                 {
-                    await _discordCacheService.UpdateGuild(guild);
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Failed to update Guild \"{guild.Name}\" ({guild.Id})", ex);
+                    try
+                    {
+                        await _discordCacheService.UpdateGuild(guild, includeSnapsnots);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Failed to update Guild \"{guild.Name}\" ({guild.Id})", ex);
+                    }
                 }
             }
-            sw.Stop();
+            finally
+            {
+                sw.Stop();
+            }
             var duration = Math.Round(sw.Elapsed.TotalMilliseconds / 1000f, 3);
             var count = _client.Guilds.Count.ToString("n0");
             await Context.Interaction.FollowupAsync($"Took {duration}s to update {count} guild(s)");
@@ -131,7 +159,7 @@ public class DiscordCacheAdminModule : InteractionModuleBase
             await Context.Interaction.FollowupWithFileAsync(
                 new MemoryStream(System.Text.Encoding.UTF8.GetBytes(ex.ToString())),
                 "exception.txt",
-                "Failed to update current guild.");
+                "Failed to update all guilds.");
         }
     }
 }
