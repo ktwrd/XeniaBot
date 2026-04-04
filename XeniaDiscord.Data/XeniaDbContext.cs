@@ -253,8 +253,7 @@ public class XeniaDbContext : DbContext
             {
                 e.GuildId,
                 e.ChannelId,
-                e.Event,
-                e.Enabled
+                e.Event
             });
 
             b.HasOne(e => e.GuildCache)
