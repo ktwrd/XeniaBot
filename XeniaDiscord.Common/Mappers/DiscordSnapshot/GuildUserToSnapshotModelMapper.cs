@@ -67,6 +67,7 @@ public class GuildUserToSnapshotModelMapper
             roles.Add(new GuildMemberRoleSnapshotModel
             {
                 GuildMemberSnapshotId = instance.RecordId,
+                RecordCreatedAt = instance.RecordCreatedAt,
                 UserId = instance.UserId,
                 GuildId = instance.GuildId,
                 RoleId = id.ToString()
@@ -77,6 +78,7 @@ public class GuildUserToSnapshotModelMapper
             permissions.Add(new GuildMemberPermissionSnapshotModel
             {
                 GuildMemberSnapshotId = instance.RecordId,
+                RecordCreatedAt = instance.RecordCreatedAt,
                 UserId = instance.UserId,
                 GuildId = instance.GuildId,
                 Value = ((ulong)value).ToString()
