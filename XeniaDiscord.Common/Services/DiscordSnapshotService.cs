@@ -44,7 +44,8 @@ public class DiscordSnapshotService : BaseService
     }
 
     public event DiscordSnapshotComparisonDelegate<GuildMemberSnapshotModel>? GuildMemberUpdated;
-    public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleUpdated;
+    public event DiscordSnapshotComparisonSourceDelegate<GuildRoleSnapshotModel>? GuildRoleUpdated;
+    public event DiscordSnapshotSourceDelegate<GuildRoleSnapshotModel>? GuildRoleDeleted;
 
     private Task OnGuildJoined(SocketGuild guild)
     {
@@ -102,7 +103,7 @@ public class DiscordSnapshotService : BaseService
         {
             try
             {
-                ProcessRole(null, role).GetAwaiter().GetResult();
+                ProcessRole(DiscordSnapshotEventSource.Create, null, role).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -118,7 +119,7 @@ public class DiscordSnapshotService : BaseService
         {
             try
             {
-                ProcessRole(roleBefore, role).GetAwaiter().GetResult();
+                ProcessRole(DiscordSnapshotEventSource.Edit, roleBefore, role).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -206,6 +207,7 @@ public class DiscordSnapshotService : BaseService
     }
 
     private async Task ProcessRole(
+        DiscordSnapshotEventSource source,
         SocketRole? roleBefore,
         SocketRole role)
     {
@@ -282,7 +284,7 @@ public class DiscordSnapshotService : BaseService
                 .AddSerializedAttachment("model.json", model));
             return;
         }
-        GuildRoleUpdated?.Invoke(modelBefore, model);
+        GuildRoleUpdated?.Invoke(source, modelBefore, model);
     }
 
     public async Task UpdateGuild(
@@ -336,3 +338,12 @@ public class DiscordSnapshotService : BaseService
 }
 
 public delegate Task DiscordSnapshotComparisonDelegate<in TModel>(TModel? before, TModel model);
+public delegate Task DiscordSnapshotComparisonSourceDelegate<in TModel>(DiscordSnapshotEventSource source, TModel? before, TModel model);
+public delegate Task DiscordSnapshotSourceDelegate<in TModel>(DiscordSnapshotEventSource source, ulong id, TModel? snapshot);
+
+public enum DiscordSnapshotEventSource
+{
+    Create,
+    Edit,
+    Delete
+}

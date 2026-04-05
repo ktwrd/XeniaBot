@@ -57,8 +57,49 @@ public class ServerLogService : BaseService
         _discordCache.MessageChange += DiscordCacheMessageChangeUpdate;
 
         _discordSnapshot.GuildMemberUpdated += DiscordSnapshotGuildMemberUpdate;
+        _discordSnapshot.GuildRoleUpdated += DiscordSnapshotGuildRoleUpdate;
 
         return Task.CompletedTask;
+    }
+
+    private async Task DiscordSnapshotGuildRoleUpdate(
+        DiscordSnapshotEventSource source,
+        GuildRoleSnapshotModel? before,
+        GuildRoleSnapshotModel model)
+    {
+        var guildIdStr = model.GuildId;
+        if (before == null)
+        {
+            _log.Trace($"Event. No before state (guildId={model.GuildId}, roleId={model.RoleId}, recordId={model.Id})");
+            return;
+        }
+
+        DiscordSnapshotRoleUpdateInfo? info = null;
+        try
+        {
+            // disabled in guild, ignore
+            if (!await _db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
+
+            var permissionsAddedList = new List<GuildPermission>();
+            var permissionsRemovedList = new List<GuildPermission>();
+
+            permissionsAddedList.AddRange(model.Permissions
+                .Where(a => !before.Permissions.Any(b => b.Value == a.Value))
+                .Select(e => e.GetValue()));
+            permissionsRemovedList.AddRange(before.Permissions
+                .Where(b => !model.Permissions.Any(a => a.Value == b.Value))
+                .Select(e => e.GetValue()));
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to handle event for Guild {model.GuildId} and Role {model.RoleId} (SnapshotId={model.Id})";
+            await _errorService.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .AddSerializedAttachment("snapshotInfo.json", info)
+                .AddSerializedAttachment("snapshot.before.json", before)
+                .AddSerializedAttachment("snapshot.after.json", model));
+        }
     }
 
     private async Task DiscordSnapshotGuildMemberUpdate(
