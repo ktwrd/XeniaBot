@@ -18,7 +18,7 @@ public class RoleToSnapshotModelMapper
     {
         ArgumentNullException.ThrowIfNull(role);
 
-        return new GuildRoleSnapshotModel
+        var result = new GuildRoleSnapshotModel
         {
             RecordCreatedAt = DateTime.UtcNow,
 
@@ -26,12 +26,25 @@ public class RoleToSnapshotModelMapper
             RoleId = role.Id.ToString(),
             Name = role.Name,
             CreatedAt = role.CreatedAt.UtcDateTime,
-            PermissionsValue = role.Permissions.RawValue.ToString(),
             Position = role.Position,
             IconHash = string.IsNullOrEmpty(role.Icon) ? null : role.Icon,
             IsManaged = role.IsManaged,
             IsMentionable = role.IsMentionable,
             IsHoisted = role.IsHoisted,
         };
+
+        foreach (var value in role.Permissions.ToList())
+        {
+            result.Permissions.Add(new GuildRolePermissionSnapshotModel
+            {
+                GuildRoleSnapshotId = result.Id,
+                RecordCreatedAt = result.RecordCreatedAt,
+                GuildId = result.GuildId,
+                RoleId = result.RoleId,
+                Value = ((ulong)value).ToString(),
+            });
+        }
+
+        return result;
     }
 }

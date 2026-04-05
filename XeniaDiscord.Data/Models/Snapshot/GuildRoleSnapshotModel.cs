@@ -10,15 +10,18 @@ public class GuildRoleSnapshotModel
     public GuildRoleSnapshotModel()
     {
         Id = Guid.NewGuid();
+        RecordCreatedAt = DateTime.UtcNow;
         GuildId = "0";
         RoleId = "0";
         Name = "";
         CreatedAt = DateTimeOffset.UnixEpoch.UtcDateTime;
-        PermissionsValue = "0";
         Position = 0;
-        RecordCreatedAt = DateTime.UtcNow;
+        Permissions = [];
     }
 
+    /// <summary>
+    /// Primary Key
+    /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
@@ -35,12 +38,18 @@ public class GuildRoleSnapshotModel
     /// <summary>
     /// Role Id (ulong as string)
     /// </summary>
+    /// <remarks>
+    /// From <see cref="IRole.Id"/>
+    /// </remarks>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string RoleId { get; set; }
 
     /// <summary>
     /// Role Name
     /// </summary>
+    /// <remarks>
+    /// From <see cref="IRole.Name"/>
+    /// </remarks>
     [MaxLength(200)]
     public string? Name { get; set; }
 
@@ -50,31 +59,49 @@ public class GuildRoleSnapshotModel
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// <see cref="GuildPermissions.RawValue"/> stored as a string (ulong as string)
+    /// Position of the role
     /// </summary>
-    [MaxLength(DbGlobals.ulongMaxLength)]
-    public string PermissionsValue { get; set; }
-
+    /// <remarks>
+    /// From <see cref="IRole.Position"/>
+    /// </remarks>
     public int Position { get; set; }
 
+    /// <summary>
+    /// Role flags
+    /// </summary>
+    /// <remarks>
+    /// From <see cref="IRole.Flags"/>
+    /// </remarks>
     public RoleFlags Flags { get; set; }
 
     // TODO find the actual max length. idk what it is
+    /// <remarks>
+    /// From <see cref="IRole.Icon"/>
+    /// </remarks>
     [MaxLength(200)]
     public string? IconHash { get; set; }
 
+    /// <remarks>
+    /// From <see cref="IRole.IsManaged"/>
+    /// </remarks>
     public bool IsManaged { get; set; }
+
+    /// <remarks>
+    /// From <see cref="IRole.IsMentionable"/>
+    /// </remarks>
+
     public bool IsMentionable { get; set; }
+
+    /// <remarks>
+    /// From <see cref="IRole.IsHoisted"/>
+    /// </remarks>
     public bool IsHoisted { get; set; }
+
+    /// <summary>
+    /// Property Accessor
+    /// </summary>
+    public List<GuildRolePermissionSnapshotModel> Permissions { get; set; }
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong GetRoleId() => RoleId.ParseRequiredULong(nameof(RoleId), false);
-    public GuildPermission GetValue()
-    {
-        if (ulong.TryParse(PermissionsValue, out var number))
-        {
-            return (GuildPermission)number;
-        }
-        throw new InvalidOperationException($"Failed to convert value \"{PermissionsValue}\" (as ulong) to {typeof(Discord.GuildPermission)}");
-    }
 }

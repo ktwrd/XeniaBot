@@ -26,10 +26,12 @@ public class XeniaDbContext : DbContext
     #endregion
 
     #region Snapshots
+    public DbSet<GuildMemberSnapshotModel> GuildMemberSnapshots { get; set; }
     public DbSet<GuildMemberPermissionSnapshotModel> GuildMemberPermissionSnapshots { get; set; }
     public DbSet<GuildMemberRoleSnapshotModel> GuildMemberRoleSnapshots { get; set; }
-    public DbSet<GuildMemberSnapshotModel> GuildMemberSnapshots { get; set; }
+
     public DbSet<GuildRoleSnapshotModel> GuildRoleSnapshots { get; set; }
+    public DbSet<GuildRolePermissionSnapshotModel> GuildRolePermissionSnapshots { get; set; }
 
     public DbSet<UserSnapshotModel> UserSnapshots { get; set; }
     public DbSet<PrimaryGuildSnapshotModel> PrimaryGuildSnapshots { get; set; }
@@ -92,6 +94,22 @@ public class XeniaDbContext : DbContext
             b.HasIndex(e => new
             {
                 e.RecordCreatedAt,
+                e.GuildId,
+                e.RoleId
+            }).IsDescending();
+
+            b.HasMany(e => e.Permissions)
+             .WithOne()
+             .HasForeignKey(e => e.GuildRoleSnapshotId);
+        });
+        builder.Entity<GuildRolePermissionSnapshotModel>(b =>
+        {
+            b.ToTable(GuildRolePermissionSnapshotModel.TableName).HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildRoleSnapshotId,
                 e.GuildId,
                 e.RoleId
             }).IsDescending();
