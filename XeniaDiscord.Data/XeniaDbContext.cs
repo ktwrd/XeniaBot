@@ -5,6 +5,8 @@ using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.GuildApproval;
 using XeniaDiscord.Data.Models.PartialSnapshot;
+using XeniaDiscord.Data.Models.ServerLog;
+using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Data;
 
@@ -23,7 +25,20 @@ public class XeniaDbContext : DbContext
     public DbSet<GuildPartialSnapshotModel> GuildPartialSnapshots { get; set; }
     #endregion
 
+    #region Snapshots
+    public DbSet<GuildMemberSnapshotModel> GuildMemberSnapshots { get; set; }
+    public DbSet<GuildMemberPermissionSnapshotModel> GuildMemberPermissionSnapshots { get; set; }
+    public DbSet<GuildMemberRoleSnapshotModel> GuildMemberRoleSnapshots { get; set; }
+
+    public DbSet<GuildRoleSnapshotModel> GuildRoleSnapshots { get; set; }
+    public DbSet<GuildRolePermissionSnapshotModel> GuildRolePermissionSnapshots { get; set; }
+
+    public DbSet<UserSnapshotModel> UserSnapshots { get; set; }
+    public DbSet<PrimaryGuildSnapshotModel> PrimaryGuildSnapshots { get; set; }
+    #endregion
+
     #region Discord Cache
+    public DbSet<GuildChannelCacheModel> GuildChannelCache { get; set; }
     public DbSet<GuildMemberCacheModel> GuildMemberCache { get; set; }
     public DbSet<GuildCacheModel> GuildCache { get; set; }
     public DbSet<UserCacheModel> UserCache { get; set; }
@@ -36,11 +51,16 @@ public class XeniaDbContext : DbContext
     public DbSet<BanSyncGuildSnapshotModel> BanSyncGuildSnapshots { get; set; }
     #endregion
 
+    #region Server Log
+    public DbSet<ServerLogChannelModel> ServerLogChannels { get; set; }
+    public DbSet<ServerLogGuildModel> ServerLogGuilds { get; set; }
+    #endregion
+
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
     public DbSet<GuildApprovalLogEventModel> GuildApprovalLogEvents { get; set; }
 
     public DbSet<InteractionStatisticModel> InteractionStatistics { get; set; }
-
+    
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -66,6 +86,106 @@ public class XeniaDbContext : DbContext
         });
         #endregion
 
+        #region Snapshots
+        builder.Entity<GuildRoleSnapshotModel>(b =>
+        {
+            b.ToTable(GuildRoleSnapshotModel.TableName).HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildId,
+                e.RoleId
+            }).IsDescending();
+
+            b.HasMany(e => e.Permissions)
+             .WithOne()
+             .HasForeignKey(e => e.GuildRoleSnapshotId);
+        });
+        builder.Entity<GuildRolePermissionSnapshotModel>(b =>
+        {
+            b.ToTable(GuildRolePermissionSnapshotModel.TableName).HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildRoleSnapshotId,
+                e.GuildId,
+                e.RoleId
+            }).IsDescending();
+        });
+        builder.Entity<GuildMemberSnapshotModel>(b =>
+        {
+            b.ToTable(GuildMemberSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.UserId,
+                e.GuildId
+            }).IsDescending();
+
+            b.HasMany(e => e.Roles)
+             .WithOne()
+             .HasForeignKey(e => e.GuildMemberSnapshotId);
+            b.HasMany(e => e.Permissions)
+             .WithOne()
+             .HasForeignKey(e => e.GuildMemberSnapshotId);
+        });
+        builder.Entity<GuildMemberPermissionSnapshotModel>(b =>
+        {
+            b.ToTable(GuildMemberPermissionSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildMemberSnapshotId,
+                e.GuildId,
+                e.UserId
+            }).IsDescending();
+        });
+        builder.Entity<GuildMemberRoleSnapshotModel>(b =>
+        {
+            b.ToTable(GuildMemberRoleSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+            
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildMemberSnapshotId,
+                e.GuildId,
+                e.UserId
+            }).IsDescending();
+
+            b.HasOne(e => e.GuildRoleSnapshot)
+             .WithMany()
+             .HasForeignKey(e => e.GuildRoleSnapshotId);
+        });
+
+        builder.Entity<UserSnapshotModel>(b =>
+        {
+            b.ToTable(UserSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.UserId
+            }).IsDescending();
+
+            b.HasOne(e => e.PrimaryGuild)
+             .WithOne()
+             .HasForeignKey<UserSnapshotModel>(e => e.PrimaryGuildId);
+        });
+        builder.Entity<PrimaryGuildSnapshotModel>(b =>
+        {
+            b.ToTable(PrimaryGuildSnapshotModel.TableName)
+             .HasKey(e => e.RecordId);
+        });
+        #endregion
+
         #region Discord Cache
         builder.Entity<GuildCacheModel>(b =>
         {
@@ -75,6 +195,22 @@ public class XeniaDbContext : DbContext
             .WithOne(e => e.Guild)
             .HasForeignKey(e => e.GuildId)
             .IsRequired();
+
+            b.HasMany(e => e.Channels)
+            .WithOne(e => e.GuildCache)
+            .HasForeignKey(e => e.GuildId)
+            .IsRequired();
+        });
+        builder.Entity<GuildChannelCacheModel>(b =>
+        {
+            b.ToTable(GuildChannelCacheModel.TableName)
+            .HasKey(e => e.ChannelId);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.ChannelId
+            });
         });
         builder.Entity<GuildMemberCacheModel>(b =>
         {
@@ -137,6 +273,45 @@ public class XeniaDbContext : DbContext
         });
         #endregion
 
+        #region Server Log
+        builder.Entity<ServerLogGuildModel>(b =>
+        {
+            b.ToTable(ServerLogGuildModel.TableName) 
+            .HasKey(e => e.GuildId);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.Enabled
+            });
+
+            b.HasOne(e => e.GuildCache)
+            .WithMany()
+            .HasForeignKey(e => e.GuildId);
+
+            b.HasMany(e => e.ServerLogChannels)
+            .WithOne()
+            .HasForeignKey(e => e.GuildId);
+        });
+        builder.Entity<ServerLogChannelModel>(b =>
+        {
+            b.ToTable(ServerLogChannelModel.TableName)
+            .HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.ChannelId,
+                e.Event
+            });
+
+            b.HasOne(e => e.GuildCache)
+            .WithMany()
+            .HasForeignKey(e => e.GuildId);
+        });
+        #endregion
+
+        #region Guild User Approval
         builder.Entity<GuildApprovalModel>(b =>
         {
             b.ToTable(GuildApprovalModel.TableName).HasKey(e => e.GuildId); 
@@ -163,6 +338,7 @@ public class XeniaDbContext : DbContext
                 e.UserId
             });
         });
+        #endregion
 
         #region Statistics
         builder.Entity<InteractionStatisticModel>(b =>
@@ -178,7 +354,7 @@ public class XeniaDbContext : DbContext
             });
         });
         #endregion
-
+        
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)]))
             .HasName("spBanSyncGetMutualRecordsForGuild");
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)]))

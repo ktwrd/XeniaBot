@@ -15,6 +15,10 @@ using XeniaBot.Shared.Helpers;
 using System.Threading;
 using NLog;
 
+using ServerLogEvent = XeniaDiscord.Data.Models.ServerLog.ServerLogEvent;
+using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
+using XeniaDiscord.Data.Models.ServerLog;
+
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
@@ -41,89 +45,135 @@ public class RolePreserveService : BaseService
         _client.UserJoined += ClientOnUserJoined;
     }
 
-    private async Task ClientOnUserJoined(SocketGuildUser arg)
+    private async Task SendFailureNotification(
+        SocketGuildUser user,
+        IReadOnlyCollection<ulong> success,
+        IReadOnlyCollection<ulong> fail)
+    {
+        IReadOnlyCollection<ServerLogChannelModel> targetLogChannels;
+        try
+        {
+            targetLogChannels = await _serverLogConfig.GetChannelsForGuild(user.Guild.Id, [ServerLogEvent.MemberJoin], new()
+            {
+                IgnoreDisabledGuilds = true
+            });
+            if (targetLogChannels.Count < 1) return;
+        }
+        catch (Exception ex)
+        {
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes($"Failed to get Server Log Channel models with event {ServerLogEvent.MemberJoin} for Guild \"{user.Guild.Name}\" ({user.Guild.Id})")
+                .WithUser(user)
+                .WithGuild(user.Guild));
+            return;
+        }
+
+        var successCount = success.Count.ToString("n0");
+        var successPlural = success.Count == 1 ? "" : "s";
+        var embed = new EmbedBuilder()
+            .WithDescription($"Added {successCount} role{successPlural} successfully.")
+            .WithTitle($"Role Preserve - User Joined")
+            .WithColor(new Color(255, 255, 255))
+            .WithCurrentTimestamp();
+        var failCount = fail.Count.ToString("n0");
+        var failPlural = fail.Count == 1 ? "" : "s";
+        if (fail.Count > 0)
+            embed.Description += $"\nFailed to add {failCount} role{failPlural}.";
+
+        var f = string.Join("\n", fail.Select(v => $"- <@&{v}>"));
+
+        foreach (var serverLogChannel in targetLogChannels)
+        {
+            SocketTextChannel? textChannel;
+            try
+            {
+                textChannel = user.Guild.GetTextChannel(serverLogChannel.GetChannelId())
+                    ?? throw new InvalidOperationException($"Channel does not exist (GetTextChannel returned null)");
+            }
+            catch (Exception ex)
+            {
+                _log.Warn(ex, $"Could not find channel {serverLogChannel.ChannelId} in Guild \"{user.Guild}\" ({user.Guild.Id}) from ServerLogChannel with Id={serverLogChannel.Id}");
+                continue;
+            }
+            try
+            {
+                if (fail.Count > 0)
+                {
+                    if (f.Length > 1000)
+                    {
+                        var stream = new MemoryStream(Encoding.UTF8.GetBytes(f));
+                        await textChannel.SendFileAsync(stream, filename: "failed.txt", embed: embed.Build());
+                    }
+                    else
+                    {
+                        embed.AddField($"Failed to add following roles", f);
+                        await textChannel.SendMessageAsync(embed: embed.Build());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await _err.Submit(new ErrorReportBuilder()
+                    .WithException(ex)
+                    .WithNotes($"Failed to send message in channel \"{textChannel.Name}\" ({textChannel.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id}) for user \"{user.Username}#{user.Discriminator}\" ({user.Id})")
+                    .WithUser(user)
+                    .WithGuild(user.Guild)
+                    .WithChannel(textChannel)
+                    .AddSerializedAttachment("serverLogChannel.json", serverLogChannel));
+            }
+        }
+    }
+
+    private async Task ClientOnUserJoined(SocketGuildUser user)
     {
         try
         {
-            var guildModel = await _guildConfig.Get(arg.Guild.Id);
+            var guildModel = await _guildConfig.Get(user.Guild.Id);
             if (guildModel?.Enable != true)
                 return;
-            var model = await _config.Get(arg.Id, arg.Guild.Id);
+            var model = await _config.Get(user.Id, user.Guild.Id);
             if (model == null)
                 return;
 
-            var ourHighestRoleEnumerable = arg.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
+            var ourHighestRoleEnumerable = user.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
             var ourHighestRolePos = ourHighestRoleEnumerable.FirstOrDefault()?.Position ?? int.MinValue;
 
             var success = new List<ulong>();
             var fail = new List<ulong>();
             foreach (var item in model.Roles)
             {
-                if (item == arg.Guild.EveryoneRole.Id)
+                if (item == user.Guild.EveryoneRole.Id || item == 0)
                     continue;
                 try
                 {
-                    var existingRole = await arg.Guild.GetRoleAsync(item);
+                    var existingRole = await user.Guild.GetRoleAsync(item);
                     if (existingRole.Position > ourHighestRolePos)
                     {
                         fail.Add(item);
                         continue;
                     }
-                    await arg.AddRoleAsync(item);
+                    await user.AddRoleAsync(item);
                     success.Add(item);
                 }
                 catch (Exception ex)
                 {
-                    await _err.ReportException(
-                        ex,
-                        $"Failed to grant role {item} in guild {arg.Guild.Name} ({arg.Guild.Id}) for {arg.Username} ({arg.Id})");
+                    _log.Warn(ex, $"Failed to grant Role {item} to User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
                     fail.Add(item);
                 }
             }
-            try
-            {
-                var serverLogModel = await _serverLogConfig.Get(arg.Guild.Id);
-                if (serverLogModel == null)
-                    return;
 
-                var channelId = serverLogModel.GetChannel(ServerLogEvent.MemberJoin);
-                var channel = arg.Guild.GetTextChannel(channelId);
-
-                var successCount = success.Count.ToString("n0");
-                var embed = new EmbedBuilder()
-                    .WithDescription($"Added {successCount} roles successfully.")
-                    .WithTitle($"Role Preserve - User Joined")
-                    .WithColor(new Color(255, 255, 255))
-                    .WithCurrentTimestamp();
-                if (fail.Count > 0)
-                    embed.Description += $"\nFailed to add {fail.Count} roles.";
-
-                var f = string.Join("\n", fail.Select(v => $"- <@&{v}>"));
-                if (fail.Count > 0)
-                {
-                    if (f.Length > 2000)
-                    {
-                        var stream = new MemoryStream(Encoding.UTF8.GetBytes(f));
-                        await channel.SendFileAsync(stream, filename: "failed.txt", embed: embed.Build());
-                    }
-                    else
-                    {
-                        embed.AddField($"Failed to add following roles", f);
-                        await channel.SendMessageAsync(embed: embed.Build());
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await _err.ReportException(
-                    ex, $"Failed to notify guild {arg.Guild.Name} ({arg.Guild.Id}) about Role Preserve being actioned.");
-            }
+            await SendFailureNotification(user, success, fail);
         }
         catch (Exception ex)
         {
-            await _err.ReportException(
-                ex,
-                $"Failed to run Role Preserve on user {arg.Username} ({arg.Id}) in guild {arg.Guild.Name} ({arg.Guild.Id})");
+            var msg = $"Failed to restore roles for User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})";
+            _log.Error(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithUser(user)
+                .WithGuild(user.Guild));
         }
     }
 
@@ -154,34 +204,50 @@ public class RolePreserveService : BaseService
         {
             var taskList = new List<Task>();
             var chunkedIds = ArrayHelper.Chunk(_client.Guilds.Select(v => v.Id).ToArray(), 10);
-            foreach (var x in chunkedIds)
-            {
-                var outerItem = x;
-                taskList.Add(new Task(
-                    delegate
-                    {
-                        foreach (var i in outerItem)
-                        {
-                            var guild = _client.GetGuild(i);
-                            try
-                            {
-                                PreserveGuild(guild).Wait();
-                            }
-                            catch (Exception ex)
-                            {
-                                _err.ReportException(ex, $"Failed to Preserve Guild {guild.Name} ({guild.Id})").Wait();
-                            }
-                        }
-                    }));
-            }
-
-            foreach (var i in taskList)
-                i.Start();
-            await Task.WhenAll(taskList);
+            await Task.WhenAll(chunkedIds.Select(PerformGuild));
         }
         catch (Exception ex)
         {
-            await _err.ReportException(ex, $"Failed to preserve all guilds ;w;");
+            const string msg = "Failed to preserve all guilds";
+            _log.Error(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg));
+        }
+
+        async Task PerformGuild(ulong[] guildIds)
+        {
+            foreach (var id in guildIds)
+            {
+                SocketGuild? guild;
+                try
+                {
+                    guild = _client.GetGuild(id);
+                    if (guild == null) continue;
+                }
+                catch (Exception ex)
+                {
+                    var msg = $"Failed to get Guild {id} for role preservation";
+                    _log.Warn(ex, msg);
+                    await _err.Submit(new ErrorReportBuilder()
+                        .WithException(ex)
+                        .WithNotes(msg));
+                    continue;
+                }
+                try
+                {
+                    await PreserveGuild(guild);
+                }
+                catch (Exception ex)
+                {
+                    var msg = $"Failed to preserver Guild \"{guild.Name}\" ({guild.Id})";
+                    _log.Warn(ex, msg);
+                    await _err.Submit(new ErrorReportBuilder()
+                        .WithException(ex)
+                        .WithNotes(msg)
+                        .WithGuild(guild));
+                }
+            }
         }
     }
     

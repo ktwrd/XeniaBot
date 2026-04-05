@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Common.Handlers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
+using XeniaDiscord.Common.Mappers.DiscordSnapshot;
 using XeniaDiscord.Common.Services;
 
 namespace XeniaDiscord;
@@ -21,6 +22,8 @@ public static class XeniaDiscordCommon
         var types = new[]
         {
             typeof(DiscordCacheService),
+            typeof(DiscordSnapshotService),
+
             typeof(UserCacheService),
             typeof(GuildCacheService),
 
@@ -43,5 +46,8 @@ public static class XeniaDiscordCommon
         DiscordUserToUserCacheModelMapper.RegisterService(services);
         DiscordGuildToGuildCacheModelMapper.RegisterService(services);
         DiscordUserToGuildMemberCacheModelMapper.RegisterService(services);
+
+        RoleToSnapshotModelMapper.RegisterService(services);
+        GuildUserToSnapshotModelMapper.RegisterService(services);
     }
 }

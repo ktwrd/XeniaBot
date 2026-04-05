@@ -69,7 +69,7 @@ public class GoogleTranslateService : BaseService
     {
         if (_translateClient == null)
         {
-            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null");
+            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null)");
         }
         var result = _translateClient.ListLanguages("en").ToList();
         return result;
@@ -79,7 +79,7 @@ public class GoogleTranslateService : BaseService
     {
         if (_translateClient == null)
         {
-            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null");
+            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null)");
         }
 
         return await _translateClient.TranslateTextAsync(message, to, from);

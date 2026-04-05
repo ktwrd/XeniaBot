@@ -1,19 +1,27 @@
-using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Core.Services.Wrappers;
+using NLog;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
-using XeniaBot.MongoData.Models;
 using XeniaBot.Data.Models.Archival;
-using XeniaBot.MongoData.Repositories;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
-using NLog;
+using XeniaDiscord.Common.Services;
+using XeniaDiscord.Data;
+using XeniaDiscord.Data.Models.ServerLog;
+using XeniaDiscord.Data.Models.Snapshot;
+using XeniaDiscord.Data.Repositories;
+using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -21,17 +29,21 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class ServerLogService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogService));
-    private readonly ServerLogRepository _config;
+    private readonly ServerLogRepository _serverLogRepo;
     private readonly DiscordSocketClient _discord;
     private readonly DiscordCacheService _discordCache;
+    private readonly DiscordSnapshotService _discordSnapshot;
     private readonly ErrorReportService _errorService;
+    private readonly XeniaDbContext _db;
     public ServerLogService(IServiceProvider services)
         : base(services)
     {
-        _config = services.GetRequiredService<ServerLogRepository>();
+        _serverLogRepo = services.GetRequiredService<ServerLogRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
+        _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
         _errorService = services.GetRequiredService<ErrorReportService>();
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
     }
 
     public override Task InitializeAsync()
@@ -44,108 +56,389 @@ public class ServerLogService : BaseService
         _discord.MessageDeleted += Event_MessageDelete;
         _discordCache.MessageChange += DiscordCacheMessageChangeUpdate;
 
+        _discordSnapshot.GuildMemberUpdated += DiscordSnapshotGuildMemberUpdate;
+        _discordSnapshot.GuildRoleUpdated += DiscordSnapshotGuildRoleUpdate;
+
         return Task.CompletedTask;
     }
 
-    
-    private async void DiscordCacheMessageChangeUpdate(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
+    private async Task DiscordSnapshotGuildRoleUpdate(
+        DiscordSnapshotEventSource source,
+        GuildRoleSnapshotModel? before,
+        GuildRoleSnapshotModel model)
     {
+        var guildIdStr = model.GuildId;
+        if (before == null && source == DiscordSnapshotEventSource.Edit)
+        {
+            _log.Trace($"Event skipped. No before state for Edit source (guildId={model.GuildId}, roleId={model.RoleId}, recordId={model.Id})");
+            return;
+        }
+        await using var db = _db.CreateSession();
+        DiscordSnapshotRoleUpdateInfo? info = null;
         try
         {
-            if (type != MessageChangeType.Update)
-                return;
+            // disabled in guild, ignore
+            if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
 
-            var previousContent = previous?.Content ?? "";
-            var currentContent = current.Content ?? "";
-            if (previousContent == currentContent)
-                return;
-
-            var author = _discord.GetUser(current.AuthorId);
-            if (author == null)
-                return;
-
-            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
-
-            var embed = DiscordHelper.BaseEmbed()
-                .WithTitle("Message Edited")
-                .WithDescription(string.Join("\n",
-                    $"From: `{author.Username}#{author.Discriminator}`",
-                    $"ID: `{current.AuthorId}`"))
-                .WithColor(new Color(255, 255, 255))
-                .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
-                .WithThumbnailUrl(author.GetAvatarUrl());
-            if (diffContent.Length >= 1000)
-                await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed, diffContent, "diff.txt");
+            var permissionsAddedList = new List<GuildPermission>();
+            var permissionsRemovedList = new List<GuildPermission>();
+            
+            if (source == DiscordSnapshotEventSource.Delete)
+            {
+                permissionsRemovedList.AddRange(model.Permissions.Select(e => e.GetValue()));
+            }
+            else if (source == DiscordSnapshotEventSource.Create)
+            {
+                permissionsAddedList.AddRange(model.Permissions.Select(e => e.GetValue()));
+            }
+            else if (before != null)
+            {
+                permissionsAddedList.AddRange(model.Permissions
+                    .Where(a => !before.Permissions.Any(b => b.Value == a.Value))
+                    .Select(e => e.GetValue()));
+                permissionsRemovedList.AddRange(before.Permissions
+                    .Where(b => !model.Permissions.Any(a => a.Value == b.Value))
+                    .Select(e => e.GetValue()));
+            }
             else
             {
-                embed.AddField("Difference",
-                    string.Join("\n",
-                        "```diff",
-                        diffContent,
-                        "```"));
-                await EventHandle(current.GuildId, (v => v.MessageEditChannel), embed);
+                permissionsAddedList.AddRange(model.Permissions.Select(e => e.GetValue()));
+            }
+            info = new()
+            {
+                PermissionsAdded = permissionsAddedList,
+                PermissionsRemoved = permissionsRemovedList,
+                SnapshotBefore = before,
+                Snapshot = model,
+                Source = source
+            };
+            if (!info.Any) return;
+            
+            _log.Trace($"Handling event (source={source}, guildId={model.GuildId}, roleId={model.RoleId}, recordId={model.Id})");
+
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var embed = new EmbedBuilder()
+                .WithDescription(string.Join("\n",
+                    $"<@&{model.RoleId}>",
+                    "Name: `" + model.Name?.Replace("`", "'") + "`"))
+                .WithFooter("ID: " + model.RoleId)
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp();
+            var attachments = new List<FileAttachment>();
+
+            switch (source)
+            {
+                case DiscordSnapshotEventSource.Create:
+                    embed.WithTitle("Role Created");
+                    info.WithInfo(embed, attachments);
+                    info.WithPermissionsUpdated(embed, attachments);
+
+                    await EventHandle(
+                        model.GetGuildId(),
+                        ServerLogEvent.RoleCreate,
+                        [embed],
+                        attachments);
+                    break;
+                case DiscordSnapshotEventSource.Edit:
+                    embed.WithTitle("Role Updated")
+                         .WithDescription(string.Join("\n",
+                        $"<@&{model.RoleId}> was updated <t:{now}:R> (name: {model.Name?.Replace("`", "'")})",
+                        "Name: `" + model.Name?.Replace("`", "'") + "`"));
+                    info.WithInfo(embed, attachments);
+                    info.WithPermissionsUpdated(embed, attachments);
+
+                    await EventHandle(
+                        model.GetGuildId(),
+                        ServerLogEvent.RoleCreate,
+                        [embed],
+                        attachments);
+                    break;
+                case DiscordSnapshotEventSource.Delete:
+                    embed.WithTitle("Role Deleted");
+                    info.WithPermissionsUpdated(embed, attachments);
+
+                    await EventHandle(
+                        model.GetGuildId(),
+                        ServerLogEvent.RoleCreate,
+                        [embed],
+                        attachments);
+                    break;
             }
         }
         catch (Exception ex)
         {
-            _log.Error(ex, $"Failed to handle MessageChangeUpdate event!!");
-            var author = _discord.GetUser(current.AuthorId);
-            var guild = _discord.GetGuild(current.GuildId);
-            var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
-            IMessage? msg = null;
-            if (channel != null)
-                msg = await channel.GetMessageAsync(current.Snowflake);
-            await DiscordHelper.ReportError(ex, author, guild, channel, msg);
+            var msg = $"Failed to handle event for Guild {model.GuildId} and Role {model.RoleId} (SnapshotId={model.Id})";
+            await _errorService.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .AddSerializedAttachment("snapshotInfo.json", info)
+                .AddSerializedAttachment("snapshot.before.json", before)
+                .AddSerializedAttachment("snapshot.after.json", model));
         }
     }
-    internal async Task EventHandle(ulong serverId, Func<ServerLogModel, ulong?> selectChannel, EmbedBuilder embed, string? attachmentContent = null, string? attachmentName = null)
+
+    private async Task DiscordSnapshotGuildMemberUpdate(
+        GuildMemberSnapshotModel? before,
+        GuildMemberSnapshotModel model)
     {
-        var data = await _config.Get(serverId);
-
-        // Server not setup for logs, aborting.
-        if (data == null)
+        var guildIdStr = model.GuildId;
+        if (before == null)
+        {
+            _log.Trace($"Event. No before state (guildId={model.GuildId}, userId={model.UserId}, recordId={model.RecordId})");
             return;
-
-        var targetChannel = selectChannel(data) ?? data.DefaultLogChannel;
-        if (targetChannel == null || targetChannel == 0)
-            return;
-
-        var server = _discord.GetGuild(serverId);
-        var logChannel = server.GetTextChannel(targetChannel);
-        if (logChannel == null)
-            return;
+        }
+        await using var db = _db.CreateSession();
+        DiscordSnapshotMemberUpdateInfo? info = null;
         try
         {
+            // disabled in guild, ignore
+            if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
 
-            if (attachmentContent == null)
+            var rolesAdded = new List<(ulong, GuildRoleSnapshotModel?)>();
+            var rolesRemoved = new List<(ulong, GuildRoleSnapshotModel?)>();
+
+            rolesAdded.AddRange(model.Roles
+                .Where(a => !before.Roles.Any(b => b.RoleId == a.RoleId))
+                .Select(e => (e.GetRoleId(), e.GuildRoleSnapshot)));
+
+            rolesRemoved.AddRange(before.Roles
+                .Where(b => !model.Roles.Any(a => a.RoleId == b.RoleId))
+                .Select(e => (e.GetRoleId(), e.GuildRoleSnapshot)));
+
+            var permissionsAddedList = new List<GuildPermission>();
+            var permissionsRemovedList = new List<GuildPermission>();
+
+            permissionsAddedList.AddRange(model.Permissions
+                .Where(a => !before.Permissions.Any(b => b.Value == a.Value))
+                .Select(e => e.GetValue()));
+            permissionsRemovedList.AddRange(before.Permissions
+                .Where(b => !model.Permissions.Any(a => a.Value == b.Value))
+                .Select(e => e.GetValue()));
+
+            ulong permissionsAddedRaw = 0;
+            ulong permissionsRemovedRaw = 0;
+            foreach (var value in permissionsAddedList)
             {
-                await logChannel.SendMessageAsync(embed: embed.Build());
+                permissionsAddedRaw |= (ulong)value;
+            }
+            foreach (var value in permissionsRemovedList)
+            {
+                permissionsRemovedRaw |= (ulong)value;
+            }
+
+            info = new()
+            {
+                RolesAdded = rolesAdded,
+                RolesRemoved = rolesRemoved,
+                PermissionsAdded = permissionsAddedList,
+                PermissionsRemoved = permissionsRemovedList,
+                SnapshotBefore = before,
+                Snapshot = model
+            };
+
+            if (!info.AnyUpdates)
+            {
+                _log.Trace($"No permission/role updates for snapshot (RecordId={model.RecordId}, UserId={model.UserId}, GuildId={model.GuildId})");
                 return;
             }
-
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(attachmentContent));
             
-            await logChannel.SendFileAsync(ms, attachmentName ?? "content.txt", embed: embed.Build());
-        }
-        catch (Exception e)
-        {
-            if (e.Message.Contains("Missing Access") || e.Message.Contains("50001") || e.Message.Contains("50013"))
+            var events = await _db.ServerLogChannels
+                .Where(e => e.GuildId == guildIdStr)
+                .Select(e => e.Event)
+                .Distinct().ToListAsync();
+            if (events.Contains(ServerLogEvent.MemberRoleAdded) ||
+                events.Contains(ServerLogEvent.MemberRoleRemoved) ||
+                events.Contains(ServerLogEvent.MemberRoleUpdated) ||
+                events.Contains(ServerLogEvent.MemberPermissionsUpdated))
             {
-                await server.Owner.SendMessageAsync(
-                    string.Join(
-                        "\n", new string[]
-                        {
-                            "Heya!", "",
-                            $"Xenia does not have access to send log events in a channel in the server `{server.Name}`, which you own.",
-                            "",
-                            "In order for the logging feature to work, make sure that Xenia has access to the following permissions.",
-                            "- View Channel",
-                            "- Send Messages",
-                            "- Embed Links",
-                            "", $"Channel affected: https://discord.com/channels/{server.Id}/{targetChannel}"
-                        }));
+                if (events.Contains(ServerLogEvent.MemberRoleUpdated) &&
+                    !events.Contains(ServerLogEvent.MemberRoleAdded) &&
+                    !events.Contains(ServerLogEvent.MemberRoleRemoved))
+                {
+                    await SendAs(GetRolesUpdated(), ServerLogEvent.MemberRoleUpdated);
+                }
+                else
+                {
+                    if (info.RolesAdded.Count > 0)
+                    {
+                        await SendAs(GetRolesAdded(), ServerLogEvent.MemberRoleAdded);
+                    }
+                    if (info.RolesRemoved.Count > 0)
+                    {
+                        await SendAs(GetRolesRemoved(), ServerLogEvent.MemberRoleRemoved);
+                    }
+                }
+                if (info.AnyPermissions)
+                {
+                    var (permEmbed, permAtt) = GetPermissionsUpdated();
+                    await EventHandle(model.GetGuildId(), ServerLogEvent.MemberPermissionsUpdated, [permEmbed], permAtt);
+                }
             }
-            throw;
+            else if (events.Contains(ServerLogEvent.Fallback) || events.Contains(ServerLogEvent.MemberUpdated))
+            {
+                await SendAs(GetCombined(), ServerLogEvent.MemberUpdated);
+            }
+
+            async Task SendAs((EmbedBuilder, List<FileAttachment>) tuple, ServerLogEvent @event)
+            {
+                var (embed, att) = tuple;
+                await EventHandle(model.GetGuildId(), @event, [embed], att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetCombined()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                    .WithTitle("Member Updated");
+                info.WithPermissionsUpdated(embed, att);
+                info.WithRolesAdded(embed, att);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetRolesUpdated()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                    .WithTitle("User Roles Updated");
+                info.WithRolesAdded(embed, att);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetRolesAdded()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                        .WithTitle("User Roles Added")
+                        .WithColor(Color.Blue);
+                info.WithRolesAdded(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetRolesRemoved()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                        .WithTitle("User Roles Removed")
+                        .WithColor(Color.Blue);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
+            (EmbedBuilder, List<FileAttachment>) GetPermissionsUpdated()
+            {
+                var att = new List<FileAttachment>();
+                var embed = CreateEmbed(model)
+                        .WithTitle("User Permissions Updated")
+                        .WithColor(Color.Blue);
+                info.WithRolesAdded(embed, att);
+                info.WithRolesRemoved(embed, att);
+                return (embed, att);
+            }
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to handle event for Guild {model.GuildId}";
+            await _errorService.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .AddSerializedAttachment("snapshotInfo.json", info)
+                .AddSerializedAttachment("snapshot.before.json", before)
+                .AddSerializedAttachment("snapshot.after.json", model));
+        }
+    }
+
+    private static EmbedBuilder CreateEmbed(GuildMemberSnapshotModel snapshot)
+    {
+        return new EmbedBuilder()
+            .WithDescription(string.Join("\n",
+                $"<@{snapshot.UserId}>",
+                "```",
+                $"Display Name: {snapshot.Nickname ?? snapshot.Username}",
+                $"Username: {snapshot.Username}",
+                $"Id: {snapshot.UserId}",
+                "```"))
+            .WithColor(Color.Blue)
+            .WithCurrentTimestamp()
+            .WithThumbnailUrl(snapshot.AvatarUrl);
+    }
+
+    internal Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder embed, Dictionary<string, string>? attachments = null)
+    {
+        return EventHandle(serverId, @event, [embed], attachments);
+    }
+    internal Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder[] embeds, Dictionary<string, string>? attachments = null)
+    {
+        return EventHandle(
+            serverId,
+            @event,
+            embeds,
+            attachments?.Select(e => new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(e.Value)), e.Key))
+            .ToList());
+    }
+    internal async Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder[] embeds, List<FileAttachment>? attachments = null)
+    {
+        var targetChannels = await _serverLogRepo.GetChannelsForGuild(serverId, [@event, ServerLogEvent.Fallback]);
+        var guild = _discord.GetGuild(serverId);
+        if (guild == null) return;
+        foreach (var channel in targetChannels)
+        {
+            try
+            {
+                await ProcessForModel(channel);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to send event {@event} to channel {channel.ChannelId} in guild \"{guild.Name}\" ({guild.Id})");
+            }
+        }
+        async Task ProcessForModel(ServerLogChannelModel channelModel)
+        {
+            var logChannel = guild.GetTextChannel(channelModel.GetChannelId());
+            if (logChannel == null) return;
+            
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+            {
+                await ProcessForModelInner(logChannel);
+            });
+        }
+        async Task ProcessForModelInner(SocketTextChannel logChannel)
+        {
+            try
+            {
+                if (attachments?.Count < 1)
+                {
+                    await logChannel.SendMessageAsync(embeds: embeds.Select(e => e.Build()).ToArray());
+                    return;
+                }
+
+                await logChannel.SendFilesAsync(attachments, embeds: embeds.Select(e => e.Build()).ToArray());
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Missing Access") || ex.Message.Contains("50001") || ex.Message.Contains("50013"))
+                {
+                    try
+                    {
+                        await guild.Owner.SendMessageAsync(
+                            string.Join(
+                                "\n",
+                                "Heya!", "",
+                                $"Xenia does not have access to send log events in a channel in the server `{guild.Name}`, which you own.",
+                                "",
+                                "In order for the logging feature to work, make sure that Xenia has access to the following permissions.",
+                                "- View Channel",
+                                "- Send Messages",
+                                "- Embed Links",
+                                "", $"Channel affected: https://discord.com/channels/{guild.Id}/{logChannel.Id}"
+                            ));
+                    }
+                    catch (Exception exx)
+                    {
+                        _log.Error(exx, $"Failed to DM owner of guild \"{guild.Name}\" ({guild.Id}), {guild.Owner.Username} ({guild.OwnerId}) about not having the correct permissions in channel \"{logChannel.Name}\" ({logChannel.Id})");
+                    }
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
     }
 
@@ -157,24 +450,24 @@ public class ServerLogService : BaseService
             var userSafe = user.Username.Replace("`", "\\`");
             var embed = new EmbedBuilder()
                 .WithTitle("User Joined")
-                .WithDescription(
-                    $"<@{user.Id}>" +
-                    string.Join(
-                        "\n",
-                            "```",
-                            $"{userSafe}#{user.Discriminator}", $"ID: {user.Id}",
-                            "```"
-                        ))
+                .WithDescription(string.Join("\n",
+                    user.Mention,
+                    "```",
+                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Username: {userSafe}#{user.Discriminator}",
+                    $"ID: {user.Id}",
+                    "```"
+                ))
                 .AddField(
-                    "Account Age", string.Join(
-                        "\n",
+                    "Account Age",
+                    string.Join("\n",
                             TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
                             $"`{user.CreatedAt}`"
-                        ))
+                    ))
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Green);
 
-            await EventHandle(user.Guild.Id, (v) => v.MemberJoinChannel, embed);
+            await EventHandle(user.Guild.Id, ServerLogEvent.MemberJoin, embed);
         }
         catch (Exception ex)
         {
@@ -192,7 +485,8 @@ public class ServerLogService : BaseService
             var description = string.Join("\n",
                 $"<@{user.Id}>",
                 "```",
-                $"{userSafe}#{user.Discriminator}",
+                $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                $"Username: {userSafe}#{user.Discriminator}",
                 $"ID: {user.Id}",
                 "```");
 
@@ -207,7 +501,7 @@ public class ServerLogService : BaseService
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
 
-            await EventHandle(guild.Id, (v) => v.MemberLeaveChannel, embed);
+            await EventHandle(guild.Id, ServerLogEvent.MemberLeave, embed);
         }
         catch (Exception ex)
         {
@@ -223,12 +517,13 @@ public class ServerLogService : BaseService
         {
             var userSafe = user.Username.Replace("`", "\\`");
             var banDetails = await guild.GetBanAsync(user.Id);
-            var reason = banDetails.Reason ?? "<Unknown Reason>";
             var embed = new EmbedBuilder()
                 .WithTitle("User Banned")
-                .WithDescription($"<@{user.Id}>" + string.Join("\n",
+                .WithDescription(string.Join("\n",
+                    user.Mention,
                     "```",
-                    $"{userSafe}#{user.Discriminator}",
+                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Username: {userSafe}#{user.Discriminator}",
                     $"ID: {user.Id}",
                     "```"
                 ))
@@ -236,11 +531,14 @@ public class ServerLogService : BaseService
                     TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
                     $"`{user.CreatedAt}`"
                 ))
-                .AddField("Ban Reason", $"```\n{reason}\n```")
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
+            if (!string.IsNullOrEmpty(banDetails?.Reason?.Trim()))
+            {
+                embed.AddField("Ban Reason", banDetails.Reason);
+            }
 
-            await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+            await EventHandle(guild.Id, ServerLogEvent.MemberBan, embed);
         }
         catch (Exception ex)
         {
@@ -254,12 +552,13 @@ public class ServerLogService : BaseService
     {
         try
         {
-            var userSafe = user.Username.Replace("`", "\\`");
+            var userSafe = user.Username.Replace("`", "'");
             var embed = new EmbedBuilder()
                 .WithTitle("User Unbanned")
                 .WithDescription($"<@{user.Id}>" + string.Join("\n",
                     "```",
-                    $"{userSafe}#{user.Discriminator}",
+                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Username: {userSafe}#{user.Discriminator}",
                     $"ID: {user.Id}",
                     "```"
                 ))
@@ -270,7 +569,7 @@ public class ServerLogService : BaseService
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
 
-            await EventHandle(guild.Id, (v) => v.MemberBanChannel, embed);
+            await EventHandle(guild.Id, ServerLogEvent.MemberBan, embed);
         }
         catch (Exception ex)
         {
@@ -289,8 +588,7 @@ public class ServerLogService : BaseService
         var message = await m.GetOrDownloadAsync();
         var channel = await c.GetOrDownloadAsync();
         
-        if (channel == null || (channel is SocketGuildChannel socketChannel) == false)
-            return;
+        if (channel is not SocketGuildChannel socketChannel) return;
         try
         {
             if (m.Id == 0)
@@ -322,17 +620,33 @@ public class ServerLogService : BaseService
             if (author != null)
                 embed.WithThumbnailUrl(author.GetAvatarUrl());
 
-            var targetFieldMessageContent = $"```\n{messageContent}\n```";
-
-            if (targetFieldMessageContent.Length is < 1024 and > 0)
-                embed.AddField("Content", targetFieldMessageContent);
-            else if (targetFieldMessageContent.Length > 1024)
+            var attachments = new Dictionary<string, string>();
+            if (messageContent.Length > 1024)
             {
                 embed.AddField("Content", "Attached to this message");
-                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed, messageContent, "content.txt");
-                return;
+                attachments.Add("content.txt", messageContent);
             }
-            await EventHandle(socketChannel.Guild.Id, (v) => v.MessageDeleteChannel, embed);
+            else if (messageContent.Length > 0)
+            {
+                embed.AddField("Content", messageContent);
+            }
+            
+            if (funkyMessage?.Attachments?.Count > 0)
+            {
+                var attachmentUrls = string.Join("\n",
+                    funkyMessage.Attachments
+                    .Select(e => string.IsNullOrEmpty(e.Filename) ? (e.ProxyUrl ?? e.Url) : $"[{e.Filename}]({e.ProxyUrl ?? e.Url})")
+                    .Distinct().ToList());
+                if (attachmentUrls.Length > 1024)
+                {
+                    attachments.Add("attachmentUrls.txt", attachmentUrls);
+                }
+                else if (attachmentUrls.Length > 0)
+                {
+                    embed.AddField("Attachments", attachmentUrls);
+                }
+            }
+            await EventHandle(socketChannel.Guild.Id, ServerLogEvent.MessageDelete, embed, attachments);
         }
         catch (Exception ex)
         {
@@ -347,56 +661,61 @@ public class ServerLogService : BaseService
                 msg);
         }
     }
-
-    private async Task Event_MessageEdit(Cacheable<IMessage, ulong> previousMessage, SocketMessage currentMessage,
-        IMessageChannel channel)
+    private async void DiscordCacheMessageChangeUpdate(MessageChangeType type, CacheMessageModel current, CacheMessageModel? previous)
     {
-        var socketChannel = channel as SocketGuildChannel;
         try
         {
-            
-            var previousContent = previousMessage.Value?.Content ?? "";
-            var storedData = await _discordCache.CacheMessageConfig.GetLatest(currentMessage.Id);
-            if (previousContent == currentMessage.Content)
+            if (type != MessageChangeType.Update)
                 return;
-            var diffContent = string.Join(
-                "\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentMessage?.Content ?? ""));
+
+            var previousContent = previous?.Content ?? "";
+            var currentContent = current.Content ?? "";
+            if (previousContent == currentContent)
+                return;
+
+            var author = await ExceptionHelper.RetryOnTimedOut<IUser?>(async () => await _discord.GetUserAsync(current.AuthorId));
+            if (author == null)
+                return;
+
+            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
+
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Edited")
-                .WithDescription($"From `{currentMessage.Author.Username}#{currentMessage.Author.Discriminator}`\nID: `{currentMessage.Author.Id}`")
+                .WithDescription(string.Join("\n",
+                    $"From: `{author.Username}#{author.Discriminator}`",
+                    $"ID: `{current.AuthorId}`"))
                 .WithColor(new Color(255, 255, 255))
-                .WithUrl($"https://discord.com/channels/{socketChannel.Guild.Id}/{socketChannel.Id}/{currentMessage.Id}")
-                .WithThumbnailUrl(currentMessage.Author.GetAvatarUrl());
-            if (diffContent.Length < 1000)
+                .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
+                .WithThumbnailUrl(author.GetAvatarUrl());
+
+            var attachments = new Dictionary<string, string>();
+            if (diffContent.Length >= 1000)
             {
-                embed
-                    .AddField("Difference", string.Join("\n",
-                        new string[]
-                        {
-                            "```",
-                            diffContent,
-                            "```",
-                        }));
-                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed);
+                embed.AddField("Difference", "Attached as `diff.txt`");
+                attachments.Add("diff.txt", diffContent);
             }
             else
             {
-                await EventHandle(socketChannel.Guild.Id, (v) => v.MessageEditChannel, embed, diffContent, "diff.txt");
+                embed.AddField(
+                    "Difference",
+                    string.Join("\n",
+                        "```diff",
+                        diffContent,
+                        "```"));
             }
+            
+            await EventHandle(current.GuildId, ServerLogEvent.MessageEdit, embed, attachments);
         }
         catch (Exception ex)
         {
-            var msg = string.Join(
-                "\n", new string[]
-                {
-                    "Failed run ServerLogService.Event_MessageDelete.", $"ChannelId: {socketChannel?.Id}",
-                    $"Guild: {socketChannel?.Guild.Id} ({socketChannel?.Guild.Name})",
-                    $"MessageId: {currentMessage?.Id ?? 0}"
-                });
-            _log.Error(ex, msg);
-            await _errorService.ReportException(
-                ex,
-                msg);
+            _log.Error(ex, $"Failed to handle MessageChangeUpdate event!!");
+            var author = _discord.GetUser(current.AuthorId);
+            var guild = _discord.GetGuild(current.GuildId);
+            var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
+            IMessage? msg = null;
+            if (channel != null)
+                msg = await channel.GetMessageAsync(current.Snowflake);
+            await DiscordHelper.ReportError(ex, author, guild, channel, msg);
         }
     }
     #endregion

@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using XeniaBot.MongoData.Models;
 using XeniaDiscord.Data.Models.BanSync;
+using XeniaDiscord.Data.Models.ServerLog;
 
 namespace XeniaBot.WebPanel.Models;
 
@@ -13,7 +14,7 @@ public class AdminServerModel : BaseViewModel, IBaseServerModel
     public CounterGuildModel CounterConfig { get; set; }
     public BanSyncGuildModel BanSyncConfig { get; set; }
     public LevelSystemConfigModel XpConfig { get; set; }
-    public ServerLogModel LogConfig { get; set; }
+    public ServerLogGuildModel LogConfig { get; set; }
     public ICollection<BanSyncGuildSnapshotModel> BanSyncStateHistory { get; set; }
     public GuildGreeterConfigModel GreeterConfig { get; set; }
     public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }

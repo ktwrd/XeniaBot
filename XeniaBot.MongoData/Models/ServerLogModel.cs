@@ -4,6 +4,7 @@ using XeniaBot.Shared.Models;
 
 namespace XeniaBot.MongoData.Models;
 
+[Obsolete("Use XeniaDiscord.Data.Models.ServerLog.ServerLogEvent")]
 public enum ServerLogEvent
 {
     Fallback,
@@ -18,6 +19,7 @@ public enum ServerLogEvent
     ChannelCreate,
     MemberVoiceChange
 }
+[Obsolete("Use XeniaDiscord.Data.Models.ServerLog.ServerLogGuildModel")]
 public class ServerLogModel : BaseModel
 {
     public ulong ServerId { get; set; }
