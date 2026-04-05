@@ -1,5 +1,6 @@
 ﻿using Discord;
 using System.Text;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Common.Services;
@@ -110,7 +111,7 @@ public class DiscordSnapshotMemberUpdateInfo
         if (!string.IsNullOrEmpty(diffRem)) content.Add(diffRem);
         var diff = string.Join("\n", content);
 
-        if (!FieldNeedAttachment(diff, "diff", true))
+        if (!EmbedHelper.FieldRequiresAttachment(diff, "diff"))
         {
             embed.AddField("User Permissions", "```diff\n" + diff + "\n```");
         }

@@ -68,27 +68,102 @@ public class ServerLogService : BaseService
         GuildRoleSnapshotModel model)
     {
         var guildIdStr = model.GuildId;
-        if (before == null)
+        if (before == null && source == DiscordSnapshotEventSource.Edit)
         {
-            _log.Trace($"Event. No before state (guildId={model.GuildId}, roleId={model.RoleId}, recordId={model.Id})");
+            _log.Trace($"Event skipped. No before state for Edit source (guildId={model.GuildId}, roleId={model.RoleId}, recordId={model.Id})");
             return;
         }
-
+        await using var db = _db.CreateSession();
         DiscordSnapshotRoleUpdateInfo? info = null;
         try
         {
             // disabled in guild, ignore
-            if (!await _db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
+            if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
 
             var permissionsAddedList = new List<GuildPermission>();
             var permissionsRemovedList = new List<GuildPermission>();
+            
+            if (source == DiscordSnapshotEventSource.Delete)
+            {
+                permissionsRemovedList.AddRange(model.Permissions.Select(e => e.GetValue()));
+            }
+            else if (source == DiscordSnapshotEventSource.Create)
+            {
+                permissionsAddedList.AddRange(model.Permissions.Select(e => e.GetValue()));
+            }
+            else if (before != null)
+            {
+                permissionsAddedList.AddRange(model.Permissions
+                    .Where(a => !before.Permissions.Any(b => b.Value == a.Value))
+                    .Select(e => e.GetValue()));
+                permissionsRemovedList.AddRange(before.Permissions
+                    .Where(b => !model.Permissions.Any(a => a.Value == b.Value))
+                    .Select(e => e.GetValue()));
+            }
+            else
+            {
+                permissionsAddedList.AddRange(model.Permissions.Select(e => e.GetValue()));
+            }
+            info = new()
+            {
+                PermissionsAdded = permissionsAddedList,
+                PermissionsRemoved = permissionsRemovedList,
+                SnapshotBefore = before,
+                Snapshot = model,
+                Source = source
+            };
+            if (!info.Any) return;
+            
+            _log.Trace($"Handling event (source={source}, guildId={model.GuildId}, roleId={model.RoleId}, recordId={model.Id})");
 
-            permissionsAddedList.AddRange(model.Permissions
-                .Where(a => !before.Permissions.Any(b => b.Value == a.Value))
-                .Select(e => e.GetValue()));
-            permissionsRemovedList.AddRange(before.Permissions
-                .Where(b => !model.Permissions.Any(a => a.Value == b.Value))
-                .Select(e => e.GetValue()));
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var embed = new EmbedBuilder()
+                .WithDescription(string.Join("\n",
+                    $"<@&{model.RoleId}>",
+                    "Name: `" + model.Name?.Replace("`", "'") + "`"))
+                .WithFooter("ID: " + model.RoleId)
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp();
+            var attachments = new List<FileAttachment>();
+
+            switch (source)
+            {
+                case DiscordSnapshotEventSource.Create:
+                    embed.WithTitle("Role Created");
+                    info.WithInfo(embed, attachments);
+                    info.WithPermissionsUpdated(embed, attachments);
+
+                    await EventHandle(
+                        model.GetGuildId(),
+                        ServerLogEvent.RoleCreate,
+                        [embed],
+                        attachments);
+                    break;
+                case DiscordSnapshotEventSource.Edit:
+                    embed.WithTitle("Role Updated")
+                         .WithDescription(string.Join("\n",
+                        $"<@&{model.RoleId}> was updated <t:{now}:R> (name: {model.Name?.Replace("`", "'")})",
+                        "Name: `" + model.Name?.Replace("`", "'") + "`"));
+                    info.WithInfo(embed, attachments);
+                    info.WithPermissionsUpdated(embed, attachments);
+
+                    await EventHandle(
+                        model.GetGuildId(),
+                        ServerLogEvent.RoleCreate,
+                        [embed],
+                        attachments);
+                    break;
+                case DiscordSnapshotEventSource.Delete:
+                    embed.WithTitle("Role Deleted");
+                    info.WithPermissionsUpdated(embed, attachments);
+
+                    await EventHandle(
+                        model.GetGuildId(),
+                        ServerLogEvent.RoleCreate,
+                        [embed],
+                        attachments);
+                    break;
+            }
         }
         catch (Exception ex)
         {
@@ -112,11 +187,12 @@ public class ServerLogService : BaseService
             _log.Trace($"Event. No before state (guildId={model.GuildId}, userId={model.UserId}, recordId={model.RecordId})");
             return;
         }
+        await using var db = _db.CreateSession();
         DiscordSnapshotMemberUpdateInfo? info = null;
         try
         {
             // disabled in guild, ignore
-            if (!await _db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
+            if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return;
 
             var rolesAdded = new List<(ulong, GuildRoleSnapshotModel?)>();
             var rolesRemoved = new List<(ulong, GuildRoleSnapshotModel?)>();
