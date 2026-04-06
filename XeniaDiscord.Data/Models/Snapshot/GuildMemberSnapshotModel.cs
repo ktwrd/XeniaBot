@@ -72,6 +72,20 @@ public class GuildMemberSnapshotModel : IGuildMemberSnapshot
 
     public List<GuildMemberRoleSnapshotModel> Roles { get; set; } = [];
     public List<GuildMemberPermissionSnapshotModel> Permissions { get; set; } = [];
+
+    /// <summary>
+    /// Check if the roles in the <paramref name="other"/> model are exactly the same as our <see cref="Roles"/>.
+    /// Will always return <see langword="true"/> when <paramref name="other"/> is <see langword="null"/>
+    /// </summary>
+    public bool RolesMatch(GuildMemberSnapshotModel? other)
+    {
+        if (other == null) return false;
+        var ourRoleIds = Roles.Select(e => e.GetRoleId()).ToHashSet();
+        var otherRoles = other.Roles.Select(e => e.GetRoleId()).ToHashSet();
+        var allRoles = ourRoleIds.Concat(otherRoles).ToHashSet();
+        if (allRoles.Count != Roles.Count) return true;
+        return allRoles.Any(id => !ourRoleIds.Contains(id) || !otherRoles.Contains(id));
+    }
 }
 
 public interface IGuildMemberSnapshot : ISnapshot

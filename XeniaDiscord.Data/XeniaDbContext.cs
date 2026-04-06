@@ -5,6 +5,7 @@ using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.GuildApproval;
 using XeniaDiscord.Data.Models.PartialSnapshot;
+using XeniaDiscord.Data.Models.RolePreserve;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
 
@@ -56,6 +57,11 @@ public class XeniaDbContext : DbContext
     public DbSet<ServerLogGuildModel> ServerLogGuilds { get; set; }
     #endregion
 
+    #region Role Preserve
+    public DbSet<RolePreserveGuildModel> RolePreserveGuilds { get; set; }
+    public DbSet<RolePreserveUserModel> RolePreserveUsers { get; set; }
+    #endregion
+    
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
     public DbSet<GuildApprovalLogEventModel> GuildApprovalLogEvents { get; set; }
 
@@ -64,7 +70,7 @@ public class XeniaDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-
+        
         #region Partial Snapshots
         builder.Entity<UserPartialSnapshotModel>(b =>
         {
@@ -311,6 +317,27 @@ public class XeniaDbContext : DbContext
         });
         #endregion
 
+        #region Role Preserve
+        builder.Entity<RolePreserveGuildModel>(b =>
+        {
+            b.ToTable(RolePreserveGuildModel.TableName).HasKey(e => e.GuildId);
+
+            b.HasMany(e => e.Users)
+                .WithOne(e => e.RolePreserveGuild)
+                .HasForeignKey(e => e.GuildId)
+                .IsRequired();
+        });
+        builder.Entity<RolePreserveUserModel>(b =>
+        {
+            b.ToTable(RolePreserveUserModel.TableName).HasKey(e => new { e.GuildId, e.UserId });
+
+            b.HasOne(e => e.GuildMemberSnapshot)
+                .WithMany()
+                .HasForeignKey(e => e.GuildMemberSnapshotId)
+                .IsRequired();
+        });
+        #endregion
+        
         #region Guild User Approval
         builder.Entity<GuildApprovalModel>(b =>
         {
