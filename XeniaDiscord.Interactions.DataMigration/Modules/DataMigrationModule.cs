@@ -24,22 +24,22 @@ public class DataMigrationModule : InteractionModuleBase
 {
     private readonly ConfigData _config;
     private readonly XeniaDbContext _db;
+    private readonly DiscordSocketClient _discord;
     private readonly BanSyncConfigRepository _mongoBanSyncConfigRepository;
     private readonly BanSyncStateHistoryRepository _mongoBanSyncStateHistoryRepository;
     private readonly BanSyncInfoRepository _mongoBanSyncInfoRepository;
     private readonly MongoServerLogRepository _mongoServerLogRepository;
-    private readonly DiscordSocketClient _discord;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DataMigrationModule(IServiceProvider services)
     {
         _config = services.GetRequiredService<ConfigData>();
         _db = services.GetRequiredService<XeniaDbContext>();
+        _discord = services.GetRequiredService<DiscordSocketClient>();
 
         _mongoBanSyncConfigRepository = services.GetRequiredService<BanSyncConfigRepository>();
         _mongoBanSyncStateHistoryRepository = services.GetRequiredService<BanSyncStateHistoryRepository>();
         _mongoBanSyncInfoRepository = services.GetRequiredService<BanSyncInfoRepository>();
         _mongoServerLogRepository = services.GetRequiredService<MongoServerLogRepository>();
-        _discord = services.GetRequiredService<DiscordSocketClient>();
     }
 
     [SlashCommand("bansync", "Migrate all BanSync-related tables")]
@@ -56,14 +56,15 @@ public class DataMigrationModule : InteractionModuleBase
         try
         {
             var mongoGuildConfigCount = (await _mongoBanSyncConfigRepository.Count()).ToString("n0");
+            var mongoGuildStateCount = (await _mongoBanSyncStateHistoryRepository.Count()).ToString("n0");
+            var mongoInfoCount = (await _mongoBanSyncInfoRepository.Count()).ToString("n0");
+
             await SendStatusUpdate($"Pulling MongoDB Records: Guild Config ({mongoGuildConfigCount})", StatusUpdateType.Downloading);
             var mongoGuildConfig = await _mongoBanSyncConfigRepository.GetAll();
             
-            var mongoGuildStateCount = (await _mongoBanSyncStateHistoryRepository.Count()).ToString("n0");
             await SendStatusUpdate($"Pulling MongoDB Records: Guild State ({mongoGuildStateCount})", StatusUpdateType.Downloading);
             var mongoGuildState = await _mongoBanSyncStateHistoryRepository.GetAll();
 
-            var mongoInfoCount = (await _mongoBanSyncInfoRepository.Count()).ToString("n0");
             await SendStatusUpdate($"Pulling MongoDB Records: Info ({mongoInfoCount})", StatusUpdateType.Downloading);
             var mongoInfo = await _mongoBanSyncInfoRepository.GetAll();
 
@@ -195,6 +196,7 @@ public class DataMigrationModule : InteractionModuleBase
         try
         {
             var mongoDataCount = (await _mongoServerLogRepository.Count()).ToString("n0");
+
             await SendStatusUpdate($"Pulling MongoDB Records ({mongoDataCount})", StatusUpdateType.Downloading);
             var mongoData = await _mongoServerLogRepository.GetAll();
             
@@ -314,10 +316,7 @@ public class DataMigrationModule : InteractionModuleBase
         if (Context.Interaction.Data is IApplicationCommandInteractionData data)
         {
             title.Add(data.Name);
-            foreach (var opt in data.Options)
-            {
-                title.Add(opt.Name);
-            }
+            title.AddRange(data.Options.Select(e => e.Name));
         }
         var content = status switch
         {
