@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared;
 using XeniaDiscord.Common.Handlers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
 using XeniaDiscord.Common.Mappers.DiscordSnapshot;
@@ -15,7 +16,9 @@ public static class XeniaDiscordCommon
         services.AddSingleton<BanSyncService>()
                 .AddSingleton<ValidationService>()
                 .AddSingleton<DiscordStatisticsService>()
-                .AddSingleton<DiscordCacheEventHandler>();
+                .AddSingleton<DiscordCacheEventHandler>()
+                .AddSingleton<ApplicationEmoteService>()
+                .AddSingleton<IXeniaOnReady, ApplicationEmoteService>(svc => svc.GetRequiredService<ApplicationEmoteService>());
 
         RegisterMappers(services);
 
