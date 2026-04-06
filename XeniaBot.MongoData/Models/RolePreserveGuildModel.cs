@@ -1,7 +1,9 @@
-﻿using XeniaBot.Shared.Models;
+﻿using System;
+using XeniaBot.Shared.Models;
 
 namespace XeniaBot.MongoData.Models;
 
+[Obsolete]
 public class RolePreserveGuildModel : BaseModel
 {
     public static string CollectionName => "rolePreserve_guild";

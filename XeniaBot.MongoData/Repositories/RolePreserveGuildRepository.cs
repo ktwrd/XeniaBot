@@ -11,6 +11,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
+[Obsolete]
 public class RolePreserveGuildRepository : BaseRepository<RolePreserveGuildModel>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
