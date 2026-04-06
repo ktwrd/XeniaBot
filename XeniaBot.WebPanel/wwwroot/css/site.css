@@ -116,3 +116,10 @@ body {
 .vertical-btn-list .btn:not(:last-child) {
     margin-bottom: .5rem !important;
 }
+.toast-container {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    padding: 1rem;
+    z-index: 1;
+}

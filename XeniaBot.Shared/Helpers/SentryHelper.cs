@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using kate.shared.Helpers;
 using NLog;
 using Sentry;
 using System;
@@ -140,5 +141,16 @@ public static class SentryHelper
 
         scope.SetTags(tags);
         scope.SetExtras(extra);
+    }
+
+    public static TimeSpan GetDuration(this ITransactionTracer transaction)
+    {
+        var end = transaction.EndTimestamp ?? DateTimeOffset.UtcNow;
+        return end - transaction.StartTimestamp;
+    }
+    public static string FormatDuration(this ITransactionTracer transaction)
+    {
+        var ts = transaction.GetDuration();
+        return FormatHelper.Duration(ts);
     }
 }

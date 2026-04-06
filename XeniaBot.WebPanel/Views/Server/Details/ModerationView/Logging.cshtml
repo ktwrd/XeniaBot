@@ -1,81 +1,116 @@
-﻿@using XeniaBot.MongoData.Models
-@using Microsoft.AspNetCore.Mvc.TagHelpers
+﻿@using System.Text
+@using System.Text.Json
+@using Discord
 @using Discord.WebSocket
-@using kate.shared.Helpers
-@using XeniaBot.Shared.Helpers
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @using XeniaBot.WebPanel.Models
 @model ServerDetailsViewModel
 
+@{
+    var seenChannelIds = new HashSet<ulong>();
+    var channelItems = new List<JsTypeServerLogChannelItem>();
+    foreach (var category in Model.Guild.CategoryChannels) {
+        foreach (var child in category.Channels) {
+            seenChannelIds.Add(child.Id);
+        }
+    }
+    foreach (var channel in Model.Guild.Channels) {
+        if (channel is IThreadChannel
+        || channel is IForumChannel
+        || channel is IStageChannel
+        || seenChannelIds.Contains(channel.Id)) continue;
+
+        if (channel is SocketCategoryChannel category)
+        {
+            var children = new List<JsTypeServerLogChannelItem>();
+            foreach (var child in category.Channels) {
+                children.Add(new JsTypeServerLogChannelItem
+                {
+                    Id = child.Id.ToString(),
+                    Name = child.Name,
+                    IsText = child is ITextChannel,
+                    IsVoice = child is IVoiceChannel
+                });
+            }
+            channelItems.Add(new JsTypeServerLogChannelItem
+            {
+                Id = category.Id.ToString(),
+                Name = category.Name,
+                IsCategory = true,
+                Children = children
+            });
+        }
+        else if (!seenChannelIds.Contains(channel.Id))
+        {
+            channelItems.Add(new JsTypeServerLogChannelItem
+            {
+                Id = channel.Id.ToString(),
+                Name = channel.Name,
+                IsText = channel is ITextChannel,
+                IsVoice = channel is IVoiceChannel
+            });
+        }
+    }
+
+    var configItems = new List<JsTypeServerLogConfigItem>();
+    foreach (var item in Model.LogConfig.ServerLogChannels.DistinctBy(e => new { e.ChannelId, e.Event })) {
+        configItems.Add(new JsTypeServerLogConfigItem
+        {
+            Id = item.Id.ToString(),
+            ChannelId = item.ChannelId,
+            Event = item.Event.ToString()
+        });
+    }
+    var opts = new JsonSerializerOptions();
+    var channelDataJson = JsonSerializer.Serialize(channelItems, opts);
+    var channelDataBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(channelDataJson));
+    var configDataJson = JsonSerializer.Serialize(configItems, opts);
+    var configDataBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(configDataJson));
+}
 
 <form id="log_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_LogSystem" asp-route-id="@Model.Guild.Id">
     <div class="row">
         <div class="col">
-            <div class="input-group mb-3">
-                @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                {
-                    Channels = StrippedChannel.FromGuild(@Model.Guild),
-                    Categories = StrippedCategory.FromGuild(@Model.Guild),
-                    SelectedChannelId = @Model.LogConfig.DefaultLogChannel,
-                    ParentFormId = "log_settings",
-                    Name = "DefaultLogChannel",
-                    Id = "log_settings_channel_default",
-                    DisplayName = "Default"
-                })
+            <div id="server-log-channel-config" xeniaDiscord-channelData="@channelDataBase64">
+                <input type="hidden" name="jsonData" value="@configDataBase64" />
+                <div id="server-log-channel-config-table">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Channel</th>
+                            <th>Event</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody id="server-log-channel-list">
+                        </tbody>
+                    </table>
+                </div>
+                <hr/>
+                <div class="d-flex flex-row flex-wrap mb-3" id="server-log-channel-add">
+                    <div class="form-group m-2">
+                        <label for="server-log-select-event">Event</label>
+                        <select id="server-log-select-event" class="form-control">
+
+                        </select>
+                        <small id="server-log-select-event-help" class="form-text text-muted">Select an event that should be sent to a channel.</small>
+                    </div>
+                    <div class="form-group m-2">
+                        <label for="server-log-select-channel">Channel</label>
+                        <select id="server-log-select-channel" class="form-control">
+
+                        </select>
+                        <small id="server-log-select-channel-help" class="form-text text-muted">
+                            Channel that the selected event should be used with.<br/>
+                            More than one event can be used per channel, and more than one channel can have the same event.</small>
+                    </div>
+                    <div class="form-group" style="margin-top: 2.5rem;">
+                        <button class="btn btn-primary" xenia-action="add" type="button">Add</button>
+                    </div>
+                </div>
+                <hr/>
+                <button type="submit" class="btn btn-success">Save Changes</button>
             </div>
-            @foreach (var item in GeneralHelper.GetEnumList<ServerLogEvent>().Where((v, i) => i < 7))
-            {
-                if (item == ServerLogEvent.Fallback)
-                    continue;
-                <div class="input-group mb-3">
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                       {
-                           Channels = @Model.Guild.Channels.Select((v) =>
-                           {
-                               return new StrippedChannel()
-                               {
-                                   Id = v.Id,
-                                   Name = v.Name,
-                                   Position = v.Position
-                               };
-                           }),
-                           Categories = StrippedCategory.FromGuild(@Model.Guild),
-                           SelectedChannelId = @Model.LogConfig.GetChannel(item),
-                           ParentFormId = "log_settings",
-                           Name = $"{item}Channel",
-                           Id = $"log_settings_channel_{item}",
-                           DisplayName = XeniaHelper.FormatPascalCase(item.ToString())
-                       })
-                </div>
-            }
-        </div>
-        <div class="col">
-            @foreach (var item in GeneralHelper.GetEnumList<ServerLogEvent>().Where((v, i) => i > 6))
-            {
-                if (item == ServerLogEvent.Fallback)
-                    continue;
-                <div class="input-group mb-3">
-                    @await Component.InvokeAsync("ChannelSelect", new ChannelSelectModel()
-                       {
-                           Channels = @Model.Guild.Channels.Select((v) =>
-                           {
-                               return new StrippedChannel()
-                               {
-                                   Id = v.Id,
-                                Name = v.Name,
-                                Position = v.Position
-                               };
-                           }),
-                           Categories = StrippedCategory.FromGuild(@Model.Guild),
-                           SelectedChannelId = @Model.LogConfig.GetChannel(item),
-                           ParentFormId = "log_settings",
-                           Name = $"{item}Channel",
-                           Id = $"log_settings_channel_{item}",
-                           DisplayName = XeniaHelper.FormatPascalCase(item.ToString())
-                       })
-                </div>
-            }
         </div>
     </div>
-    <hr/>
-    <button type="submit" class="btn btn-success">Save</button>
 </form>

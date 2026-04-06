@@ -17,6 +17,7 @@ using MongoDB.Driver;
 using NLog;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Data.Repositories;
+using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
 
 namespace XeniaBot.WebPanel.Helpers;
 
@@ -189,9 +190,13 @@ public static class AspHelper
         };
 
         var logConfig = services.GetRequiredService<ServerLogRepository>();
-        data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
+        data.LogConfig = await logConfig.GetGuild(guild.Id, new()
         {
-            ServerId = guild.Id
+            IncludeChannels = true,
+            IncludeGuildCache = true
+        }) ?? new()
+        {
+            GuildId = guild.Id.ToString()
         };
 
         var membersWhoCanAccess = new List<SocketGuildUser>();
