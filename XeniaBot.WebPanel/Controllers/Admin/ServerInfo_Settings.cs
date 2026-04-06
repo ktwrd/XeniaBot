@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Models;
 using XeniaBot.Shared.Services;
@@ -210,6 +211,7 @@ partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
     {
+        var guildIdStr = id.ToString();
         var guild = _discord.GetGuild(id);
         if (guild == null)
             return PartialView("NotFound", "Guild not found");
@@ -218,13 +220,22 @@ partial class AdminController
         await model.PopulateModel(HttpContext, id);
         try
         {
-            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
-            var data = await controller.Get(id) ?? new RolePreserveGuildModel()
+            await using var db = _db.CreateSession();
+            await using var trans = await db.Database.BeginTransactionAsync();
+            try
             {
-                GuildId = guild.Id
-            };
-            data.Enable = enable;
-            await controller.Set(data);
+                await _rolePreserveGuildRepo.EnableAsync(db, id, enable);
+                await db.SaveChangesAsync();
+                await trans.CommitAsync();
+            }
+            catch
+            {
+                await trans.RollbackAsync();
+                throw;
+            }
+            model.RolePreserve = await _db.RolePreserveGuilds
+                .AsNoTracking()
+                .SingleAsync(e => e.GuildId == guildIdStr);
             model.MessageType = "success";
             model.Message = "Saved!";
             return PartialView("ServerInfo/RolePreserveComponent", model);

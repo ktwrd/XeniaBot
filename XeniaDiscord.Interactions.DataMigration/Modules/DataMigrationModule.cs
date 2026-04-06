@@ -308,6 +308,8 @@ public class DataMigrationModule : InteractionModuleBase
         }
     }
 
+    // TODO create command for "role preservation" module and include option to generate all snapshots for all guilds (like in DiscordCacheAdminModule)
+    
     private async Task SendStatusUpdate(
         string message,
         StatusUpdateType status)

@@ -25,6 +25,7 @@ public partial class ServerController : BaseXeniaController
     private readonly ErrorReportService _errorReporting;
     private readonly GuildCacheRepository _guildCacheRepo;
     private readonly ServerLogRepository _serverLogRepository;
+    private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
 
     public ServerController(
         IServiceProvider services,
@@ -35,6 +36,7 @@ public partial class ServerController : BaseXeniaController
         _errorReporting = services.GetRequiredService<ErrorReportService>();
         _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
         _serverLogRepository = services.GetRequiredService<ServerLogRepository>();
+        _rolePreserveGuildRepo = services.GetRequiredService<RolePreserveGuildRepository>();
         _logger = logger;
     }
 

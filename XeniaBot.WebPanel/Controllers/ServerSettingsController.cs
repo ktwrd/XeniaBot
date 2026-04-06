@@ -132,14 +132,20 @@ public partial class ServerController
     {
         try
         {
-            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
-            var data = await controller.Get(id) ?? new RolePreserveGuildModel()
+            await using var db = _db.CreateSession();
+            await using var trans = await db.Database.BeginTransactionAsync();
+            try
             {
-                GuildId = id
-            };
-
-            data.Enable = enable;
-            await controller.Set(data);
+                await _rolePreserveGuildRepo.EnableAsync(db, id, enable);
+                
+                await db.SaveChangesAsync();
+                await trans.CommitAsync();
+            }
+            catch
+            {
+                await trans.RollbackAsync();
+                throw;
+            }
 
             return await ModerationView(
                 id, messageType: "success", message: $"Role Preserve " + (enable ? "Enabled" : "Disabled"));
