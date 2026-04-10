@@ -60,6 +60,7 @@ public class XeniaDbContext : DbContext
     #region Role Preserve
     public DbSet<RolePreserveGuildModel> RolePreserveGuilds { get; set; }
     public DbSet<RolePreserveUserModel> RolePreserveUsers { get; set; }
+    public DbSet<RolePreserveUserRoleModel> RolePreserveUserRoles { get; set; }
     #endregion
     
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
@@ -331,10 +332,19 @@ public class XeniaDbContext : DbContext
         {
             b.ToTable(RolePreserveUserModel.TableName).HasKey(e => new { e.GuildId, e.UserId });
 
-            b.HasOne(e => e.GuildMemberSnapshot)
-                .WithMany()
-                .HasForeignKey(e => e.GuildMemberSnapshotId)
-                .IsRequired();
+            b.HasMany(e => e.Roles)
+             .WithOne()
+             .HasForeignKey(e => new { e.GuildId, e.UserId })
+             .IsRequired();
+        });
+        builder.Entity<RolePreserveUserRoleModel>(b =>
+        {
+            b.ToTable(RolePreserveUserRoleModel.TableName).HasKey(e => new
+            {
+                e.GuildId,
+                e.UserId,
+                e.RoleId
+            });
         });
         #endregion
         

@@ -26,124 +26,100 @@ public class RolePreserveUserRepository
         XeniaDbContext db,
         ulong guildId,
         ulong userId,
-        Guid snapshotId)
+        ulong[] roleIds)
     {
         var guildIdStr = guildId.ToString();
         var userIdStr = userId.ToString();
-        if (!await db.RolePreserveGuilds.AnyAsync(e => e.GuildId == guildIdStr))
+        var now = DateTime.UtcNow;
+        if (await db.RolePreserveGuilds.FindAsync(guildIdStr) == null)
         {
             await db.RolePreserveGuilds.AddAsync(new RolePreserveGuildModel()
             {
                 GuildId = guildIdStr,
-                Enabled = false
+                Enabled = false,
+                Users = null!
             });
             _log.Trace($"Created Record in {RolePreserveGuildModel.TableName} (GuildId={guildIdStr}, Enabled={false})");
         }
         if (await db.RolePreserveUsers.AnyAsync(e => e.GuildId == guildIdStr && e.UserId == userIdStr))
         {
-            await db.RolePreserveUsers
+            await db.RolePreserveUsers.AsNoTracking()
                 .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr)
-                .ExecuteUpdateAsync(e => e
-                                        .SetProperty(p => p.GuildMemberSnapshotId, snapshotId)
-                                        .SetProperty(p => p.UpdatedAt, DateTime.UtcNow));
-            _log.Trace($"Updated Record in {RolePreserveUserModel.TableName} (GuildId={guildIdStr}, UserId={userIdStr}, SnapshotId={snapshotId})");
+                .ExecuteUpdateAsync(e => e.SetProperty(p => p.UpdatedAt, now));
         }
         else
         {
-            await db.RolePreserveUsers.AddAsync(new RolePreserveUserModel
+            var m = new RolePreserveUserModel
             {
                 GuildId = guildIdStr,
                 UserId = userIdStr,
-                GuildMemberSnapshotId = snapshotId
-            });
-            _log.Trace($"Created Record in {RolePreserveUserModel.TableName} (GuildId={guildIdStr}, UserId={userIdStr}, SnapshotId={snapshotId})");
-        }
-    }
-    
-    public async Task UpdateSnapshot(
-        XeniaDbContext db,
-        GuildMemberSnapshotModel snapshot)
-    {
-        if (!await db.RolePreserveGuilds.AnyAsync(e => e.GuildId == snapshot.GuildId))
-        {
-            await db.RolePreserveGuilds.AddAsync(new RolePreserveGuildModel
+                CreatedAt = now,
+                UpdatedAt = now,
+                Roles = null!,
+                RolePreserveGuild = null!
+            };
+            if (await db.RolePreserveUsers.FindAsync(guildIdStr, userIdStr) == null)
             {
-                GuildId = snapshot.GuildId,
-                Enabled = false
-            });
-            _log.Trace($"Created Record in {RolePreserveGuildModel.TableName} (GuildId={snapshot.GuildId}, Enabled={false})");
+                await db.RolePreserveUsers.AddAsync(m);
+            }
+            _log.Trace($"Created Record in {RolePreserveUserModel.TableName} (GuildId={guildIdStr}, UserId={userIdStr})");
         }
-        if (await db.RolePreserveUsers.AnyAsync(e => e.GuildId == snapshot.GuildId && e.UserId == snapshot.UserId))
-        {
-            await db.RolePreserveUsers
-                .Where(e => e.GuildId == snapshot.GuildId && e.UserId == snapshot.UserId)
-                .ExecuteUpdateAsync(e => e
-                .SetProperty(p => p.GuildMemberSnapshotId, snapshot.RecordId)
-                .SetProperty(p => p.UpdatedAt, DateTime.UtcNow));
-            _log.Trace($"Updated Record in {RolePreserveUserModel.TableName} (GuildId={snapshot.GuildId}, UserId={snapshot.UserId}, SnapshotId={snapshot.RecordId})");
-        }
-        else
-        {
-            await db.RolePreserveUsers.AddAsync(new RolePreserveUserModel
+
+        var roleIdStrArr = roleIds.Select(e => e.ToString()).ToArray();
+        var currentRoleIds = await db.RolePreserveUserRoles
+            .AsNoTracking()
+            .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr)
+            .Select(e => e.RoleId)
+            .ToHashSetAsync();
+        var delete = currentRoleIds.Where(e => !roleIdStrArr.Contains(e)).ToArray();
+        var add = roleIdStrArr.Where(e => !currentRoleIds.Contains(e)).ToArray();
+
+        await db.RolePreserveUserRoles
+            .AsNoTracking()
+            .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr && delete.Contains(e.RoleId))
+            .ExecuteDeleteAsync();
+        await db.RolePreserveUserRoles.AddRangeAsync(
+            add.Select(roleIdStr => new RolePreserveUserRoleModel
             {
-                GuildId = snapshot.GuildId,
-                UserId = snapshot.UserId,
-                GuildMemberSnapshotId = snapshot.RecordId
-            });
-            _log.Trace($"Created Record in {RolePreserveUserModel.TableName} (GuildId={snapshot.GuildId}, UserId={snapshot.UserId}, SnapshotId={snapshot.RecordId})");
-        }
+                GuildId = guildIdStr,
+                UserId = userIdStr,
+                RoleId = roleIdStr
+            }));
+        _log.Trace($"Updated {RolePreserveUserRoleModel.TableName} (deleted={delete.Length}, inserted={add.Length}, GuildId={guildIdStr}, UserId={userIdStr})");
     }
 
     public async Task InsertOrUpdate(
         XeniaDbContext db,
         RolePreserveUserModel model)
     {
-        if (!await db.RolePreserveGuilds.AnyAsync(e => e.GuildId == model.GuildId))
-        {
-            await db.RolePreserveGuilds.AddAsync(new RolePreserveGuildModel
-            {
-                GuildId = model.GuildId,
-                Enabled = false
-            });
-            _log.Trace($"Created Record in {RolePreserveGuildModel.TableName} (GuildId={model.GuildId}, Enabled={false})");
-        }
-        if (await db.RolePreserveUsers.AnyAsync(e => e.GuildId == model.GuildId && e.UserId == model.UserId))
-        {
-            if (model.CreatedAt <= model.UpdatedAt)
-            {
-                model.UpdatedAt = DateTime.UtcNow;
-            }
-
-            await db.RolePreserveUsers
-                .Where(e => e.GuildId == model.GuildId && e.UserId == model.UserId)
-                .ExecuteUpdateAsync(e => e
-                .SetProperty(p => p.GuildMemberSnapshotId, model.GuildMemberSnapshotId)
-                .SetProperty(p => p.UpdatedAt, model.UpdatedAt));
-            _log.Trace($"Updated Record in {RolePreserveUserModel.TableName} (GuildId={model.GuildId}, UserId={model.UserId}, SnapshotId={model.GuildMemberSnapshotId})");
-        }
-        else
-        {
-            model.UpdatedAt = model.CreatedAt;
-            await db.RolePreserveUsers.AddAsync(model);
-            _log.Trace($"Updated Record in {RolePreserveUserModel.TableName} (GuildId={model.GuildId}, UserId={model.UserId}, SnapshotId={model.GuildMemberSnapshotId})");
-        }
+        var roleIds = model.Roles.Select(e => e.GetRoleId()).Distinct().ToArray();
+        await InsertOrUpdate(db, model.GetGuildId(), model.GetUserId(), roleIds);
     }
 
-    public async Task<IReadOnlyCollection<GuildMemberRoleSnapshotModel>> FindRolesForUser(
+    public async Task UpdateSnapshot(
+        XeniaDbContext db,
+        GuildMemberSnapshotModel snapshot)
+    {
+        var roleIds = snapshot.Roles.Select(e => e.GetRoleId()).Distinct().ToArray();
+        await InsertOrUpdate(db, snapshot.GetGuildId(), snapshot.GetUserId(), roleIds);
+    }
+
+    public async Task<IReadOnlyCollection<ulong>> FindRolesForUser(
         XeniaDbContext db,
         ulong guildId,
         ulong userId)
     {
         var guildIdStr = guildId.ToString();
         var userIdStr = userId.ToString();
-        var roleIds = await db.RolePreserveUsers
+        var roleIds = await db.RolePreserveUserRoles.AsNoTracking()
             .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr)
-            .Select(e => e.GuildMemberSnapshot)
-            .SelectMany(e => e.Roles)
-            .Include(e => e.GuildRoleSnapshot)
-            .AsNoTracking()
+            .Select(e => e.RoleId)
+            .Distinct()
             .ToListAsync();
-        return roleIds.DistinctBy(e => e.RoleId).ToList();
+        return roleIds.Select(e => e.ParseULong(false).GetValueOrDefault(0))
+            .Where(e => e > 0)
+            .Distinct()
+            .ToArray();
     }
 
     public async Task<bool> HasAny(
@@ -154,6 +130,7 @@ public class RolePreserveUserRepository
         var guildIdStr = guildId.ToString();
         var userIdStr = userId.ToString();
         return await db.RolePreserveUsers
+            .AsNoTracking()
             .AnyAsync(e => e.GuildId == guildIdStr && e.UserId == userIdStr);
     }
     
@@ -167,9 +144,9 @@ public class RolePreserveUserRepository
         {
             query = query.Include(e => e.RolePreserveGuild);
         }
-        if (options.IncludeGuildMemberSnapshots)
+        if (options.IncludeRoles)
         {
-            query = query.Include(e => e.GuildMemberSnapshot);
+            query = query.Include(e => e.Roles);
         }
 
         return query;
@@ -178,6 +155,6 @@ public class RolePreserveUserRepository
     public class QueryOptions
     {
         public bool IncludeRolePreserveGuild { get; set; }
-        public bool IncludeGuildMemberSnapshots { get; set; }
+        public bool IncludeRoles { get; set; }
     }
 }

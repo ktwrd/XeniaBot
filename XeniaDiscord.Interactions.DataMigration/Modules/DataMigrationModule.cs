@@ -44,8 +44,6 @@ public class DataMigrationModule : InteractionModuleBase
     private readonly XeniaBot.DiscordCache.Controllers.DiscordCacheGenericRepository<MongoCacheGuildMemberModel> _mongoDiscordCacheGuildMemberRepository;
     private readonly XeniaBot.DiscordCache.Controllers.DiscordCacheGenericRepository<MongoCacheGuildModel> _mongoDiscordCacheGuildRepository;
 
-    private readonly IMapper<IRole, GuildRoleSnapshotModel> _guildRoleSnapshotMapper;
-
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DataMigrationModule(IServiceProvider services)
     {
@@ -63,8 +61,6 @@ public class DataMigrationModule : InteractionModuleBase
         _mongoDiscordCacheUserRepository = new(MongoCacheUserModel.CollectionName, services);
         _mongoDiscordCacheGuildMemberRepository = new(MongoCacheGuildMemberModel.CollectionName, services);
         _mongoDiscordCacheGuildRepository = new(MongoCacheGuildModel.CollectionName, services);
-
-        _guildRoleSnapshotMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
     }
 
     [SlashCommand("bansync", "Migrate all BanSync-related tables")]
@@ -354,19 +350,11 @@ public class DataMigrationModule : InteractionModuleBase
         var rolePreserveGuilds = new List<RolePreserveGuildModel>();
         var rolePreserveUsers = new List<RolePreserveUserModel>();
 
-        var userSnapshots = new List<UserSnapshotModel>();
-        var memberSnapshots = new List<GuildMemberSnapshotModel>();
-        var roleSnapshots = new List<GuildRoleSnapshotModel>();
         var guildPartialSnapshots = new List<GuildPartialSnapshotModel>();
 
         await SendStatusUpdate($"Mapping guild configurations ({mongoRPGuild.Count})", StatusUpdateType.Mapping);
         foreach (var mongoGuild in mongoRPGuild.DistinctBy(e => e.GuildId))
         {
-            var refRoleIdStrArr = mongoRPUser.Where(e => e.GuildId == mongoGuild.GuildId)
-                .SelectMany(e => e.Roles)
-                .Distinct()
-                .Select(e => e.ToString())
-                .ToArray();
             var model = new RolePreserveGuildModel
             {
                 GuildId = mongoGuild.GuildId.ToString(),
@@ -377,66 +365,6 @@ public class DataMigrationModule : InteractionModuleBase
             var discordGuild = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetGuild(mongoGuild.GuildId));
             var mongoModel = await _mongoDiscordCacheGuildRepository.GetLatest(mongoGuild.GuildId);
            
-            var efRoleIds = await db.GuildRoleSnapshots
-                .Where(e => e.GuildId == model.GuildId && refRoleIdStrArr.Contains(e.RoleId))
-                .Select(e => e.RoleId)
-                .Distinct()
-                .ToListAsync();
-            var mongoRoles = mongoModel?.Roles?
-                .Where(e => refRoleIdStrArr.Contains(e.RoleId?.ToString()))
-                .ToArray() ?? [];
-            var guildRoles = discordGuild?.Roles
-                .Where(e => refRoleIdStrArr.Contains(e.Id.ToString()))
-                .ToArray() ?? [];
-
-            foreach (var roleIdStr in refRoleIdStrArr)
-            {
-                if (efRoleIds.Contains(roleIdStr)) continue;
-
-                var guildRoleItem = guildRoles.FirstOrDefault(e => e.Id.ToString() == roleIdStr);
-                var mongoRoleItem = mongoRoles.FirstOrDefault(e => e.RoleId?.ToString() == roleIdStr);
-                if (guildRoleItem != null)
-                {
-                    roleSnapshots.Add(_guildRoleSnapshotMapper.Map(guildRoleItem));
-                }
-                else if (mongoRoleItem != null && mongoRoleItem.RoleId.HasValue)
-                {
-                    var x = new GuildRoleSnapshotModel
-                    {
-                        GuildId = model.GuildId,
-                        RoleId = mongoRoleItem.RoleId.Value.ToString(),
-                        Name = string.IsNullOrEmpty(mongoRoleItem.Name) ? null : mongoRoleItem.Name,
-                        CreatedAt = SnowflakeUtils.FromSnowflake(mongoRoleItem.RoleId.Value).UtcDateTime,
-                        Position = mongoRoleItem.Position,
-                        IconHash = mongoRoleItem.Icon,
-                        IsManaged = mongoRoleItem.IsManaged,
-                        IsMentionable = mongoRoleItem.IsMentionable,
-                        IsHoisted = mongoRoleItem.IsHoisted,
-                    };
-                    var gp = (mongoRoleItem.Permissions ?? new()).ToGuildPermissions();
-                    foreach (var p in gp.ToList())
-                    {
-                        x.Permissions.Add(new GuildRolePermissionSnapshotModel
-                        {
-                            GuildRoleSnapshotId = x.Id,
-                            GuildId = x.GuildId,
-                            RoleId = x.RoleId,
-                            Value = ((ulong)p).ToString()
-                        });
-                    }
-                    roleSnapshots.Add(x);
-                }
-                else
-                {
-                    roleSnapshots.Add(new GuildRoleSnapshotModel
-                    {
-                        RoleId = roleIdStr,
-                        GuildId = model.GuildId,
-                        CreatedAt = SnowflakeUtils.FromSnowflake(roleIdStr.ParseULong(true).GetValueOrDefault(0)).UtcDateTime,
-                    });
-                }
-            }
-
             if (!await db.GuildPartialSnapshots.AnyAsync(e => e.GuildId == model.GuildId) && !guildPartialSnapshots.Any(e => e.GuildId == model.GuildId))
             {
                 if (discordGuild != null)
@@ -460,14 +388,45 @@ public class DataMigrationModule : InteractionModuleBase
         }
 
         await SendStatusUpdate($"Mapping users ({mongoRPUser.Count})", StatusUpdateType.Mapping);
+        foreach (var mongoUser in mongoRPUser.DistinctBy(e => new { e.GuildId, e.UserId }))
+        {
+            var model = new RolePreserveUserModel
+            {
+                GuildId = mongoUser.GuildId.ToString(),
+                UserId = mongoUser.UserId.ToString(),
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+            if (!rolePreserveGuilds.Any(e => e.GuildId == model.GuildId))
+            {
+                rolePreserveGuilds.Add(new RolePreserveGuildModel
+                {
+                    GuildId = model.GuildId,
+                    Enabled = false
+                });
+            }
+            foreach (var roleId in mongoUser.Roles?.Where(e => e > 0).Distinct() ?? [])
+            {
+                model.Roles.Add(new RolePreserveUserRoleModel
+                {
+                    GuildId = model.GuildId,
+                    UserId = model.UserId,
+                    RoleId = roleId.ToString()
+                });
+            }
+            rolePreserveUsers.Add(model);
+        }
 
 
-        await db.AddRangeAsync(userSnapshots);
-        await db.AddRangeAsync(roleSnapshots);
-        await db.AddRangeAsync(memberSnapshots);
-        await db.AddRangeAsync(guildPartialSnapshots);
+        if (guildPartialSnapshots.Count > 0)
+        {
+            await SendStatusUpdate($"Inserting Guild Partial Snapshots: {guildPartialSnapshots.Count}", StatusUpdateType.Inserting);
+            await db.AddRangeAsync(guildPartialSnapshots);
+        }
 
+        await SendStatusUpdate($"Inserting Role Preserve Guilds: {rolePreserveGuilds.Count}", StatusUpdateType.Inserting);
         await db.AddRangeAsync(rolePreserveGuilds);
+        await SendStatusUpdate($"Inserting Role Preserve Users: {rolePreserveUsers.Count}", StatusUpdateType.Inserting);
         await db.AddRangeAsync(rolePreserveUsers);
     }
 
@@ -503,8 +462,12 @@ public class DataMigrationModule : InteractionModuleBase
         try
         {
             await callback(db);
+
+            await SendStatusUpdate("Saving Changes", StatusUpdateType.Commiting);
             await db.SaveChangesAsync();
+            await SendStatusUpdate("Commiting transaction", StatusUpdateType.Commiting);
             await trans.CommitAsync();
+            await SendStatusUpdate("Complete!", StatusUpdateType.Done);
         }
         catch (Exception ex)
         {

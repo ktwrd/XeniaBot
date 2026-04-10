@@ -20,10 +20,7 @@ public static class StartupExtensions
                 LogManager.GetCurrentClassLogger().Info(connectionString);
                 o.UseNpgsql(connectionString);
 
-                if (options.EnableSensitiveDataLogging)
-                {
-                    o.EnableSensitiveDataLogging();
-                }
+                o.EnableSensitiveDataLogging();
             });
         // TODO for asp.net
         // if (options.DatabaseDeveloperPageExceptionFilter)

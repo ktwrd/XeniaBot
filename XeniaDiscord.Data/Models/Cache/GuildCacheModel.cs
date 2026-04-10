@@ -2,6 +2,7 @@
 
 namespace XeniaDiscord.Data.Models.Cache;
 
+// TODO this should point to GuildSnapshotModel, like what's done in GuildRoleCacheModel
 public class GuildCacheModel
 {
     public const string TableName = "Cache_Guild";

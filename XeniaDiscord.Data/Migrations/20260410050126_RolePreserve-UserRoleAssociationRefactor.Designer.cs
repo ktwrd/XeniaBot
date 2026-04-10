@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using XeniaDiscord.Data;
@@ -11,9 +12,11 @@ using XeniaDiscord.Data;
 namespace XeniaDiscord.Data.Migrations
 {
     [DbContext(typeof(XeniaDbContext))]
-    partial class XeniaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260410050126_RolePreserve-UserRoleAssociationRefactor")]
+    partial class RolePreserveUserRoleAssociationRefactor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -587,19 +590,25 @@ namespace XeniaDiscord.Data.Migrations
 
             modelBuilder.Entity("XeniaDiscord.Data.Models.RolePreserve.RolePreserveUserRoleModel", b =>
                 {
-                    b.Property<string>("GuildId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("UserId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
                     b.Property<string>("RoleId")
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
-                    b.HasKey("GuildId", "UserId", "RoleId");
+                    b.Property<string>("GuildId")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("RoleId");
+
+                    b.HasIndex("GuildId", "UserId", "RoleId")
+                        .IsUnique()
+                        .IsDescending();
 
                     b.ToTable("RolePreserveUserRoles", (string)null);
                 });

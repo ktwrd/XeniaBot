@@ -93,15 +93,10 @@ public class RolePreserveGuildRepository
     {
         options ??= new QueryOptions();
 
-        if (options.IncludeGuildMemberSnapshots)
+        if (options.IncludeUsers)
         {
-            query = query
-                .Include(e => e.Users)
-                .ThenInclude(e => e.GuildMemberSnapshot);
-        }
-        else if (options.IncludeUsers)
-        {
-            query = query.Include(e => e.Users);
+            query = query.Include(e => e.Users)
+                .ThenInclude(e => e.Roles);
         }
 
         return query;

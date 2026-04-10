@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace XeniaDiscord.Data.Models.Cache;
 
+// TODO this should point to GuildChannelSnapshotModel, like what's done in GuildRoleCacheModel
 public class GuildChannelCacheModel
 {
     public const string TableName = "Cache_GuildChannel";
