@@ -68,6 +68,12 @@ public class RolePreserveRepository : BaseRepository<RolePreserveModel>
         return await res.FirstOrDefaultAsync();
     }
 
+    public async Task<List<RolePreserveModel>> GetAll()
+    {
+        var result = await BaseFind(Builders<RolePreserveModel>.Filter.Empty);
+        return await result.ToListAsync();
+    }
+
     public async Task Set(RolePreserveModel model)
     {
         var collection = GetCollection();
