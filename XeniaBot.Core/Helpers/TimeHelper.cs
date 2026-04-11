@@ -34,12 +34,12 @@ public static class TimeHelper
 
     public class DateDiffResult
     {
-        public int Seconds;
-        public int Minutes;
-        public int Hours;
-        public int Days;
-        public int Months;
-        public int Years;
+        public int Seconds { get; set; }
+        public int Minutes { get; set; }
+        public int Hours { get; set; }
+        public int Days { get; set; }
+        public int Months { get; set; }
+        public int Years { get; set; }
     }
     public static DateDiffResult DateDiff(DateTimeOffset d1, DateTimeOffset d2)
     {

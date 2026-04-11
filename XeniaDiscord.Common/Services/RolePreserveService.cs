@@ -50,8 +50,8 @@ public class RolePreserveService : BaseService
         if (_details.Platform == XeniaPlatform.Bot)
         {
             _client.UserJoined += ClientOnUserJoined;
-            _snapshotService.GuildMemberUpdated += DiscordSnapshotOnGuildMemberUpdated;
             _client.RoleDeleted += ClientOnRoleDeleted;
+            _snapshotService.GuildMemberUpdated += DiscordSnapshotOnGuildMemberUpdated;
         }
     }
 

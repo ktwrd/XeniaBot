@@ -11,7 +11,7 @@ public class DiscordSnapshotRoleUpdateInfo
     public required IReadOnlyCollection<GuildPermission> PermissionsRemoved { get; init; }
     public required GuildRoleSnapshotModel? SnapshotBefore { get; init; }
     public required GuildRoleSnapshotModel Snapshot { get; init; }
-    public required DiscordSnapshotEventSource Source { get; init; }
+    public GuildRoleSnapshotSource Source => Snapshot.SnapshotSource;
 
     public bool Any => AnyPermissions
         || (SnapshotBefore != null && SnapshotBefore?.Flags != Snapshot.Flags)
@@ -19,7 +19,8 @@ public class DiscordSnapshotRoleUpdateInfo
         || (SnapshotBefore != null && SnapshotBefore?.IsMentionable != Snapshot.IsMentionable)
         || (SnapshotBefore != null && SnapshotBefore?.IsHoisted != Snapshot.IsHoisted)
         || (SnapshotBefore != null && SnapshotBefore?.Name != Snapshot.Name)
-        || Source == DiscordSnapshotEventSource.Create;
+        || Source == GuildRoleSnapshotSource.RoleCreate
+        || Source == GuildRoleSnapshotSource.RoleDelete;
 
     public bool AnyPermissions
         => PermissionsAdded.Count > 0

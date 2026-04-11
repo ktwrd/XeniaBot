@@ -40,12 +40,25 @@ public class DiscordSnapshotService : BaseService
             _client.GuildMemberUpdated += OnGuildMemberUpdated;
             _client.RoleCreated += OnGuildRoleCreated;
             _client.RoleUpdated += OnGuildRoleUpdated;
+            _client.RoleDeleted += OnGuildRoleDeleted;
         }
     }
 
+
+    /// <summary>
+    /// Invoked when a member has been updated.
+    /// </summary>
     public event DiscordSnapshotComparisonDelegate<GuildMemberSnapshotModel>? GuildMemberUpdated;
-    public event DiscordSnapshotComparisonSourceDelegate<GuildRoleSnapshotModel>? GuildRoleUpdated;
-    public event DiscordSnapshotSourceDelegate<GuildRoleSnapshotModel>? GuildRoleDeleted;
+
+    /// <summary>
+    /// Invoked when a role has been updated, created, or deleted.
+    /// </summary>
+    public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleUpdated;
+
+    /// <summary>
+    /// Invoked when a role has been deleted.
+    /// </summary>
+    public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleDeleted;
 
     private Task OnGuildJoined(SocketGuild guild)
     {
@@ -103,7 +116,7 @@ public class DiscordSnapshotService : BaseService
         {
             try
             {
-                ProcessRole(DiscordSnapshotEventSource.Create, null, role).GetAwaiter().GetResult();
+                ProcessRole(GuildRoleSnapshotSource.RoleCreate, null, role).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -119,7 +132,24 @@ public class DiscordSnapshotService : BaseService
         {
             try
             {
-                ProcessRole(DiscordSnapshotEventSource.Edit, roleBefore, role).GetAwaiter().GetResult();
+                ProcessRole(GuildRoleSnapshotSource.RoleEdit, roleBefore, role).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to process role {role.Name} ({role.Id}) in guild {role.Guild.Name} ({role.Guild.Id})");
+            }
+        }).Start();
+        return Task.CompletedTask;
+    }
+    private Task OnGuildRoleDeleted(SocketRole role)
+    {
+        _log.Trace($"Id={role?.Id},name={role?.Name},guildId={role?.Guild.Id},guildName={role?.Guild.Name}");
+        if (role == null) return Task.CompletedTask;
+        new Thread(() =>
+        {
+            try
+            {
+                ProcessRole(GuildRoleSnapshotSource.RoleDelete, null, role).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -209,7 +239,7 @@ public class DiscordSnapshotService : BaseService
     }
 
     private async Task ProcessRole(
-        DiscordSnapshotEventSource source,
+        GuildRoleSnapshotSource source,
         SocketRole? roleBefore,
         SocketRole role)
     {
@@ -226,7 +256,8 @@ public class DiscordSnapshotService : BaseService
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to find Guild Role Snapshot (roleId={roleIdStr},guildId={guildIdStr})";
+            var msg = $"Failed to find Guild Role Snapshot (roleId={roleIdStr}, guildId={guildIdStr}, source={source})";
+            _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithNotes(msg)
@@ -244,7 +275,8 @@ public class DiscordSnapshotService : BaseService
             }
             catch (Exception ex)
             {
-                var msg = $"Failed to map \"before\" state of Role \"{role.Name}\" ({role.Id}) in Guild \"{role.Guild.Name}\" ({role.Guild.Id})";
+                var msg = $"Failed to map \"before\" state of Role \"{role.Name}\" in Guild \"{role.Guild.Name}\" (roleId={role.Id}, guildId={role.Guild.Id}, source={source})";
+                _log.Error(ex, msg);
                 await _err.Submit(new ErrorReportBuilder()
                     .WithException(ex)
                     .WithNotes(msg)
@@ -256,12 +288,14 @@ public class DiscordSnapshotService : BaseService
         try
         {
             model = _roleMapper.Map(role);
+            model.SnapshotSource = source;
         }
         catch (Exception ex)
         {
             await trans.RollbackAsync();
 
-            var msg = $"Failed to map Role \"{role.Name}\" ({role.Id}) in Guild \"{role.Guild.Name}\" ({role.Guild.Id})";
+            var msg = $"Failed to map Role \"{role.Name}\" in Guild \"{role.Guild.Name}\" (roleId={role.Id}, guildId={role.Guild.Id}, source={source})";
+            _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithNotes(msg)
@@ -277,8 +311,8 @@ public class DiscordSnapshotService : BaseService
         catch (Exception ex)
         {
             await trans.RollbackAsync();
-
-            var msg = $"Failed to add record into database";
+            var msg = $"Failed to add record into database (roleId={role.Id}, guildId={role.Guild.Id}, source={source})";
+            _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithNotes(msg)
@@ -286,7 +320,25 @@ public class DiscordSnapshotService : BaseService
                 .AddSerializedAttachment("model.json", model));
             return;
         }
-        GuildRoleUpdated?.Invoke(source, modelBefore, model);
+        try
+        {
+            GuildRoleUpdated?.Invoke(modelBefore, model);
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, $"Failed to invoke {nameof(GuildRoleUpdated)} (roleId={role.Id}, guildId={role.Guild.Id}, source={source})");
+        }
+        if (source == GuildRoleSnapshotSource.RoleDelete)
+        {
+            try
+            {
+                GuildRoleDeleted?.Invoke(modelBefore, model);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to invoke {nameof(GuildRoleDeleted)} (roleId={role.Id}, guildId={role.Guild.Id}, source={source})");
+            }
+        }
     }
 
     public async Task UpdateGuild(
