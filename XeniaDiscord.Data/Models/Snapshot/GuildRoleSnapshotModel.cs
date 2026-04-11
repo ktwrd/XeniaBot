@@ -30,6 +30,11 @@ public class GuildRoleSnapshotModel
     public DateTime RecordCreatedAt { get; set; }
 
     /// <summary>
+    /// Source of how this record was created.
+    /// </summary>
+    public GuildRoleSnapshotSource SnapshotSource { get; set; }
+
+    /// <summary>
     /// Guild Id (ulong as string)
     /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
@@ -104,4 +109,12 @@ public class GuildRoleSnapshotModel
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong GetRoleId() => RoleId.ParseRequiredULong(nameof(RoleId), false);
+}
+
+public enum GuildRoleSnapshotSource
+{
+    Unknown = 0,
+    RoleCreate,
+    RoleEdit,
+    RoleDelete
 }
