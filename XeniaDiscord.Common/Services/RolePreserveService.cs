@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text;
 using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
@@ -14,7 +8,6 @@ using NLog;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
-using XeniaDiscord.Common.Services;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
@@ -25,7 +18,7 @@ using ServerLogEvent = XeniaDiscord.Data.Models.ServerLog.ServerLogEvent;
 using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
 using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
 
-namespace XeniaBot.Core.Services.BotAdditions;
+namespace XeniaDiscord.Common.Services;
 
 [XeniaController]
 public class RolePreserveService : BaseService
@@ -39,6 +32,7 @@ public class RolePreserveService : BaseService
     private readonly RolePreserveGuildRepository _guildRepository;
     private readonly DiscordSnapshotService _snapshotService;
     private readonly ConfigData _configData;
+    private readonly ProgramDetails _details;
 
     public RolePreserveService(IServiceProvider services)
         : base(services)
@@ -48,14 +42,17 @@ public class RolePreserveService : BaseService
         _client = services.GetRequiredService<DiscordSocketClient>();
         _serverLogConfig = services.GetRequiredService<ServerLogRepository>();
         _configData = services.GetRequiredService<ConfigData>();
+        _details = services.GetRequiredService<ProgramDetails>();
         _userRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveUserRepository>();
         _guildRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveGuildRepository>();
         _snapshotService = (scope?.ServiceProvider ?? services).GetRequiredService<DiscordSnapshotService>();
-
-
-        _client.UserJoined += ClientOnUserJoined;
-        _snapshotService.GuildMemberUpdated += DiscordSnapshotOnGuildMemberUpdated;
-        _client.RoleDeleted += ClientOnRoleDeleted;
+        
+        if (_details.Platform == XeniaPlatform.Bot)
+        {
+            _client.UserJoined += ClientOnUserJoined;
+            _snapshotService.GuildMemberUpdated += DiscordSnapshotOnGuildMemberUpdated;
+            _client.RoleDeleted += ClientOnRoleDeleted;
+        }
     }
 
     private async Task ClientOnRoleDeleted(SocketRole role)
@@ -297,6 +294,8 @@ public class RolePreserveService : BaseService
 
     public override Task OnReadyDelay()
     {
+        // skip on webpanel
+        if (_details.Platform != XeniaPlatform.Bot) return Task.CompletedTask;
         if (!_configData.RefreshRolePreserveOnStart)
         {
             _log.Info($"Not going to run {nameof(PreserveAll)} since {nameof(_configData.RefreshRolePreserveOnStart)} is set to false");
@@ -316,15 +315,16 @@ public class RolePreserveService : BaseService
         return Task.CompletedTask;
     }
 
-    public async Task PreserveAll()
+    public async Task PreserveAll(DateTime? startedAt = null)
     {
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
+            var start = startedAt ?? DateTime.UtcNow;
             foreach (var guild in _client.Guilds)
             {
-                await PerformGuild(db, guild.Id);
+                await PerformGuild(db, guild.Id, start: start);
             }
             await db.SaveChangesAsync();
             await trans.CommitAsync();
@@ -340,7 +340,7 @@ public class RolePreserveService : BaseService
         }
     }
 
-    private async Task PerformGuild(XeniaDbContext db, ulong guildId)
+    private async Task PerformGuild(XeniaDbContext db, ulong guildId, DateTime? start = null)
     {
         SocketGuild? guild;
         try
@@ -359,7 +359,7 @@ public class RolePreserveService : BaseService
         }
         try
         {
-            var result = await UseLatestSnapshotsForGuild(db, guild);
+            var result = await UseLatestSnapshotsForGuild(db, guild, start: start);
             if (result.IsFailure) throw new InvalidOperationException(result.Error);
         }
         catch (Exception ex)
@@ -373,13 +373,13 @@ public class RolePreserveService : BaseService
         }
     }
     
-    public async Task PreserveGuild(SocketGuild guild)
+    public async Task PreserveGuild(SocketGuild guild, DateTime? startedAt = null)
     {
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var result = await UseLatestSnapshotsForGuild(db, guild);
+            var result = await UseLatestSnapshotsForGuild(db, guild, start: startedAt);
             if (result.IsFailure) throw new InvalidOperationException(result.Error);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
@@ -395,15 +395,16 @@ public class RolePreserveService : BaseService
     
     public async Task<UnitResult<string>> UseLatestSnapshotsForGuild(
         XeniaDbContext db,
-        ulong guildId)
+        ulong guildId,
+        DateTime? start = null)
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) return $"Guild does not exist: `{guildId}`";
 
-        return await UseLatestSnapshotsForGuild(db, guild);
+        return await UseLatestSnapshotsForGuild(db, guild, start: start);
     }
 
-    public async Task<UnitResult<string>> UseLatestSnapshotsForGuild(ulong guildId)
+    public async Task<UnitResult<string>> UseLatestSnapshotsForGuild(ulong guildId, DateTime? start = null)
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) return $"Guild does not exist: `{guildId}`";
@@ -412,7 +413,7 @@ public class RolePreserveService : BaseService
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var result = await UseLatestSnapshotsForGuild(db, guild);
+            var result = await UseLatestSnapshotsForGuild(db, guild, start: start);
             if (result.IsFailure)
             {
                 await trans.RollbackAsync();
@@ -431,7 +432,8 @@ public class RolePreserveService : BaseService
 
     public async Task<UnitResult<string>> UseLatestSnapshotsForGuild(
         XeniaDbContext db,
-        SocketGuild guild)
+        SocketGuild guild,
+        DateTime? start = null)
     {
         var userRoles = guild.Users
             .Select(e => new
@@ -440,9 +442,10 @@ public class RolePreserveService : BaseService
                 Value = e.Roles.Select(e => e.Id).Distinct().ToArray()
             })
             .ToDictionary(e => e.Key, e => e.Value);
+        var startValue = start ?? DateTime.UtcNow;
         foreach (var (userId, roleIds) in userRoles)
         {
-            await _userRepository.InsertOrUpdate(db, guild.Id, userId, roleIds);
+            await _userRepository.InsertOrUpdate(db, guild.Id, userId, roleIds, start: startValue);
         }
         return UnitResult.Success<string>();
     }
