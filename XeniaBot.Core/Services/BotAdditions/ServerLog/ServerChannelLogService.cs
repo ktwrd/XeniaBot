@@ -207,8 +207,14 @@ public class ServerChannelLogService : BaseService
             return;
         var embed = new EmbedBuilder()
             .WithTitle("Channel Created")
-            .WithDescription($"<#{channel.Id}> {guildChannel.Name}")
+            .WithDescription($"<#{channel.Id}>\nName: `{guildChannel.Name}`")
+            .WithCurrentTimestamp()
+            .WithFooter($"Channel ID: {channel.Id}")
             .WithColor(Color.Blue);
+        if (guildChannel is SocketTextChannel textChannel && textChannel.Category != null)
+        {
+            embed.Description += $"\nParent Category: <#{textChannel.CategoryId}>";
+        }
         await _serverLog.EventHandle(guildChannel.Guild.Id, ServerLogEvent.ChannelEdit, embed);
     }
     private async Task _discord_UserVoiceStateUpdated(
