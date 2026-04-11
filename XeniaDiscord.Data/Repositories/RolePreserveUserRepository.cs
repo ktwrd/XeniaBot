@@ -26,11 +26,12 @@ public class RolePreserveUserRepository
         XeniaDbContext db,
         ulong guildId,
         ulong userId,
-        ulong[] roleIds)
+        ulong[] roleIds,
+        DateTime? start = null)
     {
         var guildIdStr = guildId.ToString();
         var userIdStr = userId.ToString();
-        var now = DateTime.UtcNow;
+        var now = start ?? DateTime.UtcNow;
         if (await db.RolePreserveGuilds.FindAsync(guildIdStr) == null)
         {
             await db.RolePreserveGuilds.AddAsync(new RolePreserveGuildModel()
@@ -41,7 +42,7 @@ public class RolePreserveUserRepository
             });
             _log.Trace($"Created Record in {RolePreserveGuildModel.TableName} (GuildId={guildIdStr}, Enabled={false})");
         }
-        if (await db.RolePreserveUsers.AnyAsync(e => e.GuildId == guildIdStr && e.UserId == userIdStr))
+        if (await db.RolePreserveUsers.FindAsync(guildIdStr, userIdStr) != null)
         {
             await db.RolePreserveUsers.AsNoTracking()
                 .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr)
@@ -93,7 +94,7 @@ public class RolePreserveUserRepository
         RolePreserveUserModel model)
     {
         var roleIds = model.Roles.Select(e => e.GetRoleId()).Distinct().ToArray();
-        await InsertOrUpdate(db, model.GetGuildId(), model.GetUserId(), roleIds);
+        await InsertOrUpdate(db, model.GetGuildId(), model.GetUserId(), roleIds, start: model.UpdatedAt);
     }
 
     public async Task UpdateSnapshot(
@@ -101,7 +102,7 @@ public class RolePreserveUserRepository
         GuildMemberSnapshotModel snapshot)
     {
         var roleIds = snapshot.Roles.Select(e => e.GetRoleId()).Distinct().ToArray();
-        await InsertOrUpdate(db, snapshot.GetGuildId(), snapshot.GetUserId(), roleIds);
+        await InsertOrUpdate(db, snapshot.GetGuildId(), snapshot.GetUserId(), roleIds, start: snapshot.RecordCreatedAt);
     }
 
     public async Task<IReadOnlyCollection<ulong>> FindRolesForUser(

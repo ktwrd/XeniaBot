@@ -102,7 +102,15 @@ public class RolePreserveService : BaseService
         GuildMemberSnapshotModel? before,
         GuildMemberSnapshotModel model)
     {
-        if (model.RolesMatch(before)) return;
+        // skip if roles are the same, or if the user wasn't actually updated
+        var rolesMatch = model.RolesMatch(before);
+        if (!rolesMatch ||
+            (model.SnapshotSource != GuildMemberSnapshotSource.MemberUpdate &&
+            model.SnapshotSource != GuildMemberSnapshotSource.RoleDelete))
+        {
+            _log.Trace($"Skipping DB Update (guildId={model.GuildId}, userId={model.UserId}, username={model.Username}, rolesMatch={rolesMatch}, modelSnapshotSource={model.SnapshotSource})");
+            return;
+        }
 
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
@@ -112,7 +120,7 @@ public class RolePreserveService : BaseService
             
             await db.SaveChangesAsync();
             await trans.CommitAsync();
-            _log.Trace($"Successfully handled event for UserId={model.UserId},GuildId={model.GuildId}");
+            _log.Trace($"Successfully handled event (GuildId={model.GuildId}, UserId={model.UserId}, Username={model.Username}, SnapshotSource={model.SnapshotSource})");
         }
         catch (Exception ex)
         {
@@ -229,18 +237,17 @@ public class RolePreserveService : BaseService
         await using var db = _db.CreateSession();
         try
         {
-            if (!await _guildRepository.IsEnabled(db, user.Guild.Id)) return;
-            if (!await _userRepository.HasAny(db, user.Guild.Id, user.Id)) return;
+            if (!await _guildRepository.IsEnabled(db, user.Guild.Id))
+            {
+                _log.Trace($"Skipping Role Preserve is disabled (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+                return;
+            }
+            if (!await _userRepository.HasAny(db, user.Guild.Id, user.Id))
+            {
+                _log.Trace($"Skipping since there are no records in {RolePreserveUserModel.TableName} (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+                return;
+            }
             var roleIds = await _userRepository.FindRolesForUser(db, user.Guild.Id, user.Id);
-            var roleIdStrArr = roleIds.Select(e => e.ToString()).ToArray();
-            var snapshots = await db.GuildRoleSnapshots
-                .AsNoTracking()
-                .Where(e => roleIdStrArr.Contains(e.RoleId))
-                .GroupBy(e => e.RoleId)
-                .Select(e => e.OrderByDescending(x => x.RecordCreatedAt).FirstOrDefault())
-                .Where(e => e != null)
-                .Cast<GuildRoleSnapshotModel>()
-                .ToListAsync();
 
             var ourHighestRoleEnumerable = user.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
             var ourHighestRolePos = ourHighestRoleEnumerable.FirstOrDefault()?.Position ?? int.MinValue;
@@ -250,12 +257,13 @@ public class RolePreserveService : BaseService
             foreach (var item in roleIds)
             {
                 var roleId = item;
-                if (roleId == user.Guild.EveryoneRole.Id)
-                    continue;
+                if (roleId == user.Guild.EveryoneRole.Id) continue;
                 try
                 {
-                    var snapshot = snapshots
-                        .FirstOrDefault(e => e.RoleId == roleId.ToString());
+                    var snapshot = await db.GuildRoleSnapshots
+                        .AsNoTracking()
+                        .OrderByDescending(e => e.RecordCreatedAt)
+                        .FirstOrDefaultAsync(e => e.RoleId == roleId.ToString());
                     var existingRole = await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
                     // continue, since the role doesn't exist anymore
                     if (existingRole == null) continue;
@@ -274,6 +282,11 @@ public class RolePreserveService : BaseService
                 }
             }
 
+            _log.Trace($"Operation complete (userId={user.Id}, username={user.Username}, success={success.Count}, fail={fail.Count})");
+            if (success.Count < 1)
+            {
+                _log.Trace($"No roles were restored? (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+            }
             if (fail.Count > 0)
             {
                 await SendFailureNotification(user, success, fail);
