@@ -1,12 +1,13 @@
-﻿using System.Linq;
+﻿using Discord;
+using Discord.Interactions;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Web;
-using Discord;
-using Discord.Interactions;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules;
 
@@ -14,6 +15,7 @@ namespace XeniaBot.Core.Modules;
 public class DistroWatchModule : InteractionModuleBase
 {
     [SlashCommand("random", "Get information about a random distro")]
+    [RegisterDBLCommand]
     public async Task Random()
     {
         await Context.Interaction.DeferAsync();
@@ -53,18 +55,17 @@ public class DistroWatchModule : InteractionModuleBase
         await FollowupAsync(embed: embed.Build());
     }
 
-    public EmbedBuilder GenerateEmbed(DistroWatchResponseItem item)
+    private static EmbedBuilder GenerateEmbed(DistroWatchResponseItem item)
     {
         return new EmbedBuilder()
-            .WithDescription(string.Join("\n", new string[]
-            {
+            .WithDescription(string.Join("\n",
                 $"Name: `{item.Name}`",
                 $"Architecture: `{item.Arch}`" ,
                 $"Based on: `{string.Join(", ", item.BasedOn)}`",
                 $"Latest version: `{item.LatestVersion}`",
                 $"Status: `{item.Status}`",
                 $"https://distrowatch.com/table.php?distribution={HttpUtility.UrlEncode(item.Name)}"
-            }))
+            ))
             .WithColor(Color.Blue)
             .WithCurrentTimestamp();
     }

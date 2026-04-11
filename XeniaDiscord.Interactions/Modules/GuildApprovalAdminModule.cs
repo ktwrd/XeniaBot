@@ -1,22 +1,22 @@
-using System.Collections.Frozen;
-using System.Text;
 using Discord;
 using Discord.Interactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using System.Collections.Frozen;
+using System.Text;
+using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Services;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.GuildApproval;
 using XeniaDiscord.Data.Repositories;
-
 using SetupGreeterModal = XeniaDiscord.Interactions.Modules.GuildApprovalModalModule.SetupGreeterModal;
 
 namespace XeniaDiscord.Interactions.Modules;
 
-[Group("approval-admin", "Guild Config: Approval")]
+[Group("approval-admin", "Configure: Approval")]
 [CommandContextType(InteractionContextType.Guild)]
 public class GuildApprovalAdminModule : InteractionModuleBase
 {
@@ -33,8 +33,9 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         _repo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildApprovalRepository>();
     }
     
-    [SlashCommand("enable", "Enable approval module")]
+    [SlashCommand("enable", "Enable Approval module")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
+    [RegisterDBLCommand]
     public async Task Enable()
     {
         await DeferAsync();
@@ -105,6 +106,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
     [SlashCommand("set-approved-role", "Set role to be given to approved users")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [RequireBotPermission(GuildPermission.ManageRoles)]
+    [RegisterDBLCommand]
     public async Task SetRoleAsync(
         [Summary("Role", "Role that users will get once they've been approved.")]
         IRole role)
@@ -187,6 +189,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
     
     [SlashCommand("set-channel", "Set log channel for user approvals")]
     [RequireUserPermission(GuildPermission.ManageChannels)]
+    [RegisterDBLCommand]
     public async Task SetLogChannel(
         [ChannelTypes(ChannelType.Text)] ITextChannel channel)
     {
@@ -216,6 +219,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
     
     [SlashCommand("set-greeter-channel", "Set channel to send message for greeting user (post-approval)")]
     [RequireUserPermission(GuildPermission.ManageChannels)]
+    [RegisterDBLCommand]
     public async Task SetGreeterChannel(
         [ChannelTypes(ChannelType.Text)] ITextChannel channel)
     {
@@ -242,7 +246,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         }
     }
 
-    [SlashCommand("get-greeter-msg", "Get the message used for greeting users.")]
+    [SlashCommand("get-greeter-msg", "Get the message used for greeting users (post-approval)")]
     [RequireUserPermission(GuildPermission.ManageChannels)]
     public async Task GetGreeterMessage()
     {
@@ -301,8 +305,9 @@ public class GuildApprovalAdminModule : InteractionModuleBase
     }
 
 
-    [SlashCommand("setup-greeter", "Setup post-approval greeter", runMode: RunMode.Async)]
+    [SlashCommand("setup-greeter", "Setup post-approval greeter for user approvals", runMode: RunMode.Async)]
     [RequireUserPermission(GuildPermission.ManageChannels)]
+    [RegisterDBLCommand]
     public async Task SetupGreeter()
     {
         ITextChannel? greeterChannel = null;
@@ -342,7 +347,6 @@ public class GuildApprovalAdminModule : InteractionModuleBase
             greeterChannel = role;
         }
     }
-
 
     // TODO use GuildApprovalService to validate SetupModal
     // TODO update GuildApprovalModel from the SetupModal data

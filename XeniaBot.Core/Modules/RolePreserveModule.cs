@@ -1,15 +1,17 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
+using XeniaBot.Shared;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
 [Group("rolepreserve", "Configure the RolePreserve module.")]
+[RequireBotPermission(GuildPermission.ManageRoles | GuildPermission.ModerateMembers)]
 [CommandContextType(InteractionContextType.Guild)]
 public class RolePreserveModule : InteractionModuleBase
 {
@@ -22,6 +24,7 @@ public class RolePreserveModule : InteractionModuleBase
     }
     [SlashCommand("enable", "Grant members preserved roles on re-join.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [RegisterDBLCommand]
     public async Task Enable()
     {
         await DeferAsync();
@@ -52,8 +55,9 @@ public class RolePreserveModule : InteractionModuleBase
         }
     }
 
-    [SlashCommand("disable", "Disable Role Grant feature.")]
+    [SlashCommand("disable", "Disable Role Preservation feature.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [RegisterDBLCommand]
     public async Task Disable()
     {
         await DeferAsync();

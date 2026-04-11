@@ -1,30 +1,27 @@
 using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using NLog;
+using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Services;
-using XeniaDiscord.Data;
 
 namespace XeniaDiscord.Interactions.Modules;
 
 [CommandContextType(InteractionContextType.Guild)]
 public class GuildApprovalModule : InteractionModuleBase
 {
-    private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
     private readonly ErrorReportService _err;
     private readonly GuildApprovalService _service;
     public GuildApprovalModule(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
         _err = services.GetRequiredService<ErrorReportService>();
         _service = services.GetRequiredService<GuildApprovalService>();
     }
 
-    [SlashCommand("approve", "Approve a user")]
+    [SlashCommand("approve", "Guild Approvals: Approve a user")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [RequireBotPermission(GuildPermission.ManageRoles)]
+    [RegisterDBLCommand]
     public async Task ApproveUser(IGuildUser user)
     {
         await DeferAsync();

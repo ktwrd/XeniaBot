@@ -14,7 +14,6 @@ using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.PartialSnapshot;
 using XeniaDiscord.Data.Models.RolePreserve;
 using XeniaDiscord.Data.Models.ServerLog;
-using XeniaDiscord.Data.Models.Snapshot;
 using MongoBanSyncGuildState = XeniaBot.MongoData.Models.BanSyncGuildState;
 using MongoCacheGuildMemberModel = XeniaBot.DiscordCache.Models.CacheGuildMemberModel;
 using MongoCacheUserModel = XeniaBot.DiscordCache.Models.CacheUserModel;

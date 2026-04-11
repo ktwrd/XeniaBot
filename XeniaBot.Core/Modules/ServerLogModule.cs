@@ -1,10 +1,11 @@
+using Discord;
+using Discord.Interactions;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord;
-using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Repositories;
@@ -26,6 +27,7 @@ public class ServerLogModule : InteractionModuleBase
     }
 
     [SlashCommand("reset", "Reset server log configuration")]
+    [RegisterDBLCommand]
     public async Task Reset()
     {
         await DeferAsync();
@@ -55,6 +57,7 @@ public class ServerLogModule : InteractionModuleBase
     }
 
     [SlashCommand("reset-channel", "Remove all events from a channel")]
+    [RegisterDBLCommand]
     public async Task ResetChannel(
         [ChannelTypes(ChannelType.Text)] ITextChannel channel)
     {
@@ -86,6 +89,7 @@ public class ServerLogModule : InteractionModuleBase
     }
 
     [SlashCommand("add-event", "Add an event to a channel")]
+    [RegisterDBLCommand]
     public async Task AddChannelEvent(
         ServerLogEvent @event,
         [ChannelTypes(ChannelType.Text)] ITextChannel channel)
@@ -155,6 +159,7 @@ public class ServerLogModule : InteractionModuleBase
     }
 
     [SlashCommand("get-channel-events", "See events being sent to a channel")]
+    [RegisterDBLCommand]
     public async Task GetEventsByChannel(
         [ChannelTypes(ChannelType.Text)] ITextChannel channel)
     {
@@ -195,6 +200,7 @@ public class ServerLogModule : InteractionModuleBase
     }
 
     [SlashCommand("get-channels", "See channels that use an event")]
+    [RegisterDBLCommand]
     public async Task GetChannelsByEvent(ServerLogEvent @event)
     {
         await DeferAsync();
@@ -229,32 +235,6 @@ public class ServerLogModule : InteractionModuleBase
                 embed.WithDescription(string.Join("\n", $"Failed to get channels by event `{@event}`.", $"`{errorType}`"))
                 .WithColor(Color.Red)
                 .Build());
-        }
-    }
-
-    [SlashCommand("setchannel", "Set event channel")]
-    public async Task SetChannel(
-        ServerLogEvent logEvent,
-        [ChannelTypes(ChannelType.Text)] ITextChannel channel)
-    {
-        await DeferAsync();
-        try
-        {
-            
-        }
-        catch (Exception ex)
-        {
-            await _err.Submit(new ErrorReportBuilder()
-                .WithException(ex)
-                .WithNotes($"Failed to set channel {channel} to use event {logEvent}")
-                .WithContext(Context)
-                .WithChannel(channel));
-            await FollowupAsync(embed: new EmbedBuilder()
-                {
-                    Title = "Failed to set channel",
-                    Description = $"Error has been reported ({ex.GetType().Namespace}.{ex.GetType().Name})",
-                    Color = Color.Red
-                }.Build());
         }
     }
     

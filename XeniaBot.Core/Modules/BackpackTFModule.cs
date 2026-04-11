@@ -16,6 +16,7 @@ namespace XeniaBot.Core.Modules;
 public class BackpackTFModule : InteractionModuleBase
 {
     [SlashCommand("currency", "List currencies and their current worth")]
+    [RegisterDBLCommand]
     public async Task GetCurrencyPlural()
     {
         await Context.Interaction.DeferAsync();

@@ -1,6 +1,7 @@
-﻿using System.Threading.Tasks;
-using Discord.Interactions;
+﻿using Discord.Interactions;
+using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules;
 
@@ -8,6 +9,7 @@ namespace XeniaBot.Core.Modules;
 public class HelpModule : InteractionModuleBase
 {
     [SlashCommand("remind", "Usage for the reminder command")]
+    [RegisterDBLCommand]
     public async Task Remind()
     {
         var embed = DiscordHelper.BaseEmbed()
@@ -21,6 +23,7 @@ public class HelpModule : InteractionModuleBase
     }
 
     [SlashCommand("bansync", "Usage for the BanSync module")]
+    [RegisterDBLCommand]
     public async Task BanSync()
     {
         var embed = DiscordHelper.BaseEmbed()

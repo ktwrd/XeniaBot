@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.Core.Services.Wrappers;
+using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
@@ -15,6 +16,7 @@ public class WeatherModule : InteractionModuleBase
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(WeatherModule));
     [SlashCommand("get", "Fetch weather")]
+    [RegisterDBLCommand]
     public async Task Fetch([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location,
         [Summary("system", description: "Measurement system to fetch the weather in.")]
         MeasurementSystem syst)
@@ -56,6 +58,7 @@ public class WeatherModule : InteractionModuleBase
     }
 
     [SlashCommand("forecast", "Fetch 3 day weather forecast")]
+    [RegisterDBLCommand]
     public async Task Forecast([Summary("weather_location"), Autocomplete(typeof(WeatherAPIAutocompleteHandler))] string location,
         [Summary("system", description: "Measurement system to fetch the weather in.")]
         MeasurementSystem syst)

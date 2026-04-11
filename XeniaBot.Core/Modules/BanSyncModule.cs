@@ -81,6 +81,7 @@ public class BanSyncModule : InteractionModuleBase
     
     [SlashCommand("userinfo", "Get ban sync details about user")]
     [RequireUserPermission(GuildPermission.BanMembers)]
+    [RegisterDBLCommand]
     public async Task UserDetails(
         [Summary(description: "User to get information about.")]
         IUser user)
@@ -105,6 +106,7 @@ public class BanSyncModule : InteractionModuleBase
 
     [SlashCommand("setchannel", "Set the log channel where ban notifications get sent.")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
+    [RegisterDBLCommand]
     public async Task SetChannel(
         [Summary(description: "Channel where BanSync notifications will be sent to.")]
         [ChannelTypes(ChannelType.Text)]
@@ -143,6 +145,7 @@ public class BanSyncModule : InteractionModuleBase
     }
     
     [SlashCommand("setguildstate", "Set state field of guild")]
+    [RequireDeveloper]
     public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
@@ -187,6 +190,7 @@ public class BanSyncModule : InteractionModuleBase
 
     [SlashCommand("request", "Request for this guild to have BanSync support")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [RegisterDBLCommand]
     public async Task RequestGuild()
     {
         var kind = await _bansyncService.GetGuildKind(Context.Guild.Id);
