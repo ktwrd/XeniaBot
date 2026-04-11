@@ -1,6 +1,7 @@
 ﻿using Discord.Interactions;
 using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Interactions.Modules;
+using XeniaDiscord.Interactions.Modules.Admin;
 
 namespace XeniaDiscord;
 
@@ -24,7 +25,7 @@ public static class XeniaDiscordInteractions
         var types = new[]
         {
             typeof(DiscordCacheAdminModule),
-            typeof(DeveloperModule)
+            typeof(DeveloperModule),
         };
         var result = await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();

@@ -8,12 +8,13 @@ using XeniaBot.Shared;
 using XeniaDiscord.Common.Services;
 using XeniaDiscord.Data;
 
-namespace XeniaDiscord.Interactions.Modules;
+namespace XeniaDiscord.Interactions.Modules.Admin;
 
 [Group("cacheadmin", "Cache administration")]
 [DeveloperModule]
 [CommandContextType(InteractionContextType.Guild)]
-public class DiscordCacheAdminModule : InteractionModuleBase
+[RequireDeveloper]
+public partial class DiscordCacheAdminModule : InteractionModuleBase
 {
     private readonly ConfigData _config;
     private readonly XeniaDbContext _db;
@@ -149,7 +150,8 @@ public class DiscordCacheAdminModule : InteractionModuleBase
     }
 
     [SlashCommand("update-all-guilds", "Update all guilds")]
-    public async Task UpdateAllGuilds(bool includeSnapsnots = false)
+    public async Task UpdateAllGuilds(
+        bool includeSnapsnots = false)
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
         {
