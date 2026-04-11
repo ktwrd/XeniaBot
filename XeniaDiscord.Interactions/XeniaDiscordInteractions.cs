@@ -24,6 +24,8 @@ public static class XeniaDiscordInteractions
         var transaction = SentryHelper.CreateTransaction();
         var types = new[]
         {
+            typeof(AdmRolePreserveModule),
+
             typeof(DiscordCacheAdminModule),
             typeof(DeveloperModule),
         };
