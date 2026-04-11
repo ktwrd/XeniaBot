@@ -129,18 +129,20 @@ public class ServerLogBotService : BaseService
                 .WithCurrentTimestamp();
             var attachments = new List<FileAttachment>();
 
+            var targetEvent = model.SnapshotSource switch
+            {
+                GuildRoleSnapshotSource.RoleCreate => ServerLogEvent.RoleCreate,
+                GuildRoleSnapshotSource.RoleEdit => ServerLogEvent.RoleEdit,
+                GuildRoleSnapshotSource.RoleDelete => ServerLogEvent.RoleDelete,
+                _ => Maybe<ServerLogEvent>.None
+            };
+
             switch (model.SnapshotSource)
             {
                 case GuildRoleSnapshotSource.RoleCreate:
                     embed.WithTitle("Role Created");
                     info.WithInfo(embed, attachments);
                     info.WithPermissionsUpdated(embed, attachments);
-
-                    await _serverLogService.EventHandle(
-                        model.GetGuildId(),
-                        ServerLogEvent.RoleCreate,
-                        [embed],
-                        attachments);
                     break;
                 case GuildRoleSnapshotSource.RoleEdit:
                     embed.WithTitle("Role Updated")
@@ -149,23 +151,19 @@ public class ServerLogBotService : BaseService
                         "Name: `" + model.Name?.Replace("`", "'") + "`"));
                     info.WithInfo(embed, attachments);
                     info.WithPermissionsUpdated(embed, attachments);
-
-                    await _serverLogService.EventHandle(
-                        model.GetGuildId(),
-                        ServerLogEvent.RoleCreate,
-                        [embed],
-                        attachments);
                     break;
                 case GuildRoleSnapshotSource.RoleDelete:
                     embed.WithTitle("Role Deleted");
                     info.WithPermissionsUpdated(embed, attachments);
-
+                    break;
+            }
+            if (targetEvent.HasValue)
+            {
                     await _serverLogService.EventHandle(
                         model.GetGuildId(),
-                        ServerLogEvent.RoleCreate,
+                    targetEvent.Value,
                         [embed],
                         attachments);
-                    break;
             }
         }
         catch (Exception ex)
