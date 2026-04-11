@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace XeniaDiscord.Data.Models.Cache;
 
+// TODO this should point to UserSnapshotModel, like what's done in GuildRoleCacheModel
 public class UserCacheModel
 {
     public const string TableName = "Cache_User";

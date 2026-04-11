@@ -7,6 +7,10 @@ using XeniaDiscord.Data.Models.ServerLog;
 
 namespace XeniaDiscord.Data.Repositories;
 
+// TODO Use IDbContextFactory<WeatherForecastContext> in methods that don't take XeniaDbContext as a parameter
+// This should be done in *all* repositories
+// https://learn.microsoft.com/en-us/ef/core/performance/advanced-performance-topics?tabs=with-di%2Cexpression-api-with-constant#dbcontext-pooling
+
 public class ServerLogRepository
 {
     private readonly XeniaDbContext _db;
@@ -20,8 +24,11 @@ public class ServerLogRepository
         _discordClient = services.GetRequiredService<DiscordSocketClient>();
     }
 
-    public Task<ServerLogGuildModel?> GetGuild(ulong guildId, GuildQueryOptions? options = null)
-        => GetGuild(_db, guildId, options);
+    public async Task<ServerLogGuildModel?> GetGuild(ulong guildId, GuildQueryOptions? options = null)
+    {
+        await using var db = _db.CreateSession();
+        return await GetGuild(db, guildId, options);
+    }
     public async Task<ServerLogGuildModel?> GetGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -55,11 +62,14 @@ public class ServerLogRepository
         return await Apply(query, options)
             .ToListAsync();
     }
-    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+    public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         ulong guildId,
         ulong channelId,
         ChannelQueryOptions? options = null)
-        => GetChannelsForGuild(_db, guildId, channelId, options);
+    {
+        await using var db = _db.CreateSession();
+        return await GetChannelsForGuild(db, guildId, channelId, options);
+    }
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -72,8 +82,11 @@ public class ServerLogRepository
             .Where(e => e.GuildId == guildIdStr && e.ChannelId == channelIdStr);
         return await Apply(query, options).ToListAsync();
     }
-    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(ulong guildId, ServerLogEvent[] events, ChannelQueryOptions? options = null)
-        => GetChannelsForGuild(_db, guildId, events, options);
+    public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(ulong guildId, ServerLogEvent[] events, ChannelQueryOptions? options = null)
+    {
+        await using var db = _db.CreateSession();
+        return await GetChannelsForGuild(db, guildId, events, options);
+    }
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,

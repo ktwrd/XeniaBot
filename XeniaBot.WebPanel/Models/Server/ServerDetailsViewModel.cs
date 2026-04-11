@@ -6,6 +6,7 @@ using XeniaBot.MongoData.Services;
 using XeniaBot.WebPanel.Models.Component.FunView;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.ServerLog;
+using RolePreserveGuildModel = XeniaDiscord.Data.Models.RolePreserve.RolePreserveGuildModel;
 
 namespace XeniaBot.WebPanel.Models;
 
@@ -50,15 +51,15 @@ public class JsTypeServerLogChannelItem
 {
     [JsonPropertyName("category")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? IsCategory {get;set;}
+    public bool? IsCategory { get; set; }
 
     [JsonPropertyName("text")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? IsText {get;set;}
+    public bool? IsText { get; set; }
 
     [JsonPropertyName("voice")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? IsVoice {get;set;}
+    public bool? IsVoice { get; set; }
 
     [JsonPropertyName("id")]
     public string Id { get; set; } = "0";
@@ -74,8 +75,10 @@ public class JsTypeServerLogConfigItem
 {
     [JsonPropertyName("id")]
     public required string Id { get; set; }
+    
     [JsonPropertyName("channelId")]
     public required string ChannelId { get; set; }
+
     [JsonPropertyName("event")]
     public required string Event { get; set; }
 }

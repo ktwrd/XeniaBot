@@ -1,6 +1,7 @@
 ﻿using Discord.Interactions;
 using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Interactions.Modules;
+using XeniaDiscord.Interactions.Modules.Admin;
 
 namespace XeniaDiscord;
 
@@ -23,8 +24,10 @@ public static class XeniaDiscordInteractions
         var transaction = SentryHelper.CreateTransaction();
         var types = new[]
         {
+            typeof(AdmRolePreserveModule),
+
             typeof(DiscordCacheAdminModule),
-            typeof(DeveloperModule)
+            typeof(DeveloperModule),
         };
         var result = await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();

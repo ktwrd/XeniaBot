@@ -4,6 +4,7 @@ using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Data.Models.Cache;
 
+// TODO this should point to GuildMemberSnapshotModel, like what's done in GuildRoleCacheModel
 public class GuildMemberCacheModel
 {
     public const string TableName = "Cache_GuildMember";

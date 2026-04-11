@@ -11,6 +11,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
+[Obsolete]
 public class RolePreserveRepository : BaseRepository<RolePreserveModel>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
@@ -65,6 +66,12 @@ public class RolePreserveRepository : BaseRepository<RolePreserveModel>
             .Where(v => v.UserId == userId && v.GuildId == guildId);
         var res = await BaseFind(filter, limit: 1);
         return await res.FirstOrDefaultAsync();
+    }
+
+    public async Task<List<RolePreserveModel>> GetAll()
+    {
+        var result = await BaseFind(Builders<RolePreserveModel>.Filter.Empty);
+        return await result.ToListAsync();
     }
 
     public async Task Set(RolePreserveModel model)

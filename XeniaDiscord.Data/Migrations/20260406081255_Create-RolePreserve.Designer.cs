@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using XeniaDiscord.Data;
@@ -11,9 +12,11 @@ using XeniaDiscord.Data;
 namespace XeniaDiscord.Data.Migrations
 {
     [DbContext(typeof(XeniaDbContext))]
-    partial class XeniaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406081255_Create-RolePreserve")]
+    partial class CreateRolePreserve
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -567,41 +570,25 @@ namespace XeniaDiscord.Data.Migrations
             modelBuilder.Entity("XeniaDiscord.Data.Models.RolePreserve.RolePreserveUserModel", b =>
                 {
                     b.Property<string>("GuildId")
-                        .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
                     b.Property<string>("UserId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GuildMemberSnapshotId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("GuildId", "UserId");
 
+                    b.HasIndex("GuildMemberSnapshotId");
+
                     b.ToTable("RolePreserveUsers", (string)null);
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.RolePreserve.RolePreserveUserRoleModel", b =>
-                {
-                    b.Property<string>("GuildId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("UserId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("RoleId")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.HasKey("GuildId", "UserId", "RoleId");
-
-                    b.ToTable("RolePreserveUserRoles", (string)null);
                 });
 
             modelBuilder.Entity("XeniaDiscord.Data.Models.ServerLog.ServerLogChannelModel", b =>
@@ -800,9 +787,6 @@ namespace XeniaDiscord.Data.Migrations
 
                     b.Property<DateTime>("RecordCreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("SnapshotSource")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("TimedOutUntil")
                         .HasColumnType("timestamp with time zone");
@@ -1095,16 +1079,15 @@ namespace XeniaDiscord.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("RolePreserveGuild");
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.RolePreserve.RolePreserveUserRoleModel", b =>
-                {
-                    b.HasOne("XeniaDiscord.Data.Models.RolePreserve.RolePreserveUserModel", null)
-                        .WithMany("Roles")
-                        .HasForeignKey("GuildId", "UserId")
+                    b.HasOne("XeniaDiscord.Data.Models.Snapshot.GuildMemberSnapshotModel", "GuildMemberSnapshot")
+                        .WithMany()
+                        .HasForeignKey("GuildMemberSnapshotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("GuildMemberSnapshot");
+
+                    b.Navigation("RolePreserveGuild");
                 });
 
             modelBuilder.Entity("XeniaDiscord.Data.Models.ServerLog.ServerLogChannelModel", b =>
@@ -1193,11 +1176,6 @@ namespace XeniaDiscord.Data.Migrations
             modelBuilder.Entity("XeniaDiscord.Data.Models.RolePreserve.RolePreserveGuildModel", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("XeniaDiscord.Data.Models.RolePreserve.RolePreserveUserModel", b =>
-                {
-                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("XeniaDiscord.Data.Models.ServerLog.ServerLogGuildModel", b =>

@@ -5,6 +5,7 @@ namespace XeniaBot.DiscordCache.Models;
 
 public class CacheRole
 {
+    public ulong? RoleId { get; set; }
     public ulong GuildId { get; set; }
     public string Color { get; set; }
     public bool IsHoisted { get; set; }
@@ -19,6 +20,7 @@ public class CacheRole
 
     public CacheRole()
     {
+        RoleId = null;
         GuildId = 0;
         Color = "000000";
         IsHoisted = false;
@@ -34,6 +36,7 @@ public class CacheRole
 
     public CacheRole Update(IRole role)
     {
+        RoleId = role.Id;
         GuildId = role.Guild.Id;
         Color = XeniaHelper.ToHex(role.Color);
         IsHoisted = role.IsHoisted;

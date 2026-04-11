@@ -1,0 +1,17 @@
+
+[*]
+
+# Microsoft .NET properties
+csharp_preferred_modifier_order = public, private, protected, internal, file, new, readonly, abstract, virtual, sealed, static, override, extern, unsafe, volatile, async, required:suggestion
+csharp_prefer_braces = true:none
+
+# ReSharper properties
+resharper_blank_lines_after_block_statements = 0
+resharper_braces_redundant = true
+resharper_csharp_align_first_arg_by_paren = true
+resharper_csharp_align_multiline_calls_chain = false
+resharper_csharp_max_line_length = 132
+resharper_csharp_wrap_parameters_style = chop_always
+resharper_instance_members_qualify_declared_in = base_class
+resharper_outdent_dots = false
+resharper_parentheses_redundancy_style = remove

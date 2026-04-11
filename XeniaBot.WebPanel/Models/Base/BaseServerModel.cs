@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using XeniaBot.MongoData.Models;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Models.ServerLog;
+using RolePreserveGuildModel = XeniaDiscord.Data.Models.RolePreserve.RolePreserveGuildModel;
 
 namespace XeniaBot.WebPanel.Models;
 

@@ -181,6 +181,8 @@ public class ServerLogService : BaseService
         GuildMemberSnapshotModel? before,
         GuildMemberSnapshotModel model)
     {
+        if (model.SnapshotSource != GuildMemberSnapshotSource.MemberUpdate) return;
+
         var guildIdStr = model.GuildId;
         if (before == null)
         {
@@ -402,7 +404,7 @@ public class ServerLogService : BaseService
         {
             try
             {
-                if (attachments?.Count < 1)
+                if (attachments == null || attachments.Count < 1)
                 {
                     await logChannel.SendMessageAsync(embeds: embeds.Select(e => e.Build()).ToArray());
                     return;
