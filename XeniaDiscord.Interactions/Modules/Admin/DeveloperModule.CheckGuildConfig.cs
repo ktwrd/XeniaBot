@@ -11,6 +11,12 @@ partial class DeveloperModule
         string guildId,
         ValidateGuildConfigAction action)
     {
+        if (!_config.UserWhitelist.Contains(Context.User.Id))
+        {
+            await RespondAsync("Invalid permissions.");
+            return;
+        }
+
         await DeferAsync();
         var guildIdReal = guildId.ParseRequiredULong(nameof(guildId), true);
         switch (action)

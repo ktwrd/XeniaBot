@@ -13,10 +13,12 @@ using XeniaBot.MongoData.Services;
 using XeniaBot.DiscordCache.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
-using MongoDB.Driver;
 using NLog;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Data.Repositories;
+using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
+using RolePreserveGuildModel = XeniaDiscord.Data.Models.RolePreserve.RolePreserveGuildModel;
+using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
 
 namespace XeniaBot.WebPanel.Helpers;
 
@@ -189,9 +191,13 @@ public static class AspHelper
         };
 
         var logConfig = services.GetRequiredService<ServerLogRepository>();
-        data.LogConfig = await logConfig.Get(guild.Id) ?? new ServerLogModel()
+        data.LogConfig = await logConfig.GetGuild(guild.Id, new()
         {
-            ServerId = guild.Id
+            IncludeChannels = true,
+            IncludeGuildCache = true
+        }) ?? new()
+        {
+            GuildId = guild.Id.ToString()
         };
 
         var membersWhoCanAccess = new List<SocketGuildUser>();
@@ -220,9 +226,9 @@ public static class AspHelper
         data.WarnItems = await warnConfig.GetLatestGuildItems(guild.Id) ?? new List<GuildWarnItemModel>();
 
         var rolePreserveConfig = services.GetRequiredService<RolePreserveGuildRepository>();
-        data.RolePreserve = await rolePreserveConfig.Get(guild.Id) ?? new RolePreserveGuildModel()
+        data.RolePreserve = await rolePreserveConfig.GetAsync(guild.Id) ?? new RolePreserveGuildModel()
         {
-            GuildId = guild.Id
+            GuildId = guild.Id.ToString()
         };
 
         var banSyncRecordService = services.GetRequiredService<BanSyncRecordRepository>();

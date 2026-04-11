@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using MongoDB.Driver;
@@ -8,6 +9,7 @@ using XeniaBot.Shared;
 namespace XeniaBot.MongoData.Repositories;
 
 [XeniaController]
+[Obsolete("Use XeniaDiscord.Data.Repositories.ServerLogRepository")]
 public class ServerLogRepository : BaseRepository<ServerLogModel>
 {
     public ServerLogRepository(IServiceProvider services)
@@ -29,6 +31,18 @@ public class ServerLogRepository : BaseRepository<ServerLogModel>
                 ServerId = serverId
             };
         return first;
+    }
+    public async Task<List<ServerLogModel>> GetAll()
+    {
+        var result = await BaseFind(Builders<ServerLogModel>.Filter.Empty);
+        return await result.ToListAsync();
+    }
+    public async Task<long> Count()
+    {
+        var collection = GetCollection();
+        if (collection == null)
+            throw new NoNullAllowedException("GetCollection resulted in null");
+        return await collection.CountDocumentsAsync(Builders<ServerLogModel>.Filter.Empty);
     }
 
     public async Task Set(ServerLogModel model)

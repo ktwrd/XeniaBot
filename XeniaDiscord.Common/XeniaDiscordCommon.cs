@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared;
 using XeniaDiscord.Common.Handlers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
+using XeniaDiscord.Common.Mappers.DiscordSnapshot;
 using XeniaDiscord.Common.Services;
 
 namespace XeniaDiscord;
@@ -11,16 +13,27 @@ public static class XeniaDiscordCommon
         IServiceCollection services,
         bool includeAsSingleton)
     {
-        services.AddSingleton<BanSyncService>()
-            .AddSingleton<DiscordCacheEventHandler>();
+        services.AddSingleton<ApplicationEmoteService>()
+                .AddSingleton<BanSyncService>()
+                .AddSingleton<DiscordAuditLogService>()
+                .AddSingleton<DiscordStatisticsService>()
+                .AddSingleton<DiscordCacheEventHandler>()
+                .AddSingleton<ServerLogService>()
+                .AddSingleton<ValidationService>()
+                .AddSingleton<IXeniaOnReady, ApplicationEmoteService>(svc => svc.GetRequiredService<ApplicationEmoteService>());
 
         RegisterMappers(services);
 
         var types = new[]
         {
             typeof(DiscordCacheService),
+            typeof(DiscordSnapshotService),
+
             typeof(UserCacheService),
-            typeof(GuildCacheService)
+            typeof(GuildCacheService),
+
+            typeof(GuildApprovalService),
+            typeof(RolePreserveService),
         };
         foreach (var t in types)
         {
@@ -39,5 +52,8 @@ public static class XeniaDiscordCommon
         DiscordUserToUserCacheModelMapper.RegisterService(services);
         DiscordGuildToGuildCacheModelMapper.RegisterService(services);
         DiscordUserToGuildMemberCacheModelMapper.RegisterService(services);
+
+        RoleToSnapshotModelMapper.RegisterService(services);
+        GuildUserToSnapshotModelMapper.RegisterService(services);
     }
 }

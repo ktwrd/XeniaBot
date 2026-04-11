@@ -1,4 +1,4 @@
-﻿using XeniaBot.MongoData.Models;
+﻿using XeniaDiscord.Data.Models.RolePreserve;
 
 namespace XeniaBot.WebPanel.Models;
 

@@ -21,6 +21,7 @@ public class XeniaDbContextFactory : IDesignTimeDbContextFactory<XeniaDbContext>
             connectionString += ";";
         connectionString += "Include Error Detail=true";
         builder.UseNpgsql(connectionString);
+        builder.EnableSensitiveDataLogging(true);
         Environment.SetEnvironmentVariable("CONFIG_READONLY", pv);
 
         return new XeniaDbContext(builder.Options);

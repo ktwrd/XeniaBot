@@ -48,5 +48,5 @@ public class UserPartialSnapshotModel
 
     public ulong GetUserId() => UserId.ParseRequiredULong(nameof(UserId), false);
 
-    public string FormatUsername() => string.IsNullOrEmpty(Discriminator?.Trim()) ? Username : $"{Username}#{Discriminator}";
+    public string FormatUsername() => string.IsNullOrEmpty(Discriminator?.Trim('0')) ? Username : $"{Username}#{Discriminator}";
 }

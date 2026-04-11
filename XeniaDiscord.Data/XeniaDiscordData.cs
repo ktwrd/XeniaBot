@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared;
 using XeniaDiscord.Data.Repositories;
 using XeniaDiscord.Data.Services;
 
@@ -16,7 +17,8 @@ public static class XeniaDiscordData
 
         if (!includeAsSingleton) return;
 
-        services.AddSingleton<DatabaseMigrationService>();
+        services.AddSingleton<DatabaseMigrationService>()
+                .AddSingleton<IBaseService, DatabaseMigrationService>();
     }
     public static void RegisterRepositories(
         IServiceCollection services,
@@ -33,6 +35,11 @@ public static class XeniaDiscordData
             typeof(GuildCacheRepository),
             typeof(GuildMemberCacheRepository),
             typeof(UserCacheRepository),
+
+            typeof(ServerLogRepository),
+            typeof(GuildApprovalRepository),
+            typeof(RolePreserveGuildRepository),
+            typeof(RolePreserveUserRepository),
         };
         foreach (var i in types)
         {

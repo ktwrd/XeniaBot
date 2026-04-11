@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Discord;
+using Microsoft.EntityFrameworkCore;
 using NLog;
 using XeniaDiscord.Data.Models.Cache;
 
@@ -7,7 +8,25 @@ namespace XeniaDiscord.Data.Repositories;
 public class GuildCacheRepository
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-
+    public async Task Ensure(XeniaDbContext db, ulong guildId, IGuild? guild)
+    {
+        var guildIdStr = guildId.ToString();
+        if (await db.GuildCache.AnyAsync(e => e.Id == guildIdStr)) return;
+        var model = new GuildCacheModel()
+        {
+            Id = guildIdStr,
+            Name = guild?.Name,
+            CreatedAt = SnowflakeUtils.FromSnowflake(guildId).UtcDateTime,
+            OwnerUserId = guild?.OwnerId.ToString(),
+            IconUrl = guild?.IconUrl,
+            BannerUrl = guild?.BannerUrl,
+            SplashUrl = guild?.SplashUrl,
+            DiscoverySplashUrl = guild?.DiscoverySplashUrl,
+        };
+        await InsertOrUpdate(db, model);
+    }
+    
+    
     public async Task InsertOrUpdate(
         XeniaDbContext db,
         GuildCacheModel model)

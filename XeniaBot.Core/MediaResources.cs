@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using XeniaBot.Shared;
 
@@ -11,24 +12,24 @@ public static class MediaResources
     {
         foreach (var asm in assemblies)
         {
-            foreach (var res in asm.GetManifestResourceNames())
+            var names = asm.GetManifestResourceNames();
+            var resourceName = names.FirstOrDefault(e => e == name);
+            if (resourceName == null)
             {
-                if (res == name)
-                {
-                    var stream = asm.GetManifestResourceStream(res);
-                    if (stream == null)
-                    {
-                        throw new EmbeddedResourceException("Resource stream is null, but it exists in the assembly!")
-                        {
-                            Assembly = asm,
-                            SearchedAssemblies = assemblies,
-                            ResourceName = name,
-                            ResourceExists = true,
-                        };
-                    }
-                    return stream;
-                }
+                continue;
             }
+            var stream = asm.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                throw new EmbeddedResourceException("Resource stream is null, but it exists in the assembly!")
+                {
+                    Assembly = asm,
+                    SearchedAssemblies = assemblies,
+                    ResourceName = name,
+                    ResourceExists = true,
+                };
+            }
+            return stream;
         }
         throw new EmbeddedResourceException("Could not find resource in any of the assemblies provided.")
         {

@@ -3,6 +3,8 @@ name: .NET Core Desktop
 on:
   push:
     branches: [ "main", "develop", "reborn" ]
+  pull_request:
+    branches: [ "main", "develop", "reborn" ]
 
 jobs:
 
@@ -10,9 +12,9 @@ jobs:
 
     strategy:
       matrix:
-        configuration: [ Debug, Release ]
+        configuration: [ Release ]
         projectName: [ XeniaBot.Core, XeniaBot.WebPanel ]
-        runtime: [ win-x64, linux-x64 ]
+        runtime: [ linux-x64 ]
 
     runs-on: windows-latest
 
@@ -34,7 +36,7 @@ jobs:
     - name: Clean
       run: dotnet clean ./XeniaBot.sln --configuration ${{ matrix.configuration }} && dotnet nuget locals all --clear
 
-    - name: Publish Windows
+    - name: Publish
       run: |
         dotnet publish ${{ matrix.projectName }} --self-contained true -c ${{ matrix.configuration }} --runtime ${{ matrix.runtime }} -p:PublishSingleFile=true
         Compress-Archive -Path ./${{ matrix.projectName }}/bin/${{ matrix.configuration }}/net10.0/${{ matrix.runtime }}/publish/* -Destination ${{ matrix.projectName }}.zip

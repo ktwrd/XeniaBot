@@ -16,6 +16,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Services;
 
@@ -83,9 +84,23 @@ public class CoreContext
     }
     private void DiscordServiceOnReadyThreadHandler()
     {
-        RunServiceReady();
+        try
+        {
+            RunServiceReady();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Failed to run " + nameof(RunServiceReady));
+        }
         Task.Delay(2000).GetAwaiter().GetResult();
-        RunServiceDelayedReady();
+        try
+        {
+            RunServiceDelayedReady();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Failed to run " + nameof(RunServiceDelayedReady));
+        }
     }
     /// <summary>
     /// When not null, it is called after <see cref="DiscordService.Run()"/> in <see cref="MainAsync"/>.
@@ -168,7 +183,7 @@ public class CoreContext
         beforeBuild(services).GetAwaiter().GetResult();
 
         RegisteredBaseControllers = [..services.Where(item
-            => item.ServiceType.IsAssignableTo(typeof(BaseService))
+            => item.ServiceType.IsAssignableTo(typeof(IBaseService))
             && !RegisteredBaseControllers.Contains(item.ServiceType)).Select(item => item.ServiceType)];
         Services = services.BuildServiceProvider();
         RunServiceInit();
@@ -195,59 +210,76 @@ public class CoreContext
         var s = new InteractionService(Discord);
 
         services.AddSingleton(mongoDb)
+            .AddSingleton(s)
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
-            .AddSingleton(s)
             .AddSingleton<InteractionHandler>();
     }
     private List<Type> RegisteredBaseControllers { get; set; }
 
     private void RunServiceInit()
     {
-        AllBaseServices(async (item) =>
+        using var trans = SentryHelper.CreateTransaction();
+        try
         {
-            await item.InitializeAsync();
-        });
+            AllBaseServices(item => item.InitializeAsync());
+            trans.Finish();
+            Log.Info("Done");
+        }
+        catch (Exception ex)
+        {
+            trans.Finish(ex);
+            throw;
+        }
     }
 
     private void RunServiceReady()
     {
-        AllBaseServices(async (item) =>
+        using var trans = SentryHelper.CreateTransaction();
+        try
         {
-            await item.OnReady();
-        });
+            AllBaseServices(svc => svc.OnReady());
+            trans.Finish();
+            Log.Info("Done - Bot is online!");
+        }
+        catch (Exception ex)
+        {
+            trans.Finish(ex);
+            throw;
+        }
     }
 
     public void RunServiceDelayedReady()
     {
-        AllBaseServices(async (item) =>
+        using var trans = SentryHelper.CreateTransaction();
+        try
         {
-            await item.OnReadyDelay();
-        });
+            AllBaseServices(svc => svc.OnReadyDelay());
+            trans.Finish();
+            Log.Info("Done");
+        }
+        catch (Exception ex)
+        {
+            trans.Finish(ex);
+            throw;
+        }
     }
     /// <summary>
-    /// For every registered class that extends <see cref="BaseService"/>, call <paramref name="func"/> with the argument as the target controller.
+    /// For every registered class that extends <see cref="IBaseService"/>,
+    /// call <paramref name="func"/> with the argument as the target service.
     /// </summary>
-    public void AllBaseServices(Func<BaseService, Task> func)
+    public void AllBaseServices(Func<IBaseService, Task> func)
     {
-        var ins = new List<BaseService>();
-        foreach (var service in RegisteredBaseControllers)
-        {
-            var svc = Services.GetServices(service);
-            foreach (var item in svc
-                .Where(e => e != null).Cast<object>())
-            {
-                if (item is BaseService svcItem)
-                {
-                    ins.Add(svcItem);
-                }
-            }
-        }
-        Task.WhenAll(ins
+        Task.WhenAll(RegisteredBaseControllers.Where(e => typeof(IBaseService).IsAssignableFrom(e))
+            .Select(Services.GetRequiredService).Cast<IBaseService>()
             .OrderBy(v => v.Priority)
             .ThenBy(v => v.GetType().AssemblyQualifiedName)
-            .Select(e => func(e)))
+            .Select(ProcessItem))
             .GetAwaiter().GetResult();
+        async Task ProcessItem(IBaseService svc)
+        {
+            await func(svc);
+        }
     }
     #endregion
 
@@ -260,12 +292,11 @@ public class CoreContext
 
     private void BeforeQuit()
     {
-        Config.Write(Config.Data);
+        Config.Write();
     }
 }
 
 public delegate Task CoreContextRegisterInteractionModulesDelegate(InteractionService interactions, IServiceProvider services);
 public delegate Task<Discord.Interactions.ModuleInfo[]> CoreContextGetDeveloperModulesDelegate(InteractionService interactions, IServiceProvider services);
 public delegate Task CoreContextBeforeServiceBuildDelegate(IServiceCollection services);
-// Func<string[], Task>
 public delegate Task CoreContextAlternativeMainDelegate(string[] args);

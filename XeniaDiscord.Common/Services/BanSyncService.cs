@@ -181,7 +181,7 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to add ban for {ban?.User.Username} ({ban?.User.Id}) in guild {guild.Name} ({guild.Id})";
+            var msg = $"Failed to add ban for {ban?.User.FormatUsername()} ({ban?.User.Id}) in guild {guild.Name} ({guild.Id})";
             _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
@@ -202,7 +202,7 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to process event UserBanned for {user} in Guild \"{guild.Name}\" ({guild.Id})";
+            var msg = $"Failed to process event UserBanned for {user.FormatUsername()} in Guild \"{guild.Name}\" (guildId={guild.Id}, userId={user.Id})";
             _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
@@ -242,6 +242,7 @@ public class BanSyncService : BaseService
                     .WithUser(user)
                     .WithGuild(guild));
             }
+            else
             {
                 _log.Warn(ex, msg);
             }
@@ -260,11 +261,19 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
-            await _err.Submit(new ErrorReportBuilder()
-                .WithException(ex)
-                .WithNotes($"Failed to fetch audit log records for user {user} ({user.Id}) in guild \"{guild.Name}\" ({guild.Id})")
-                .WithUser(user)
-                .WithGuild(guild));
+            var msg = $"Failed to fetch audit log records for user {user.FormatUsername()} in guild \"{guild.Name}\" (guildId={guild.Id}, userId={user.Id})";
+            if (config.Enable || config.State == BanSyncGuildState.Active)
+            {
+                await _err.Submit(new ErrorReportBuilder()
+                    .WithException(ex)
+                    .WithNotes(msg)
+                    .WithUser(user)
+                    .WithGuild(guild));
+            }
+            else
+            {
+                _log.Warn(ex, msg);
+            }
         }
 
         BanSyncRecordModel? info = null;

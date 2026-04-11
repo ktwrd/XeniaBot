@@ -3,55 +3,18 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-
     <AssemblyName>XeniaBot.Core</AssemblyName>
     <RootNamespace>XeniaBot.Core</RootNamespace>
-
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <TransformOnBuild>true</TransformOnBuild>
-
     <IsTrimmable>false</IsTrimmable>
-
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
+
   <ItemGroup>
-    <None Remove="Resources\1984.png" />
-    <None Remove="Resources\1984cover.png" />
-    <None Remove="Resources\1984originaldate.png" />
-    <None Remove="Resources\arial.ttf" />
-    <None Remove="Resources\AtkinsonHyperlegible-Bold.ttf" />
-    <None Remove="Resources\caption.otf" />
-    <None Remove="Resources\chirp-regular-web.woff2" />
-    <None Remove="Resources\HelveticaNeue.otf" />
-    <None Remove="Resources\ImpactMix.ttf" />
-    <None Remove="Resources\speech.png" />
-    <None Remove="Resources\speechbubble.png" />
-    <None Remove="Resources\TAHOMABD.TTF" />
-    <None Remove="Resources\times new roman.ttf" />
-    <None Remove="Resources\TwemojiCOLR0.otf" />
-    <None Remove="Resources\Ubuntu-R.ttf" />
-    <None Remove="Resources\whisper.otf" />
-    <None Remove="Resources\yskysn.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\1984.png" />
-    <EmbeddedResource Include="Resources\1984cover.png" />
-    <EmbeddedResource Include="Resources\1984originaldate.png" />
-    <EmbeddedResource Include="Resources\arial.ttf" />
-    <EmbeddedResource Include="Resources\AtkinsonHyperlegible-Bold.ttf" />
-    <EmbeddedResource Include="Resources\caption.otf" />
-    <EmbeddedResource Include="Resources\chirp-regular-web.woff2" />
-    <EmbeddedResource Include="Resources\HelveticaNeue.otf" />
-    <EmbeddedResource Include="Resources\ImpactMix.ttf" />
-    <EmbeddedResource Include="Resources\speech.png" />
-    <EmbeddedResource Include="Resources\speechbubble.png" />
-    <EmbeddedResource Include="Resources\TAHOMABD.TTF" />
-    <EmbeddedResource Include="Resources\times new roman.ttf" />
-    <EmbeddedResource Include="Resources\TwemojiCOLR0.otf" />
-    <EmbeddedResource Include="Resources\Ubuntu-R.ttf" />
-    <EmbeddedResource Include="Resources\whisper.otf" />
-    <EmbeddedResource Include="Resources\yskysn.png" />
+    <None Include="Resources\**\*" />
+    <EmbeddedResource Include="Resources\**\*" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DiffPlex" />
@@ -106,7 +69,6 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
   <!-- T4 build support for .NET Core (Begin) -->
-
   <ItemGroup Condition="'$(MSBuildRuntimeType)'=='Core'">
     <TextTemplate Include="**\*.tt" />
   </ItemGroup>
@@ -120,11 +82,9 @@
       <Compile Include="**\*.cs" />
     </ItemGroup>
   </Target>
-
   <!-- T4 build support for .NET Core (End) -->
 
   <!-- T4 build support for Visual Studio (Begin) -->
-
   <PropertyGroup Condition="'$(MSBuildRuntimeType)'=='Full'">
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <TransformOnBuild>true</TransformOnBuild>

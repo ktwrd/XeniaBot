@@ -1,11 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
-using XeniaBot.Core.Helpers;
+using NLog;
 using System;
 using System.Threading.Tasks;
+using XeniaBot.Core.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
-using NLog;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules;
 
@@ -14,8 +15,10 @@ namespace XeniaBot.Core.Modules;
 public class CounterModule : InteractionModuleBase
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(CounterModule));
+    
     [SlashCommand("setchannel", "Set the channel for counting")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
+    [RegisterDBLCommand]
     public async Task SetChannel(
         [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
     {
@@ -44,6 +47,7 @@ public class CounterModule : InteractionModuleBase
 
     [SlashCommand("deletechannel", "Remove channel from storage")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
+    [RegisterDBLCommand]
     public async Task DeleteChannel(
         [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
     {
@@ -71,6 +75,7 @@ public class CounterModule : InteractionModuleBase
     }
     [SlashCommand("delete", "Delete all Counting Channels in this server")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
+    [RegisterDBLCommand]
     public async Task Delete()
     {
         var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
@@ -97,6 +102,7 @@ public class CounterModule : InteractionModuleBase
     }
 
     [SlashCommand("info", "Information about the counter module for this guild")]
+    [RegisterDBLCommand]
     public async Task Info()
     {
         var controller = Program.Core.GetRequiredService<CounterConfigRepository>();

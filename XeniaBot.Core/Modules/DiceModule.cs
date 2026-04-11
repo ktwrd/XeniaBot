@@ -1,17 +1,20 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
+using System;
+using System.Threading.Tasks;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules;
 
 public class DiceModule : InteractionModuleBase
 {
     [SlashCommand("dice", "Throw a dice. Defaults to a 6-sided dice")]
+    [RegisterDBLCommand]
     public async Task Dice(
-        [Discord.Interactions.Summary(description: "Maximum value for dice roll")]
+        [Summary(description: "Maximum value for dice roll")]
         int max, 
-        [Discord.Interactions.Summary(description: "Minimum value for dice roll. Default: 1")]
+        [Summary(description: "Minimum value for dice roll. Default: 1")]
+        [MinValue(1)]
         int min = 1)
     {
         var result = new Random().Next(min, max);

@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using XeniaBot.Shared.Models;
 
 namespace XeniaBot.MongoData.Models;
 
+[Obsolete]
 public class RolePreserveModel : BaseModel
 {
     public static string CollectionName => "rolePreserve";

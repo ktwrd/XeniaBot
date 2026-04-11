@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using NLog;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Services.Wrappers;
 
@@ -20,8 +22,8 @@ public class GoogleTranslateService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(GoogleTranslateService));
     private readonly ConfigData _configData;
-    private GoogleCredential _gcsCred;
-    private TranslationClient _translateClient;
+    private GoogleCredential? _googleCredential = null;
+    private TranslationClient? _translateClient = null;
     public GoogleTranslateService(IServiceProvider services)
         : base(services)
     {
@@ -30,15 +32,14 @@ public class GoogleTranslateService : BaseService
 
     private void Validate()
     {
-        bool configInvalid =
-            _configData.GoogleCloud == null;
+        var configInvalid = _configData.GoogleCloud == null;
         var configDictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(
             JsonSerializer.Serialize(
                 _configData.GoogleCloud ?? new GoogleCloudKey(),
                 Program.SerializerOptions) ?? "{}",
             Program.SerializerOptions) ?? new Dictionary<string, string>();
-        int dictRequired = configDictionary.Count;
-        int dictFound = 0;
+        var dictRequired = configDictionary.Count;
+        var dictFound = 0;
 
         if (dictRequired < 1)
         {
@@ -50,11 +51,11 @@ public class GoogleTranslateService : BaseService
             if (pair.Value.Length > 0)
                 dictFound++;
             else
-                _log.Warn($"Empty value \"Config.GCSKey_Translate.{pair.Key}\"");
+                _log.Warn($"Empty value in config: \"GCSKey_Translate.{pair.Key}\"");
         }
         if (dictFound < dictRequired)
         {
-            _log.Error("Not all fields have a value in \"Config.GCSKey_Translate\"");
+            _log.Error("Not all fields have a value in config: \"GCSKey_Translate\"");
             configInvalid = false;
         }
 
@@ -68,7 +69,7 @@ public class GoogleTranslateService : BaseService
     {
         if (_translateClient == null)
         {
-            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null");
+            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null)");
         }
         var result = _translateClient.ListLanguages("en").ToList();
         return result;
@@ -78,65 +79,61 @@ public class GoogleTranslateService : BaseService
     {
         if (_translateClient == null)
         {
-            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null");
+            throw new InvalidOperationException($"Translation Client ({nameof(_translateClient)} is null)");
         }
 
-        TranslationResult result = await _translateClient.TranslateTextAsync(message, to, from); ;
-        return result;
+        return await _translateClient.TranslateTextAsync(message, to, from);
     }
 
     private async Task<GoogleCredential?> LoadCredentials()
     {
-        bool denyAccess = _configData.GoogleCloud == null || _configData.GoogleCloud.ProjectId.Length < 1;
-        if (denyAccess)
+        if (_configData.GoogleCloud == null)
         {
-            _log.Error("Config not setup (null or project_id not set)");
-            Program.Quit(1);
+            throw new InvalidOperationException("GoogleCloud not configured in config");
+        }
+        if (string.IsNullOrEmpty(_configData.GoogleCloud.ProjectId?.Trim()))
+        {
+            throw new InvalidOperationException("ProjectId not configured in GoogleCloud (from config)");
         }
 
-        GoogleCredential? cred = null;
-        using (CancellationTokenSource source = new CancellationTokenSource())
+        GoogleCredential? credential;
+        using (var source = new CancellationTokenSource())
         {
-            var jsonText = JsonSerializer.Serialize(_configData.GoogleCloud, Program.SerializerOptions);
-            if (jsonText == null)
+            var jsonText = JsonSerializer.Serialize(_configData.GoogleCloud, SerializerOptions)
+                ?? throw new InvalidOperationException("Failed to serialize GoogleCloud credentials in config file (result was null)");
+            using var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText));
+            try
             {
-                _log.Error("Failed to serialize Google Cloud Config.");
-                Program.Quit(1);
-                return null;
+                credential = (await CredentialFactory.FromStreamAsync<ServiceAccountCredential>(memoryStream, source.Token)).ToGoogleCredential();
             }
-            using (var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonText)))
+            catch (Exception ex)
             {
-                try
-                {
-                    cred = await GoogleCredential.FromStreamAsync(memoryStream, source.Token);
-                }
-                catch (Exception ex)
-                {
-                    var errorMessage = "Failed to create GoogleCredential";
-                    _log.Error(ex, errorMessage);
-#if DEBUG
-                    throw;
-#endif
-                    Program.Quit(1);
-                }
+                const string errorMessage = "Failed to create GoogleCredential";
+                _log.Fatal(ex, errorMessage);
+                Debugger.BreakForUserUnhandledException(ex);
+                throw new InvalidOperationException(errorMessage, ex);
             }
         }
-        if (cred == null)
+        if (credential == null)
         {
-            string errorMessage = "Object \"cred\" is null. (Failed to create credentials)";
+            var errorMessage = $"Failed to create credentials: {typeof(CredentialFactory).Namespace}.{nameof(CredentialFactory)}.{nameof(CredentialFactory.FromStreamAsync)} returned null";
             _log.Error(errorMessage);
-#if DEBUG
             throw new InvalidOperationException(errorMessage);
-#endif
-            Program.Quit(1);
-            return null;
         }
-        return cred;
+        return credential;
     }
+    private static readonly JsonSerializerOptions SerializerOptions
+        = new()
+        {
+            IgnoreReadOnlyFields = false,
+            IgnoreReadOnlyProperties = false,
+            IncludeFields = true,
+            WriteIndented = true
+        };
 
     private async Task CreateClient()
     {
-        TranslationClient client = await TranslationClient.CreateAsync(_gcsCred);
+        var client = await TranslationClient.CreateAsync(_googleCredential);
         if (client == null)
         {
             _log.Error("TranslationClient is null? (Failed to create client)");
@@ -148,21 +145,30 @@ public class GoogleTranslateService : BaseService
 
     public override async Task InitializeAsync()
     {
-        var start_ts = GeneralHelper.GetMicroseconds();
-        _log.Debug("Initializing GoogleTranslateService");
-        Validate();
-
-        // Fetch credentials, if failed then throw exception
-        var googleCredential = await LoadCredentials();
-        if (googleCredential == null)
+        var trans = SentryHelper.CreateTransaction();
+        try
         {
-            _log.Error("Failed to load Google Cloud Translate Credentials. Result was null");
-            Program.Quit(1);
-            return;
-        }
-        _gcsCred = googleCredential;
+            var startedAt = GeneralHelper.GetMicroseconds();
+            _log.Debug("Initializing GoogleTranslateService");
+            Validate();
 
-        await CreateClient();
-        _log.Debug($"Done! Took {GeneralHelper.GetMicroseconds() - start_ts}us");
+            // Fetch credentials, if failed then throw exception
+            var googleCredential = await LoadCredentials();
+            if (googleCredential == null)
+            {
+                _log.Error("Failed to load Google Cloud Translate Credentials. Result was null");
+                trans.Finish();
+                Program.Quit(1);
+                return;
+            }
+            _googleCredential = googleCredential;
+
+            await CreateClient();
+            _log.Debug($"Done! Took {GeneralHelper.GetMicroseconds() - startedAt}us");
+        }
+        finally
+        {
+            trans.Finish();
+        }
     }
 }

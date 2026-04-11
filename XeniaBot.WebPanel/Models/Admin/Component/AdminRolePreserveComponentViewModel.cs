@@ -1,9 +1,10 @@
 ﻿using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
-using XeniaBot.MongoData.Models;
-using XeniaBot.MongoData.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared.Services;
+using XeniaDiscord.Data.Models.RolePreserve;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.WebPanel.Models.Component;
 
@@ -16,11 +17,8 @@ public class AdminRolePreserveComponentViewModel : IGuildViewModel, IAlertViewMo
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
         var discord = CoreContext.Instance!.GetRequiredService<DiscordSocketClient>();
+        var repo = context.RequestServices.GetRequiredService<RolePreserveGuildRepository>();
         Guild = discord.GetGuild(guildId);
-        var repo = CoreContext.Instance!.GetRequiredService<RolePreserveGuildRepository>();
-        RolePreserve = await repo.Get(Guild.Id) ?? new RolePreserveGuildModel()
-        {
-            GuildId = Guild.Id
-        };
+        RolePreserve = await repo.GetAsync(Guild.Id) ?? new RolePreserveGuildModel(Guild.Id);
     }
 }

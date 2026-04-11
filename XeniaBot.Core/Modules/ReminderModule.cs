@@ -1,18 +1,20 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
+using System;
+using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
-using XeniaBot.MongoData.Models;
 using XeniaBot.Logic.Services;
+using XeniaBot.MongoData.Models;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules;
 
 public class ReminderModule : InteractionModuleBase
 {
     [SlashCommand("remind", "Create a reminder")]
+    [RegisterDBLCommand]
     public async Task CreateReminder(
-        [Discord.Interactions.Summary(description: "When you will be reminded. Example 2d 1hrs 5seconds")]
+        [Summary(description: "When you will be reminded. Example 2d 1hrs 5seconds")]
         string when, string? note = null)
     {
         TimeSpan timeSpan;

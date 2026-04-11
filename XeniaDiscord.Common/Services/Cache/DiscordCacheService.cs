@@ -3,9 +3,11 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using System.Data;
 using XeniaBot.Shared;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
@@ -23,7 +25,8 @@ public class DiscordCacheService
     private readonly IMapper<IUser, UserCacheModel> _userMapper;
     private readonly IMapperMerger<IUser, GuildMemberCacheModel> _memberMergerMapper;
     private readonly IMapperMerger<IGuild, GuildCacheModel> _guildMergerMapper;
-
+    private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberSnapshotMapper;
+    private readonly IMapper<IRole, GuildRoleSnapshotModel> _guildRoleSnapshotMapper;
     public DiscordCacheService(IServiceProvider services)
     {
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
@@ -36,6 +39,8 @@ public class DiscordCacheService
         _userMapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
         _memberMergerMapper = services.GetRequiredService<IMapperMerger<IUser, GuildMemberCacheModel>>();
         _guildMergerMapper = services.GetRequiredService<IMapperMerger<IGuild, GuildCacheModel>>();
+        _guildMemberSnapshotMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
+        _guildRoleSnapshotMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
     }
 
     #region Guild

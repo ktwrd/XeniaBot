@@ -1,18 +1,19 @@
 ﻿using Discord;
 using Discord.Interactions;
-using XeniaBot.Core.Services.BotAdditions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
+using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Services;
+using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules;
 
-[Discord.Interactions.Group("config", "Configure Xenia")]
+[Group("config", "Configure Xenia")]
 public class ConfigModule : InteractionModuleBase
 {
     private CoreContext _core => CoreContext.Instance!;
@@ -20,11 +21,11 @@ public class ConfigModule : InteractionModuleBase
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [CommandContextType(InteractionContextType.Guild)]
     public async Task TicketConfig(
-        [Discord.Interactions.Summary(description: "Parent Category for all channels that will be created when a ticket is made.")]
+        [Summary(description: "Parent Category for all channels that will be created when a ticket is made.")]
         [ChannelTypes(ChannelType.Category)] ICategoryChannel? ticketCategory = null,
-        [Discord.Interactions.Summary(description: "Role for who will be able to manage tickets.")]
+        [Summary(description: "Role for who will be able to manage tickets.")]
         IRole? managerRole = null,
-        [Discord.Interactions.Summary(description: "Channel where ticket states will be logged and archived.")]
+        [Summary(description: "Channel where ticket states will be logged and archived.")]
         [ChannelTypes(ChannelType.Text)] ITextChannel? logChannel = null)
     {
         TicketService service = Program.Core.GetRequiredService<TicketService>();
@@ -71,6 +72,7 @@ public class ConfigModule : InteractionModuleBase
     [SlashCommand("strike-enable", "Enable Warn Strikes")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [CommandContextType(InteractionContextType.Guild)]
+    [RegisterDBLCommand]
     public async Task WarnStrikeConfigEnable()
     {
         await DeferAsync();
@@ -104,6 +106,7 @@ public class ConfigModule : InteractionModuleBase
     [SlashCommand("strike-disable", "Enable Warn Strikes")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [CommandContextType(InteractionContextType.Guild)]
+    [RegisterDBLCommand]
     public async Task WarnStrikeConfigDisable()
     {
         await DeferAsync();
@@ -137,6 +140,7 @@ public class ConfigModule : InteractionModuleBase
     [SlashCommand("strike-window", "Set maximum age for a Warn to be Active")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [CommandContextType(InteractionContextType.Guild)]
+    [RegisterDBLCommand]
     public async Task WarnStrikeConfigSetWindow(
         [Summary(description: "Maximum age for a Warn to count as an Active Strike")]
         double days)
@@ -196,6 +200,7 @@ public class ConfigModule : InteractionModuleBase
     [SlashCommand("strike-limit", "Set the amount Warns before action should be taken.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [CommandContextType(InteractionContextType.Guild)]
+    [RegisterDBLCommand]
     public async Task WarnStrikeConfigSetLimit(
         [Summary(description: "Maximum amount of warns before action should be taken")]
         int limit)
@@ -246,6 +251,7 @@ public class ConfigModule : InteractionModuleBase
     [SlashCommand("strike", "Get current config for Warn Strikes")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [CommandContextType(InteractionContextType.Guild)]
+    [RegisterDBLCommand]
     public async Task WarnStrikeConfigGet()
     {
         await DeferAsync();

@@ -1,71 +1,87 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
-using XeniaBot.MongoData.Models;
-using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared;
+using XeniaDiscord.Data;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
 [Group("rolepreserve", "Configure the RolePreserve module.")]
+[RequireBotPermission(GuildPermission.ManageRoles | GuildPermission.ModerateMembers)]
 [CommandContextType(InteractionContextType.Guild)]
 public class RolePreserveModule : InteractionModuleBase
 {
+    private readonly XeniaDbContext _db;
+    private readonly RolePreserveGuildRepository _userRepository;
+    public RolePreserveModule(IServiceProvider services)
+    {
+        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
+        _userRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveGuildRepository>();
+    }
     [SlashCommand("enable", "Grant members preserved roles on re-join.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [RegisterDBLCommand]
     public async Task Enable()
     {
+        await DeferAsync();
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
-            var data = await controller.Get(Context.Guild.Id) ?? new RolePreserveGuildModel()
-            {
-                GuildId = Context.Guild.Id
-            };
-            data.Enable = true;
-            await controller.Set(data);
+            await _userRepository.EnableAsync(db, Context.Guild.Id, true);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
             
-            await RespondAsync(embed: new EmbedBuilder()
+            await FollowupAsync(embed: new EmbedBuilder()
                 .WithTitle("Role Preserve")
-                .WithDescription($"Roles will now be granted to members when they re-join (if Xenia can grant those roles).")
+                .WithDescription("Roles will now be granted to members when they re-join (if Xenia can grant those roles)")
+                .WithColor(Color.Blue)
                 .Build());
         }
         catch (Exception ex)
         {
-            await RespondAsync(embed: new EmbedBuilder()
+            await trans.RollbackAsync();
+            await FollowupAsync(embed: new EmbedBuilder()
                 .WithTitle("Role Preserve - Failed to Enable")
-                .WithDescription($"Failed to enable Role Preserve feature. `{ex.Message}`")
+                .WithDescription("Failed to enable Role Preserve feature")
+                .AddField("Message", ex.Message[..Math.Min(1024, ex.Message.Length)])
                 .WithColor(Color.Red)
                 .Build());
             await DiscordHelper.ReportError(ex, Context);
         }
     }
 
-    [SlashCommand("disable", "Disable Role Grant feature.")]
+    [SlashCommand("disable", "Disable Role Preservation feature.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [RegisterDBLCommand]
     public async Task Disable()
     {
+        await DeferAsync();
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var controller = Program.Core.GetRequiredService<RolePreserveGuildRepository>();
-            var data = await controller.Get(Context.Guild.Id) ?? new RolePreserveGuildModel()
-            {
-                GuildId = Context.Guild.Id
-            };
-            data.Enable = false;
-            await controller.Set(data);
+            await _userRepository.EnableAsync(db, Context.Guild.Id, false);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
             
-            await RespondAsync(embed: new EmbedBuilder()
+            await FollowupAsync(embed: new EmbedBuilder()
                 .WithTitle("Role Preserve")
-                .WithDescription($"Xenia will continue to track member roles, but they will not be granted on re-join.")
+                .WithDescription("Xenia will continue to track member roles, but they will not be granted when someone re-joins.")
+                .WithColor(Color.Blue)
                 .Build());
         }
         catch (Exception ex)
         {
-            await RespondAsync(embed: new EmbedBuilder()
+            await trans.RollbackAsync();
+            await FollowupAsync(embed: new EmbedBuilder()
                 .WithTitle("Role Preserve - Failed to Disable")
-                .WithDescription($"Failed to disable Role Preserve feature. `{ex.Message}`")
+                .WithDescription("Failed to disable Role Preserve feature")
+                .AddField("Message", ex.Message[..Math.Min(1024, ex.Message.Length)])
                 .WithColor(Color.Red)
                 .Build());
             await DiscordHelper.ReportError(ex, Context);

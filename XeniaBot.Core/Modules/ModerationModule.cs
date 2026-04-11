@@ -65,6 +65,7 @@ public class ModerationModule : InteractionModuleBase
 
     [SlashCommand("warn", "Warn member")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
+    [RegisterDBLCommand]
     public async Task WarnMember(IUser user, string reason)
     {
         await DeferAsync();
@@ -120,6 +121,7 @@ public class ModerationModule : InteractionModuleBase
 
     [SlashCommand("warns", "Get all warns for user. Only top 10")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
+    [RegisterDBLCommand]
     public async Task MemberWarns(SocketGuildUser user)
     {
         await DeferAsync();
@@ -195,6 +197,8 @@ public class ModerationModule : InteractionModuleBase
     
     [SlashCommand("kick", "Kick member from server")]
     [RequireUserPermission(GuildPermission.KickMembers)]
+    [RequireBotPermission(GuildPermission.KickMembers | GuildPermission.ViewAuditLog)]
+    [RegisterDBLCommand]
     public async Task KickMember(SocketGuildUser user, string? reason = null)
     {
         SocketGuildUser? member = await SafelyFetchUser(user.Id);
@@ -232,8 +236,10 @@ public class ModerationModule : InteractionModuleBase
 
     [SlashCommand("ban", "Ban member from server")]
     [RequireUserPermission(GuildPermission.BanMembers)]
+    [RequireBotPermission(GuildPermission.BanMembers | GuildPermission.ViewAuditLog)]
+    [RegisterDBLCommand]
     public async Task BanMember(SocketGuildUser user, string? reason = null, 
-        [Discord.Interactions.Summary(description: "How many days of messages should be deleted when this member is banned")]
+        [Summary(description: "How many days of messages should be deleted when this member is banned")]
         int pruneDays=0)
     {
         var embed = DiscordHelper.BaseEmbed()
@@ -283,6 +289,7 @@ public class ModerationModule : InteractionModuleBase
 
     [SlashCommand("purge", "Purge messages")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
+    [RegisterDBLCommand]
     public async Task PurgeMessages(
         int count,
         [ChannelTypes(ChannelType.Text)] IChannel? channel = null)
@@ -344,7 +351,7 @@ public class ModerationModule : InteractionModuleBase
         }
     }
 
-    private async Task<List<IMessage>> FetchRecursiveMessages(SocketTextChannel channel, int? max = null)
+    private static async Task<List<IMessage>> FetchRecursiveMessages(SocketTextChannel channel, int? max = null)
     {
         List<IMessage> messageList = new List<IMessage>();
         IEnumerable<IMessage> messages = await channel.GetMessagesAsync(Math.Min(max ?? 100, 300)).FlattenAsync();

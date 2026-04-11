@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
 using XeniaBot.MongoData.Models;
+using XeniaBot.Shared;
 
 namespace XeniaBot.Core.Modules;
 
@@ -15,16 +16,19 @@ public class RandomAnimalModule : InteractionModuleBase
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(RandomAnimalModule));
     [SlashCommand("fox", "Get a random image of a fox")]
+    [RegisterDBLCommand]
     public async Task Fox()
     {
         await Boilerplate("fox");
     }
     [SlashCommand("yeen", "Get a random image of a yeen")]
+    [RegisterDBLCommand]
     public async Task Yeen()
     {
         await Boilerplate("yeen");
     }
     [SlashCommand("dog", "Get a random image of a dog")]
+    [RegisterDBLCommand]
     public async Task Dog()
     {
         await Boilerplate("dog");
