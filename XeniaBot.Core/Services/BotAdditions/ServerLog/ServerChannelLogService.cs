@@ -16,18 +16,16 @@ namespace XeniaBot.Core.Services.BotAdditions;
 [XeniaController]
 public class ServerChannelLogService : BaseService
 {
-    private readonly ServerLogRepository _config;
     private readonly DiscordSocketClient _discord;
     private readonly DiscordCacheService _discordCache;
-    private readonly ServerLogService _serverLog;
+    private readonly ServerLogBotService _serverLog;
 
     public ServerChannelLogService(IServiceProvider services)
         : base(services)
     {
-        _config = services.GetRequiredService<ServerLogRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
-        _serverLog = services.GetRequiredService<ServerLogService>();
+        _serverLog = services.GetRequiredService<ServerLogBotService>();
     }
 
     public override Task InitializeAsync()

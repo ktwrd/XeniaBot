@@ -27,9 +27,9 @@ using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
-public class ServerLogService : BaseService
+public class ServerLogBotService : BaseService
 {
-    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogService));
+    private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogBotService));
     private readonly ServerLogRepository _serverLogRepo;
     private readonly DiscordSocketClient _discord;
     private readonly DiscordCacheService _discordCache;
@@ -37,7 +37,7 @@ public class ServerLogService : BaseService
     private readonly ErrorReportService _errorService;
     private readonly XeniaDbContext _db;
     private readonly ProgramDetails _details;
-    public ServerLogService(IServiceProvider services)
+    public ServerLogBotService(IServiceProvider services)
         : base(services)
     {
         _serverLogRepo = services.GetRequiredService<ServerLogRepository>();
