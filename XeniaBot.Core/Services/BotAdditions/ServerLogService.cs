@@ -21,6 +21,7 @@ using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
+
 using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
 
 namespace XeniaBot.Core.Services.BotAdditions;
@@ -35,6 +36,7 @@ public class ServerLogService : BaseService
     private readonly DiscordSnapshotService _discordSnapshot;
     private readonly ErrorReportService _errorService;
     private readonly XeniaDbContext _db;
+    private readonly ProgramDetails _details;
     public ServerLogService(IServiceProvider services)
         : base(services)
     {
@@ -43,23 +45,22 @@ public class ServerLogService : BaseService
         _discordCache = services.GetRequiredService<DiscordCacheService>();
         _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
         _errorService = services.GetRequiredService<ErrorReportService>();
+        _details = services.GetRequiredService<ProgramDetails>();
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
-    }
 
-    public override Task InitializeAsync()
-    {
-        _discord.UserJoined += Event_UserJoined;
-        _discord.UserLeft += Event_UserLeave;
-        _discord.UserBanned += Event_UserBan;
-        _discord.UserUnbanned += Event_UserBanRemove;
+        if (_details.Platform == XeniaPlatform.Bot)
+        {
+            _discord.UserJoined += Event_UserJoined;
+            _discord.UserLeft += Event_UserLeave;
+            _discord.UserBanned += Event_UserBan;
+            _discord.UserUnbanned += Event_UserBanRemove;
 
-        _discord.MessageDeleted += Event_MessageDelete;
-        _discordCache.MessageChange += DiscordCacheMessageChangeUpdate;
+            _discord.MessageDeleted += Event_MessageDelete;
+            _discordCache.MessageChange += DiscordCacheMessageChangeUpdate;
 
-        _discordSnapshot.GuildMemberUpdated += DiscordSnapshotGuildMemberUpdate;
-        _discordSnapshot.GuildRoleUpdated += DiscordSnapshotGuildRoleUpdate;
-
-        return Task.CompletedTask;
+            _discordSnapshot.GuildMemberUpdated += DiscordSnapshotGuildMemberUpdate;
+            _discordSnapshot.GuildRoleUpdated += DiscordSnapshotGuildRoleUpdate;
+        }
     }
 
     private async Task DiscordSnapshotGuildRoleUpdate(
@@ -361,88 +362,134 @@ public class ServerLogService : BaseService
             .WithThumbnailUrl(snapshot.AvatarUrl);
     }
 
-    internal Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder embed, Dictionary<string, string>? attachments = null)
+
+    #region Event Handle
+    internal Task EventHandle(ulong guildId, ServerLogEvent @event, EmbedBuilder embed, Dictionary<string, string>? attachments = null)
     {
-        return EventHandle(serverId, @event, [embed], attachments);
+        return EventHandle(guildId, @event, [embed], attachments);
     }
-    internal Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder[] embeds, Dictionary<string, string>? attachments = null)
+    internal Task EventHandle(ulong guildId, ServerLogEvent @event, EmbedBuilder[] embeds, Dictionary<string, string>? attachments = null)
     {
         return EventHandle(
-            serverId,
+            guildId,
             @event,
             embeds,
             attachments?.Select(e => new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(e.Value)), e.Key))
             .ToList());
     }
-    internal async Task EventHandle(ulong serverId, ServerLogEvent @event, EmbedBuilder[] embeds, List<FileAttachment>? attachments = null)
+    internal async Task EventHandle(ulong guildId, ServerLogEvent @event, EmbedBuilder[] embeds, List<FileAttachment>? attachments = null)
     {
-        var targetChannels = await _serverLogRepo.GetChannelsForGuild(serverId, [@event, ServerLogEvent.Fallback]);
-        var guild = _discord.GetGuild(serverId);
+        var targetChannels = await _serverLogRepo.GetChannelsForGuild(guildId, [@event, ServerLogEvent.Fallback]);
+        var guild = _discord.GetGuild(guildId);
+
+        if (attachments?.Count > 10)
+        {
+            _log.Warn($"More than 10 attachments defined for event {@event} in guild \"{guild?.Name}\" (guildId={guildId}, attachmentCount={attachments.Count})");
+        }
+
         if (guild == null) return;
-        foreach (var channel in targetChannels)
+
+        // do non-fallback events first, and skip fallback event if non-fallback events ran successfully
+        var nonFallbackSent = false;
+        foreach (var channel in targetChannels.OrderBy(e => e.Event == ServerLogEvent.Fallback ? 1 : 0))
         {
             try
             {
-                await ProcessForModel(channel);
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex, $"Failed to send event {@event} to channel {channel.ChannelId} in guild \"{guild.Name}\" ({guild.Id})");
-            }
-        }
-        async Task ProcessForModel(ServerLogChannelModel channelModel)
-        {
-            var logChannel = guild.GetTextChannel(channelModel.GetChannelId());
-            if (logChannel == null) return;
-            
-            await ExceptionHelper.RetryOnTimedOut(async () =>
-            {
-                await ProcessForModelInner(logChannel);
-            });
-        }
-        async Task ProcessForModelInner(SocketTextChannel logChannel)
-        {
-            try
-            {
-                if (attachments == null || attachments.Count < 1)
+                if (channel.Event == ServerLogEvent.Fallback && nonFallbackSent)
                 {
-                    await logChannel.SendMessageAsync(embeds: embeds.Select(e => e.Build()).ToArray());
-                    return;
+                    _log.Trace($"Non-fallback event(s) successfully ran. Skipping fallback channels. (GuildId={guildId}, ChannelEvent={channel.Event}, Event={@event})");
+                    continue;
                 }
 
-                await logChannel.SendFilesAsync(attachments, embeds: embeds.Select(e => e.Build()).ToArray());
+                var channelResult = await ProcessForModel(channel);
+                if (channel.Event != ServerLogEvent.Fallback)
+                {
+                    nonFallbackSent |= channelResult;
+                }
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("Missing Access") || ex.Message.Contains("50001") || ex.Message.Contains("50013"))
-                {
-                    try
-                    {
-                        await guild.Owner.SendMessageAsync(
-                            string.Join(
-                                "\n",
-                                "Heya!", "",
-                                $"Xenia does not have access to send log events in a channel in the server `{guild.Name}`, which you own.",
-                                "",
-                                "In order for the logging feature to work, make sure that Xenia has access to the following permissions.",
-                                "- View Channel",
-                                "- Send Messages",
-                                "- Embed Links",
-                                "", $"Channel affected: https://discord.com/channels/{guild.Id}/{logChannel.Id}"
-                            ));
-                    }
-                    catch (Exception exx)
-                    {
-                        _log.Error(exx, $"Failed to DM owner of guild \"{guild.Name}\" ({guild.Id}), {guild.Owner.Username} ({guild.OwnerId}) about not having the correct permissions in channel \"{logChannel.Name}\" ({logChannel.Id})");
-                    }
-                }
-                else
-                {
-                    throw;
-                }
+                _log.Error(ex, $"Failed to send event (GuildId={guildId}, ChannelEvent={channel.Event}, Event={@event})");
             }
         }
+        async Task<bool> ProcessForModel(ServerLogChannelModel channelModel)
+        {
+            var logChannel = await ExceptionHelper.RetryOnTimedOut(async () => guild.GetTextChannel(channelModel.GetChannelId()));
+            if (logChannel == null) return false;
+            
+            return await ExceptionHelper.RetryOnTimedOut(async () => await EventHandleProcessInner(logChannel, @event, embeds, attachments));
+        }
     }
+    private async Task<bool> EventHandleProcessInner(SocketTextChannel channel, ServerLogEvent @event, EmbedBuilder[] embeds, List<FileAttachment>? attachments = null)
+    {
+        var guild = channel.Guild;
+        try
+        {
+            if (attachments == null || attachments.Count < 1)
+            {
+                await channel.SendMessageAsync(embeds: [.. embeds.Select(e => e.Build())]);
+                return true;
+            }
+
+            var attachmentList = attachments.Count > 10
+                ? attachments.Take(10) : attachments;
+            if (attachments.Count > 10)
+            {
+                _log.Warn($"More than 10 attachments defined when handling event {@event} in channel \"{channel.Name}\" in guild \"{guild.Name}\" (guildId={guild.Id}, channelId={channel.Id})");
+            }
+
+            await channel.SendFilesAsync(attachmentList, embeds: [.. embeds.Select(e => e.Build())]);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, $"Failed to send message in channel \"{channel.Name}\" in guild \"{guild.Name}\" (guildId={guild.Id}, channelId={channel.Id})");
+
+            if (ex.Message.Contains("Missing Access") || ex.Message.Contains("50001") || ex.Message.Contains("50013"))
+            {
+                try
+                {
+                    // make sure that formatting doesn't break
+                    var guildNameEscaped = guild.Name.Replace("`", "").PadRight(1, ' ');
+                    var channelName = channel.Name.Replace("`", "'").PadRight(1, ' ');
+
+                    var channelUrl = $"https://discord.com/channels/{guild.Id}/{channel.Id}";
+                    var channelNameInfo = $"It's the channel called `{channelName}`";
+                    if (channel.Category != null)
+                    {
+                        var categoryNameFormatted = channel.Category.Name.Replace("`", "'");
+                        channelNameInfo += $" in the category `{categoryNameFormatted}`";
+                    }
+                    await guild.Owner.SendMessageAsync(
+                        string.Join(
+                            "\n",
+                            "Heya!",
+                            "",
+                            $"Xenia does not have access to send log events in a channel in the server {guildNameEscaped}, which you own.",
+                            "",
+                            "In order for the logging feature to work, make sure that Xenia has access to the following permissions.",
+                            "- View Channel",
+                            "- Send Messages",
+                            "- Embed Links",
+                            "- Attach Files",
+                            "",
+                            $"Channel affected: {channelUrl}",
+                            $"-# {channelNameInfo}"
+                        ));
+                }
+                catch (Exception exx)
+                {
+                    _log.Error(exx, $"Failed to DM owner \"{guild.Owner.Username}\" of guild \"{guild.Name}\" about not having the correct permissions in channel \"{channel.Name}\" (guildId={guild.Id}, ownerId={guild.OwnerId}, channelId={channel.Id})");
+                }
+            }
+            else
+            {
+                throw;
+            }
+            return false;
+        }
+    }
+    #endregion
 
     #region User Events
     private async Task Event_UserJoined(SocketGuildUser user)
