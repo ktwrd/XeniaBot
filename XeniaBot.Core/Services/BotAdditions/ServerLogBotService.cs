@@ -438,24 +438,22 @@ public class ServerLogBotService : BaseService
     {
         try
         {
-            var username = user.Username.Replace("`", "'");
-            if (user.DiscriminatorValue > 0) username += $"#{user.Discriminator}";
+            var username = user.FormatUsername().Replace("`", "'");
+
+            var userCreatedAtSeconds = user.CreatedAt.ToUnixTimeSeconds();
+            var accountAgeText = $"<t:{userCreatedAtSeconds}:R>\n<t:{userCreatedAtSeconds}:F>";
+
             var embed = new EmbedBuilder()
                 .WithTitle("User Joined")
                 .WithDescription(string.Join("\n",
                     user.Mention,
                     "```",
-                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Display Name: {(user.GlobalName ?? user.FormatUsername()).Replace("`", "'")}",
                     $"Username: {username}",
                     $"ID: {user.Id}",
                     "```"
                 ))
-                .AddField(
-                    "Account Age",
-                    string.Join("\n",
-                            TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                            $"`{user.CreatedAt}`"
-                    ))
+                .AddField("Account Age", accountAgeText)
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithCurrentTimestamp()
                 .WithColor(Color.Green);
@@ -488,19 +486,18 @@ public class ServerLogBotService : BaseService
             var description = string.Join("\n",
                 $"<@{user.Id}>",
                 "```",
-                $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                $"Display Name: {(user.GlobalName ?? user.FormatUsername()).Replace("`", "'")}",
                 $"Username: {userSafe}",
                 $"ID: {user.Id}",
                 "```");
-            var userCreatedAt = user.CreatedAt.UtcDateTime.ToString("yyyy/MM/dd HH:mm:ss");
-            var accountAge = string.Join("\n",
-                TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                $"`{userCreatedAt}`");
+            
+            var userCreatedAtSeconds = user.CreatedAt.ToUnixTimeSeconds();
+            var accountAgeText = $"<t:{userCreatedAtSeconds}:R>\n<t:{userCreatedAtSeconds}:F>";
 
             var embed = new EmbedBuilder()
-                .WithTitle("User Left")
+                .WithTitle($"User Left - {user.FormatUsername()}")
                 .WithDescription(description)
-                .AddField("Account Age", accountAge)
+                .AddField("Account Age", accountAgeText)
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithCurrentTimestamp()
                 .WithColor(Color.Red);
@@ -529,20 +526,19 @@ public class ServerLogBotService : BaseService
         {
             var userSafe = user.FormatUsername().Replace("`", "'");
             var banDetails = await guild.GetBanAsync(user.Id);
+            var userCreatedAtSeconds = user.CreatedAt.ToUnixTimeSeconds();
+            var accountAgeText = $"<t:{userCreatedAtSeconds}:R>\n<t:{userCreatedAtSeconds}:F>";
             var embed = new EmbedBuilder()
-                .WithTitle("User Banned")
+                .WithTitle($"User Banned - {user.FormatUsername()}")
                 .WithDescription(string.Join("\n",
                     user.Mention,
                     "```",
-                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Display Name: {(user.GlobalName ?? userSafe).Replace("`", "'")}",
                     $"Username: {userSafe}",
                     $"ID: {user.Id}",
                     "```"
                 ))
-                .AddField("Account Age", string.Join("\n",
-                    TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                    $"`{user.CreatedAt}`"
-                ))
+                .AddField("Account Age", accountAgeText)
                 .WithCurrentTimestamp()
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
@@ -574,19 +570,18 @@ public class ServerLogBotService : BaseService
         try
         {
             var userSafe = user.FormatUsername().Replace("`", "'");
+            var userCreatedAtSeconds = user.CreatedAt.ToUnixTimeSeconds();
+            var accountAgeText = $"<t:{userCreatedAtSeconds}:R>\n<t:{userCreatedAtSeconds}:F>";
             var embed = new EmbedBuilder()
-                .WithTitle("User Unbanned")
+                .WithTitle($"User Unbanned - {user.FormatUsername()}")
                 .WithDescription($"<@{user.Id}>" + string.Join("\n",
                     "```",
-                    $"Display Name: {user.GlobalName.Replace("`", "'")}",
+                    $"Display Name: {(user.GlobalName ?? userSafe).Replace("`", "'")}",
                     $"Username: {userSafe}",
                     $"ID: {user.Id}",
                     "```"
                 ))
-                .AddField("Account Age", string.Join("\n",
-                    TimeHelper.SinceTimestamp(user.CreatedAt.ToUnixTimeMilliseconds()),
-                    $"`{user.CreatedAt}`"
-                ))
+                .AddField("Account Age", accountAgeText)
                 .WithThumbnailUrl(user.GetAvatarUrl())
                 .WithColor(Color.Red);
 
@@ -731,21 +726,21 @@ public class ServerLogBotService : BaseService
             if (author == null) return;
 
             var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
-
+            var username = author.FormatUsername().Replace('`', '\'').PadRight(1, ' ');
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Edited")
                 .WithDescription(string.Join("\n",
-                    $"From: `{author.Username}#{author.Discriminator}`",
-                    $"ID: `{current.AuthorId}`"))
+                    $"User {author.Mention} (`{username}`, {current.AuthorId}) edited message <t:{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}:R>"))
                 .WithColor(new Color(255, 255, 255))
                 .WithUrl($"https://discord.com/channels/{current.GuildId}/{current.ChannelId}/{current.Snowflake}")
+                .WithCurrentTimestamp()
                 .WithThumbnailUrl(author.GetAvatarUrl());
 
             var attachments = new Dictionary<string, string>();
             if (diffContent.Contains('`') || diffContent.Length >= 1000)
             {
-                embed.AddField("Difference", "Attached as `diff.txt`");
-                attachments.Add("diff.txt", diffContent);
+                embed.AddField("Difference", "> Attached as `message.diff`");
+                attachments.Add("message.diff", diffContent);
             }
             else
             {
