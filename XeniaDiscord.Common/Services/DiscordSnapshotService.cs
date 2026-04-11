@@ -69,7 +69,7 @@ public class DiscordSnapshotService : BaseService
         {
             try
             {
-                ProcessGuildMember(member).GetAwaiter().GetResult();
+                ProcessGuildMember(member, GuildMemberSnapshotSource.MemberJoin).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -87,7 +87,7 @@ public class DiscordSnapshotService : BaseService
         {
             try
             {
-                ProcessGuildMember(member).GetAwaiter().GetResult();
+                ProcessGuildMember(member, GuildMemberSnapshotSource.MemberUpdate).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -147,7 +147,7 @@ public class DiscordSnapshotService : BaseService
         }
     }
 
-    private async Task ProcessGuildMember(SocketGuildUser socketMemberAfter)
+    private async Task ProcessGuildMember(SocketGuildUser socketMemberAfter, GuildMemberSnapshotSource source)
     {
         var userIdStr = socketMemberAfter.Id.ToString();
         var guildIdStr = socketMemberAfter.Guild.Id.ToString();
@@ -175,6 +175,7 @@ public class DiscordSnapshotService : BaseService
         try
         {
             model = _guildMemberMapper.Map(socketMemberAfter);
+            model.SnapshotSource = source;
         }
         catch (Exception ex)
         {
@@ -189,6 +190,7 @@ public class DiscordSnapshotService : BaseService
         try
         {
             await db.AddAsync(model);
+
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }

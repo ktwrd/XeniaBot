@@ -181,6 +181,8 @@ public class ServerLogService : BaseService
         GuildMemberSnapshotModel? before,
         GuildMemberSnapshotModel model)
     {
+        if (model.SnapshotSource != GuildMemberSnapshotSource.MemberUpdate) return;
+
         var guildIdStr = model.GuildId;
         if (before == null)
         {

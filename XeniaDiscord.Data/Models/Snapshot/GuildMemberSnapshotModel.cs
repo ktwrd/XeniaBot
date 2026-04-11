@@ -18,6 +18,8 @@ public class GuildMemberSnapshotModel : IGuildMemberSnapshot
     public Guid RecordId { get; set; }
     /// <inheritdoc/>
     public DateTime RecordCreatedAt { get; set; }
+    /// <inheritdoc/>
+    public GuildMemberSnapshotSource SnapshotSource { get; set;  }
 
     /// <inheritdoc/>
     [MaxLength(DbGlobals.ulongMaxLength)]
@@ -90,6 +92,8 @@ public class GuildMemberSnapshotModel : IGuildMemberSnapshot
 
 public interface IGuildMemberSnapshot : ISnapshot
 {
+    public GuildMemberSnapshotSource SnapshotSource { get; }
+
     /// <summary>
     /// User Id (ulong as string)
     /// </summary>
@@ -180,3 +184,11 @@ public interface IGuildMemberSnapshot : ISnapshot
     public ulong? GetVoiceChannelId();
 }
 
+public enum GuildMemberSnapshotSource
+{
+    Unknown = 0,
+    MemberJoin = 10,
+    MemberUpdate = 11,
+
+    RoleDelete = 20,
+}
