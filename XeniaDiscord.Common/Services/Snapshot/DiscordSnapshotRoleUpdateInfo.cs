@@ -56,22 +56,22 @@ public class DiscordSnapshotRoleUpdateInfo
             if (SnapshotBefore.IsMentionable &&
                 !Snapshot.IsMentionable)
             {
-                info.Add("Role is **not** mentionable anymore");
+                info.Add("Role is **not** mentionable anymore.");
             }
             else if (!SnapshotBefore.IsMentionable &&
                 Snapshot.IsMentionable)
             {
-                info.Add("Role is now mentionable");
+                info.Add("Role is now mentionable.");
             }
             if (SnapshotBefore.IsHoisted &&
                 !Snapshot.IsHoisted)
             {
-                info.Add("Role is **not** pinned anymore");
+                info.Add("Role is **not** pinned anymore.");
             }
             else if (!SnapshotBefore.IsHoisted &&
                 Snapshot.IsHoisted)
             {
-                info.Add("Role is now pinned");
+                info.Add("Role is now pinned.");
             }
         }
         if (info.Count < 1) return embed;

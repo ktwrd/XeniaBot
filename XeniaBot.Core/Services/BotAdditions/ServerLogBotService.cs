@@ -35,6 +35,7 @@ public class ServerLogBotService : BaseService
     private readonly ErrorReportService _errorService;
     private readonly XeniaDbContext _db;
     private readonly ServerLogService _serverLogService;
+    private readonly DiscordAuditLogService _auditLogService;
     public ServerLogBotService(IServiceProvider services)
         : base(services)
     {
@@ -43,6 +44,7 @@ public class ServerLogBotService : BaseService
         _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
         _errorService = services.GetRequiredService<ErrorReportService>();
         _serverLogService = services.GetRequiredService<ServerLogService>();
+        _auditLogService = services.GetRequiredService<DiscordAuditLogService>();
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
 
         var details = services.GetRequiredService<ProgramDetails>();
@@ -159,11 +161,11 @@ public class ServerLogBotService : BaseService
             }
             if (targetEvent.HasValue)
             {
-                    await _serverLogService.EventHandle(
-                        model.GetGuildId(),
+                await _serverLogService.EventHandle(
+                    model.GetGuildId(),
                     targetEvent.Value,
-                        [embed],
-                        attachments);
+                    [embed],
+                    attachments);
             }
         }
         catch (Exception ex)
@@ -481,6 +483,28 @@ public class ServerLogBotService : BaseService
         if (user == null || guild == null) return;
         try
         {
+            // check if this user was kicked. if they were, then we call DiscordOnUserKickThread
+            var kickAuditEvent = await _auditLogService.GetLatestKickEvent(guild.Id, user.Id, TimeSpan.FromSeconds(15));
+            if (kickAuditEvent.IsSuccess && kickAuditEvent.Value == null)
+            {
+                await Task.Delay(2000);
+                kickAuditEvent = await _auditLogService.GetLatestKickEvent(guild.Id, user.Id, TimeSpan.FromSeconds(15));
+            }
+            if (kickAuditEvent.IsSuccess && kickAuditEvent.Value != null)
+            {
+                if (await DiscordOnUserKickThread(guild, user, kickAuditEvent.Value)) return;
+            }
+            else if (kickAuditEvent.IsFailure)
+            {
+                _log.Error($"Failed to get kick audit info: {kickAuditEvent.Error} (username={user.FormatUsername()}, userId={user.Id}, guildId={guild.Id})");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, $"Failed to call {nameof(DiscordOnUserKickThread)}");
+        }
+        try
+        {
             var userSafe = user.FormatUsername().Replace("`", "'");
 
             var description = string.Join("\n",
@@ -513,6 +537,44 @@ public class ServerLogBotService : BaseService
                 .WithNotes(msg)
                 .WithUser(user)
                 .WithGuild(guild));
+        }
+    }
+    private async Task<bool> DiscordOnUserKickThread(SocketGuild guild, SocketUser user, IAuditLogEntry auditLogEntry)
+    {
+        if (guild == null || user == null || auditLogEntry == null) return false;
+        try
+        {
+            var userSafe = user.FormatUsername().Replace("`", "'");
+
+            var description = string.Join("\n",
+                "```",
+                $"Display Name: {(user.GlobalName ?? user.FormatUsername()).Replace("`", "'")}",
+                $"Username: {userSafe}",
+                $"ID: {user.Id}",
+                "```");
+
+            var embed = new EmbedBuilder()
+                .WithTitle($"User Kicked - {user.FormatUsername()}")
+                .WithDescription($"User <@{user.Id}> was kicked by <@{auditLogEntry.User.Id}> <t:{auditLogEntry.CreatedAt.ToUnixTimeSeconds()}:R>")
+                .AddField("Kicked User Details", description)
+                .WithThumbnailUrl(user.GetAvatarUrl())
+                .WithCurrentTimestamp()
+                .WithColor(Color.Orange);
+            if (!string.IsNullOrEmpty(auditLogEntry.Reason)) embed.AddField("Reason", auditLogEntry.Reason);
+
+            await _serverLogService.EventHandle(guild.Id, ServerLogEvent.MemberKick, embed);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to run {nameof(DiscordOnUserKickThread)} for user \"{user.FormatUsername()}\" in guild \"{guild.Name}\" (guildId={guild.Id}, userId={user.Id})";
+            await _errorService.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithUser(user)
+                .WithGuild(guild)
+                .AddSerializedAttachment("auditLogEntry.json", auditLogEntry));
+            return false;
         }
     }
     private async Task DiscordOnUserBannedThread(DiscordGuildUserPair options)
