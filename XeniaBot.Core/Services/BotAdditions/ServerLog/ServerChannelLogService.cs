@@ -40,8 +40,8 @@ public class ServerChannelLogService : BaseService
 
     private async void _discordCache_ChannelChange(CacheChangeType changeType, CacheGuildChannelModel current, CacheGuildChannelModel? previous)
     {
-        if (changeType != CacheChangeType.Update)
-            return;
+        if (changeType != CacheChangeType.Update) return;
+
         if (current.Name != previous?.Name)
         {
             string previousName = previous?.Name ?? "<null>";
@@ -190,19 +190,23 @@ public class ServerChannelLogService : BaseService
     
     private async Task _discord_ChannelDestroyed(SocketChannel channel)
     {
-        if (!(channel is SocketGuildChannel guildChannel))
-            return;
+        if (channel is not SocketGuildChannel guildChannel) return;
         var embed = new EmbedBuilder()
             .WithTitle("Channel Deleted")
             .WithDescription($"<#{channel.Id}> {guildChannel.Name}")
+            .WithCurrentTimestamp()
+            .WithFooter($"Channel ID: {channel.Id}")
             .WithColor(Color.Red);
+        if (guildChannel is SocketTextChannel textChannel && textChannel.Category != null)
+        {
+            embed.Description += $"\nParent Category: <#{textChannel.CategoryId}>";
+        }
         await _serverLog.EventHandle(guildChannel.Guild.Id, ServerLogEvent.ChannelEdit, embed);
     }
 
     private async Task _discord_ChannelCreated(SocketChannel channel)
     {
-        if (!(channel is SocketGuildChannel guildChannel))
-            return;
+        if (channel is not SocketGuildChannel guildChannel) return;
         var embed = new EmbedBuilder()
             .WithTitle("Channel Created")
             .WithDescription($"<#{channel.Id}>\nName: `{guildChannel.Name}`")
@@ -221,8 +225,7 @@ public class ServerChannelLogService : BaseService
         SocketVoiceState current)
     {
         // Ignore non-guild users
-        if (!(user is SocketGuildUser guildUser))
-            return;
+        if (user is not SocketGuildUser guildUser) return;
         
         var changeList = new List<string>();
         if (previous.IsStreaming != current.IsStreaming)
