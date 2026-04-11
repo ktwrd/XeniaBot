@@ -13,12 +13,13 @@ public static class XeniaDiscordCommon
         IServiceCollection services,
         bool includeAsSingleton)
     {
-        services.AddSingleton<BanSyncService>()
-                .AddSingleton<ValidationService>()
+        services.AddSingleton<ApplicationEmoteService>()
+                .AddSingleton<BanSyncService>()
+                .AddSingleton<DiscordAuditLogService>()
                 .AddSingleton<DiscordStatisticsService>()
                 .AddSingleton<DiscordCacheEventHandler>()
-                .AddSingleton<ApplicationEmoteService>()
                 .AddSingleton<ServerLogService>()
+                .AddSingleton<ValidationService>()
                 .AddSingleton<IXeniaOnReady, ApplicationEmoteService>(svc => svc.GetRequiredService<ApplicationEmoteService>());
 
         RegisterMappers(services);
