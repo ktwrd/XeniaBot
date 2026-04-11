@@ -18,6 +18,7 @@ public static class XeniaDiscordCommon
                 .AddSingleton<DiscordStatisticsService>()
                 .AddSingleton<DiscordCacheEventHandler>()
                 .AddSingleton<ApplicationEmoteService>()
+                .AddSingleton<ServerLogService>()
                 .AddSingleton<IXeniaOnReady, ApplicationEmoteService>(svc => svc.GetRequiredService<ApplicationEmoteService>());
 
         RegisterMappers(services);
