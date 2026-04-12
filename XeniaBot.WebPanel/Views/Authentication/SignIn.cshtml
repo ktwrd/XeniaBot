@@ -3,7 +3,7 @@
 @model Microsoft.AspNetCore.Authentication.AuthenticationScheme[]
 
 <h1>Authentication</h1>
-<p class="lead text-left">Sign in using one of these external providers:</p>
+<p class="lead text-start">Sign in using one of these external providers:</p>
 
 @foreach (var scheme in Model!.OrderBy(p => p.DisplayName))
 {

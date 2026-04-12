@@ -11,13 +11,9 @@ else
 <hr/>
 @foreach (var channel in Model.Channels.OrderBy(v => v.Position))
 {
-    bool contains = false;
-    foreach (var category in Model.Categories)
-    {
-        if (category.ChannelIds.Contains(channel.Id))
-            contains = true;
-    }
-    if (contains == false)
+    var relatedToCategory = Model.Categories.Any(category => category.Id == channel.Id || category.ChannelIds.Contains(channel.Id));
+    
+    if (!relatedToCategory)
     {
         @if (@channel.Id == Model.SelectedChannelId)
         {

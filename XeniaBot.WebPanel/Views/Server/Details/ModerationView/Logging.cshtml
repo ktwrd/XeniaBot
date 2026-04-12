@@ -98,20 +98,22 @@
                 <hr/>
                 <div class="d-flex flex-row flex-wrap mb-3" id="server-log-channel-add">
                     <div class="form-group m-2">
-                        <label for="server-log-select-event">Event</label>
-                        <select id="server-log-select-event" class="form-control">
-
+                        <label class="form-label" for="server-log-select-event">Event</label>
+                        <select id="server-log-select-event" class="form-control" aria-describedby="server-log-select-event-help">
                         </select>
-                        <small id="server-log-select-event-help" class="form-text text-muted">Select an event that should be sent to a channel.</small>
+                        <small id="server-log-select-event-help" class="form-text text-muted">
+                            Select an event that should be sent to a channel.
+                        </small>
                     </div>
                     <div class="form-group m-2">
-                        <label for="server-log-select-channel">Channel</label>
-                        <select id="server-log-select-channel" class="form-control">
+                        <label class="form-label" for="server-log-select-channel">Channel</label>
+                        <select id="server-log-select-channel" class="form-control" aria-describedby="server-log-select-channel-help">
 
                         </select>
                         <small id="server-log-select-channel-help" class="form-text text-muted">
                             Channel that the selected event should be used with.<br/>
-                            More than one event can be used per channel, and more than one channel can have the same event.</small>
+                            More than one event can be used per channel, and more than one channel can have the same event.
+                        </small>
                     </div>
                     <div class="form-group" style="margin-top: 2.5rem;">
                         <button class="btn btn-primary" xenia-action="add" type="button">Add</button>

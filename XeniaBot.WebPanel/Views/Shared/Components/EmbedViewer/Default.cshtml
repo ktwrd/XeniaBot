@@ -3,13 +3,13 @@
 
 @if (@Model.ShowExportButton)
 {
-    <input type="button" value="Export" id="export-embed" discord-embed-group-id="@Model.Id" class="btn btn-primary my-1 mr-3" style="display: inline" />
+    <input type="button" value="Export" id="export-embed" discord-embed-group-id="@Model.Id" class="btn btn-primary my-1 me-3" style="display: inline" />
 }
 @if (@Model.ShowImportButton)
 {
     <div style="display: inline">
         <input type="file" id="import-embed-ghost" discord-embed-group-id="@Model.Id" class="display-none" />
-        <input type="button" value="Import" id="import-embed" discord-embed-group-id="@Model.Id" class="btn btn-primary my-1 mr-3 d-inline" style="display: inline" />
+        <input type="button" value="Import" id="import-embed" discord-embed-group-id="@Model.Id" class="btn btn-primary my-1 me-3 d-inline" style="display: inline" />
     </div>
 }
 

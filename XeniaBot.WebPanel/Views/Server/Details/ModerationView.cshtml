@@ -36,7 +36,11 @@ new List<BreadcrumbItem>()
                  hx-trigger="load"
                  hx-target="this"
                  hx-indicator=".htmx-indicator">
-                <center><span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span></center>
+                <center>
+                    <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true">
+                        <span class="visually-hidden">Loading...</span>
+                    </span>
+                </center>
             </div>
         </div>
     </div>

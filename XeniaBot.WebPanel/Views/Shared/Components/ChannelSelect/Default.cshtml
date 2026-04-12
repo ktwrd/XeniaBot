@@ -1,10 +1,8 @@
 ﻿@model XeniaBot.WebPanel.Models.ChannelSelectModel
 @using Discord.WebSocket
 <div class="input-group mb-3">
-    <div class="input-group-prepend">
-        <span class="input-group-text" id="@Model.Id" style="width: 12rem;">@Model.DisplayName</span>
-    </div>
-    <select class="custom-select" name="@Model.Name" id="@Model.Id" form="@Model.ParentFormId">
+    <span class="input-group-text" id="@(Model.Id)-label" style="width: 12rem;">@Model.DisplayName</span>
+    <select class="form-select" name="@Model.Name" id="@Model.Id" aria-describedby="@(Model.Id)-label" form="@Model.ParentFormId">
         @await Component.InvokeAsync("ChannelSelectRaw", @Model);
     </select>
 </div>

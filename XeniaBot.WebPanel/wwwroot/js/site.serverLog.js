@@ -17,6 +17,12 @@ const serverLogEvents = [
     'MemberRoleAdded',
     'MemberRoleRemoved',
     'MemberRoleUpdated',
+    'MemberPermissionsUpdated',
+    'MemberUpdated',
+
+    'RoleCreate',
+    'RoleEdit',
+    'RoleDelete'
 ];
 
 /**
