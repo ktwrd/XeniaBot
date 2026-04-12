@@ -25,29 +25,29 @@ public class FormSelectViewModel
     /// </summary>
     /// <example>
     /// With the following options
-    /// ```csharp
+    /// <code>
     /// new FormSelectViewModel()
     /// {
     ///     ParentFormId = "test_form",
     ///     Name = "test",
     ///     Id = "test_select",
     ///     Label = "Example",
-    ///     Data = new List&lt;object, string>()
+    ///     Data = new List&lt;object, string&gt;()
     ///     {
     ///         (1, "Hello")
     ///     },
     ///     Selected = null
     /// };
-    /// ```
+    /// </code>
     /// would result in the following HTML being generated
-    /// ```html
-    /// &lt;label for="test_select">Example&lt;/label>
-    /// &lt;select class="custom-select" form="test_form" name="test" id="test_select">
-    ///     &lt;option value="1">Hello&lt;/option>
-    /// &lt;/select>
-    /// ```
+    /// <code>
+    /// &lt;label for="test_select"&gt;Example&lt;/label&gt;
+    /// &lt;select class="form-select" form="test_form" name="test" id="test_select"&gt;
+    ///     &lt;option value="1"&gt;Hello&lt;/option&gt;
+    /// &lt;/select&gt;
+    /// </code>
     /// </example>
-    public List<(object, string)> Data { get; set; }
+    public List<(object, string)> Data { get; set; } = [];
     /// <summary>
     /// Value of the selected option element.
     /// </summary>

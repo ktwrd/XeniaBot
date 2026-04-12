@@ -25,7 +25,9 @@
                         hx-indicator="#level-reward-content button.btn-danger[data-id=_@item.RoleId] .htmx-indicator">
                         <input type="text" name="roleId" value="@item.RoleId" class="display-none" />
                         <button class="btn btn-danger btn-sm" type="submit" data-id="_@item.RoleId">
-                            <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true">
+                                    <span class="visually-hidden">Loading...</span>
+                            </span>
                             Delete
                         </button>
                     </form>
@@ -61,7 +63,9 @@
             Value = ""
         })
         <button type="submit" class="btn btn-success">
-            <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true">
+                <span class="visually-hidden">Loading...</span>
+            </span>
             Add
         </button>
     </form>

@@ -28,18 +28,22 @@
                Id = "confession_settings_channel_modal",
                DisplayName = "Modal Channel"
            })
-    <a class="btn btn-danger mr-2"
+    <a class="btn btn-danger me-2"
        href="#"
        id="purge"
        hx-post="/Admin/Server/@Model.Guild.Id/Settings/Confession/Purge"
        hx-target="#confession-body"
        hx-swap="innerHTML"
        hx-indicator="#confession-body #purge .htmx-indicator">
-        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true">
+            <span class="visually-hidden">Loading...</span>
+        </span>
         Purge
     </a>
     <button type="submit" class="btn btn-success">
-        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span class="spinner-border htmx-indicator spinner-border-sm" role="status" aria-hidden="true">
+            <span class="visually-hidden">Loading...</span>
+        </span>
         Save
     </button>
 </form>

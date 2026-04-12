@@ -96,20 +96,19 @@ const xeniaDiscord = {
         }
         
         const title = document.createElement('strong');
-        title.className = 'mr-auto';
+        title.className = 'me-auto';
         if (typeof options.title === 'string' && options.title.length > 0) {
             title.innerText = options.title;
         }
         header.appendChild(title);
 
         // <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        // <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        // <button type="button" class="ms-2 mb-1 close" data-dismiss="toast" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         const closeButton = document.createElement('button');
         closeButton.type = 'button';
         closeButton.className = 'btn-close';
-        closeButton.setAttribute('data-dismiss', 'toast');
+        closeButton.setAttribute('data-bs-dismiss', 'toast');
         closeButton.setAttribute('aria-label', 'Close');
-        closeButton.innerHTML = '<span aria-hidden="true">&times;</span>';
         header.appendChild(closeButton);
 
         div.appendChild(header);
@@ -143,7 +142,7 @@ const xeniaDiscord = {
             } else if (typeof options.autohide === 'boolean') {
                 autohide = options.autohide === true;
             } else if (typeof options.autohide === 'number') {
-                autohide = options.autohide >= 1.0;
+                autohide = options.autohide >= 1;
             } else if (typeof options.autohide === 'bigint') {
                 autohide = options.autohide >= BigInt('1');
             }

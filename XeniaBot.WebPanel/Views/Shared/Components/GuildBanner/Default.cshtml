@@ -5,17 +5,25 @@
 {
     <div role="enable-breadcrumb">
         <div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark guildBanner">
-            <img class="me-3 rounded-circle mr-3" src="@(Model.Guild.IconUrl)" alt="" width="48" height="48">
+            <img class="me-3 rounded-circle" src="@(Model.Guild.IconUrl)" alt="" width="48" height="48">
             <div class="lh-1">
                 <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
                 <small>@Model.Guild.MemberCount members</small>
             </div>
         </div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb rounded shadow-sm bg-dark">
-                @foreach (var item in @Model.Parameters.Breadcrumbs)
+        <nav style="--bs-breadcrumb-divider: '/';" aria-label="breadcrumb">
+            <ol class="breadcrumb rounded shadow-sm bg-dark text-light px-3 pb-3">
+                @foreach (var (index, item) in @Model.Parameters.Breadcrumbs.Index())
                 {
-                    <li class="breadcrumb-item">
+                    var isLast = index == @Model.Parameters.Breadcrumbs.Count - 1;
+                    var itemClass = "breadcrumb-item";
+                    if (isLast) itemClass += " active";
+                    <li class="@itemClass" @{
+                        if (isLast)
+                        {
+                            <text>aria-current="page"</text>
+                        }
+                    }>
                         @if (item.Href != null)
                         {
                             <a href="@item.Href">@item.Name</a>
@@ -51,7 +59,7 @@
 else
 {
     <div class="d-flex flex-row align-items-center p-3 text-white rounded shadow-sm bg-dark guildBanner">
-        <img class="me-3 rounded-circle mr-3" src="@(Model.Guild.IconUrl)" alt="" width="48" height="48">
+        <img class="me-3 rounded-circle" src="@(Model.Guild.IconUrl)" alt="" width="48" height="48">
         <div class="lh-1">
             <h1 class="h6 mb-0 text-white lh-1">@Model.Guild.Name</h1>
             <small>@Model.Guild.MemberCount members</small>

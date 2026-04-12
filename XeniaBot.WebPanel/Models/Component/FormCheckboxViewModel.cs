@@ -1,10 +1,12 @@
-﻿namespace XeniaBot.WebPanel.Models;
+﻿using System;
+
+namespace XeniaBot.WebPanel.Models;
 
 public class FormCheckboxViewModel
 {
-    public string ParentFormId { get; set; }
+    public string? ParentFormId { get; set; }
     public string Name { get; set; }
-    public string Id { get; set; }
+    public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Label { get; set; }
     public bool State { get; set; }
     public string? ExtraClasses { get; set; }
@@ -12,12 +14,12 @@ public class FormCheckboxViewModel
     {
         get
         {
-            string s = "form-check";
+            var s = "form-check";
             if (Margin)
             {
                 s += " mb-3";
             }
-            if (string.IsNullOrEmpty(ExtraClasses) == false)
+            if (!string.IsNullOrEmpty(ExtraClasses?.Trim()))
             {
                 s += " " + ExtraClasses;
             }
