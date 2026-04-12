@@ -712,6 +712,11 @@ public class ServerLogBotService : BaseService
                 return;
             }
             var funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(m.Id);
+            if (funkyMessage == null)
+            {
+                await Task.Delay(2000);
+                funkyMessage = await _discordCache.CacheMessageConfig.GetLatest(m.Id);
+            }
 
             var messageContent = message?.Content ?? funkyMessage?.Content ?? "";
             var timestamp =
