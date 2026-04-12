@@ -736,6 +736,7 @@ public class ServerLogBotService : BaseService
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Deleted")
                 .WithDescription($"Deleted in <#{c.Id}> at <t:{timestamp}:F>" + (author == null ? "" : $" from <@{author.Id}> (`{author.Username}`)"))
+                .WithFooter("Message ID: " + m.Id)
                 .WithColor(Color.Orange);
             if (author != null) embed.WithThumbnailUrl(author.GetAvatarUrl());
 
