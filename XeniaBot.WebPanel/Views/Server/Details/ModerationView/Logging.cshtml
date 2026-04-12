@@ -71,6 +71,15 @@
 <form id="log_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_LogSystem" asp-route-id="@Model.Guild.Id">
     <div class="row">
         <div class="col">
+            <div class="form-check mb-3">
+                <input class="form-check-input" name="enable" type="checkbox" value="true" id="server_log_enable" checked="@Model.LogConfig.Enabled" />
+                <label class="form-check-label" for="server_log_enable">Enable</label>
+                <small id="server_log_enable_help" class="form-text text-muted">This will only enable/disable server log messages from being sent. Information used for server logging will still be stored.</small>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
             <div id="server-log-channel-config" xeniaDiscord-channelData="@channelDataBase64">
                 <input type="hidden" name="jsonData" value="@configDataBase64" />
                 <div id="server-log-channel-config-table">
