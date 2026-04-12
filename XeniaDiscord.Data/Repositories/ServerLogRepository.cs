@@ -32,8 +32,9 @@ public class ServerLogRepository
     public async Task<bool> IsEnabled(XeniaDbContext db, ulong guildId)
     {
         var guildIdStr = guildId.ToString();
-        return await db.ServerLogGuilds.FindAsync(guildIdStr) != null
-            && await db.ServerLogChannels.AnyAsync(e => e.GuildId == guildIdStr);
+        if (await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled)) return true;
+        var model = await db.ServerLogGuilds.FindAsync(guildIdStr);
+        return model?.Enabled != false;
     }
 
     public async Task<ServerLogGuildModel?> GetGuild(ulong guildId, GuildQueryOptions? options = null)

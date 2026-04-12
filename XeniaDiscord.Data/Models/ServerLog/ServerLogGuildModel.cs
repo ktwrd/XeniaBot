@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using XeniaDiscord.Data.Models.Cache;
 
@@ -10,7 +11,7 @@ public class ServerLogGuildModel
     public ServerLogGuildModel()
     {
         GuildId = "0";
-        Enabled = false;
+        Enabled = true;
 
         ServerLogChannels = [];
     }
@@ -27,10 +28,15 @@ public class ServerLogGuildModel
     /// </remarks>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string GuildId { get; set; }
-    
+
     /// <summary>
     /// Is server logging enabled for this guild?
     /// </summary>
+    /// <remarks>
+    /// This should not prevent snapshots/events from being captured.
+    /// This is only to prevent notifications from being sent in server logging channels.
+    /// </remarks>
+    [DefaultValue(true)]
     public bool Enabled { get; set; }
 
     /// <summary>
