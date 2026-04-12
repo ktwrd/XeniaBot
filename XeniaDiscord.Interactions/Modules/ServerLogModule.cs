@@ -1,16 +1,12 @@
 using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Repositories;
 
-namespace XeniaBot.Core.Modules;
+namespace XeniaDiscord.Interactions.Modules;
 
 [Group("log", "Configure Server Event Logging")]
 [RequireUserPermission(GuildPermission.ManageGuild)]
