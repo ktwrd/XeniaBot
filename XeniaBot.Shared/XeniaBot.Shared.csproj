@@ -17,6 +17,7 @@
     <PackageReference Include="DiffPlex" />
     <PackageReference Include="Discord.Net" />
     <PackageReference Include="FastCloner" />
+    <PackageReference Include="Humanizer" />
     <PackageReference Include="Iminetsoft.CronNET" />
     <PackageReference Include="kate.shared" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />

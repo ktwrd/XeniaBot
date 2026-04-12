@@ -16,6 +16,7 @@ public static class XeniaDiscordCommon
         services.AddSingleton<ApplicationEmoteService>()
                 .AddSingleton<BanSyncService>()
                 .AddSingleton<DiscordAuditLogService>()
+                .AddSingleton<DiscordBotListService>()
                 .AddSingleton<DiscordStatisticsService>()
                 .AddSingleton<DiscordCacheEventHandler>()
                 .AddSingleton<ServerLogService>()
