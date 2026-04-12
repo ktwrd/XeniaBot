@@ -35,7 +35,7 @@ public class ConfigData
     public string DiscordToken { get; set; }
     public string Prefix { get; set; }
     public ulong InviteClientId { get; set; }
-    public ulong InvitePermissions { get; set; }
+    public ulong InvitePermissions { get; set; } = 4504974285851845;
     /// <summary>
     /// Client ID for OAuth Web Panel
     /// </summary>
