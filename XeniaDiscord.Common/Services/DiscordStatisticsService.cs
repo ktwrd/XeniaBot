@@ -39,15 +39,6 @@ public sealed class DiscordStatisticsService : BaseService
 
         _prom = services.GetRequiredService<PrometheusService>();
         _db = services.GetRequiredScopedService<XeniaDbContext>(out _dbScope);
-
-        // Prometheus Events
-        _prom.ServerStart += InitializePrometheus;
-        _prom.ReloadMetrics += ReloadMetrics;
-        if (_details.Platform == XeniaPlatform.Bot)
-        {
-            _client.MessageReceived += OnMessageReceived;
-            _client.SlashCommandExecuted += OnSlashCommandExecuted;
-        }
         
         _statGuilds = _prom.CreateGauge(
             "xenia_discord_guild_count",
@@ -135,6 +126,15 @@ public sealed class DiscordStatisticsService : BaseService
             "xenia_discord_bansync_guilds",
             "BanSync Guild Snapshots",
             publish: false);
+
+        // Prometheus Events
+        _prom.ServerStart += InitializePrometheus;
+        _prom.ReloadMetrics += ReloadMetrics;
+        if (_details.Platform == XeniaPlatform.Bot)
+        {
+            _client.MessageReceived += OnMessageReceived;
+            _client.SlashCommandExecuted += OnSlashCommandExecuted;
+        }
     }
 
     public override async Task InitializeAsync()
@@ -173,22 +173,22 @@ public sealed class DiscordStatisticsService : BaseService
             {
                 try
                 {
-                    MetricCollectionThreadCallback().GetAwaiter().GetResult();
+                    MetricCollectionThread().GetAwaiter().GetResult();
                     break;
                 }
                 catch (Exception ex)
                 {
-                    _log.Warn(ex, $"Failed to call {nameof(MetricCollectionThreadCallback)}");
+                    _log.Warn(ex, $"Failed to call {nameof(MetricCollectionThread)}");
                     Task.Delay(500).Wait();
                 }
             }
             _collectionThreadExists = false;
         })
         {
-            Name = $"{nameof(DiscordStatisticsService)}.MetricCollectionThread"
+            Name = $"Xenia.{nameof(DiscordStatisticsService)}.{nameof(MetricCollectionThread)}"
         }.Start();
     }
-    private async Task MetricCollectionThreadCallback()
+    private async Task MetricCollectionThread()
     {
         int i = 1;
         while (true)

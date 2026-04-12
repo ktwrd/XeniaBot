@@ -2,6 +2,7 @@
 using NLog;
 using Prometheus;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 
@@ -13,13 +14,13 @@ public class PrometheusService : BaseService
     private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(PrometheusService));
     private readonly ConfigData _configData;
     private readonly ProgramDetails _details;
-    protected Prometheus.KestrelMetricServer? Server { get; private set; }
+    protected KestrelMetricServer? Server { get; private set; }
     public PrometheusService(IServiceProvider services)
         : base(services)
     {
         _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
-        Server = new Prometheus.KestrelMetricServer(
+        Server = new KestrelMetricServer(
         hostname: _configData.Prometheus.Hostname,
             port: _configData.Prometheus.Port,
              url: _configData.Prometheus.Url);
@@ -53,15 +54,34 @@ public class PrometheusService : BaseService
     /// </summary>
     public override Task InitializeAsync()
     {
+        new Thread(InitializeServerThread)
+        {
+            Name = $"Xenia.{nameof(PrometheusService)}.{nameof(InitializeServerThread)}"
+        }.Start();
+        return base.InitializeAsync();
+    }
+
+    private void InitializeServerThread()
+    {
         if (!_configData.Prometheus.Enable || _details.Platform == XeniaPlatform.WebPanel)
         {
-            Log.Debug("Prometheus Metrics is disabled");
-            return Task.CompletedTask;
+            Log.Debug("Prometheus Metrics are disabled");
+            return;
         }
-        Log.Debug($"Starting server");
-        Server?.Start();
-        OnServerStart();
-        return base.InitializeAsync();
+        Log.Debug("Starting server");
+        try
+        {
+            Server ??= new KestrelMetricServer(
+            hostname: _configData.Prometheus.Hostname,
+                port: _configData.Prometheus.Port,
+                 url: _configData.Prometheus.Url);
+            Server?.Start();
+            OnServerStart();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to start server!");
+        }
     }
 
 
