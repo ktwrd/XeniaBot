@@ -52,6 +52,67 @@ public class ServerLogModule : InteractionModuleBase
         }
     }
 
+    #region Enable/Disable
+    [SlashCommand("enable", "Enable server logging")]
+    [RegisterDBLCommand]
+    public async Task Enable()
+    {
+        await DeferAsync();
+        try
+        {
+            await _repo.Enable(Context.Guild.Id);
+            await FollowupAsync(embed: new EmbedBuilder()
+                .WithTitle("Server Log - Enable")
+                .WithDescription("Server logging has been enabled. Make sure that you setup your log events [via the dashboard](), or with the `/log` commands.")
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp()
+                .Build());
+        }
+        catch (Exception ex)
+        {
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes($"Failed to enable server logging in Guild \"{Context.Guild.Name}\" ({Context.Guild.Id})")
+                .WithContext(Context));
+            await FollowupAsync(embed: new EmbedBuilder()
+                .WithTitle("Failed to enable server logging")
+                .WithDescription($"Error has been reported ({ex.GetType().Namespace}.{ex.GetType().Name})")
+                .WithColor(Color.Red)
+                .Build());
+        }
+    }
+
+    [SlashCommand("disable", "Disable server logging")]
+    [RegisterDBLCommand]
+    public async Task Disable()
+    {
+        await DeferAsync();
+        try
+        {
+            await _repo.Disable(Context.Guild.Id);
+            await FollowupAsync(embed: new EmbedBuilder()
+                .WithTitle("Server Log - Disable")
+                .WithDescription("Server logging has been disabled.\nData will still be stored about your guild, Xenia just won't send any messages in relation to server logging.")
+                .WithColor(Color.Blue)
+                .WithCurrentTimestamp()
+                .Build());
+        }
+        catch (Exception ex)
+        {
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes($"Failed to disable server logging in Guild \"{Context.Guild.Name}\" ({Context.Guild.Id})")
+                .WithContext(Context));
+            await FollowupAsync(embed: new EmbedBuilder()
+            {
+                Title = "Failed to disable server logging",
+                Description = $"Error has been reported ({ex.GetType().Namespace}.{ex.GetType().Name})",
+                Color = Color.Red
+            }.Build());
+        }
+    }
+    #endregion
+
     [SlashCommand("reset-channel", "Remove all events from a channel")]
     [RegisterDBLCommand]
     public async Task ResetChannel(

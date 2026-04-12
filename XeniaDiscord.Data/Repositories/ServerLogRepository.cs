@@ -24,6 +24,18 @@ public class ServerLogRepository
         _discordClient = services.GetRequiredService<DiscordSocketClient>();
     }
 
+    public async Task<bool> IsEnabled(ulong guildId)
+    {
+        await using var db = _db.CreateSession();
+        return await IsEnabled(db, guildId);
+    }
+    public async Task<bool> IsEnabled(XeniaDbContext db, ulong guildId)
+    {
+        var guildIdStr = guildId.ToString();
+        return await db.ServerLogGuilds.FindAsync(guildIdStr) != null
+            && await db.ServerLogChannels.AnyAsync(e => e.GuildId == guildIdStr);
+    }
+
     public async Task<ServerLogGuildModel?> GetGuild(ulong guildId, GuildQueryOptions? options = null)
     {
         await using var db = _db.CreateSession();
@@ -101,6 +113,7 @@ public class ServerLogRepository
         return await Apply(query, options)
             .ToListAsync();
     }
+    #region Set/Remove Channels
 
     public async Task SetChannels(
         ulong guildId,
@@ -180,7 +193,79 @@ public class ServerLogRepository
         _log.Debug($"Removed channels (GuildId={guildId},ChannelId={channelId},Count={result})");
         return result;
     }
+    #endregion
 
+    #region Add/Remove Channel Events
+    public async Task<ServerLogChannelModel?> AddChannelEvent(
+        ulong guildId,
+        ulong channelId,
+        ServerLogEvent @event,
+        IUser? byUserId = null)
+    {
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
+        {
+            var result = await AddChannelEvent(db, guildId, channelId, @event, byUserId);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+            return result;
+        }
+        catch
+        {
+            await trans.RollbackAsync();
+            throw;
+        }
+    }
+
+    public async Task<ServerLogChannelModel?> AddChannelEvent(
+        XeniaDbContext db,
+        ulong guildId, ulong channelId,
+        ServerLogEvent @event,
+        IUser? byUserId = null)
+    {
+        var guildIdStr = guildId.ToString();
+        var channelIdStr = channelId.ToString();
+        if (await db.ServerLogChannels.AnyAsync(e => e.GuildId == guildIdStr && e.ChannelId == channelIdStr && e.Event == @event))
+        {
+            // already exists
+            return null;
+        }
+
+        IGuild? guild = null;
+        try
+        {
+            guild = _discordClient.GetGuild(guildId);
+        }
+        catch (Exception ex)
+        {
+            _log.Warn(ex, $"Failed to get Guild: {guildId}");
+        }
+        await _guildCacheRepo.Ensure(db, guildId, guild);
+
+        if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr))
+        {
+            await db.ServerLogGuilds.AddAsync(new ServerLogGuildModel()
+            {
+                GuildId = guildIdStr,
+                Enabled = true
+            });
+        }
+
+        var model = new ServerLogChannelModel
+        {
+            GuildId = guildIdStr,
+            ChannelId = channelIdStr,
+            Event = @event,
+        };
+        if (byUserId != null)
+        {
+            model.CreatedByUserId = byUserId.Id.ToString();
+        }
+
+        await db.ServerLogChannels.AddAsync(model);
+        return model;
+    }
     public async Task<int> RemoveEvents(ulong guildId, ServerLogEvent[] events)
     {
         await using var trans = await _db.Database.BeginTransactionAsync();
@@ -215,22 +300,16 @@ public class ServerLogRepository
         _log.Debug($"Removed events (GuildId={guildId},Events={string.Join(' ', events.Select(e => e.ToString()))},Count={result})");
         return result;
     }
+    #endregion
 
-
-    public async Task<ServerLogChannelModel?> AddChannelEvent(
-        ulong guildId,
-        ulong channelId,
-        ServerLogEvent @event,
-        IUser? byUserId = null)
+    #region Enable/Disable
+    public async Task Enable(ulong guildId, bool enable = true)
     {
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var result = await AddChannelEvent(db, guildId, channelId, @event, byUserId);
-            await db.SaveChangesAsync();
-            await trans.CommitAsync();
-            return result;
+            await Enable(db, guildId, enable);
         }
         catch
         {
@@ -238,54 +317,26 @@ public class ServerLogRepository
             throw;
         }
     }
-    public async Task<ServerLogChannelModel?> AddChannelEvent(
-        XeniaDbContext db,
-        ulong guildId, ulong channelId,
-        ServerLogEvent @event,
-        IUser? byUserId = null)
+
+    public async Task Enable(XeniaDbContext db, ulong guildId, bool enable)
     {
         var guildIdStr = guildId.ToString();
-        var channelIdStr = channelId.ToString();
-        if (await db.ServerLogChannels.AnyAsync(e => e.GuildId == guildIdStr && e.ChannelId == channelIdStr && e.Event == @event))
+        if (await db.ServerLogGuilds.FindAsync(guildIdStr) == null)
         {
-            // already exists
-            return null;
-        }
-
-        IGuild? guild = null;
-        try
-        {
-            guild = _discordClient.GetGuild(guildId);
-        }
-        catch (Exception ex)
-        {
-            _log.Warn(ex, $"Failed to get Guild: {guildId}");
-        }
-        await _guildCacheRepo.Ensure(db, guildId, guild);
-        
-        if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildIdStr))
-        {
-            await db.ServerLogGuilds.AddAsync(new ServerLogGuildModel()
+            await db.AddAsync(new ServerLogGuildModel(guildId)
             {
-                GuildId = guildIdStr,
-                Enabled = true
+                Enabled = enable
             });
         }
-        
-        var model = new ServerLogChannelModel
+        else
         {
-            GuildId = guildIdStr,
-            ChannelId = channelIdStr,
-            Event = @event,
-        };
-        if (byUserId != null)
-        {
-            model.CreatedByUserId = byUserId.Id.ToString();
+            await db.ServerLogGuilds.Where(e => e.GuildId == guildIdStr)
+                .ExecuteUpdateAsync(e => e.SetProperty(p => p.Enabled, enable));
         }
-
-        await db.ServerLogChannels.AddAsync(model);
-        return model;
     }
+    public Task Disable(ulong guildId) => Enable(guildId, false);
+    public Task Disable(XeniaDbContext db, ulong guildId) => Enable(db, guildId, false);
+    #endregion
 
     #region Insert or Update
     public async Task InsertOrUpdate(ServerLogGuildModel model)

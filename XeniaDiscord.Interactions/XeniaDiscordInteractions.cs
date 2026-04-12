@@ -28,6 +28,7 @@ public static class XeniaDiscordInteractions
 
             typeof(DiscordCacheAdminModule),
             typeof(DeveloperModule),
+            typeof(ServerLogModule)
         };
         var result = await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();
