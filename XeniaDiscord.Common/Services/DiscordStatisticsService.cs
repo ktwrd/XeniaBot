@@ -52,6 +52,7 @@ public sealed class DiscordStatisticsService : BaseService
         _statGuilds = _prom.CreateGauge(
             "xenia_discord_guild_count",
             "Amount of guilds this bot is in",
+            labelNames: [],
             publish: false);
         _statGuildMemberCount = _prom.CreateGauge(
             "xenia_discord_guild_users",
@@ -281,7 +282,8 @@ public sealed class DiscordStatisticsService : BaseService
                 .ToListAsync();
             foreach (var group in recordByGuilds)
             {
-                var name = guildSnapshots.FirstOrDefault(e => e.GuildId == group.GuildId)?.Name;
+                var name = _client.Guilds.FirstOrDefault(e => e.Id.ToString() == group.GuildId)?.Name
+                    ?? guildSnapshots.FirstOrDefault(e => e.GuildId == group.GuildId)?.Name;
                 _statBanSyncRecords.WithLabels(group.GuildId, name ?? group.GuildId).Set(group.Count);
             }
             trans.Finish();
@@ -422,11 +424,13 @@ public sealed class DiscordStatisticsService : BaseService
             foreach (var guild in _client.Guilds)
             {
                 _statGuildMemberCount.WithLabels(
-                        guild.Name,
+                        guild.Name ?? guild.Id.ToString(),
                         guild.Id.ToString())
                     .Set(guild.Users.Count);
             }
-            _statGuilds.Set(_client.Guilds.Count);
+            _statGuilds
+                .WithLabels()
+                .Set(_client.Guilds.Count);
             trans.Finish();
         }
         catch (Exception ex)
@@ -535,7 +539,7 @@ public sealed class DiscordStatisticsService : BaseService
             channelIdStr,
             usernameFormatted,
             interaction.User.Id.ToString(),
-            string.IsNullOrEmpty(interactionGroup) ? null : interactionGroup,
+            string.IsNullOrEmpty(interactionGroup) ? string.Empty : interactionGroup,
             interactionNameBuilder.ToString(),
             interaction.Id.ToString());
     }
