@@ -57,6 +57,7 @@ public partial class DiscordCacheAdminModule : InteractionModuleBase
                     "-# I might not be a member of it anymore.");
                 return;
             }
+            var now = DateTime.UtcNow;
             var sw = new Stopwatch();
             sw.Start();
             await using var db = _db.CreateSession();
@@ -66,7 +67,7 @@ public partial class DiscordCacheAdminModule : InteractionModuleBase
                 await _discordCacheService.UpdateGuild(db, guild);
                 if (includeSnapsnots)
                 {
-                    await _snapshotService.UpdateGuild(db, guild);
+                    await _snapshotService.UpdateGuild(db, guild, now, Data.Models.Snapshot.DiscordSnapshotSource.Unknown);
                 }
                 await db.SaveChangesAsync();
                 await trans.CommitAsync();
@@ -115,6 +116,7 @@ public partial class DiscordCacheAdminModule : InteractionModuleBase
         {
             var sw = new Stopwatch();
             sw.Start();
+            var now = DateTime.Now;
             await using var db = _db.CreateSession();
             await using var trans = await db.Database.BeginTransactionAsync();
             try
@@ -122,7 +124,7 @@ public partial class DiscordCacheAdminModule : InteractionModuleBase
                 await _discordCacheService.UpdateGuild(db, Context.Guild);
                 if (includeSnapsnots)
                 {
-                    await _snapshotService.UpdateGuild(db, Context.Guild);
+                    await _snapshotService.UpdateGuild(db, Context.Guild, now, Data.Models.Snapshot.DiscordSnapshotSource.Unknown);
                 }
                 await db.SaveChangesAsync();
                 await trans.CommitAsync();
@@ -164,6 +166,7 @@ public partial class DiscordCacheAdminModule : InteractionModuleBase
         {
             var sw = new Stopwatch();
             sw.Start();
+            var now = DateTime.Now;
             await using var db = _db.CreateSession();
             await using var trans = await db.Database.BeginTransactionAsync();
             try
@@ -175,7 +178,7 @@ public partial class DiscordCacheAdminModule : InteractionModuleBase
                         await _discordCacheService.UpdateGuild(db, guild);
                         if (includeSnapsnots)
                         {
-                            await _snapshotService.UpdateGuild(db, guild);
+                            await _snapshotService.UpdateGuild(db, guild, now, Data.Models.Snapshot.DiscordSnapshotSource.Unknown);
                         }
                     }
                     catch (Exception ex)
