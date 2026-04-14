@@ -62,8 +62,28 @@ public class DiscordCacheService
 
     public async Task UpdateGuild(
         XeniaDbContext db,
-        IGuild guild)
+        IGuild guild,
+        DateTime? now = null,
+        bool includeMembers = true)
     {
+        var nowValue = now ?? DateTime.UtcNow;
+
+        var guildIdStr = guild.Id.ToString();
+        var guildModel = await db.GuildCache.Where(e => e.Id == guildIdStr)
+            .FirstOrDefaultAsync()
+            ?? new GuildCacheModel(guild.Id)
+            {
+                RecordCreatedAt = nowValue,
+                RecordUpdatedAt = nowValue
+            };
+
+        guildModel = _guildMergerMapper.Map(guildModel, guild);
+        guildModel.RecordUpdatedAt = nowValue;
+
+        await _guildCacheRepository.InsertOrUpdate(db, guildModel);
+
+        if (!includeMembers) return;
+
         foreach (var member in await guild.GetUsersAsync())
         {
             try
@@ -75,15 +95,6 @@ public class DiscordCacheService
                 _log.Warn(ex, $"Failed to update member \"{member.GlobalName}\" ({member.Username}, {member.Id}) in guild \"{guild.Name}\" ({guild.Id})");
             }
         }
-
-        var guildIdStr = guild.Id.ToString();
-        var guildModel = await db.GuildCache.Where(e => e.Id == guildIdStr)
-            .FirstOrDefaultAsync()
-            ?? new(guild.Id);
-
-        guildModel = _guildMergerMapper.Map(guildModel, guild);
-
-        await _guildCacheRepository.InsertOrUpdate(db, guildModel);
     }
     #endregion
 
@@ -112,8 +123,8 @@ public class DiscordCacheService
         IUser? member = null;
         try
         {
-            member = await guild.GetUserAsync(userId)
-                ?? await _client.GetUserAsync(userId);
+            member = await guild.GetUserAsync(userId);
+            member ??= _client.GetUser(userId);
         }
         catch (Exception ex)
         {
@@ -122,8 +133,10 @@ public class DiscordCacheService
         await UpdateGuildMember(db, guild, userId, member);
     }
     
-    public async Task UpdateGuildMember(XeniaDbContext db, IGuild guild, ulong userId, IUser? member)
+    public async Task UpdateGuildMember(XeniaDbContext db, IGuild guild, ulong userId, IUser? member,
+        DateTime? now = null)
     {
+        var nowValue = now ?? DateTime.UtcNow;
         var guildIdStr = guild.Id.ToString();
         var userIdStr = userId.ToString();
         var model = await db.GuildMemberCache
@@ -132,7 +145,9 @@ public class DiscordCacheService
             ?? new()
             {
                 GuildId = guildIdStr,
-                UserId = userIdStr
+                UserId = userIdStr,
+                RecordCreatedAt = nowValue,
+                RecordUpdatedAt = nowValue
             };
 
         if (member == null)
@@ -147,6 +162,7 @@ public class DiscordCacheService
         // JUST TO BE SURE!!!
         model.UserId = userIdStr;
         model.GuildId = guildIdStr;
+        model.RecordUpdatedAt = nowValue;
 
         await _guildMemberCacheRepository.InsertOrUpdate(db, model);
         if (member != null)
