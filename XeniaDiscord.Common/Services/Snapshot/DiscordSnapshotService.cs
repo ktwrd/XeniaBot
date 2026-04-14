@@ -36,6 +36,9 @@ public class DiscordSnapshotService : BaseService
         if (programDetails.Platform == XeniaPlatform.Bot)
         {
             _client.JoinedGuild += OnGuildJoined;
+            _client.GuildUpdated += OnGuildUpdated;
+            _client.LeftGuild += OnGuildLeft;
+
             _client.UserJoined += OnGuildMemberJoined;
             _client.GuildMemberUpdated += OnGuildMemberUpdated;
             _client.RoleCreated += OnGuildRoleCreated;
@@ -43,7 +46,6 @@ public class DiscordSnapshotService : BaseService
             _client.RoleDeleted += OnGuildRoleDeleted;
         }
     }
-
 
     /// <summary>
     /// Invoked when a member has been updated.
@@ -60,13 +62,50 @@ public class DiscordSnapshotService : BaseService
     /// </summary>
     public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleDeleted;
 
+    /// <summary>
+    /// Invoked when the bot joins a guild, or when it's been updated.
+    /// </summary>
+    public event DiscordSnapshotComparisonDelegate<GuildSnapshotModel>? GuildUpdated;
+
     private Task OnGuildJoined(SocketGuild guild)
     {
         new Thread(() =>
         {
             try
             {
-                ProcessGuild(guild).GetAwaiter().GetResult();
+                ProcessGuild(guild, DiscordSnapshotSource.JoinedGuild).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to process Guild \"{guild.Name}\" ({guild.Id})");
+            }
+        }).Start();
+        return Task.CompletedTask;
+    }
+
+    private Task OnGuildUpdated(SocketGuild _, SocketGuild guild)
+    {
+        new Thread(() =>
+        {
+            try
+            {
+                ProcessGuild(guild, DiscordSnapshotSource.GuildUpdated, skipRoles: true, skipMembers: true).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to process Guild \"{guild.Name}\" ({guild.Id})");
+            }
+        }).Start();
+        return Task.CompletedTask;
+    }
+
+    private Task OnGuildLeft(SocketGuild guild)
+    {
+        new Thread(() =>
+        {
+            try
+            {
+                ProcessGuild(guild, DiscordSnapshotSource.LeftGuild).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
@@ -125,7 +164,6 @@ public class DiscordSnapshotService : BaseService
         }).Start();
         return Task.CompletedTask;
     }
-
     private Task OnGuildRoleUpdated(SocketRole? roleBefore, SocketRole role)
     {
         new Thread(() =>
@@ -159,22 +197,44 @@ public class DiscordSnapshotService : BaseService
         return Task.CompletedTask;
     }
 
-    private async Task ProcessGuild(SocketGuild guild)
+    private async Task ProcessGuild(SocketGuild guild, DiscordSnapshotSource source,
+        bool skipRoles = false, bool skipMembers = false)
     {
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await UpdateGuild(db, guild);
-            await _cacheService.UpdateGuild(db, guild);
+            var now = DateTime.UtcNow;
+            await UpdateGuild(db, guild, now, source,
+                skipRoles: skipRoles,
+                skipMembers: skipMembers);
+            await _cacheService.UpdateGuild(db, guild, now,
+                includeMembers: source != DiscordSnapshotSource.LeftGuild && !skipMembers);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
         catch (Exception ex)
         {
             await trans.RollbackAsync();
-            _log.Error(ex, $"Failed to pull data for Guild \"{guild.Name}\" ({guild.Id})");
+            _log.Error(ex, $"Failed to pull data for Guild \"{guild.Name}\" (guildId={guild.Id}, source={source}, skipRoles={skipRoles}, skipMembers={skipMembers})");
+            return;
         }
+
+        var guildId = guild.Id.ToString();
+        var latestEvent = await db.GuildSnapshotEvent
+            .AsNoTracking()
+            .Where(e => e.GuildId == guildId && e.Source == source)
+            .OrderByDescending(e => e.Timestamp)
+            .Select(e => new { e.BeforeId, e.CurrentId })
+            .FirstOrDefaultAsync();
+        if (latestEvent == null) return;
+        
+        var before = await db.GuildSnapshots.AsNoTracking().FirstOrDefaultAsync(e => e.RecordId == latestEvent.BeforeId);
+        var after = await db.GuildSnapshots.AsNoTracking().FirstOrDefaultAsync(e => e.RecordId == latestEvent.CurrentId);
+        
+        if (after == null) return;
+        
+        GuildUpdated?.Invoke(before, after);
     }
 
     private async Task ProcessGuildMember(SocketGuildUser socketMemberAfter, GuildMemberSnapshotSource source)
@@ -343,42 +403,81 @@ public class DiscordSnapshotService : BaseService
 
     public async Task UpdateGuild(
         XeniaDbContext db,
-        IGuild guild)
+        IGuild guild,
+        DateTime now,
+        DiscordSnapshotSource source,
+        bool skipRoles = false,
+        bool skipMembers = false)
     {
-        var members = new List<GuildMemberSnapshotModel>();
-        var roles = new List<GuildRoleSnapshotModel>();
-        foreach (var member in await guild.GetUsersAsync())
+        if (!skipRoles)
         {
-            try
+            await UpdateGuildRoles(db, guild, now, source);
+        }
+        if (!skipMembers)
+        {
+            await UpdateGuildMembers(db, guild, now, source);
+        }
+
+        GuildSnapshotModel? guildSnapshotBefore = null;
+        GuildSnapshotModel guildSnapshot;
+        try
+        {
+            guildSnapshot = new GuildSnapshotModel()
             {
-                var mapped = _guildMemberMapper.Map(member);
-                members.Add(mapped);
-            }
-            catch (Exception ex)
+                RecordCreatedAt = now,
+                SnapshotSource = source
+            };
+            guildSnapshot.Update(guild);
+            guildSnapshotBefore = await db.GuildSnapshots
+                .AsNoTracking()
+                .OrderByDescending(e => e.RecordCreatedAt)
+                .Where(e => e.GuildId == guildSnapshot.GuildId)
+                .FirstOrDefaultAsync();
+            await db.GuildSnapshots.AddAsync(guildSnapshot);
+            if (guildSnapshotBefore != null)
             {
-                _log.Warn(ex, $"Failed to map member \"{member.GlobalName}\" ({member.Username}, {member.Id}) for Guild \"{guild.Name}\" ({guild.Id})");
+                await db.GuildSnapshotEvent.AddAsync(new GuildSnapshotEventModel
+                {
+                    Timestamp = now,
+                    GuildId = guildSnapshot.GuildId,
+                    Source = source,
+                    BeforeId = guildSnapshotBefore?.RecordId,
+                    CurrentId = guildSnapshot.RecordId,
+                });
             }
         }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to insert GuildSnapshot for \"{guild.Name}\" (guildId={guild.Id}, source={source})", ex);
+        }
+    }
+
+    public async Task UpdateGuildRoles(
+        XeniaDbContext db,
+        IGuild guild,
+        DateTime now,
+        DiscordSnapshotSource source)
+    {
+        var roles = new List<GuildRoleSnapshotModel>();
         foreach (var role in guild.Roles)
         {
             try
             {
                 var mapped = _roleMapper.Map(role);
+                mapped.RecordCreatedAt = now;
+                mapped.SnapshotSource = source switch
+                {
+                    DiscordSnapshotSource.RoleCreated => GuildRoleSnapshotSource.RoleCreate,
+                    DiscordSnapshotSource.RoleUpdated => GuildRoleSnapshotSource.RoleEdit,
+                    DiscordSnapshotSource.RoleDeleted => GuildRoleSnapshotSource.RoleDelete,
+                    _ => GuildRoleSnapshotSource.Unknown
+                };
                 roles.Add(mapped);
             }
             catch (Exception ex)
             {
-                _log.Warn(ex, $"Failed to map role \"{role.Name}\" ({role.Id}) for Guild \"{guild.Name}\" ({guild.Id})");
+                _log.Warn(ex, $"Failed to map role \"{role.Name}\" in Guild \"{guild.Name}\" (guildId={guild.Id}, roleId={role.Id}, source={source})");
             }
-        }
-
-        try
-        {
-            await db.AddRangeAsync(members);
-        }
-        catch (Exception ex)
-        {
-            _log.Error(ex, $"Failed to save members for Guild \"{guild.Name}\" ({guild.Id})");
         }
         try
         {
@@ -386,7 +485,45 @@ public class DiscordSnapshotService : BaseService
         }
         catch (Exception ex)
         {
-            _log.Error(ex, $"Failed to save roles for Guild \"{guild.Name}\" ({guild.Id})");
+            throw new InvalidOperationException($"Failed to save roles for Guild \"{guild.Name}\" (guildId={guild.Id}, source={source})", ex);
+        }
+    }
+
+    private async Task UpdateGuildMembers(
+        XeniaDbContext db,
+        IGuild guild,
+        DateTime now,
+        DiscordSnapshotSource source)
+    {
+        var members = new List<GuildMemberSnapshotModel>();
+        foreach (var member in await guild.GetUsersAsync())
+        {
+            try
+            {
+                var mapped = _guildMemberMapper.Map(member);
+                mapped.RecordCreatedAt = now;
+                mapped.SnapshotSource = source switch
+                {
+                    DiscordSnapshotSource.MemberJoined => GuildMemberSnapshotSource.MemberJoin,
+                    DiscordSnapshotSource.MemberUpdated => GuildMemberSnapshotSource.MemberUpdate,
+                    DiscordSnapshotSource.RoleDeleted => GuildMemberSnapshotSource.RoleDelete,
+                    DiscordSnapshotSource.JoinedGuild => GuildMemberSnapshotSource.GuildJoined,
+                    _ => GuildMemberSnapshotSource.Unknown
+                };
+                members.Add(mapped);
+            }
+            catch (Exception ex)
+            {
+                _log.Warn(ex, $"Failed to map member \"{member.GlobalName}\" ({member.Username}) in Guild \"{guild.Name}\" (guildId={guild.Id}, userId={member.Id}, source={source})");
+            }
+        }
+        try
+        {
+            await db.AddRangeAsync(members);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to save members for Guild \"{guild.Name}\" (guildId={guild.Id}, source={source})", ex);
         }
     }
 }
