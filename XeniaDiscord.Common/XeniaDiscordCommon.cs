@@ -19,6 +19,7 @@ public static class XeniaDiscordCommon
                 .AddSingleton<DiscordBotListService>()
                 .AddSingleton<DiscordStatisticsService>()
                 .AddSingleton<DiscordCacheEventHandler>()
+                .AddSingleton<ServerLogEventHandler>()
                 .AddSingleton<ServerLogService>()
                 .AddSingleton<ValidationService>()
                 .AddSingleton<IXeniaOnReady, ApplicationEmoteService>(svc => svc.GetRequiredService<ApplicationEmoteService>());
