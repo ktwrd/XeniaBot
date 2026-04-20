@@ -26,7 +26,7 @@ public static class XeniaDiscordInteractions
         {
             typeof(AdmRolePreserveModule),
 
-            typeof(DiscordCacheAdminModule),
+            typeof(AdmDataModule),
             typeof(DeveloperModule),
             typeof(ServerLogModule)
         };
