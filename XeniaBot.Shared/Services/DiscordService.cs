@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 
@@ -29,10 +30,6 @@ public class DiscordService
         {
             _interactionHandler = services.GetRequiredService<InteractionHandler>();
         }
-        else
-        {
-            _interactionHandler = null;
-        }
 
         _client.Log += DiscordClientLogHandler;
         _client.Ready += OnClientReady;
@@ -40,6 +37,61 @@ public class DiscordService
         {
             MessageReceived?.Invoke(arg);
         };
+        _client.Disconnected += OnClientDisconnected;
+        CreateConnectionStatusThread();
+    }
+
+    private static Task OnClientDisconnected(Exception error)
+    {
+        Log.Error(error, "Disconnected from Discord!!!");
+        return Task.CompletedTask;
+    }
+
+    private void CreateConnectionStatusThread()
+    {
+        new Thread(() =>
+        {
+            try
+            {
+                ConnectionStatusThread().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, $"Failed to run {nameof(ConnectionStatusThread)}");
+                CreateConnectionStatusThread();
+            }
+        })
+        {
+            Name = $"{nameof(DiscordService)}.{nameof(ConnectionStatusThread)}"
+        }.Start();
+    }
+
+    private async Task ConnectionStatusThread()
+    {
+        while (true)
+        {
+            switch (_client.ConnectionState)
+            {
+                case ConnectionState.Disconnected:
+                    try
+                    {
+                        await _client.StartAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Failed to re-connect");
+                    }
+                    await Task.Delay(1000);
+                    break;
+                case ConnectionState.Disconnecting:
+                case ConnectionState.Connecting:
+                    await Task.Delay(500);
+                    break;
+                case ConnectionState.Connected:
+                    await Task.Delay(5000);
+                    break;
+            }
+        }
     }
 
     public async Task Run()
@@ -106,14 +158,4 @@ public class DiscordService
         return Task.CompletedTask;
     }
     #endregion
-
-    public static DiscordSocketConfig GetSocketClientConfig()
-    {
-        return new DiscordSocketConfig()
-        {
-            GatewayIntents = GatewayIntents.All,
-            UseInteractionSnowflakeDate = false,
-            AlwaysDownloadUsers = true
-        };
-    }
 }
