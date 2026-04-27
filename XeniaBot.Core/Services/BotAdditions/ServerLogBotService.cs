@@ -145,7 +145,7 @@ public class ServerLogBotService : BaseService
                 return;
             }
             
-            var events = await _db.ServerLogChannels
+            var events = await db.ServerLogChannels
                 .Where(e => e.GuildId == guildIdStr)
                 .Select(e => e.Event)
                 .Distinct().ToListAsync();
