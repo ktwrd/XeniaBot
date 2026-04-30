@@ -68,6 +68,7 @@ public class DiscordService
 
     private async Task ConnectionStatusThread()
     {
+        await Task.Delay(60_000); // wait 1min before doing the reconnect stuff
         while (true)
         {
             switch (_client.ConnectionState)
