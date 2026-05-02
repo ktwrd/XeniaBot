@@ -47,12 +47,6 @@ public class ErrorReportBuilder
             attachments.Add(new FileAttachment(
                 new MemoryStream(Encoding.UTF8.GetBytes(_exception.ToString())),
                 fileName: "exception.txt"));
-            if (!string.IsNullOrEmpty(_exception.StackTrace?.Trim()))
-            {
-                attachments.Add(new FileAttachment(
-                    new MemoryStream(Encoding.UTF8.GetBytes(_exception.StackTrace.ToString())),
-                    fileName: "stack.txt"));
-            }
         }
         if (!string.IsNullOrEmpty(_exceptionJson?.Trim()))
         {
