@@ -11,6 +11,7 @@ public class GuildRoleCacheModel
     {
         GuildId = "0";
         RoleId = "0";
+        Name = "";
         RecordCreatedAt = DateTime.UtcNow;
         RecordUpdatedAt = RecordCreatedAt;
         SnapshotId = Guid.Empty;
@@ -28,6 +29,12 @@ public class GuildRoleCacheModel
     /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string RoleId { get; set; }
+    
+    /// <summary>
+    /// Role Name
+    /// </summary>
+    [MaxLength(200)]
+    public string Name { get; set; }
 
     /// <summary>
     /// UTC Date Time of when this record was created.

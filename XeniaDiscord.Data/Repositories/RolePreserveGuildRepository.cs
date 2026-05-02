@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Discord;
+using Microsoft.EntityFrameworkCore;
 using NLog;
 using XeniaDiscord.Data.Models.RolePreserve;
 
@@ -81,6 +82,73 @@ public class RolePreserveGuildRepository
                 Enabled = enable
             });
             _log.Trace($"Created Record (GuildId={guildIdStr}, Enabled={enable}");
+        }
+    }
+
+    public async Task<List<RolePreserveBlacklistedRoleModel>> GetBlacklistedRoles(
+        XeniaDbContext db)
+    {
+        return await db.RolePreserveBlacklistedRoles
+            .AsNoTracking()
+            .OrderBy(e => e.GuildId)
+            .ThenBy(e => e.RoleId)
+            .ToListAsync();
+    }
+
+    public async Task<List<RolePreserveBlacklistedRoleModel>> GetBlacklistRolesForGuild(
+        XeniaDbContext db,
+        ulong guildId)
+    {
+        var guildIdStr = guildId.ToString();
+        return await db.RolePreserveBlacklistedRoles
+            .AsNoTracking()
+            .Where(e => e.GuildId == guildIdStr)
+            .OrderBy(e => e.RoleId)
+            .ToListAsync();
+    }
+
+    public async Task RoleBlacklistAdd(
+        XeniaDbContext db,
+        IGuild guild,
+        IRole role,
+        IGuildUser? doneByUser = null)
+    {
+        var guildIdStr = guild.Id.ToString();
+        var roleIdStr = role.Id.ToString();
+        if (await db.RolePreserveGuilds.FindAsync(guildIdStr) == null)
+        {
+            await db.RolePreserveGuilds.AddAsync(new RolePreserveGuildModel
+            {
+                GuildId = guildIdStr,
+                Enabled = false
+            });
+        }
+
+        // already exists
+        if (await db.RolePreserveBlacklistedRoles.FindAsync(guildIdStr, roleIdStr) != null)
+        {
+            return;
+        }
+
+        await db.RolePreserveBlacklistedRoles.AddAsync(new RolePreserveBlacklistedRoleModel()
+        {
+            GuildId = guildIdStr,
+            RoleId = roleIdStr,
+            CreatedByUserId = doneByUser?.Id.ToString()
+        });
+    }
+
+    public async Task RoleBlacklistRemove(
+        XeniaDbContext db,
+        ulong guildId,
+        ulong roleId)
+    {
+        var guildIdStr = guildId.ToString();
+        var roleIdStr = roleId.ToString();
+        var target = await db.RolePreserveBlacklistedRoles.FindAsync(guildIdStr, roleIdStr);
+        if (target != null)
+        {
+            db.Remove(target);
         }
     }
 

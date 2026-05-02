@@ -64,6 +64,7 @@ public class XeniaDbContext : DbContext
     public DbSet<RolePreserveGuildModel> RolePreserveGuilds { get; set; }
     public DbSet<RolePreserveUserModel> RolePreserveUsers { get; set; }
     public DbSet<RolePreserveUserRoleModel> RolePreserveUserRoles { get; set; }
+    public DbSet<RolePreserveBlacklistedRoleModel> RolePreserveBlacklistedRoles { get; set; }
     #endregion
     
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
@@ -368,6 +369,11 @@ public class XeniaDbContext : DbContext
                 .WithOne(e => e.RolePreserveGuild)
                 .HasForeignKey(e => e.GuildId)
                 .IsRequired();
+
+            b.HasMany(e => e.BlacklistedRoles)
+                .WithOne()
+                .HasForeignKey(e => e.GuildId)
+                .IsRequired();
         });
         builder.Entity<RolePreserveUserModel>(b =>
         {
@@ -386,6 +392,15 @@ public class XeniaDbContext : DbContext
                 e.UserId,
                 e.RoleId
             });
+        });
+        builder.Entity<RolePreserveBlacklistedRoleModel>(b =>
+        {
+            b.ToTable(RolePreserveBlacklistedRoleModel.TableName)
+                .HasKey(e => new
+                {
+                    e.GuildId,
+                    e.RoleId
+                });
         });
         #endregion
         
