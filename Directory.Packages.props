@@ -13,6 +13,7 @@
     <PackageVersion Include="Humanizer" Version="3.0.10" />
     <PackageVersion Include="IdGen" Version="3.0.7" />
     <PackageVersion Include="Iminetsoft.CronNET" Version="8.0.2" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageVersion Include="kate.shared" Version="1.7.0" />
     <PackageVersion Include="Magick.NET-Q16-HDRI-AnyCPU" Version="14.11.1" />
     <PackageVersion Include="Markdig" Version="1.1.1" />

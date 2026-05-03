@@ -107,12 +107,16 @@ public class RolePreserveGuildRepository
             .ToListAsync();
     }
 
-    public async Task RoleBlacklistAdd(
+    public async Task<RoleBlacklistAddResult> RoleBlacklistAdd(
         XeniaDbContext db,
         IGuild guild,
         IRole role,
         IGuildUser? doneByUser = null)
     {
+        if (guild.Id != role.Guild.Id)
+        {
+            return RoleBlacklistAddResult.GuildMismatch;
+        }
         var guildIdStr = guild.Id.ToString();
         var roleIdStr = role.Id.ToString();
         if (await db.RolePreserveGuilds.FindAsync(guildIdStr) == null)
@@ -127,7 +131,7 @@ public class RolePreserveGuildRepository
         // already exists
         if (await db.RolePreserveBlacklistedRoles.FindAsync(guildIdStr, roleIdStr) != null)
         {
-            return;
+            return RoleBlacklistAddResult.AlreadyExists;
         }
 
         await db.RolePreserveBlacklistedRoles.AddAsync(new RolePreserveBlacklistedRoleModel()
@@ -136,9 +140,17 @@ public class RolePreserveGuildRepository
             RoleId = roleIdStr,
             CreatedByUserId = doneByUser?.Id.ToString()
         });
+        return RoleBlacklistAddResult.Ok;
     }
 
-    public async Task RoleBlacklistRemove(
+    public enum RoleBlacklistAddResult
+    {
+        Ok,
+        AlreadyExists,
+        GuildMismatch
+    }
+
+    public async Task<RoleBlacklistRemoveResult> RoleBlacklistRemove(
         XeniaDbContext db,
         ulong guildId,
         ulong roleId)
@@ -146,10 +158,17 @@ public class RolePreserveGuildRepository
         var guildIdStr = guildId.ToString();
         var roleIdStr = roleId.ToString();
         var target = await db.RolePreserveBlacklistedRoles.FindAsync(guildIdStr, roleIdStr);
-        if (target != null)
-        {
-            db.Remove(target);
-        }
+        if (target == null) return RoleBlacklistRemoveResult.NotFound;
+        
+        db.Remove(target);
+        return RoleBlacklistRemoveResult.Ok;
+
+    }
+
+    public enum RoleBlacklistRemoveResult
+    {
+        Ok,
+        NotFound
     }
 
     public Task EnableAsync(XeniaDbContext db, ulong guildId)
