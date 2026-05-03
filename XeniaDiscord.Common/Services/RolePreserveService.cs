@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
+﻿using System.Text;
 using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
@@ -31,7 +30,6 @@ public class RolePreserveService : BaseService
     private readonly ServerLogRepository _serverLogConfig;
     private readonly RolePreserveUserRepository _userRepository;
     private readonly RolePreserveGuildRepository _guildRepository;
-    private readonly DiscordSnapshotService _snapshotService;
     private readonly ConfigData _configData;
     private readonly ProgramDetails _details;
 
@@ -46,19 +44,20 @@ public class RolePreserveService : BaseService
         _details = services.GetRequiredService<ProgramDetails>();
         _userRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveUserRepository>();
         _guildRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveGuildRepository>();
-        _snapshotService = (scope?.ServiceProvider ?? services).GetRequiredService<DiscordSnapshotService>();
+        var snapshotService = (scope?.ServiceProvider ?? services).GetRequiredService<DiscordSnapshotService>();
         
         if (_details.Platform == XeniaPlatform.Bot)
         {
             _client.UserJoined += ClientOnUserJoined;
             _client.RoleDeleted += ClientOnRoleDeleted;
-            _snapshotService.GuildMemberUpdated += DiscordSnapshotOnGuildMemberUpdated;
+            snapshotService.GuildMemberUpdated += DiscordSnapshotOnGuildMemberUpdated;
         }
     }
 
-    private async Task ClientOnRoleDeleted(SocketRole role)
+    private Task ClientOnRoleDeleted(
+        SocketRole? role)
     {
-        if (role == null) return;
+        if (role == null) return Task.CompletedTask;
         new Thread((roleArg) =>
         {
             if (roleArg is not SocketRole socketRole) return;
@@ -74,6 +73,7 @@ public class RolePreserveService : BaseService
         {
             Name = $"{nameof(RolePreserveService)}.{nameof(ClientOnRoleDeletedThread)} (roleId={role.Id})"
         }.Start(role);
+        return Task.CompletedTask;
     }
 
     private async Task ClientOnRoleDeletedThread(SocketRole? role)
@@ -143,8 +143,7 @@ public class RolePreserveService : BaseService
         {
             await trans.RollbackAsync();
             _log.Error(ex, $"Failed to handle event for user {model.Username} ({model.UserId}) in guild {model.GuildId}");
-            // TODO error handling
-            throw;
+            // TODO submit to ErrorReportService
         }
     }
 
@@ -471,7 +470,7 @@ public class RolePreserveService : BaseService
             .Select(e => new
             {
                 Key = e.Id,
-                Value = e.Roles.Select(e => e.Id).Distinct().ToArray()
+                Value = e.Roles.Select(r => r.Id).Distinct().ToArray()
             })
             .ToDictionary(e => e.Key, e => e.Value);
         var startValue = start ?? DateTime.UtcNow;
