@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
@@ -69,26 +70,42 @@ public class RolePreserveService : BaseService
             {
                 _log.Error(ex, $"Failed to call {nameof(ClientOnRoleDeletedThread)}");
             }
-        }).Start(role);
+        })
+        {
+            Name = $"{nameof(RolePreserveService)}.{nameof(ClientOnRoleDeletedThread)} (roleId={role.Id})"
+        }.Start(role);
     }
-    private async Task ClientOnRoleDeletedThread(SocketRole role)
+
+    private async Task ClientOnRoleDeletedThread(SocketRole? role)
     {
         if (role == null) return;
 
+        // remove from blacklist & remove from preserved roles
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
             var roleIdStr = role.Id.ToString();
-            var count = await db.RolePreserveUserRoles
+
+            var countUsr = await db.RolePreserveUserRoles
                 .AsNoTracking()
                 .Where(e => e.RoleId == roleIdStr)
                 .ExecuteDeleteAsync();
+            var countBlk = await db.RolePreserveBlacklistedRoles
+                .AsNoTracking()
+                .Where(e => e.RoleId == roleIdStr)
+                .ExecuteDeleteAsync();
+            
             await db.SaveChangesAsync();
             await trans.CommitAsync();
-            if (count > 0)
+            
+            if (countUsr > 0)
             {
-                _log.Trace($"Deleted {count} records in {RolePreserveUserRoleModel.TableName} for RoleId={role.Id}");
+                _log.Trace($"Deleted {countUsr} records in {RolePreserveUserRoleModel.TableName} for RoleId={role.Id}");
+            }
+            if (countBlk > 0)
+            {
+                _log.Trace($"Deleted {countBlk} records in {RolePreserveBlacklistedRoleModel.TableName} for RoleId={role.Id}");
             }
         }
         catch (Exception ex)
