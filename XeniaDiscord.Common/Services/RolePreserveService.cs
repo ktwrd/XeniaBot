@@ -265,7 +265,8 @@ public class RolePreserveService : BaseService
                 return;
             }
             var roleIds = await _userRepository.FindRolesForUser(db, user.Guild.Id, user.Id);
-
+            var blacklist = await _guildRepository.GetBlacklistRolesForGuild(db, user.Guild.Id);
+            
             var ourHighestRoleEnumerable = user.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
             var ourHighestRolePos = ourHighestRoleEnumerable.FirstOrDefault()?.Position ?? int.MinValue;
 
@@ -275,6 +276,7 @@ public class RolePreserveService : BaseService
             {
                 var roleId = item;
                 if (roleId == user.Guild.EveryoneRole.Id) continue;
+                if (blacklist.Any(e => e.RoleId == item.ToString())) continue;
                 try
                 {
                     var snapshot = await db.GuildRoleSnapshots
