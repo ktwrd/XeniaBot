@@ -375,24 +375,30 @@ public class XeniaDbContext : DbContext
                 .WithOne()
                 .HasForeignKey(e => e.GuildId)
                 .IsRequired();
+            
+            b.HasMany(e => e.AuditEntries)
+                .WithOne()
+                .HasForeignKey(e => e.GuildId)
+                .IsRequired();
         });
         builder.Entity<RolePreserveUserModel>(b =>
         {
             b.ToTable(RolePreserveUserModel.TableName).HasKey(e => new { e.GuildId, e.UserId });
 
             b.HasMany(e => e.Roles)
-             .WithOne()
-             .HasForeignKey(e => new { e.GuildId, e.UserId })
-             .IsRequired();
+                .WithOne()
+                .HasForeignKey(e => new { e.GuildId, e.UserId })
+                .IsRequired();
         });
         builder.Entity<RolePreserveUserRoleModel>(b =>
         {
-            b.ToTable(RolePreserveUserRoleModel.TableName).HasKey(e => new
-            {
-                e.GuildId,
-                e.UserId,
-                e.RoleId
-            });
+            b.ToTable(RolePreserveUserRoleModel.TableName)
+                .HasKey(e => new
+                {
+                    e.GuildId,
+                    e.UserId,
+                    e.RoleId
+                });
         });
         builder.Entity<RolePreserveBlacklistedRoleModel>(b =>
         {
@@ -405,8 +411,7 @@ public class XeniaDbContext : DbContext
         });
         builder.Entity<RolePreserveAuditModel>(b =>
         {
-            b.ToTable(RolePreserveAuditModel.TableName)
-                .HasKey(e => e.Id);
+            b.ToTable(RolePreserveAuditModel.TableName).HasKey(e => e.Id);
             b.HasIndex(e => new
             {
                 e.RecordCreatedAt,
@@ -467,12 +472,13 @@ public class XeniaDbContext : DbContext
         });
         #endregion
         
-        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)]))
+        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)])!)
             .HasName("spBanSyncGetMutualRecordsForGuild");
-        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)]))
+        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)])!)
             .HasName("spBanSyncGetMutualRecordsForGuild_Paginate");
     }
 
+    // ReSharper disable InconsistentNaming
     public IQueryable<BanSyncRecordModel> spBanSyncGetMutualRecordsForGuild(
         string guildId)
         => FromExpression(() => spBanSyncGetMutualRecordsForGuild(guildId));
@@ -481,4 +487,5 @@ public class XeniaDbContext : DbContext
         int page,
         int pageSize = 50)
         => FromExpression(() => spBanSyncGetMutualRecordsForGuild_Paginate(guildId, page, pageSize));
+    // ReSharper restore InconsistentNaming
 }

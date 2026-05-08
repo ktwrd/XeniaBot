@@ -12,6 +12,7 @@ public class RolePreserveGuildModel
         Enabled = false;
         Users = [];
         BlacklistedRoles = [];
+        AuditEntries = [];
     }
 
     public RolePreserveGuildModel(
@@ -40,6 +41,8 @@ public class RolePreserveGuildModel
     /// Property Accessor
     /// </summary>
     public List<RolePreserveBlacklistedRoleModel> BlacklistedRoles { get; set; }
+    
+    public List<RolePreserveAuditModel> AuditEntries { get; set; }
     
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
 }
