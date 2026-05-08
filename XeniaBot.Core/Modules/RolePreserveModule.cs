@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using NLog;
@@ -17,7 +18,7 @@ using XeniaDiscord.Data.Repositories;
 namespace XeniaBot.Core.Modules;
 
 [Group("rolepreserve", "Configure the RolePreserve module.")]
-[RequireBotPermission(GuildPermission.ManageRoles | GuildPermission.ModerateMembers)]
+[RequireBotPermission(GuildPermission.ManageRoles)]
 [CommandContextType(InteractionContextType.Guild)]
 [UsedImplicitly]
 public class RolePreserveModule : InteractionModuleBase
@@ -28,9 +29,17 @@ public class RolePreserveModule : InteractionModuleBase
     private readonly ErrorReportService _error;
     public RolePreserveModule(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
-        _repo = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveGuildRepository>();
-        _error = services.GetRequiredService<ErrorReportService>();
+        try
+        {
+            _db = services.GetRequiredService<XeniaDbContext>();
+            _repo = services.GetRequiredService<RolePreserveGuildRepository>();
+            _error = services.GetRequiredService<ErrorReportService>();
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex);
+            throw new InvalidOperationException("Failed to get services", ex);
+        }
     }
 
     [SlashCommand("enable", "Grant members preserved roles on re-join.")]
@@ -117,14 +126,13 @@ public class RolePreserveModule : InteractionModuleBase
         }
     }
     
-    [SlashCommand("blacklist-add", "Add a role to be ignored with role preservation")]
+    [SlashCommand("blacklist-add", "Ignore/blacklist a role")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
-    [RequireBotPermission(GuildPermission.ManageRoles | GuildPermission.ModerateMembers)]
     [RegisterDBLCommand]
     [UsedImplicitly]
-    public async Task BlacklistAdd(
-        IRole role)
+    public async Task BlacklistAdd(IRole role)
     {
+        await DeferAsync();
         const string title = "Role Preserve - Add to blacklist";
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
@@ -154,7 +162,7 @@ public class RolePreserveModule : InteractionModuleBase
             switch (result)
             {
                 case RolePreserveGuildRepository.RoleBlacklistAddResult.Ok:
-                    embed.WithDescription($"Removed role {role.Mention} from the blacklist.")
+                    embed.WithDescription($"Added role {role.Mention} to the blacklist.")
                          .WithColor(Color.Green);
                     break;
                 case RolePreserveGuildRepository.RoleBlacklistAddResult.GuildMismatch:
@@ -174,9 +182,9 @@ public class RolePreserveModule : InteractionModuleBase
         }
         catch (Exception ex)
         {
-            await trans.RollbackAsync();
             var msg = $"Failed to add role {role.Name} to blacklist (guildId={Context.Guild.Id}, roleId={role.Id})";
             _log.Error(ex, msg);
+            await trans.RollbackAsync();
             await _error.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithNotes(msg)
@@ -189,13 +197,14 @@ public class RolePreserveModule : InteractionModuleBase
                 .Build());
         }
     }
-    [SlashCommand("blacklist-add", "Remove a ignored/blacklisted role")]
+    
+    [SlashCommand("blacklist-remove", "Remove a ignored/blacklisted role")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
-    [RequireBotPermission(GuildPermission.ManageRoles | GuildPermission.ModerateMembers)]
     [RegisterDBLCommand]
     [UsedImplicitly]
     public async Task BlacklistRemove(IRole role)
     {
+        await DeferAsync();
         const string title = "Role Preserve - Remove from blacklist";
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
@@ -242,9 +251,9 @@ public class RolePreserveModule : InteractionModuleBase
         }
         catch (Exception ex)
         {
-            await trans.RollbackAsync();
             var msg = $"Failed to remove role {role.Name} from blacklist (roleId={role.Id})";
             _log.Error(ex, msg);
+            await trans.RollbackAsync();
             await _error.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithNotes(msg)
@@ -264,18 +273,36 @@ public class RolePreserveModule : InteractionModuleBase
     [UsedImplicitly]
     public async Task BlacklistList(int page = 1)
     {
-        await DeferAsync();
-        var (embed, components) = await ListEmbed(Context.Guild, page);
-        await FollowupAsync(
-            embed: embed.Build(),
-            components: components.Build());
-        // throw new NotImplementedException(
-        //     "List roles (basic), and implement pagination. Should only show 15 roles per page, and it should have a CSV export function. " +
-        //     "Data should be fetched with XeniaDiscord.Data.Repositories.RolePreserveGuildRepository.GetBlacklistRolesForGuild(XeniaDbContext, ulong)");
+        try
+        {
+            await DeferAsync();
+            await using var db = _db.CreateSession();
+            var (embed, components) = await RolePreserveModuleHelper.ListEmbed(db, Context.Guild, page);
+            if (components != null)
+            {
+                await FollowupAsync(
+                    embed: embed.Build(),
+                    components: components.Build());
+            }
+            else
+            {
+                await FollowupAsync(
+                    embed: embed.Build());
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex);
+        }
     }
+}
 
-    private sealed record ListEmbedResult(EmbedBuilder Embed, ComponentBuilderV2 ComponentBuilder);
-    private async Task<ListEmbedResult> ListEmbed(
+internal static class RolePreserveModuleHelper
+{
+    internal const string ViewBlacklistedRolesInteractionName = "rolepreserve_blacklistedroles_list:page=*";
+    internal sealed record ListEmbedResult(EmbedBuilder Embed, ComponentBuilderV2? ComponentBuilder);
+    internal static async Task<ListEmbedResult> ListEmbed(
+        XeniaDbContext db,
         IGuild guild,
         int page = 1)
     {
@@ -286,7 +313,6 @@ public class RolePreserveModule : InteractionModuleBase
         var skip = pageSize * (page - 1);
         var guildIdStr = guild.Id.ToString();
 
-        await using var db = _db.CreateSession();
         var totalItemCount = await db.RolePreserveBlacklistedRoles
             .Where(e => e.GuildId == guildIdStr)
             .CountAsync();
@@ -322,13 +348,12 @@ public class RolePreserveModule : InteractionModuleBase
         }
         else
         {
-            embed.Description = string.Join("\n", items.Select(e => $"- <@&{e.RoleId}>"));
+            embed.Description = string.Join("\n", items.Select(e => $"<@&{e.RoleId}>"));
         }
 
         return new(embed, components);
     }
-
-    private static ComponentBuilderV2 BuildBlacklistedRolesListingComponents(
+    private static ComponentBuilderV2? BuildBlacklistedRolesListingComponents(
         int currentPage,
         int lastPage)
     {
@@ -361,21 +386,48 @@ public class RolePreserveModule : InteractionModuleBase
                 .WithLabel("Last")
                 .WithStyle(ButtonStyle.Primary));
         }
+        if (paginationRow.Count < 1) return null;
         return new ComponentBuilderV2()
             .WithActionRow(paginationRow);
     }
+}
 
-    [ComponentInteraction("rolepreserve_blacklistedroles_list:page=*")]
+public class RolePreserveComponentModule : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+{
+    private readonly Logger _log = LogManager.GetCurrentClassLogger();
+    private readonly XeniaDbContext _db;
+    public RolePreserveComponentModule(IServiceProvider services)
+    {
+        try
+        {
+            _db = services.GetRequiredService<XeniaDbContext>();
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex);
+            throw new InvalidOperationException("Failed to get services", ex);
+        }
+    }
+    
+    [ComponentInteraction(RolePreserveModuleHelper.ViewBlacklistedRolesInteractionName)]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [UsedImplicitly]
-    public async Task ViewBlacklistedRolesInteraction(int page)
+    public async Task ListComponent(int page = 1)
     {
-        await DeferAsync();
-        var (embed, components) = await ListEmbed(Context.Guild, page);
-        await FollowupAsync(
-            embed: embed.Build(),
-            components: components.Build());
+        try
+        {
+            await using var db = _db.CreateSession();
+            var (embed, components) = await RolePreserveModuleHelper.ListEmbed(db, Context.Guild, page);
+            await Context.Interaction.UpdateAsync(
+                p =>
+                {
+                    p.Embed = embed.Build();
+                    p.Components = components == null ? new Optional<MessageComponent>(): components.Build();
+                });
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex);
+        }
     }
-
-    private const string ViewBlacklistedRolesInteractionName = "rolepreserve_blacklistedroles_list:page=*";
 }

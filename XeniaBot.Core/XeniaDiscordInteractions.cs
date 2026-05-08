@@ -27,6 +27,7 @@ public static class XeniaDiscordCoreInteractions
             interactions.AddModuleAsync<RandomAnimalModule>(services),
             interactions.AddModuleAsync<ReminderModule>(services),
             interactions.AddModuleAsync<RolePreserveModule>(services),
+            interactions.AddModuleAsync<RolePreserveComponentModule>(services),
             interactions.AddModuleAsync<TicketModule>(services),
             interactions.AddModuleAsync<TranslateModule>(services),
             interactions.AddModuleAsync<WeatherModule>(services)

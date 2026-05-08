@@ -50,6 +50,32 @@ public class InteractionHandler
         Log.Debug($"Loaded [{_interactionService.Modules.Count}] modules\n" + string.Join("\n", lines));
         _client.InteractionCreated += InteractionCreateAsync;
         _client.ModalSubmitted += ModalSubmittedAsync;
+        _client.ButtonExecuted += ButtonExecutedAsync;
+    }
+
+    private async Task ButtonExecutedAsync(SocketMessageComponent interaction)
+    {
+        try
+        {
+            var context = new SocketInteractionContext(
+                _client,
+                interaction);
+            var result = await _interactionService.ExecuteCommandAsync(
+                context,
+                _services);
+            if (result.Error != null)
+            {
+                Log.Warn(result.ErrorReason);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                SentryHelper.SetInteractionInfo(scope, interaction);
+            });
+        }
     }
 
     private async Task ModalSubmittedAsync(SocketModal interaction)
@@ -59,9 +85,13 @@ public class InteractionHandler
             var context = new SocketInteractionContext(
                 _client,
                 interaction);
-            await _interactionService.ExecuteCommandAsync(
+            var result = await _interactionService.ExecuteCommandAsync(
                 context,
                 _services);
+            if (result.Error != null)
+            {
+                Log.Warn(result.ErrorReason);
+            }
         }
         catch (Exception ex)
         {
@@ -77,12 +107,17 @@ public class InteractionHandler
     {
         try
         {
+            Log.Trace(interaction.Id);
             var context = new SocketInteractionContext(
                 _client,
                 interaction);
-            await _interactionService.ExecuteCommandAsync(
+            var result = await _interactionService.ExecuteCommandAsync(
                 context,
                 _services);
+            if (!result.IsSuccess)
+            {
+                Log.Warn(result.ErrorReason);
+            }
         }
         catch (Exception ex)
         {
