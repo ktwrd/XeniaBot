@@ -1,27 +1,29 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Shared;
+using NLog;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared;
+
 using ReactionMessage = Discord.Cacheable<Discord.IUserMessage, ulong>;
 using ReactionChannel = Discord.Cacheable<Discord.IMessageChannel, ulong>;
-using NLog;
-
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
+[UsedImplicitly]
 public class RoleService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(RoleService));
-    private DiscordSocketClient _client;
-    private RoleConfigRepository _config;
-    private RoleMessageConfigRepository _messageConfig;
+    private readonly DiscordSocketClient _client;
+    private readonly RoleConfigRepository _config;
+    private readonly RoleMessageConfigRepository _messageConfig;
     public RoleService(IServiceProvider services)
         : base (services)
     {
@@ -37,17 +39,17 @@ public class RoleService : BaseService
         return Task.CompletedTask;
     }
 
-    private const string GuildNotFoundForUserTempl
+    private const string GuildNotFoundForUserTemplate
         = "Guild \"{0}\" ({1}) not found for user \"{2}\" ({3}, {4})";
-    private const string MemberNotFoundInGuildTempl
+    private const string MemberNotFoundInGuildTemplate
         = "Member \"{0}\" ({1}, {2}) not found in guild \"{3}\" ({4})";
     private static string GuildNotFoundForUserMessage(IGuildUser user)
-        => string.Format(GuildNotFoundForUserTempl,
+        => string.Format(GuildNotFoundForUserTemplate,
                 user.Guild.Name, user.Guild.Id,
                 user.DisplayName, user.Username, user.Id);
     private static string MemberNotFoundInGuildMessage(
         IGuild guild, IGuildUser user)
-        => string.Format(MemberNotFoundInGuildTempl,
+        => string.Format(MemberNotFoundInGuildTemplate,
             user.DisplayName, user.Username, user.Id,
             guild.Name, guild.Id);
 
@@ -67,7 +69,7 @@ public class RoleService : BaseService
         if (model.BlacklistRoleId != 0)
         {
             var blacklistRole = await guild.GetRoleAsync(model.BlacklistRoleId);
-            var contains = blacklistRole == null ? false : memberRoleIds.Contains(blacklistRole.Id);
+            var contains = blacklistRole != null && memberRoleIds.Contains(blacklistRole.Id);
             if (blacklistRole == null)
             {
                 _log.Warn($"RoleConfigModel.BlacklistRoleId {model.BlacklistRoleId} not found for Guild \"{guild.Name}\" ({guild.Id}) for User \"{user}\" ({user.Id})");
@@ -80,7 +82,7 @@ public class RoleService : BaseService
         else if (model.RequiredRoleId != 0)
         {
             var whitelistRole = await guild.GetRoleAsync(model.RequiredRoleId);
-            var contains = whitelistRole == null ? false : memberRoleIds.Contains(whitelistRole.Id);
+            var contains = whitelistRole != null && memberRoleIds.Contains(whitelistRole.Id);
             if (whitelistRole == null)
             {
                 _log.Warn($"RoleConfigModel.RequiredRoleId not found (guild: {model.GuildId}, role: {model.RequiredRoleId})");
@@ -97,12 +99,13 @@ public class RoleService : BaseService
     {
         var guild = _client.GetGuild(user.Guild.Id);
         if (guild == null)
-            throw new Exception($"Guild {user.Guild.Id} not found");
+            throw new InvalidOperationException($"Guild {user.Guild.Id} not found");
         var member = guild.GetUser(user.Id);
         if (member == null)
-            throw new Exception($"Member {user.Id} not found in guild {guild.Id}");
+            throw new InvalidOperationException($"Member {user.Id} not found in guild {guild.Id}");
 
         var targetRole = await guild.GetRoleAsync(model.RoleId);
+        if (targetRole == null) return;
 
         await member.RemoveRoleAsync(targetRole);
     }
@@ -117,10 +120,10 @@ public class RoleService : BaseService
             return;
 
         // Ignore if the emote isn't a valid reaction role.
-        if (!messageConfig.ReactionRoleMap.ContainsKey(reaction.Emote.Name))
+        if (!messageConfig.ReactionRoleMap.TryGetValue(reaction.Emote.Name, out var targetRoleConfigId))
             return;
+        targetRoleConfigId ??= "";
 
-        var targetRoleConfigId = messageConfig.ReactionRoleMap[reaction.Emote.Name] ?? "";
         var roleConfigAll = await _config.GetAll(false, uid: targetRoleConfigId);
         var roleConfig = roleConfigAll?.FirstOrDefault();
         if (roleConfig == null)
@@ -144,12 +147,13 @@ public class RoleService : BaseService
             return;
 
         // Ignore if the emote isn't a valid reaction role.
-        if (!messageConfig.ReactionRoleMap.ContainsKey(reaction.Emote.Name))
+        if (!messageConfig.ReactionRoleMap.TryGetValue(reaction.Emote.Name, out var targetRoleConfigId))
             return;
+        targetRoleConfigId ??= "";
 
-        var targetRoleConfigId = messageConfig.ReactionRoleMap[reaction.Emote.Name] ?? "";
         var roleConfigAll = await _config.GetAll(false, uid: targetRoleConfigId);
-        var roleConfig = roleConfigAll?.FirstOrDefault();
+        var roleConfig = roleConfigAll.FirstOrDefault();
+        if (roleConfig == null) return;
 
         var validateResult = ValidateReactionObjects(message, reaction, roleConfig, targetRoleConfigId);
         if (!validateResult)
@@ -160,7 +164,7 @@ public class RoleService : BaseService
 
         await GrantUser(member, roleConfig);
     }
-    private bool ValidateReactionObjects(ReactionMessage message, SocketReaction reaction, RoleConfigModel model, string targetRoleConfigId)
+    private bool ValidateReactionObjects(ReactionMessage message, SocketReaction reaction, RoleConfigModel? model, string targetRoleConfigId)
     {
         if (model == null)
         {
