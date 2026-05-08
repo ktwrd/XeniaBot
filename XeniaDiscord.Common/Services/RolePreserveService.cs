@@ -146,8 +146,83 @@ public class RolePreserveService : BaseService
             // TODO submit to ErrorReportService
         }
     }
+    
+    private async Task ClientOnUserJoined(SocketGuildUser user)
+    {
+        await using var db = _db.CreateSession();
+        try
+        {
+            if (!await _guildRepository.IsEnabled(db, user.Guild.Id))
+            {
+                _log.Trace($"Skipping Role Preserve is disabled (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+                return;
+            }
+            if (!await _userRepository.HasAny(db, user.Guild.Id, user.Id))
+            {
+                _log.Trace($"Skipping since there are no records in {RolePreserveUserModel.TableName} (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+                return;
+            }
+            var roleIds = await _userRepository.FindRolesForUser(db, user.Guild.Id, user.Id);
+            var blacklist = await _guildRepository.GetBlacklistRolesForGuild(db, user.Guild.Id);
+            
+            var ourHighestRoleEnumerable = user.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
+            var ourHighestRolePos = ourHighestRoleEnumerable.FirstOrDefault()?.Position ?? int.MinValue;
 
+            var success = new List<ulong>();
+            var fail = new List<ApplyFailure>();
+            foreach (var item in roleIds)
+            {
+                var roleId = item;
+                if (roleId == user.Guild.EveryoneRole.Id) continue;
+                if (blacklist.Any(e => e.RoleId == item.ToString())) continue;
+                try
+                {
+                    var snapshot = await db.GuildRoleSnapshots
+                        .AsNoTracking()
+                        .OrderByDescending(e => e.RecordCreatedAt)
+                        .FirstOrDefaultAsync(e => e.RoleId == roleId.ToString());
+                    var existingRole = await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
+                    // continue, since the role doesn't exist anymore
+                    if (existingRole == null) continue;
+                    if (existingRole.Position > ourHighestRolePos)
+                    {
+                        fail.Add(new (item, snapshot));
+                        continue;
+                    }
+                    await user.AddRoleAsync(roleId);
+                    success.Add(roleId);
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn(ex, $"Failed to grant Role {item} to User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
+                    fail.Add(new(item, null));
+                }
+            }
 
+            _log.Trace($"Operation complete (userId={user.Id}, username={user.Username}, success={success.Count}, fail={fail.Count})");
+            if (success.Count < 1)
+            {
+                _log.Trace($"No roles were restored? (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+            }
+            if (fail.Count > 0)
+            {
+                await SendFailureNotification(user, success, fail);
+            }
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to restore roles for User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})";
+            _log.Error(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithUser(user)
+                .WithGuild(user.Guild));
+        }
+    }
+    private sealed record ApplyFailure(ulong RoleId, GuildRoleSnapshotModel? Snapshot);
+    
+    #region Send Failure Notification
     private async Task SendFailureNotification(
         SocketGuildUser user,
         IReadOnlyCollection<ulong> success,
@@ -232,11 +307,10 @@ public class RolePreserveService : BaseService
                 return sb.ToString();
             });
         embed.AddField("Failed Roles", failureFieldContent);
-        await SendFailureNotificationToChannels(
-            user,
-            embed,
-            attachments,
-            targetLogChannels);
+        foreach (var serverLogChannel in targetLogChannels)
+        {
+            await SendFailureNotificationToChannel(user, embed, attachments, serverLogChannel);
+        }
     }
     private enum GetFailEmbedContentError
     {
@@ -276,132 +350,57 @@ public class RolePreserveService : BaseService
         var sb = new StringBuilder();
         foreach (var item in items)
         {
-            sb.AppendFormat("{0} - {1}", item.RoleId, item.Snapshot?.Name);
+            sb.Append(item.RoleId);
+            sb.Append(" - ");
+            sb.Append(item.Snapshot?.Name);
             sb.AppendLine();
         }
         return sb.ToString();
     }
-    private async Task SendFailureNotificationToChannels(
+    private async Task SendFailureNotificationToChannel(
         SocketGuildUser user,
         EmbedBuilder embed,
         List<FileAttachment> attachments,
-        IReadOnlyCollection<ServerLogChannelModel> targetLogChannels)
+        ServerLogChannelModel serverLogChannel)
     {
-        foreach (var serverLogChannel in targetLogChannels)
-        {
-            SocketTextChannel? textChannel;
-            try
-            {
-                textChannel = user.Guild.GetTextChannel(serverLogChannel.GetChannelId())
-                              ?? throw new InvalidOperationException($"Channel {serverLogChannel.ChannelId} does not exist (GetTextChannel returned null)");
-            }
-            catch (Exception ex)
-            {
-                _log.Warn(ex, $"Could not get channel {serverLogChannel.ChannelId} in Guild \"{user.Guild}\" ({user.Guild.Id}) from ServerLogChannel with Id={serverLogChannel.Id}");
-                continue;
-            }
-            try
-            {
-                if (attachments.Count > 0)
-                {
-                    await textChannel.SendFilesAsync(attachments, embed: embed.Build());
-                }
-                else
-                {
-                    await textChannel.SendMessageAsync(embed: embed.Build());
-                }
-            }
-            catch (Exception ex)
-            {
-                await _err.Submit(new ErrorReportBuilder()
-                    .WithException(ex)
-                    .WithNotes($"Failed to send message in channel \"{textChannel.Name}\" ({textChannel.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id}) for user \"{user.Username}#{user.Discriminator}\" ({user.Id})")
-                    .WithUser(user)
-                    .WithGuild(user.Guild)
-                    .WithChannel(textChannel)
-                    .AddSerializedAttachment("serverLogChannel.json", serverLogChannel));
-            }
-        }
-    }
-    
-    private async Task ClientOnUserJoined(SocketGuildUser user)
-    {
-        await using var db = _db.CreateSession();
+        SocketTextChannel? textChannel;
         try
         {
-            if (!await _guildRepository.IsEnabled(db, user.Guild.Id))
+            textChannel = user.Guild.GetTextChannel(serverLogChannel.GetChannelId())
+                          ?? throw new InvalidOperationException($"Channel {serverLogChannel.ChannelId} does not exist (GetTextChannel returned null)");
+        }
+        catch (Exception ex)
+        {
+            _log.Warn(ex, $"Could not get channel {serverLogChannel.ChannelId} in Guild \"{user.Guild}\" ({user.Guild.Id}) from ServerLogChannel with Id={serverLogChannel.Id}");
+            return;
+        }
+        try
+        {
+            if (attachments.Count > 0)
             {
-                _log.Trace($"Skipping Role Preserve is disabled (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
-                return;
+                await textChannel.SendFilesAsync(attachments, embed: embed.Build());
             }
-            if (!await _userRepository.HasAny(db, user.Guild.Id, user.Id))
+            else
             {
-                _log.Trace($"Skipping since there are no records in {RolePreserveUserModel.TableName} (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
-                return;
-            }
-            var roleIds = await _userRepository.FindRolesForUser(db, user.Guild.Id, user.Id);
-            var blacklist = await _guildRepository.GetBlacklistRolesForGuild(db, user.Guild.Id);
-            
-            var ourHighestRoleEnumerable = user.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
-            var ourHighestRolePos = ourHighestRoleEnumerable.FirstOrDefault()?.Position ?? int.MinValue;
-
-            var success = new List<ulong>();
-            var fail = new List<ApplyFailure>();
-            foreach (var item in roleIds)
-            {
-                var roleId = item;
-                if (roleId == user.Guild.EveryoneRole.Id) continue;
-                if (blacklist.Any(e => e.RoleId == item.ToString())) continue;
-                try
-                {
-                    var snapshot = await db.GuildRoleSnapshots
-                        .AsNoTracking()
-                        .OrderByDescending(e => e.RecordCreatedAt)
-                        .FirstOrDefaultAsync(e => e.RoleId == roleId.ToString());
-                    var existingRole = await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
-                    // continue, since the role doesn't exist anymore
-                    if (existingRole == null) continue;
-                    if (existingRole.Position > ourHighestRolePos)
-                    {
-                        fail.Add(new (item, snapshot));
-                        continue;
-                    }
-                    await user.AddRoleAsync(roleId);
-                    success.Add(roleId);
-                }
-                catch (Exception ex)
-                {
-                    _log.Warn(ex, $"Failed to grant Role {item} to User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
-                    fail.Add(new(item, null));
-                }
-            }
-
-            _log.Trace($"Operation complete (userId={user.Id}, username={user.Username}, success={success.Count}, fail={fail.Count})");
-            if (success.Count < 1)
-            {
-                _log.Trace($"No roles were restored? (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
-            }
-            if (fail.Count > 0)
-            {
-                await SendFailureNotification(user, success, fail);
+                await textChannel.SendMessageAsync(embed: embed.Build());
             }
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to restore roles for User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})";
-            _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
-                .WithNotes(msg)
+                .WithNotes($"Failed to send message in channel \"{textChannel.Name}\" ({textChannel.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id}) for user \"{user.Username}#{user.Discriminator}\" ({user.Id})")
                 .WithUser(user)
-                .WithGuild(user.Guild));
+                .WithGuild(user.Guild)
+                .WithChannel(textChannel)
+                .AddSerializedAttachment("serverLogChannel.json", serverLogChannel));
         }
     }
-    private sealed record ApplyFailure(ulong RoleId, GuildRoleSnapshotModel? Snapshot);
+    #endregion
 
     public override Task OnReadyDelay()
     {
-        // skip on webpanel
+        // skip on web panel
         if (_details.Platform != XeniaPlatform.Bot) return Task.CompletedTask;
         if (!_configData.RefreshRolePreserveOnStart)
         {
