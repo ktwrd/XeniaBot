@@ -14,21 +14,43 @@ public class RolePreserveAuditModel
         Action = RolePreserveAuditAction.Unknown;
     }
     
+    /// <summary>
+    /// Record ID, primary key
+    /// </summary>
     public Guid Id { get; set; }
     
+    /// <summary>
+    /// UTC Date Time of when this record was created
+    /// </summary>
     public DateTime RecordCreatedAt { get; set; }
     
+    /// <summary>
+    /// Guild Id (ulong as string)
+    /// Also a foreign key to <see cref="RolePreserveGuildModel.GuildId"/>
+    /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string GuildId { get; set; }
     
+    /// <summary>
+    /// Action that was done
+    /// </summary>
     public RolePreserveAuditAction Action { get; set; }
     
+    /// <summary>
+    /// User Id (ulong as string)
+    /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string? UserId { get; set; }
     
+    /// <summary>
+    /// User Id that the action was performed on (ulong as string, currently not used)
+    /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string? TargetUserId { get; set; }
     
+    /// <summary>
+    /// Role Id that the action was performed on (ulong as string)
+    /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string? TargetRoleId { get; set; }
 }
