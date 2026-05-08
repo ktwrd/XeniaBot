@@ -407,18 +407,22 @@ public class RolePreserveService : BaseService
             _log.Info($"Not going to run {nameof(PreserveAll)} since {nameof(_configData.RefreshRolePreserveOnStart)} is set to false");
             return Task.CompletedTask;
         }
-        new Thread((ThreadStart)delegate
+        new Thread(PreserveAllThread)
         {
-            try
-            {
-                PreserveAll().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex, $"Failed to run {nameof(PreserveAll)}");
-            }
-        }).Start();
+            Name = $"{nameof(RolePreserveService)}.{nameof(PreserveAllThread)}"
+        }.Start();
         return Task.CompletedTask;
+    }
+    private void PreserveAllThread()
+    {
+        try
+        {
+            PreserveAll().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, $"Failed to run {nameof(PreserveAll)}");
+        }
     }
 
     public async Task PreserveAll(DateTime? startedAt = null)
