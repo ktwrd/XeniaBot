@@ -65,6 +65,7 @@ public class XeniaDbContext : DbContext
     public DbSet<RolePreserveUserModel> RolePreserveUsers { get; set; }
     public DbSet<RolePreserveUserRoleModel> RolePreserveUserRoles { get; set; }
     public DbSet<RolePreserveBlacklistedRoleModel> RolePreserveBlacklistedRoles { get; set; }
+    public DbSet<RolePreserveAuditModel> RolePreserveAudit { get; set; }
     #endregion
     
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
@@ -401,6 +402,24 @@ public class XeniaDbContext : DbContext
                     e.GuildId,
                     e.RoleId
                 });
+        });
+        builder.Entity<RolePreserveAuditModel>(b =>
+        {
+            b.ToTable(RolePreserveAuditModel.TableName)
+                .HasKey(e => e.Id);
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildId
+            });
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildId,
+                e.UserId,
+                e.TargetUserId,
+                e.TargetRoleId
+            });
         });
         #endregion
         

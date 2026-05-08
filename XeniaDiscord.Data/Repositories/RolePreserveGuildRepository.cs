@@ -63,7 +63,7 @@ public class RolePreserveGuildRepository
         }
     }
 
-    public async Task EnableAsync(XeniaDbContext db, ulong guildId, bool enable)
+    public async Task EnableAsync(XeniaDbContext db, ulong guildId, bool enable, IUser? doneByUser = null)
     {
         var guildIdStr = guildId.ToString();
         if (await db.RolePreserveGuilds.AnyAsync(e => e.GuildId == guildIdStr))
@@ -83,6 +83,13 @@ public class RolePreserveGuildRepository
             });
             _log.Trace($"Created Record (GuildId={guildIdStr}, Enabled={enable}");
         }
+        var userIdStr = doneByUser?.Id.ToString();
+        await db.RolePreserveAudit.AddAsync(new RolePreserveAuditModel()
+        {
+            GuildId = guildIdStr,
+            Action = enable ? RolePreserveAuditAction.Enable : RolePreserveAuditAction.Disable,
+            UserId = userIdStr
+        });
     }
 
     public async Task<List<RolePreserveBlacklistedRoleModel>> GetBlacklistedRoles(
@@ -134,11 +141,19 @@ public class RolePreserveGuildRepository
             return RoleBlacklistAddResult.AlreadyExists;
         }
 
+        var userIdStr = doneByUser?.Id.ToString();
         await db.RolePreserveBlacklistedRoles.AddAsync(new RolePreserveBlacklistedRoleModel()
         {
             GuildId = guildIdStr,
             RoleId = roleIdStr,
-            CreatedByUserId = doneByUser?.Id.ToString()
+            CreatedByUserId = userIdStr
+        });
+        await db.RolePreserveAudit.AddAsync(new RolePreserveAuditModel()
+        {
+            GuildId = guildIdStr,
+            Action = RolePreserveAuditAction.BlacklistAdd,
+            UserId = userIdStr,
+            TargetRoleId = roleIdStr
         });
         return RoleBlacklistAddResult.Ok;
     }
@@ -153,14 +168,22 @@ public class RolePreserveGuildRepository
     public async Task<RoleBlacklistRemoveResult> RoleBlacklistRemove(
         XeniaDbContext db,
         ulong guildId,
-        ulong roleId)
+        ulong roleId,
+        IGuildUser? doneByUser = null)
     {
         var guildIdStr = guildId.ToString();
         var roleIdStr = roleId.ToString();
         var target = await db.RolePreserveBlacklistedRoles.FindAsync(guildIdStr, roleIdStr);
         if (target == null) return RoleBlacklistRemoveResult.NotFound;
-        
+        var userIdStr = doneByUser?.Id.ToString();
         db.Remove(target);
+        await db.RolePreserveAudit.AddAsync(new RolePreserveAuditModel()
+        {
+            GuildId = guildIdStr,
+            Action = RolePreserveAuditAction.BlacklistRemove,
+            UserId = userIdStr,
+            TargetRoleId = roleIdStr
+        });
         return RoleBlacklistRemoveResult.Ok;
 
     }

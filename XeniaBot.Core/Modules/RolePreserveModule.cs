@@ -2,13 +2,12 @@
 using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using NLog;
-using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -42,7 +41,12 @@ public class RolePreserveModule : InteractionModuleBase
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await _repo.EnableAsync(db, Context.Guild.Id, true);
+            var guildUser =
+                await ExceptionHelper.RetryOnTimedOut(async () => await Context.Guild.GetUserAsync(Context.User.Id))
+                ?? throw new InvalidOperationException($"Could not find requestors user in the current guild (guildId={Context.Guild.Id}, userId={Context.User.Id})");
+
+            await _repo.EnableAsync(db, Context.Guild.Id, true, guildUser);
+
             await db.SaveChangesAsync();
             await trans.CommitAsync();
             
@@ -75,7 +79,12 @@ public class RolePreserveModule : InteractionModuleBase
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await _repo.EnableAsync(db, Context.Guild.Id, false);
+            var guildUser =
+                await ExceptionHelper.RetryOnTimedOut(async () => await Context.Guild.GetUserAsync(Context.User.Id))
+                ?? throw new InvalidOperationException($"Could not find requestors user in the current guild (guildId={Context.Guild.Id}, userId={Context.User.Id})");
+            
+            await _repo.EnableAsync(db, Context.Guild.Id, false, guildUser);
+            
             await db.SaveChangesAsync();
             await trans.CommitAsync();
             
@@ -218,7 +227,11 @@ public class RolePreserveModule : InteractionModuleBase
                     .Build());
             }
 
-            var result = await _repo.RoleBlacklistRemove(db, role.Guild.Id, role.Id);
+            var guildUser =
+                await ExceptionHelper.RetryOnTimedOut(async () => await Context.Guild.GetUserAsync(Context.User.Id))
+                ?? throw new InvalidOperationException($"Could not find requestors user in the current guild (guildId={Context.Guild.Id}, userId={Context.User.Id})");
+
+            var result = await _repo.RoleBlacklistRemove(db, role.Guild.Id, role.Id, guildUser);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
 
