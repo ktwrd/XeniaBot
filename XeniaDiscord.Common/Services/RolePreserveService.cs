@@ -196,28 +196,104 @@ public class RolePreserveService : BaseService
             if (fail.Count > 0) embed.Description += $"\n- Failed to add {failCount} role{failPlural}.";
         }
 
-        var failField = string.Join("\n", fail.Select(v => $"- <@&{v.RoleId}>"));
-        var failAttachment = string.Join("\n", fail.Select(v => $"{v.RoleId} - {v.Snapshot?.Name}"));
-
+        const string failFilename = "roles.txt";
         var attachments = new List<FileAttachment>();
-        switch (failField.Length)
-        {
-            case > 1024:
-                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(failAttachment)), "roles.txt"));
-                embed.AddField("Failed Roles", "Too many roles failed! It's been attached as `roles.txt`");
-                break;
-            case > 0:
-                embed.AddField("Failed Roles", failField);
-                break;
-        }
+        var failAttachmentMessage = new StringBuilder();
+        var failureFieldContent = GetFailEmbedContent(fail)
+            .TapError(err =>
+            {
+                if (err != GetFailEmbedContentError.AttachFailures) return;
+                var failAttachmentContent = GetFailAttachment(fail);
+                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(failAttachmentContent)), failFilename));
+            })
+            .Finally(r =>
+            {
+                var sb = new StringBuilder();
+                if (r.IsFailure)
+                {
+                    switch (r.Error)
+                    {
+                        case GetFailEmbedContentError.AttachFailures:
+                            sb.Append(Emotes.Warning);
+                            sb.AppendFormat(" Too many roles failed! It's been attached as `{0}`", failFilename);
+                            break;
+                        default:
+                            sb.Append(Emotes.Warning);
+                            sb.Append(" Unknown error: ");
+                            sb.Append(r.Error);
+                            break;
+                    }
+                }
+                else
+                {
+                    sb.Append(r.Value);
+                }
+                
+                return sb.ToString();
+            });
+        embed.AddField("Failed Roles", failureFieldContent);
+        await SendFailureNotificationToChannels(
+            user,
+            embed,
+            attachments,
+            targetLogChannels);
+    }
+    private enum GetFailEmbedContentError
+    {
+        AttachFailures
+    }
+    private static Result<string, GetFailEmbedContentError> GetFailEmbedContent(
+        IReadOnlyCollection<ApplyFailure> items)
+    {
+        /* determined with the following code:
+        const int max = 1024;
+        int lineSize = string.Format("- <@&{0}>\n", ulong.MaxValue).Length; // expected to be 26
+        int iterCount = Convert.ToInt32(Math.Floor(max / (float)(lineSize)));
+         */
+        const int maxCountSafe = 37;
+        if (items.Count > maxCountSafe) return GetFailEmbedContentError.AttachFailures;
 
+        var sb = new StringBuilder();
+        var count = items.Count;
+        for (var i = 0; i < count; i++)
+        {
+            var item = items.ElementAt(i);
+            sb.Append("- <@&");
+            sb.Append(item.RoleId);
+            sb.Append('>');
+            if (i < count - 1)
+            {
+                sb.AppendLine();
+            }
+        }
+        // added just to be safe
+        if (sb.Length >= 1024) return GetFailEmbedContentError.AttachFailures;
+        return sb.ToString();
+    }
+    private static string GetFailAttachment(
+        IReadOnlyCollection<ApplyFailure> items)
+    {
+        var sb = new StringBuilder();
+        foreach (var item in items)
+        {
+            sb.AppendFormat("{0} - {1}", item.RoleId, item.Snapshot?.Name);
+            sb.AppendLine();
+        }
+        return sb.ToString();
+    }
+    private async Task SendFailureNotificationToChannels(
+        SocketGuildUser user,
+        EmbedBuilder embed,
+        List<FileAttachment> attachments,
+        IReadOnlyCollection<ServerLogChannelModel> targetLogChannels)
+    {
         foreach (var serverLogChannel in targetLogChannels)
         {
             SocketTextChannel? textChannel;
             try
             {
                 textChannel = user.Guild.GetTextChannel(serverLogChannel.GetChannelId())
-                    ?? throw new InvalidOperationException($"Channel {serverLogChannel.ChannelId} does not exist (GetTextChannel returned null)");
+                              ?? throw new InvalidOperationException($"Channel {serverLogChannel.ChannelId} does not exist (GetTextChannel returned null)");
             }
             catch (Exception ex)
             {
