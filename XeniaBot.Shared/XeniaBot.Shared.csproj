@@ -35,6 +35,7 @@
     <PackageReference Include="prometheus-net.AspNetCore" />
     <PackageReference Include="Sentry" />
     <PackageReference Include="Sentry.NLog" />
+    <PackageReference Include="Snappier" />
   </ItemGroup>
 
 </Project>
