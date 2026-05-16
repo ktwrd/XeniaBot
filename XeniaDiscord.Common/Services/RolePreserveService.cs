@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Frozen;
+using System.Text;
 using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
@@ -150,16 +151,19 @@ public class RolePreserveService : BaseService
     private async Task ClientOnUserJoined(SocketGuildUser user)
     {
         await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
             if (!await _guildRepository.IsEnabled(db, user.Guild.Id))
             {
                 _log.Trace($"Skipping Role Preserve is disabled (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+                await trans.RollbackAsync();
                 return;
             }
             if (!await _userRepository.HasAny(db, user.Guild.Id, user.Id))
             {
                 _log.Trace($"Skipping since there are no records in {RolePreserveUserModel.TableName} (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
+                await trans.RollbackAsync();
                 return;
             }
             var roleIds = await _userRepository.FindRolesForUser(db, user.Guild.Id, user.Id);
@@ -168,13 +172,29 @@ public class RolePreserveService : BaseService
             var ourHighestRoleEnumerable = user.Guild.CurrentUser.Roles.OrderByDescending(v => v.Position);
             var ourHighestRolePos = ourHighestRoleEnumerable.FirstOrDefault()?.Position ?? int.MinValue;
 
+            var audit = new RolePreserveAuditModel()
+            {
+                GuildId = user.Guild.Id.ToString(),
+                TargetUserId = user.Id.ToString(),
+                Action = RolePreserveAuditAction.AppliedRoles
+            };
+            
             var success = new List<ulong>();
             var fail = new List<ApplyFailure>();
             foreach (var item in roleIds)
             {
                 var roleId = item;
                 if (roleId == user.Guild.EveryoneRole.Id) continue;
-                if (blacklist.Any(e => e.RoleId == item.ToString())) continue;
+                if (blacklist.Any(e => e.RoleId == item.ToString()))
+                {
+                    audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                    {
+                        RolePreserveAuditId = audit.Id,
+                        RoleId = item.ToString(),
+                        Action = RolePreserveAuditAppliedRoleAction.SkippedBlacklisted
+                    });
+                    continue;
+                }
                 try
                 {
                     var snapshot = await db.GuildRoleSnapshots
@@ -183,19 +203,47 @@ public class RolePreserveService : BaseService
                         .FirstOrDefaultAsync(e => e.RoleId == roleId.ToString());
                     var existingRole = await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
                     // continue, since the role doesn't exist anymore
-                    if (existingRole == null) continue;
+                    if (existingRole == null)
+                    {
+                        audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                        {
+                            RolePreserveAuditId = audit.Id,
+                            RoleId = item.ToString(),
+                            Action = RolePreserveAuditAppliedRoleAction.SkippedRoleDoesNotExist
+                        });
+                        continue;
+                    }
                     if (existingRole.Position > ourHighestRolePos)
                     {
+                        audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                        {
+                            RolePreserveAuditId = audit.Id,
+                            RoleId = item.ToString(),
+                            Action = RolePreserveAuditAppliedRoleAction.FailureMissingPermissionsHierarchy
+                        });
                         fail.Add(new (item, snapshot));
                         continue;
                     }
                     await user.AddRoleAsync(roleId);
                     success.Add(roleId);
+                    audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                    {
+                        RolePreserveAuditId = audit.Id,
+                        RoleId = item.ToString(),
+                        Action = RolePreserveAuditAppliedRoleAction.SuccessGrant
+                    });
                 }
                 catch (Exception ex)
                 {
                     _log.Warn(ex, $"Failed to grant Role {item} to User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
                     fail.Add(new(item, null));
+                    audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                    {
+                        RolePreserveAuditId = audit.Id,
+                        RoleId = item.ToString(),
+                        Action = RolePreserveAuditAppliedRoleAction.FailureUnknown,
+                        ExceptionText = ex.ToString()
+                    });
                 }
             }
 
@@ -206,11 +254,23 @@ public class RolePreserveService : BaseService
             }
             if (fail.Count > 0)
             {
-                await SendFailureNotification(user, success, fail);
+                try
+                {
+                    await SendFailureNotification(user, success.ToFrozenSet(), fail);
+                }
+                catch (Exception ex)
+                {
+                    _log.Error(ex, $"Failed to send failure notification for User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
+                }
             }
+
+            await db.AddAsync(audit);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
         }
         catch (Exception ex)
         {
+            await trans.RollbackAsync();
             var msg = $"Failed to restore roles for User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})";
             _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
@@ -257,6 +317,10 @@ public class RolePreserveService : BaseService
             .WithFooter($"User Id: {user.Id}")
             .WithColor(new Color(255, 255, 255))
             .WithCurrentTimestamp();
+        if (auditModel != null && _configData.HasDashboard)
+        {
+            embed.WithUrl($"{_configData.DashboardUrl}/RolePreserve/Audit/Details?Id={auditModel.Id}");
+        }
         var failCount = fail.Count.ToString("n0");
         if (success.Count == 0)
         {
