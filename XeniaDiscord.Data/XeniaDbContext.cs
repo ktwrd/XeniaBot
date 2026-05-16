@@ -258,7 +258,7 @@ public class XeniaDbContext : DbContext
             b.ToTable(GuildRoleCacheModel.TableName)
                 .HasKey(e => e.RoleId);
             b.HasIndex(e => e.GuildId);
-            b.HasIndex(e => new { e.GuildId, e.Position }).IsDescending(false);
+            b.HasIndex(e => e.Position);
             b.HasOne(e => e.Snapshot)
                 .WithMany()
                 .HasForeignKey(e => e.SnapshotId)
