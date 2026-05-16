@@ -8,6 +8,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Snapshot;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
 
@@ -17,6 +18,7 @@ public class DiscordSnapshotService : BaseService
     private readonly XeniaDbContext _db;
     private readonly DiscordSocketClient _client;
     private readonly DiscordCacheService _cacheService;
+    private readonly GuildCacheRepository _guildCacheRepository;
     private readonly IMapper<IRole, GuildRoleSnapshotModel> _roleMapper;
     private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberMapper;
 
@@ -26,6 +28,7 @@ public class DiscordSnapshotService : BaseService
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
         _client = services.GetRequiredService<DiscordSocketClient>();
         _cacheService = services.GetRequiredService<DiscordCacheService>();
+        _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
 
         _roleMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
         _guildMemberMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
@@ -365,6 +368,7 @@ public class DiscordSnapshotService : BaseService
         try
         {
             await db.AddAsync(model);
+            await _guildCacheRepository.UpdateRoleCache(db, model);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
@@ -482,6 +486,10 @@ public class DiscordSnapshotService : BaseService
         try
         {
             await db.AddRangeAsync(roles);
+            foreach (var role in roles)
+            {
+                await _guildCacheRepository.UpdateRoleCache(db, role);
+            }
         }
         catch (Exception ex)
         {

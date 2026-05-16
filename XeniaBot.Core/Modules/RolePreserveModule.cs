@@ -330,7 +330,7 @@ internal static class RolePreserveModuleHelper
         if (page > lastPage)
         {
             embed.Description = string.Format(emptyPageMessageFmt, page);
-            return new(embed, components);
+            return new ListEmbedResult(embed, components);
         }
 
         var items = await db.RolePreserveBlacklistedRoles
@@ -351,7 +351,7 @@ internal static class RolePreserveModuleHelper
             embed.Description = string.Join("\n", items.Select(e => $"<@&{e.RoleId}>"));
         }
 
-        return new(embed, components);
+        return new ListEmbedResult(embed, components);
     }
     private static ComponentBuilderV2? BuildBlacklistedRolesListingComponents(
         int currentPage,
