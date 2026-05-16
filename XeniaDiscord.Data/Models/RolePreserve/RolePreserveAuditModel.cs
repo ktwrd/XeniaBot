@@ -12,6 +12,7 @@ public class RolePreserveAuditModel
         RecordCreatedAt = DateTime.UtcNow;
         GuildId = "0";
         Action = RolePreserveAuditAction.Unknown;
+        AppliedRoles = new();
     }
     
     /// <summary>
@@ -53,6 +54,16 @@ public class RolePreserveAuditModel
     /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string? TargetRoleId { get; set; }
+    
+    /// <summary>
+    /// Property Accessor
+    /// </summary>
+    public List<RolePreserveAuditAppliedRoleModel> AppliedRoles { get; set; }
+
+    public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
+    public ulong? GetUserId() => UserId.ParseULong(false);
+    public ulong? GetTargetUserId() => TargetUserId.ParseULong(false);
+    public ulong? GetTargetRoleId() => TargetRoleId.ParseULong(false);
 }
 
 public enum RolePreserveAuditAction
@@ -61,5 +72,6 @@ public enum RolePreserveAuditAction
     BlacklistAdd,
     BlacklistRemove,
     Enable,
-    Disable
+    Disable,
+    AppliedRoles
 }

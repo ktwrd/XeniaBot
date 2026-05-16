@@ -1,0 +1,54 @@
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+
+namespace XeniaDiscord.Data.Models.RolePreserve;
+
+public class RolePreserveAuditAppliedRoleModel
+{
+    public const string TableName = "RolePreserveAudit_AppliedRoles";
+    public RolePreserveAuditAppliedRoleModel()
+    {
+        RolePreserveAuditId = Guid.Empty;
+        RoleId = "0";
+        Action = RolePreserveAuditAppliedRoleAction.FailureUnknown;
+    }
+
+    /// <summary>
+    /// Foreign Key to <see cref="RolePreserveAuditModel.Id"/>
+    /// </summary>
+    public Guid RolePreserveAuditId { get; set; }
+
+    /// <summary>
+    /// Role Id that was applied, or Xenia tried to (ulong as string)
+    /// </summary>
+    [MaxLength(DbGlobals.ulongMaxLength)]
+    public string RoleId { get; set; }
+    
+    /// <summary>
+    /// Action in relation to the role
+    /// </summary>
+    public RolePreserveAuditAppliedRoleAction Action { get; set; }
+
+    /// <summary>
+    /// Only used if <see cref="Action"/> is <see cref="RolePreserveAuditAppliedRoleAction.FailureUnknown"/>
+    /// </summary>
+    public string? ExceptionText { get; set; }
+
+    public ulong GetRoleId() => RoleId.ParseRequiredULong(nameof(RoleId), false);
+}
+
+public enum RolePreserveAuditAppliedRoleAction
+{
+    [Description("Failure - Unknown")]
+    FailureUnknown = 0,
+    [Description("Success - Granted")]
+    SuccessGrant,
+    [Description("Skipped - Role does not exist")]
+    SkippedRoleDoesNotExist,
+    [Description("Skipped - Blacklisted")]
+    SkippedBlacklisted,
+    [Description("Failed to apply - Missing permissions")]
+    FailureMissingPermissions,
+    [Description("Failed to apply - Missing permissions (hierarchy issue)")]
+    FailureMissingPermissionsHierarchy
+}

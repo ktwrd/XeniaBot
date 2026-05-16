@@ -45,6 +45,7 @@ public class XeniaDbContext : DbContext
     public DbSet<GuildChannelCacheModel> GuildChannelCache { get; set; }
     public DbSet<GuildMemberCacheModel> GuildMemberCache { get; set; }
     public DbSet<GuildCacheModel> GuildCache { get; set; }
+    public DbSet<GuildRoleCacheModel> GuildRoleCache { get; set; }
     public DbSet<UserCacheModel> UserCache { get; set; }
     public DbSet<AuditLogBanCacheModel> AuditLogBanEntryCache { get; set; }
     #endregion
@@ -66,6 +67,7 @@ public class XeniaDbContext : DbContext
     public DbSet<RolePreserveUserRoleModel> RolePreserveUserRoles { get; set; }
     public DbSet<RolePreserveBlacklistedRoleModel> RolePreserveBlacklistedRoles { get; set; }
     public DbSet<RolePreserveAuditModel> RolePreserveAudit { get; set; }
+    public DbSet<RolePreserveAuditAppliedRoleModel> RolePreserveAuditAppliedRoles { get; set; }
     #endregion
     
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
@@ -251,6 +253,16 @@ public class XeniaDbContext : DbContext
             .HasForeignKey(e => e.GuildId)
             .IsRequired();
         });
+        builder.Entity<GuildRoleCacheModel>(b =>
+        {
+            b.ToTable(GuildRoleCacheModel.TableName)
+                .HasKey(e => e.RoleId);
+            b.HasIndex(e => e.GuildId);
+            b.HasOne(e => e.Snapshot)
+                .WithMany()
+                .HasForeignKey(e => e.SnapshotId)
+                .IsRequired();
+        });
         builder.Entity<GuildChannelCacheModel>(b =>
         {
             b.ToTable(GuildChannelCacheModel.TableName)
@@ -362,6 +374,8 @@ public class XeniaDbContext : DbContext
         #endregion
 
         #region Role Preserve
+        builder.HasPostgresEnum<RolePreserveAuditAction>();
+        builder.HasPostgresEnum<RolePreserveAuditAppliedRoleAction>();
         builder.Entity<RolePreserveGuildModel>(b =>
         {
             b.ToTable(RolePreserveGuildModel.TableName).HasKey(e => e.GuildId);
@@ -425,6 +439,15 @@ public class XeniaDbContext : DbContext
                 e.TargetUserId,
                 e.TargetRoleId
             });
+            b.HasMany(e => e.AppliedRoles)
+                .WithOne()
+                .HasForeignKey(e => e.RolePreserveAuditId)
+                .IsRequired();
+        });
+        builder.Entity<RolePreserveAuditAppliedRoleModel>(b =>
+        {
+            b.ToTable(RolePreserveAuditAppliedRoleModel.TableName)
+                .HasKey(e => new { e.RolePreserveAuditId, e.RoleId });
         });
         #endregion
         
