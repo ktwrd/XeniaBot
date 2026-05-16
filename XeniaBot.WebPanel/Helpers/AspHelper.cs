@@ -26,20 +26,11 @@ public static class AspHelper
 {
     public static ulong? GetUserId(HttpContext context)
     {
-        ulong? target = null;
-        if (context.User?.Identity?.IsAuthenticated ?? false)
-        {
-            foreach (var claim in context.User.Claims)
-            {
-                if (claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
-                {
-                    target = ulong.Parse(claim.Value);
-                    return target;
-                }
-            }
-        }
-
-        return target;
+        if (!(context.User?.Identity?.IsAuthenticated ?? false)) return null;
+        var claim = context.User.Claims.FirstOrDefault(e =>
+            e.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+        if (ulong.TryParse(claim?.Value, out var value)) return value;
+        return null;
     }
     
     public static bool IsCurrentUserAdmin(HttpContext context)
