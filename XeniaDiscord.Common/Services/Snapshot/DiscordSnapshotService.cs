@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using System.Data;
+using JetBrains.Annotations;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
@@ -12,11 +12,11 @@ using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
 
+[UsedImplicitly]
 public class DiscordSnapshotService : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly XeniaDbContext _db;
-    private readonly DiscordSocketClient _client;
     private readonly DiscordCacheService _cacheService;
     private readonly GuildCacheRepository _guildCacheRepository;
     private readonly IMapper<IRole, GuildRoleSnapshotModel> _roleMapper;
@@ -26,7 +26,7 @@ public class DiscordSnapshotService : BaseService
     public DiscordSnapshotService(IServiceProvider services) : base(services)
     {
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        var client = services.GetRequiredService<DiscordSocketClient>();
         _cacheService = services.GetRequiredService<DiscordCacheService>();
         _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
 
@@ -38,36 +38,40 @@ public class DiscordSnapshotService : BaseService
         var programDetails = services.GetRequiredService<ProgramDetails>();
         if (programDetails.Platform == XeniaPlatform.Bot)
         {
-            _client.JoinedGuild += OnGuildJoined;
-            _client.GuildUpdated += OnGuildUpdated;
-            _client.LeftGuild += OnGuildLeft;
+            client.JoinedGuild += OnGuildJoined;
+            client.GuildUpdated += OnGuildUpdated;
+            client.LeftGuild += OnGuildLeft;
 
-            _client.UserJoined += OnGuildMemberJoined;
-            _client.GuildMemberUpdated += OnGuildMemberUpdated;
-            _client.RoleCreated += OnGuildRoleCreated;
-            _client.RoleUpdated += OnGuildRoleUpdated;
-            _client.RoleDeleted += OnGuildRoleDeleted;
+            client.UserJoined += OnGuildMemberJoined;
+            client.GuildMemberUpdated += OnGuildMemberUpdated;
+            client.RoleCreated += OnGuildRoleCreated;
+            client.RoleUpdated += OnGuildRoleUpdated;
+            client.RoleDeleted += OnGuildRoleDeleted;
         }
     }
 
     /// <summary>
     /// Invoked when a member has been updated.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildMemberSnapshotModel>? GuildMemberUpdated;
 
     /// <summary>
     /// Invoked when a role has been updated, created, or deleted.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleUpdated;
 
     /// <summary>
     /// Invoked when a role has been deleted.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleDeleted;
 
     /// <summary>
     /// Invoked when the bot joins a guild, or when it's been updated.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildSnapshotModel>? GuildUpdated;
 
     private Task OnGuildJoined(SocketGuild guild)
@@ -422,7 +426,6 @@ public class DiscordSnapshotService : BaseService
             await UpdateGuildMembers(db, guild, now, source);
         }
 
-        GuildSnapshotModel? guildSnapshotBefore = null;
         GuildSnapshotModel guildSnapshot;
         try
         {
@@ -432,7 +435,7 @@ public class DiscordSnapshotService : BaseService
                 SnapshotSource = source
             };
             guildSnapshot.Update(guild);
-            guildSnapshotBefore = await db.GuildSnapshots
+            var guildSnapshotBefore = await db.GuildSnapshots
                 .AsNoTracking()
                 .OrderByDescending(e => e.RecordCreatedAt)
                 .Where(e => e.GuildId == guildSnapshot.GuildId)

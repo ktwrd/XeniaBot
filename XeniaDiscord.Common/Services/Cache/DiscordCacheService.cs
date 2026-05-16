@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -11,6 +12,7 @@ using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
 
+[UsedImplicitly]
 public class DiscordCacheService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
@@ -120,6 +122,7 @@ public class DiscordCacheService
         try
         {
             member = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetUserAsync(userId));
+            // ReSharper disable once AsyncMethodWithoutAwait
             member ??= await ExceptionHelper.RetryOnTimedOut(async () => _client.GetUser(userId));
         }
         catch (Exception ex)
@@ -139,7 +142,7 @@ public class DiscordCacheService
         var model = await db.GuildMemberCache
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.UserId == userIdStr && e.GuildId == guildIdStr)
-            ?? new()
+            ?? new GuildMemberCacheModel
             {
                 GuildId = guildIdStr,
                 UserId = userIdStr,

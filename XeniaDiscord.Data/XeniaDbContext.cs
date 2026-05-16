@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using XeniaDiscord.Data.Extensions;
 using XeniaDiscord.Data.Models;
 using XeniaDiscord.Data.Models.BanSync;
@@ -11,6 +12,7 @@ using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Data;
 
+[UsedImplicitly]
 public class XeniaDbContext : DbContext
 {
     private readonly DbContextOptions<XeniaDbContext> _ops;

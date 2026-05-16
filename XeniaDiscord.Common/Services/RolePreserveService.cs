@@ -226,7 +226,8 @@ public class RolePreserveService : BaseService
     private async Task SendFailureNotification(
         SocketGuildUser user,
         IReadOnlyCollection<ulong> success,
-        IReadOnlyCollection<ApplyFailure> fail)
+        IReadOnlyCollection<ApplyFailure> fail,
+        RolePreserveAuditModel? auditModel = null)
     {
         if (fail.Count < 1) return;
         IReadOnlyCollection<ServerLogChannelModel> targetLogChannels;
@@ -273,7 +274,6 @@ public class RolePreserveService : BaseService
 
         const string failFilename = "roles.txt";
         var attachments = new List<FileAttachment>();
-        var failAttachmentMessage = new StringBuilder();
         var failureFieldContent = GetFailEmbedContent(fail)
             .TapError(err =>
             {
