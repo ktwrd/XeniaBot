@@ -35,6 +35,11 @@ public class GuildRoleCacheModel
     /// </summary>
     [MaxLength(200)]
     public string Name { get; set; }
+    
+    /// <summary>
+    /// From: <see cref="Discord.IRole.Position"/>
+    /// </summary>
+    public int Position { get; set; }
 
     /// <summary>
     /// UTC Date Time of when this record was created.
