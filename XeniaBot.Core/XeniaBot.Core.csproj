@@ -20,7 +20,7 @@
     <PackageReference Include="DiffPlex" />
     <PackageReference Include="Google.Cloud.Translation.V2" />
     <PackageReference Include="IdGen" />
-    <PackageReference Include="Magick.NET-Q16-HDRI-AnyCPU" />
+    <PackageReference Include="Magick.NET-Q16-HDRI-x64" />
     <PackageReference Include="MimeTypesMap" />
     <PackageReference Include="Sentry.AspNetCore" />
   </ItemGroup>
