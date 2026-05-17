@@ -223,11 +223,9 @@ public partial class ServerController : BaseXeniaController
         foreach (var item in _discord.Guilds)
         {
             var guildUser = item.GetUser(user.Id);
-            if (guildUser == null)
+            if (guildUser?.GuildPermissions.ManageGuild != true)
                 continue;
-            if (!guildUser.GuildPermissions.ManageGuild)
-                continue;
-            dataItems.Add(new ServerListViewModelItem()
+            dataItems.Add(new ServerListViewModelItem
             {
                 Guild = item,
                 GuildUser = guildUser

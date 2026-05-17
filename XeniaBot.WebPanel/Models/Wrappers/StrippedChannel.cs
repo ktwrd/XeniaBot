@@ -12,14 +12,12 @@ public class StrippedChannel
 
     public static IEnumerable<StrippedChannel> FromGuild(IGuild guild)
     {
-        return guild.GetChannelsAsync().GetAwaiter().GetResult().Select((v) =>
-        {
-            return new StrippedChannel()
+        return guild.GetChannelsAsync().GetAwaiter().GetResult()
+            .Select((v) => new StrippedChannel()
             {
                 Id = v.Id,
                 Name = v.Name,
                 Position = v.Position
-            };
-        });
+            });
     }
 }

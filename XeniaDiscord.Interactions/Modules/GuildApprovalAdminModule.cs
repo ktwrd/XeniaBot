@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System.Collections.Frozen;
 using System.Text;
+using JetBrains.Annotations;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -16,6 +17,7 @@ using SetupGreeterModal = XeniaDiscord.Interactions.Modules.GuildApprovalModalMo
 
 namespace XeniaDiscord.Interactions.Modules;
 
+[UsedImplicitly]
 [Group("approval-admin", "Configure: Approval")]
 [CommandContextType(InteractionContextType.Guild)]
 public class GuildApprovalAdminModule : InteractionModuleBase
@@ -32,7 +34,8 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         _service = (scope?.ServiceProvider ?? services).GetRequiredService<GuildApprovalService>();
         _repo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildApprovalRepository>();
     }
-    
+
+    [UsedImplicitly]
     [SlashCommand("enable", "Enable Approval module")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [RegisterDBLCommand]
@@ -103,6 +106,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         }
     }
 
+    [UsedImplicitly]
     [SlashCommand("set-approved-role", "Set role to be given to approved users")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [RequireBotPermission(GuildPermission.ManageRoles)]
@@ -186,7 +190,8 @@ public class GuildApprovalAdminModule : InteractionModuleBase
                 .Build());
         }
     }
-    
+
+    [UsedImplicitly]
     [SlashCommand("set-channel", "Set log channel for user approvals")]
     [RequireUserPermission(GuildPermission.ManageChannels)]
     [RegisterDBLCommand]
@@ -216,7 +221,8 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         }
         throw new NotImplementedException();
     }
-    
+
+    [UsedImplicitly]
     [SlashCommand("set-greeter-channel", "Set channel to send message for greeting user (post-approval)")]
     [RequireUserPermission(GuildPermission.ManageChannels)]
     [RegisterDBLCommand]
@@ -246,6 +252,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         }
     }
 
+    [UsedImplicitly]
     [SlashCommand("get-greeter-msg", "Get the message used for greeting users (post-approval)")]
     [RequireUserPermission(GuildPermission.ManageChannels)]
     public async Task GetGreeterMessage()
@@ -304,7 +311,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         }
     }
 
-
+    [UsedImplicitly]
     [SlashCommand("setup-greeter", "Setup post-approval greeter for user approvals", runMode: RunMode.Async)]
     [RequireUserPermission(GuildPermission.ManageChannels)]
     [RegisterDBLCommand]

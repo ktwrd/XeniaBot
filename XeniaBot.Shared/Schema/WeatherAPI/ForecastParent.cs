@@ -6,6 +6,6 @@ namespace XeniaBot.Shared.Schema.WeatherAPI
     public class ForecastParent
     {
         [JsonPropertyName("forecastday")]
-        public ForecastDay[] ForecastDay = Array.Empty<ForecastDay>();
+        public ForecastDay[] ForecastDay { get; set; } = Array.Empty<ForecastDay>();
     }
 }

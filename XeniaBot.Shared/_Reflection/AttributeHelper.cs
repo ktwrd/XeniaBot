@@ -16,14 +16,12 @@ public static class AttributeHelper
         foreach (var item in classes)
         {
             var descriptor = new ServiceDescriptor(item, item, ServiceLifetime.Singleton);
-            if (!services.Any(e
-                => e.ServiceType == descriptor.ServiceType
-                && e.ImplementationType == descriptor.ImplementationType
-                && e.Lifetime == descriptor.Lifetime))
-            {
-                services.Add(descriptor);
-                Log.Trace($"Registered type: {item}");
-            }
+            if (services.Any(e
+                    => e.ServiceType == descriptor.ServiceType
+                       && e.ImplementationType == descriptor.ImplementationType
+                       && e.Lifetime == descriptor.Lifetime)) continue;
+            services.Add(descriptor);
+            Log.Trace($"Registered type: {item}");
         }
     }
     public static void InjectControllerAttributes(string name, IServiceCollection services)
@@ -38,10 +36,7 @@ public static class AttributeHelper
     }
     public static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly)
     {
-        foreach(Type type in assembly.GetTypes()) {
-            if (type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableTo(typeof(IBaseService)) && type != typeof(IBaseService)) {
-                yield return type;
-            }
-        }
+        return assembly.GetTypes()
+            .Where(type => type.GetCustomAttributes(typeof(T), true).Length > 0 && type.IsAssignableTo(typeof(IBaseService)) && type != typeof(IBaseService));
     }
 }

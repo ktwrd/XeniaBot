@@ -16,30 +16,27 @@ public class ServerDetailsViewModel : BaseViewModel,
     IServerCountingComponentViewModel,
     IServerConfessionComponentViewModel
 {
-    public SocketGuildUser User { get; set; }
-    public SocketGuild Guild { get; set; }
+    public required SocketGuildUser User { get; set; }
+    public required SocketGuild Guild { get; set; }
     public ICollection<SocketGuildUser> UsersWhoCanAccess { get; set; } = [];
-    
-    public CounterGuildModel CounterConfig { get; set; }
-    public BanSyncGuildModel BanSyncConfig { get; set; }
-    public LevelSystemConfigModel XpConfig { get; set; }
+
+    public required CounterGuildModel CounterConfig { get; set; }
+    public required BanSyncGuildModel BanSyncConfig { get; set; }
+    public required LevelSystemConfigModel XpConfig { get; set; }
     public LevelSystemConfigModel LevelSystemConfig
     {
         get => XpConfig;
-        set
-        {
-            XpConfig = value;
-        }
+        set => XpConfig = value;
     }
-    public ServerLogGuildModel LogConfig { get; set; }
+    public required ServerLogGuildModel LogConfig { get; set; }
     public ICollection<BanSyncGuildSnapshotModel> BanSyncStateHistory { get; set; } = [];
-    public GuildGreeterConfigModel GreeterConfig { get; set; }
-    public GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }
+    public required GuildGreeterConfigModel GreeterConfig { get; set; }
+    public required GuildByeGreeterConfigModel GreeterGoodbyeConfig { get; set; }
     public ICollection<GuildWarnItemModel> WarnItems { get; set; } = [];
-    public RolePreserveGuildModel RolePreserve { get; set; }
+    public required RolePreserveGuildModel RolePreserve { get; set; }
     public long BanSyncRecordCount { get; set; }
-    public GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
-    public ConfessionGuildModel ConfessionConfig { get; set; }
+    public required GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
+    public required ConfessionGuildModel ConfessionConfig { get; set; }
 
     public bool IsWarnActive(GuildWarnItemModel model)
     {

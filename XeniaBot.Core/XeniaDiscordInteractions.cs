@@ -3,6 +3,8 @@ using System;
 using System.Threading.Tasks;
 using XeniaBot.Core.Modules;
 using XeniaBot.Shared.Helpers;
+#pragma warning disable S1186
+#pragma warning disable IDE0130
 
 namespace XeniaDiscord;
 

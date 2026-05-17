@@ -231,15 +231,13 @@ public partial class ServerController
         string? message = null)
     {
         ulong targetChannelId = 0;
-        if (inputChannelId == null || inputChannelId?.Length < 1)
+        if (string.IsNullOrEmpty(inputChannelId))
             targetChannelId = 0;
         else
         {
             try
             {
                 targetChannelId = ulong.Parse(inputChannelId);
-                if (targetChannelId == null)
-                    throw new Exception("ChannelId is null");
             }
             catch (Exception ex)
             {
@@ -307,15 +305,13 @@ public partial class ServerController
         string? inputColor)
     {
         ulong targetChannelId = 0;
-        if (inputChannelId == null || inputChannelId?.Length < 1)
+        if (string.IsNullOrEmpty(inputChannelId))
             targetChannelId = 0;
         else
         {
             try
             {
                 targetChannelId = ulong.Parse(inputChannelId);
-                if (targetChannelId == null)
-                    throw new Exception("ChannelId is null");
             }
             catch (Exception ex)
             {

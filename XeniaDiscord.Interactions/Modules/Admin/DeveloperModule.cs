@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
@@ -12,6 +13,7 @@ namespace XeniaDiscord.Interactions.Modules;
 [DeveloperModule]
 [CommandContextType(InteractionContextType.Guild)]
 [RequireDeveloper]
+[UsedImplicitly]
 public partial class DeveloperModule : InteractionModuleBase
 {
     private readonly DiscordSocketClient _client;

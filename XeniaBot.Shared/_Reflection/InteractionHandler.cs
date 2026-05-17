@@ -73,7 +73,7 @@ public class InteractionHandler
             Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
             SentrySdk.CaptureException(ex, scope =>
             {
-                SentryHelper.SetInteractionInfo(scope, interaction);
+                scope.SetInteractionInfo(interaction);
             });
         }
     }
@@ -98,7 +98,7 @@ public class InteractionHandler
             Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
             SentrySdk.CaptureException(ex, scope =>
             {
-                SentryHelper.SetInteractionInfo(scope, interaction);
+                scope.SetInteractionInfo(interaction);
             });
         }
     }
@@ -124,7 +124,7 @@ public class InteractionHandler
             Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
             SentrySdk.CaptureException(ex, scope =>
             {
-                SentryHelper.SetInteractionInfo(scope, interaction);
+                scope.SetInteractionInfo(interaction);
             });
         }
     }

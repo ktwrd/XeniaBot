@@ -2,6 +2,7 @@
 using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Interactions.Modules;
 using XeniaDiscord.Interactions.Modules.Admin;
+#pragma warning disable IDE0130
 
 namespace XeniaDiscord;
 
@@ -19,6 +20,7 @@ public static class XeniaDiscordInteractions
         await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();
     }
+
     public static async Task<ModuleInfo[]> RegisterDeveloperModules(InteractionService interactions, IServiceProvider services)
     {
         var transaction = SentryHelper.CreateTransaction();

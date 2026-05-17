@@ -1,11 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using XeniaDiscord.Data;
 
 namespace XeniaDiscord.Interactions.Modules;
 
 partial class DeveloperModule
 {
+    [UsedImplicitly]
     [SlashCommand("chk-guild-cfg", "Validate Guild Config")]
     public async Task ValidateGuildConfig(
         string guildId,
@@ -54,8 +56,8 @@ partial class DeveloperModule
         };
 
 
-        var logchannelId = guildConfig.GetLogChannelId();
-        if (!logchannelId.HasValue)
+        var logChannelId = guildConfig.GetLogChannelId();
+        if (!logChannelId.HasValue)
         {
             embed.WithDescription("Log Channel Id not configured.");
             await FollowupWithFilesAsync(files, embeds: [embed.Build()]);
@@ -64,7 +66,7 @@ partial class DeveloperModule
 
         var validatePermissions = await ValidatePermissions(
             guildId,
-            logchannelId.Value,
+            logChannelId.Value,
             [
                 ChannelPermission.ViewChannel,
                 ChannelPermission.ReadMessageHistory,
@@ -86,10 +88,10 @@ partial class DeveloperModule
             ]);
         if (validatePermissions.IsFailure)
         {
-            embed.WithDescription(validatePermissions.Error.Item1);
-            if (validatePermissions.Error.Item2 != null)
+            embed.WithDescription(validatePermissions.Error.Message);
+            if (validatePermissions.Error.Exception != null)
             {
-                files.Add(CreateStringAttachment("exception.txt", validatePermissions.Error.Item2.ToString()));
+                files.Add(CreateStringAttachment("exception.txt", validatePermissions.Error.Exception.ToString()));
             }
             await FollowupWithFilesAsync(files, embeds: [embed.Build()]);
             return;

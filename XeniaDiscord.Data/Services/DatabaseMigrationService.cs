@@ -15,7 +15,7 @@ public class DatabaseMigrationService : BaseService
         _err = services.GetRequiredService<ErrorReportService>();
     }
 
-    private bool hasInitialized = false;
+    private bool _hasInitialized = false;
 
     /// <inheritdoc/>
     /// <remarks>
@@ -24,7 +24,7 @@ public class DatabaseMigrationService : BaseService
     /// </remarks>
     public override async Task InitializeAsync()
     {
-        if (hasInitialized) return;
+        if (_hasInitialized) return;
 
         new Thread(() =>
         {
@@ -38,14 +38,14 @@ public class DatabaseMigrationService : BaseService
             }
             finally
             {
-                hasInitialized = true;
+                _hasInitialized = true;
             }
         })
         {
             Name = $"Xenia.{nameof(DatabaseMigrationService)}.{nameof(InitializeAsync)}"
         }.Start();
 
-        while (!hasInitialized) await Task.Delay(500);
+        while (!_hasInitialized) await Task.Delay(500);
     }
 
     private async Task InitializeThread()
@@ -58,7 +58,7 @@ public class DatabaseMigrationService : BaseService
         if (migrationsArray.Length < 1)
         {
             _log.Info("No pending migrations");
-            hasInitialized = true;
+            _hasInitialized = true;
             return;
         }
 
@@ -69,11 +69,11 @@ public class DatabaseMigrationService : BaseService
         {
             await db.Database.MigrateAsync();
             await db.SaveChangesAsync();
-            hasInitialized = true;
+            _hasInitialized = true;
         }
         catch (Exception ex)
         {
-            hasInitialized = true;
+            _hasInitialized = true;
             var msg = $"Failed to apply {migrationCount} migration(s)";
             _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()

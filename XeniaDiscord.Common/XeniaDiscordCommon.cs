@@ -4,6 +4,8 @@ using XeniaDiscord.Common.Handlers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
 using XeniaDiscord.Common.Mappers.DiscordSnapshot;
 using XeniaDiscord.Common.Services;
+#pragma warning disable S1186
+#pragma warning disable IDE0130
 
 namespace XeniaDiscord;
 
@@ -49,6 +51,7 @@ public static class XeniaDiscordCommon
             }
         }
     }
+
     private static void RegisterMappers(IServiceCollection services)
     {
         DiscordUserToUserCacheModelMapper.RegisterService(services);

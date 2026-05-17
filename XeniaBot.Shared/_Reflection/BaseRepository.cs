@@ -9,8 +9,8 @@ namespace XeniaBot.Shared;
 /// <summary>
 /// Base controller that interacts with MongoDB
 /// </summary>
-/// <typeparam name="TH">Type of the target collection specified at <see cref="MongoCollectionName"/></typeparam>
-public class BaseRepository<TH> : BaseService
+/// <typeparam name="TCollectionModel">Type of the target collection specified at <see cref="MongoCollectionName"/></typeparam>
+public class BaseRepository<TCollectionModel> : BaseService
 {
     protected IMongoDatabase _db { get; private set; }
     /// <summary>
@@ -44,24 +44,24 @@ public class BaseRepository<TH> : BaseService
     /// <summary>
     /// Get collection with the name of <see cref="MongoCollectionName"/>
     /// </summary>
-    /// <returns>MongoDB Collection with assumed type of <typeparamref name="TH"/> or null if the collection doesn't exist.</returns>
-    public IMongoCollection<TH>? GetCollection()
-        => GetCollection<TH>();
+    /// <returns>MongoDB Collection with assumed type of <typeparamref name="TCollectionModel"/> or null if the collection doesn't exist.</returns>
+    public IMongoCollection<TCollectionModel>? GetCollection()
+        => GetCollection<TCollectionModel>();
 
     /// <summary>
     /// Get collection by <paramref name="name"/>
     /// </summary>
     /// <param name="name">Collection name to fetch</param>
-    /// <returns>MongoDB Collection with assumed type of <typeparamref name="TH"/> or null if the collection doesn't exist.</returns>
-    protected IMongoCollection<TH>? GetCollection(string name)
-        => GetCollection<TH>(name);
+    /// <returns>MongoDB Collection with assumed type of <typeparamref name="TCollectionModel"/> or null if the collection doesn't exist.</returns>
+    protected IMongoCollection<TCollectionModel>? GetCollection(string name)
+        => GetCollection<TCollectionModel>(name);
 
-    public Task<IAsyncCursor<TH>> BaseFind(FilterDefinition<TH> filter, SortDefinition<TH>? sort = null, int? limit = null)
+    public Task<IAsyncCursor<TCollectionModel>> BaseFind(FilterDefinition<TCollectionModel> filter, SortDefinition<TCollectionModel>? sort = null, int? limit = null)
     {
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
-        var opts = new FindOptions<TH, TH>();
+        var opts = new FindOptions<TCollectionModel, TCollectionModel>();
         if (sort != null)
             opts.Sort = sort;
         if (limit != null && limit.HasValue)

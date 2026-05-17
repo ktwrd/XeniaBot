@@ -18,22 +18,27 @@ public sealed class StrippedGuild
     /// Name of the guild
     /// </summary>
     public string Name { get; set; } = string.Empty;
+
     /// <summary>
     /// Amount of members in guild
     /// </summary>
     public int MemberCount { get; set; }
+    
     /// <summary>
     /// UserId of the guild owner
     /// </summary>
     public ulong OwnerId { get; set; }
+
     /// <summary>
-    /// Icon Url for this guild. Will default to `/Debugempty.png` when is null.
+    /// Icon Url for this guild. Will default to <c>/DebugEmpty.png</c> when is null.
     /// </summary>
     public string? IconUrl { get; set; }
+    
     /// <summary>
     /// Banner Url for this guild
     /// </summary>
     public string? BannerUrl { get; set; }
+    
     /// <summary>
     /// Description of this guild.
     /// </summary>
@@ -43,13 +48,13 @@ public sealed class StrippedGuild
     {
         if (guild == null)
         {
-            return new StrippedGuild()
+            return new StrippedGuild
             {
                 Id = 0,
                 Name = "<unknown>",
                 MemberCount = -1,
                 OwnerId = 0,
-                IconUrl = "/Debugempty.png",
+                IconUrl = "/DebugEmpty.png",
                 Description = ""
             };
         }
@@ -61,7 +66,7 @@ public sealed class StrippedGuild
                 Name = guild.Name,
                 MemberCount = guild.MemberCount,
                 OwnerId = guild.OwnerId,
-                IconUrl = guild.IconUrl ?? "/Debugempty.png",
+                IconUrl = guild.IconUrl ?? "/DebugEmpty.png",
                 BannerUrl = guild.BannerUrl,
                 Description = guild.Description ?? ""
             };
@@ -75,21 +80,21 @@ public sealed class StrippedGuild
     {
         if (guild != null) return FromGuild(guild);
         if (model == null)
-            return new StrippedGuild()
+            return new StrippedGuild
             {
                 Id = id,
                 Name = id.ToString(),
                 MemberCount = -1,
                 OwnerId = 0,
-                IconUrl = "/Debugempty.png",
+                IconUrl = "/DebugEmpty.png",
             };
-        return new StrippedGuild()
+        return new StrippedGuild
         {
             Id = model.GetGuildId(),
             Name = model.Name,
             MemberCount = model.ApproximateMemberCount ?? -1,
             OwnerId = model.GetOwnerUserId(),
-            IconUrl = model.IconUrl ?? "/Debugempty.png",
+            IconUrl = model.IconUrl ?? "/DebugEmpty.png",
             Description = model.Description
         };
     }

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System.Text;
@@ -16,6 +17,7 @@ namespace XeniaDiscord.Interactions.Modules.Admin;
 [DeveloperModule]
 [CommandContextType(InteractionContextType.Guild)]
 [RequireDeveloper]
+[UsedImplicitly]
 public partial class AdmDataModule : InteractionModuleBase
 {
     private readonly ConfigData _config;

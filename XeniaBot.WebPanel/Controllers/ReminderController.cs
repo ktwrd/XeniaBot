@@ -82,7 +82,7 @@ public class ReminderController : BaseXeniaController
 
         dbResult.MarkAsComplete();
         await db.Set(dbResult);
-        
+        _logger.LogInformation("Deleted reminder {ReminderId}", id);
         return RedirectToAction("Index", new Dictionary<string, object>()
         {
             {"message", "Successfully deleted reminder"},

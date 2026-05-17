@@ -6,8 +6,10 @@ public class AuthentikConfigItem
 {
     [DefaultValue(false)]
     public bool Enable { get; set; } = false;
+    
     [DefaultValue("")]
     public string Token { get; set; } = "";
+    
     [DefaultValue("")]
     public string Url { get; set; } = "";
 

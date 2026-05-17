@@ -18,8 +18,8 @@ public class AdminLevelSystemComponentViewModel : IGuildViewModel, IAlertViewMod
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
         var discord = CoreContext.Instance!.GetRequiredService<DiscordSocketClient>();
-        Guild = discord.GetGuild(guildId);
         var xpConfig = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
+        Guild = discord.GetGuild(guildId);
         XpConfig = await xpConfig.Get(Guild.Id) ?? new LevelSystemConfigModel()
         {
             GuildId = Guild.Id

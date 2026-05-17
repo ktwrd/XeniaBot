@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -10,6 +11,7 @@ using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Interactions.Modules;
 
+[UsedImplicitly]
 [CommandContextType(InteractionContextType.Guild)]
 public class GuildApprovalModalModule : InteractionModuleBase
 {
@@ -25,6 +27,7 @@ public class GuildApprovalModalModule : InteractionModuleBase
         _validation = services.GetRequiredService<ValidationService>();
         _repo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildApprovalRepository>();
     }
+
     private async Task HandleSetupGreeterModalInternal(SetupGreeterModal modal)
     {
         var errors = new List<string>();
@@ -113,7 +116,8 @@ public class GuildApprovalModalModule : InteractionModuleBase
                 .AddSerializedAttachment("guildApprovalModel.json", model));
         }
     }
-    
+
+    [UsedImplicitly]
     [ModalInteraction("guild-approval-setup-greeter", runMode: RunMode.Async)]
     public async Task HandleSetupGreeterModal(SetupGreeterModal modal)
     {

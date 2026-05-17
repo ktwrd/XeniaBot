@@ -41,116 +41,120 @@ public static class SentryHelper
         return result;
     }
 
-    public static void SetInteractionInfo(this Scope scope, IDiscordInteraction? interaction)
+    extension(Scope scope)
     {
-        if (interaction == null) return;
-
-        var tags = new Dictionary<string, string>();
-        var extra = new Dictionary<string, object?>();
-        if (interaction.Data is IApplicationCommandInteractionData data)
+        public void SetInteractionInfo(IDiscordInteraction? interaction)
         {
-            tags["interaction.name"] = data.Name;
-            tags["interaction.id"] = data.Id.ToString();
+            if (interaction == null) return;
 
-            var optionIndex = 0;
-            foreach (var option in data.Options)
+            var tags = new Dictionary<string, string>();
+            var extra = new Dictionary<string, object?>();
+            if (interaction.Data is IApplicationCommandInteractionData data)
             {
-                if (optionIndex == 0 && option.Type == ApplicationCommandOptionType.SubCommand)
+                tags["interaction.name"] = data.Name;
+                tags["interaction.id"] = data.Id.ToString();
+
+                var optionIndex = 0;
+                foreach (var option in data.Options)
                 {
-                    tags["interaction.group"] = data.Name;
-                    tags["interaction.name"] = option.Name;
-                    tags["command.name"] = option.Name;
-                    tags["command.group"] = data.Name;
+                    if (optionIndex == 0 && option.Type == ApplicationCommandOptionType.SubCommand)
+                    {
+                        tags["interaction.group"] = data.Name;
+                        tags["interaction.name"] = option.Name;
+                        tags["command.name"] = option.Name;
+                        tags["command.group"] = data.Name;
+                    }
+
+                    var p = $"interaction.data.options[{optionIndex}]";
+                    extra[p + ".name"] = option.Name;
+                    extra[p + ".options.count"] = option.Options.Count;
+                    extra[p + ".type"] = option.Type.ToString();
+                    try
+                    {
+                        extra[p + ".value"] = option.Value;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, $"Failed to set value for interaction {data.Id} (value type: {option.Value?.GetType()})" + string.Join("\n", tags.Select(kvp => $"{kvp.Key}={kvp.Value}")));
+                    }
+
+                    optionIndex++;
                 }
 
-                var p = $"interaction.data.options[{optionIndex}]";
-                extra[p + ".name"] = option.Name;
-                extra[p + ".options.count"] = option.Options.Count;
-                extra[p + ".type"] = option.Type.ToString();
-                try
+                if (optionIndex == 0)
                 {
-                    extra[p + ".value"] = option.Value;
+                    tags["command.name"] = data.Name;
                 }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, $"Failed to set value for interaction {data.Id} (value type: {option.Value?.GetType()})" + string.Join("\n", tags.Select(kvp => $"{kvp.Key}={kvp.Value}")));
-                }
-
-                optionIndex++;
             }
 
-            if (optionIndex == 0)
+
+            tags["channel.id"] = interaction.ChannelId.ToString() ?? "";
+            tags["guild.id"] = interaction.GuildId?.ToString() ?? "";
+            if (interaction is SocketInteraction socketInteraction)
             {
-                tags["command.name"] = data.Name;
+                if (socketInteraction.Channel != null)
+                {
+                    extra["channel.name"] = socketInteraction.Channel.Name;
+                }
+                if (socketInteraction.InteractionChannel is IGuildChannel { Guild: not null } guildChannel)
+                {
+                    extra["guild.id"] = guildChannel.Guild.Id.ToString();
+                    extra["guild.name"] = guildChannel.Guild.Name;
+                    extra["guild.owner.id"] = guildChannel.Guild.OwnerId.ToString();
+                    try
+                    {
+                        var owner = guildChannel.Guild.GetOwnerAsync().GetAwaiter().GetResult();
+                        extra["guild.owner.username"] = owner?.Username ?? "";
+                        extra["guild.owner.global_name"] = owner?.GlobalName ?? "";
+                    }
+                    catch { }
+                }
+                tags["author.id"] = socketInteraction.User.Id.ToString();
+                tags["author.username"] = socketInteraction.User.Username;
+                tags["author.global_name"] = socketInteraction.User.GlobalName;
             }
+
+            scope.SetTags(tags);
+            scope.SetExtras(extra);
         }
 
-
-        tags["channel.id"] = interaction.ChannelId.ToString() ?? "";
-        tags["guild.id"] = interaction.GuildId?.ToString() ?? "";
-        if (interaction is SocketInteraction socketInteraction)
+        public void SetInteractionInfo(IInteractionContext? context)
         {
-            if (socketInteraction.Channel != null)
+            if (context?.Interaction == null)
+                return;
+
+            scope.SetInteractionInfo(context.Interaction);
+            var extra = new Dictionary<string, object?>();
+        
+            if (context.Guild != null)
             {
-                extra["channel.name"] = socketInteraction.Channel.Name;
-            }
-            if (socketInteraction.InteractionChannel is IGuildChannel guildChannel
-                && guildChannel.Guild != null)
-            {
-                extra["guild.id"] = guildChannel.Guild.Id.ToString();
-                extra["guild.name"] = guildChannel.Guild.Name;
-                extra["guild.owner.id"] = guildChannel.Guild.OwnerId.ToString();
+                extra["guild.name"] = context.Guild.Name;
+                extra["guild.owner.id"] = context.Guild.OwnerId.ToString();
                 try
                 {
-                    var owner = guildChannel.Guild.GetOwnerAsync().GetAwaiter().GetResult();
+                    var owner = context.Guild.GetOwnerAsync().GetAwaiter().GetResult();
                     extra["guild.owner.username"] = owner?.Username ?? "";
                     extra["guild.owner.global_name"] = owner?.GlobalName ?? "";
                 }
                 catch { }
             }
-            tags["author.id"] = socketInteraction.User.Id.ToString();
-            tags["author.username"] = socketInteraction.User.Username;
-            tags["author.global_name"] = socketInteraction.User.GlobalName;
-        }
 
-        scope.SetTags(tags);
-        scope.SetExtras(extra);
+            scope.SetExtras(extra);
+        }
     }
 
-    public static void SetInteractionInfo(this Scope scope, IInteractionContext? context)
+    extension(ITransactionTracer transaction)
     {
-        if (context == null || context.Interaction == null)
-            return;
-
-        scope.SetInteractionInfo(context.Interaction);
-        var tags = new Dictionary<string, string>();
-        var extra = new Dictionary<string, object?>();
-        
-        if (context.Guild != null)
+        public TimeSpan GetDuration()
         {
-            extra["guild.name"] = context.Guild.Name;
-            extra["guild.owner.id"] = context.Guild.OwnerId.ToString();
-            try
-            {
-                var owner = context.Guild.GetOwnerAsync().GetAwaiter().GetResult();
-                extra["guild.owner.username"] = owner?.Username ?? "";
-                extra["guild.owner.global_name"] = owner?.GlobalName ?? "";
-            }
-            catch { }
+            var end = transaction.EndTimestamp ?? DateTimeOffset.UtcNow;
+            return end - transaction.StartTimestamp;
         }
 
-        scope.SetTags(tags);
-        scope.SetExtras(extra);
-    }
-
-    public static TimeSpan GetDuration(this ITransactionTracer transaction)
-    {
-        var end = transaction.EndTimestamp ?? DateTimeOffset.UtcNow;
-        return end - transaction.StartTimestamp;
-    }
-    public static string FormatDuration(this ITransactionTracer transaction)
-    {
-        var ts = transaction.GetDuration();
-        return FormatHelper.Duration(ts);
+        public string FormatDuration()
+        {
+            var ts = transaction.GetDuration();
+            return FormatHelper.Duration(ts);
+        }
     }
 }

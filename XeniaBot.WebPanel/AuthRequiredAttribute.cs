@@ -22,15 +22,16 @@ public class AuthRequiredAttribute : ActionFilterAttribute
     #region Obsolete
     /// <summary>
     /// <para><b>Will be removed in a later update</b></para>
-    /// <para>Optional: Requesting User Id must be in the provided guild and must have the Manage Server permission.</para>
+    /// <para>Optional: Requesting User ID must be in the provided guild and must have the Manage Server permission.</para>
     /// </summary>
     [DefaultValue(null)]
     [Obsolete("Will be removed in a later update.")]
     public ulong? RequireGuildId { get; set; }
+
     /// <summary>
     /// <para><b>Will be removed in a later update. Use <see cref="RestrictToGuildAttribute"/> instead.</b></para>
     /// 
-    /// <para>Route/Parameter name where the Guild Id is set.</para>
+    /// <para>Route/Parameter name where the Guild ID is set.</para>
     ///
     /// <para>Requesting User must have the Manage Server permission</para>
     ///
@@ -39,6 +40,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
     [DefaultValue(null)]
     [Obsolete("Will be removed in a later update. Use RestrictToGuildAttribute instead.")]
     public string? GuildIdRouteDataName { get; set; }
+    
     /// <summary>
     /// <para><b>Will be removed in a later update. Use <see cref="RequireSuperuserAttribute"/> instead.</b></para>
     /// Require the requesting user to be in <see cref="ConfigData.UserWhitelist"/>. Used for bot owner-only sections.
@@ -47,6 +49,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
     [Obsolete("Will be removed in a later update. Use RequireSuperuserAttribute instead.")]
     public bool RequireWhitelist { get; set; }
     #endregion
+    
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         // Only allow authenticated users.
@@ -69,7 +72,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
             return;
         }
 
-        ulong? targetGuildId = RequireGuildId;
+        var targetGuildId = RequireGuildId;
         if (GuildIdRouteDataName != null)
         {
             if (context.RouteData.Values.TryGetValue(GuildIdRouteDataName, out var s))
@@ -77,8 +80,8 @@ public class AuthRequiredAttribute : ActionFilterAttribute
                 try
                 {
                     targetGuildId = ulong.Parse(s?.ToString() ?? "0");
-                    if (targetGuildId == null || targetGuildId < 1)
-                        throw new Exception();
+                    if (targetGuildId is null or < 1)
+                        throw new InvalidOperationException("Invalid TargetGuildId");
                 }
                 catch
                 {
@@ -105,7 +108,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
         if (targetGuildId != null)
         {
             var userId = AspHelper.GetUserId(context.HttpContext) ?? 0;
-            bool canAccess = AspHelper.CanAccessGuild((ulong)targetGuildId!, userId);
+            var canAccess = AspHelper.CanAccessGuild((ulong)targetGuildId!, userId);
             if (!canAccess)
             {
                 context.Result = new ViewResult

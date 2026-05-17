@@ -6,6 +6,6 @@ namespace XeniaBot.Shared.Schema.WeatherAPI
     public class WeatherAlert
     {
         [JsonPropertyName("alert")]
-        public WeatherAlertItem[] Items = Array.Empty<WeatherAlertItem>();
+        public WeatherAlertItem[] Items { get; set; } = Array.Empty<WeatherAlertItem>();
     }
 }
