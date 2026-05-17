@@ -26,33 +26,8 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
         var res = await collection.FindAsync(filter);
-        var single = res.FirstOrDefault();
-        return single;
+        return await res.FirstOrDefaultAsync();
     }
-
-    // public async Task<ReminderModel[]?> GetMany(
-    //     long beforeTs = long.MaxValue,
-    //     long afterTs = long.MinValue,
-    //     ulong? authorId = null,
-    //     ulong? guildId = null,
-    //     ulong? channelId = null,
-    //     bool? hasReminded = null)
-    // {
-    //     var filter = Builders<ReminderModel>
-    //         .Filter
-    //         .Where((m) =>
-    //             beforeTs > m.ReminderTimestamp &&
-    //             afterTs < m.ReminderTimestamp &&
-    //             m.UserId == (authorId ?? m.UserId) &&
-    //             m.GuildId == (guildId ?? m.GuildId) &&
-    //             m.ChannelId == (channelId ?? m.ChannelId) &&
-    //             m.HasReminded == (hasReminded ?? m.HasReminded));
-    //     var collection = GetCollection();
-    //     var result = await collection.FindAsync(filter);
-    //     
-    //     var final = result?.ToList().ToArray();
-    //     return final;
-    // }
 
     public async Task<List<ReminderModel>?> GetMany(
         long beforeTimestamp = long.MaxValue,
@@ -63,7 +38,7 @@ public class ReminderRepository : BaseRepository<ReminderModel>
             .Filter
             .Where((v) => v.ReminderTimestamp < beforeTimestamp && v.ReminderTimestamp > afterTimestamp && v.HasReminded == hasReminded);
         var res = await BaseFind(filter);
-        return res.ToList();
+        return await res.ToListAsync();
     }
 
     private async Task<ReminderModel[]?> InternalFindMany(FilterDefinition<ReminderModel> filter)
@@ -71,8 +46,8 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         var collection = GetCollection();
         var result = await collection.FindAsync(filter);
         
-        var final = result?.ToList().ToArray();
-        return final;
+        var final = await result.ToListAsync();
+        return final.ToArray();
     }
 
     /// <summary>
@@ -105,22 +80,13 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         }
     }
 
-    public async Task<List<ReminderModel>> GetForgotten(string[] currentItems, long initTimestamp)
+    public async Task<List<ReminderModel>> GetForgotten(IReadOnlyCollection<string> currentItems, long initTimestamp)
     {
         var notCalled = await GetMany(
             beforeTimestamp: initTimestamp,
             hasReminded: false) ?? [];
 
-        var results = new List<ReminderModel>();
-        foreach (var i in notCalled)
-        {
-            if (!currentItems.Contains(i.ReminderId))
-            {
-                results.Add(i);
-            }
-        }
-
-        return results;
+        return notCalled.Where(e => !currentItems.Contains(e.ReminderId)).ToList();
     }
 
     public async Task<ICollection<ReminderModel>> GetByUser(ulong userId)
@@ -132,14 +98,14 @@ public class ReminderRepository : BaseRepository<ReminderModel>
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");
         var results = await collection.FindAsync(filter);
-        return results.ToList();
+        return await results.ToListAsync();
     }
 
     public async Task<ICollection<ReminderModel>> GetByUserPaginate(ulong userId, int page, int pageSize)
     {
         var filter = Builders<ReminderModel>
             .Filter
-            .Where(v => v.UserId == userId && v.HasReminded == false);
+            .Where(v => v.UserId == userId && !v.HasReminded);
         var collection = GetCollection();
         if (collection == null)
             throw new NoNullAllowedException("GetCollection resulted in null");

@@ -1,20 +1,17 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using kate.shared.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
-using XeniaBot.MongoData.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
-using XeniaBot.Shared.Services;
-using Timer = System.Timers.Timer;
 
 namespace XeniaBot.Logic.Services;
 
@@ -22,14 +19,12 @@ namespace XeniaBot.Logic.Services;
 public class ReminderService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ReminderService));
-    private readonly CoreContext _core;
     private readonly ConfigData _configData;
     private readonly DiscordSocketClient _discordClient;
     private readonly ReminderRepository _reminderDb;
     public ReminderService(IServiceProvider services)
         : base(services)
     {
-        _core = services.GetRequiredService<CoreContext>();
         _configData = services.GetRequiredService<ConfigData>();
         _discordClient = services.GetRequiredService<DiscordSocketClient>();
         _reminderDb = services.GetRequiredService<ReminderRepository>();
@@ -45,6 +40,8 @@ public class ReminderService : BaseService
     /// List of <see cref="ReminderModel.ReminderId"/> that has a timer created.
     /// </summary>
     private List<string> CurrentReminders { get; set; }
+
+    private readonly SemaphoreSlim _currentRemindersLock = new(1, 1);
 
     #region OnReady
     public override async Task OnReady()
@@ -64,6 +61,7 @@ public class ReminderService : BaseService
         {
             SentrySdk.CaptureException(ex);
             _log.Error(ex, $"Failed to call {nameof(CallForgottenReminders)}");
+            // TODO submit error to ErrorReportingService
         }
         try
         {
@@ -73,45 +71,65 @@ public class ReminderService : BaseService
         {
             SentrySdk.CaptureException(ex);
             _log.Error(ex, $"Failed to call {nameof(OnReadyTasks)}");
+            // TODO submit error to ErrorReportingService
         }
+    }
 
-        CreateUnregisteredTasksCompleted += ReminderDbCheckLoop;
+    private void ReminderDatabaseThread()
+    {
+        try
+        {
+            ReminderDatabaseThreadLoop().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to call thread loop");
+            // TODO submit error to ErrorReportingService
+        }
+        CreateReminderDatabaseThread();
+    }
+
+    private void CreateReminderDatabaseThread()
+    {
+        new Thread(ReminderDatabaseThread)
+        {
+            Name = $"{nameof(ReminderService)}.{nameof(ReminderDatabaseThread)}"
+        }.Start();
     }
 
     /// <summary>
     /// Runs function every 5 seconds to look call <see cref="AddReminderTask"/> on every reminder that isn't in <see cref="CurrentReminders"/>.
     /// </summary>
-    private void ReminderDbCheckLoop()
+    private async Task ReminderDatabaseThreadLoop()
     {
-        new System.Threading.Timer(
-            ReminderDbCheckLoop_Callback,
-            null,
-            0,
-            5000);
-    }
-    private void ReminderDbCheckLoop_Callback(object? obj)
-    {
-        List<ReminderModel> notCalled = [];;
-        try
+        while (true)
         {
-            lock (CurrentReminders)
+            List<ReminderModel> notCalled = [];
+            await _currentRemindersLock.WaitAsync();
+            try
             {
                 var cur = CurrentReminders.ToArray();
-                notCalled = _reminderDb.GetForgotten(cur, InitTimestamp).Result;
-                        
+                notCalled = await _reminderDb.GetForgotten(cur, InitTimestamp);
+
                 CreateUnregisteredTasks(cur).Wait();
 
                 CurrentReminders = cur.Concat(notCalled.Select(v => v.ReminderId)).ToList();
             }
-        }
-        catch (Exception ex)
-        {
-            SentrySdk.CaptureException(ex, scope =>
+            catch (Exception ex)
             {
-                scope.SetExtra(nameof(CurrentReminders), string.Join(", ", CurrentReminders));
-                scope.SetExtra(nameof(notCalled), notCalled);
-            });
-            _log.Error(ex, $"Failed to run {nameof(CreateUnregisteredTasks)}");
+                SentrySdk.CaptureException(ex, scope =>
+                {
+                    scope.SetExtra(nameof(CurrentReminders), string.Join(", ", CurrentReminders));
+                    scope.SetExtra(nameof(notCalled), notCalled);
+                });
+                _log.Error(ex, $"Failed to run {nameof(CreateUnregisteredTasks)}");
+            }
+            finally
+            {
+                _currentRemindersLock.Release();
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(5));
         }
     }
 
@@ -120,26 +138,25 @@ public class ReminderService : BaseService
     /// </summary>
     private async Task CallForgottenReminders()
     {
+        if (!_configData.ReminderService.Enable)
+        {
+            _log.Debug("Ignoring since ReminderServiceConfigItem.Enable is false");
+            return;
+        }
         try
         {
-            if (!_configData.ReminderService.Enable)
-            {
-                _log.Debug("Ignoring since ReminderServiceConfigItem.Enable is false");
-                return;
-            }
             var notCalled = await _reminderDb.GetMany(
                 beforeTimestamp: InitTimestamp,
                 hasReminded: false) ?? [];
 
             var taskList = new List<Task>();
-            foreach (var item in notCalled)
+            foreach (var item in notCalled.Where(e => !e.HasReminded).Select(e => e.ReminderId))
             {
-                if (item.HasReminded)
-                    continue;
-                _log.Debug($"Called {item.ReminderId}");
+                var reminderId = item;
+                _log.Debug($"Called {reminderId}");
                 taskList.Add(new Task(delegate
                 {
-                    SendNotification(item.ReminderId).Wait();
+                    SendNotification(reminderId).GetAwaiter().GetResult();
                 }));
             }
             foreach (var i in taskList)
@@ -169,6 +186,15 @@ public class ReminderService : BaseService
             SentrySdk.CaptureException(ex);
             _log.Error(ex, $"Failed to call {nameof(CreateUnregisteredTasks)}");
         }
+
+        try
+        {
+            CreateReminderDatabaseThread();
+        }
+        catch (Exception ex)
+        {
+            _log.Fatal(ex, "Failed to create thread loop for processing reminders!");
+        }
     }
 
     /// <summary>
@@ -176,7 +202,7 @@ public class ReminderService : BaseService
     /// </summary>
     /// <param name="ignoreItems">Array of ReminderId that should be ignored when calling <see cref="AddReminderTask"/></param>
     /// <param name="appendToCurrentReminders">When `true`, it will add <see cref="ReminderModel.ReminderId"/> <see cref="CurrentReminders"/> if it decides to call <see cref="AddReminderTask"/></param>
-    private async Task CreateUnregisteredTasks(string[]? ignoreItems = null, bool appendToCurrentReminders = false)
+    private async Task CreateUnregisteredTasks(IReadOnlyCollection<string>? ignoreItems = null, bool appendToCurrentReminders = false)
     {
         ignoreItems ??= Array.Empty<string>();
         var targets = await _reminderDb.GetMany(
@@ -184,26 +210,29 @@ public class ReminderService : BaseService
             hasReminded: false) ?? [];
 
         var taskList = new List<Task>();
-        foreach (var i in targets)
+        var appendReminders = new HashSet<string>();
+        await _currentRemindersLock.WaitAsync();
+        try
         {
-            if (i.HasReminded)
-                continue;
-            if (ignoreItems.Length < 1 || ignoreItems.Contains(i.ReminderId))
+            foreach (var i in targets.Where(e => !e.HasReminded))
             {
+                if (ignoreItems.Count >= 1 && !ignoreItems.Contains(i.ReminderId)) continue;
                 _log.Debug($"Registered {i.ReminderId}");
-                taskList.Add(new Task(delegate { AddReminderTask(i).Wait(); }));
+                var item = i;
+                taskList.Add(new Task(delegate { AddReminderTask(item).GetAwaiter().GetResult(); }));
                 if (appendToCurrentReminders)
                 {
-                    lock (CurrentReminders)
-                    { CurrentReminders.Add(i.ReminderId); }
+                    appendReminders.Add(i.ReminderId);
                 }
             }
+            CurrentReminders.AddRange(appendReminders);
+        }
+        finally
+        {
+            _currentRemindersLock.Release();
         }
         await XeniaHelper.TaskWhenAll(taskList);
-        CreateUnregisteredTasksCompleted?.Invoke();
     }
-
-    private VoidDelegate CreateUnregisteredTasksCompleted;
     #endregion
 
     #region Reminder Creation
@@ -213,33 +242,58 @@ public class ReminderService : BaseService
     /// <see cref="ReminderModel.ReminderTimestamp"/> should be more than 3s into the future.
     /// </summary>
     /// <param name="model"></param>
-    private Task AddReminderTask(ReminderModel model)
+    private async Task AddReminderTask(ReminderModel model)
     {  
         var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var diff = model.ReminderTimestamp - currentTimestamp;
         if (diff < 3)
         {
-            _log.Warn($"Reminder ${model.ReminderId} too short, ignoring.");
-            return Task.CompletedTask;
+            _log.Warn($"Reminder ${model.ReminderId} too short, running now");
+            await SendNotification(model.ReminderId);
+            return;
         }
-        var timer = new Timer(diff * 1000);
-        timer.Elapsed += (sender, args) =>
+
+        var targetTime = DateTimeOffset.FromUnixTimeSeconds(model.ReminderTimestamp);
+        var reminderId = model.ReminderId;
+        new Thread(() =>
         {
-            var data = _reminderDb.Get(model.ReminderId).Result;
-            if (data != null)
+            try
             {
-                SendNotification(data.ReminderId).Wait();
+                var now = DateTimeOffset.UtcNow;
+                _log.Info($"Started thread for reminder {reminderId} (target: {targetTime}, which is in {targetTime - DateTimeOffset.UtcNow})");
+                while (now < targetTime)
+                {
+                    if (now - targetTime > ReminderBigDelayCheck)
+                    {
+                        Task.Delay(ReminderBigDelay).Wait();
+                    }
+                    Task.Delay(1_000).Wait();
+                    now = DateTimeOffset.UtcNow;
+                }
+                _log.Trace($"Triggering event: {reminderId}");
+                var data = _reminderDb.Get(reminderId).GetAwaiter().GetResult();
+                if (data != null)
+                {
+                    SendNotification(data.ReminderId).GetAwaiter().GetResult();
+                }
             }
-        };
-        timer.Enabled = true;
-        timer.AutoReset = false;
-        timer.Start();
-        return Task.CompletedTask;
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to send reminder for {reminderId}");
+            }
+        })
+        {
+            Name = $"{nameof(ReminderService)}.{nameof(AddReminderTask)}({nameof(model.ReminderId)}={reminderId})"
+        }.Start();
     }
+
+    private static TimeSpan ReminderBigDelayCheck => TimeSpan.FromHours(6);
+    private static TimeSpan ReminderBigDelay => TimeSpan.FromHours(5);
+
     /// <summary>
     /// Create and add a reminder into the database. Also calls <see cref="AddReminderTask"/>
     /// </summary>
-    /// <param name="timestamp">Timestamp when the reminder should be ran at. Seconds since Unix Epoch (UTC)</param>
+    /// <param name="timestamp">Timestamp when the reminder should be run at. Seconds since Unix Epoch (UTC)</param>
     /// <param name="userId">Snowflake for user that this reminder is for</param>
     /// <param name="channelId">Channel Id that the user should be pinged in</param>
     /// <param name="guildId">Guild Id this reminder is for</param>
@@ -281,8 +335,8 @@ public class ReminderService : BaseService
             if (model.HasReminded)
                 return;
             
-            var channel = await _discordClient.GetChannelAsync(model.ChannelId);
-            if (!(channel is ITextChannel textChannel))
+            var channel = await ExceptionHelper.RetryOnTimedOut(async () => await _discordClient.GetChannelAsync(model.ChannelId));
+            if (channel is not ITextChannel textChannel)
             {
                 _log.Error($"Channel for Reminder {reminderId} isn't a text channel");
                 return;
@@ -292,8 +346,12 @@ public class ReminderService : BaseService
                 .WithTitle("Reminder")
                 .WithDescription(model.Note)
                 .WithColor(Color.Blue);
+            if (!string.IsNullOrEmpty(model.Note?.Trim()))
+            {
+                embed.Description = model.Note;
+            }
 
-            await textChannel.SendMessageAsync($"<@{model.UserId}>", embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await textChannel.SendMessageAsync($"<@{model.UserId}>", embed: embed.Build()));
 
             model.MarkAsComplete();
             await _reminderDb.Set(model);
