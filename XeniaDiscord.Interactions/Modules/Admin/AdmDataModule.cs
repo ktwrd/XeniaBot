@@ -190,7 +190,7 @@ public partial class AdmDataModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var elapsed = await ModuleHelper.PerformTransaction(_services, async db =>
             {
                 foreach (var guild in _client.Guilds)
