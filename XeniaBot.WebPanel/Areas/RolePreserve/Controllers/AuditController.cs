@@ -21,7 +21,7 @@ namespace XeniaBot.WebPanel.Areas.RolePreserve.Controllers;
 [AuthRequired]
 [Area("RolePreserve")]
 [Route("~/Guild/{guildId}/[area]/[controller]")]
-[RestrictToGuild(GuildIdRouteKey = "guildId")]
+[RestrictToGuild(GuildIdRouteKey = "guildId", RequiredPermission = GuildPermission.ViewAuditLog)]
 public class AuditController : Controller
 {
     private readonly DiscordSocketClient _discord;
