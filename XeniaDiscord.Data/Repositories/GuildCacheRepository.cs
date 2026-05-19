@@ -60,7 +60,7 @@ public class GuildCacheRepository
         GuildRoleSnapshotModel snapshot)
     {
         var now = DateTime.UtcNow;
-        var model = await db.GuildRoleCache.FindAsync(snapshot.GuildId, snapshot.RoleId);
+        var model = await db.GuildRoleCache.FindAsync(snapshot.RoleId);
         if (model == null)
         {
             await db.GuildRoleCache.AddAsync(new GuildRoleCacheModel()
@@ -77,7 +77,7 @@ public class GuildCacheRepository
         }
         else
         {
-            await db.GuildRoleCache.Where(e => e.GuildId == snapshot.GuildId && e.RoleId == snapshot.RoleId)
+            await db.GuildRoleCache.Where(e => e.RoleId == snapshot.RoleId)
                 .ExecuteUpdateAsync(e => e
                     .SetProperty(p => p.Name, snapshot.Name ?? string.Empty)
                     .SetProperty(p => p.Position, snapshot.Position)
