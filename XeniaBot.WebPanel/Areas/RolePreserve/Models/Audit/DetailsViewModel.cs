@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Collections.Generic;
+using Discord;
 using Discord.WebSocket;
 using XeniaBot.WebPanel.Models;
 using XeniaDiscord.Data.Models.RolePreserve;
@@ -20,4 +21,6 @@ public class DetailsViewModel
     public AlertComponentViewModel? Alert { get; set; }
     public ulong GuildId { get; set; }
     public required RolePreserveAuditModel Record { get; set; }
+
+    public Dictionary<string, StrippedRole> RoleLookup { get; set; } = [];
 }

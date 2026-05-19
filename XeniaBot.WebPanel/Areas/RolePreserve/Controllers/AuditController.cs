@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -16,10 +17,11 @@ using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaBot.WebPanel.Areas.RolePreserve.Controllers;
 
-[Area("RolePreserve")]
-[Route("~/[area]/[controller]")]
-[AuthRequired]
 [Authorize]
+[AuthRequired]
+[Area("RolePreserve")]
+[Route("~/Guild/{guildId}/[area]/[controller]")]
+[RestrictToGuild(GuildIdRouteKey = "guildId")]
 public class AuditController : Controller
 {
     private readonly DiscordSocketClient _discord;
@@ -31,7 +33,7 @@ public class AuditController : Controller
         _db = services.GetRequiredService<XeniaDbContext>();
     }
 
-    [HttpGet("Details")]
+    [Route("Details")]
     public async Task<IActionResult> GetDetails(Guid id)
     {
         if (!HttpContext.IsLoggedIn())
@@ -65,7 +67,7 @@ public class AuditController : Controller
             });
         }
 
-        var guild = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetGuild(auditRecord.GetGuildId()));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(auditRecord.GetGuildId()));
         var guildSnapshot = await _db.GuildSnapshots.AsNoTracking()
             .Where(e => e.GuildId == auditRecord.GuildId)
             .OrderByDescending(e => e.RecordCreatedAt)
@@ -82,7 +84,7 @@ public class AuditController : Controller
 
         if (userId.HasValue)
         {
-            user = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetUser(userId.Value));
+            user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
             userSnapshot = await _db.UserSnapshots.AsNoTracking()
                 .Where(e => e.UserId == auditRecord.UserId)
                 .OrderByDescending(e => e.RecordCreatedAt)
@@ -91,13 +93,27 @@ public class AuditController : Controller
 
         if (targetUserId.HasValue)
         {
-            targetUser = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetUser(targetUserId.Value));
+            targetUser = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(targetUserId.Value));
             targetUserSnapshot = await _db.UserSnapshots.AsNoTracking()
                 .Where(e => e.UserId == auditRecord.TargetUserId)
                 .OrderByDescending(e => e.RecordCreatedAt)
                 .FirstOrDefaultAsync();
         }
 
+        var roleLookup = new Dictionary<string, StrippedRole>();
+        foreach (var roleId in auditRecord.AppliedRoles
+                     .Select(e => e.RoleId).Distinct())
+        {
+            var roleSnapshot = await _db.GuildRoleSnapshots
+                .Include(e => e.Permissions)
+                .Include(e => e.RoleColors)
+                .AsNoTracking()
+                .Where(e => e.RoleId == roleId)
+                .OrderByDescending(e => e.RecordCreatedAt)
+                .FirstOrDefaultAsync();
+            if (roleSnapshot == null) continue;
+            roleLookup[roleId] = StrippedRole.FromRole(roleSnapshot);
+        }
 
         var vm = new DetailsViewModel()
         {
@@ -108,7 +124,8 @@ public class AuditController : Controller
             UserSnapshot = userSnapshot,
             TargetUser = targetUser,
             TargetUserSnapshot = targetUserSnapshot,
-            GuildId = auditRecord.GetGuildId()
+            GuildId = auditRecord.GetGuildId(),
+            RoleLookup = roleLookup
         };
 
         return View("Details", vm);

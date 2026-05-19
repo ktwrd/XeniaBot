@@ -1,5 +1,19 @@
-﻿@using XeniaBot.WebPanel.Areas.RolePreserve.Models.Audit
+﻿@using Microsoft.AspNetCore.Http
+@using XeniaBot.WebPanel.Areas.RolePreserve.Models.Audit
+@using XeniaBot.WebPanel.Extensions
+@inject IHttpContextAccessor HttpContextAccessor
 @model DetailsViewModel
+@{
+    if (HttpContextAccessor?.HttpContext?.IsHtmxRequest() == true)
+    {
+        Layout = null;
+    }
+    else
+    {
+        ViewBag.Title = "Role Preserve Audit Log Entry";
+        Layout = "_Layout";
+    }
+}
 @{
     await Html.RenderPartialAsync("_PartialDetails");
 }

@@ -1,4 +1,4 @@
-﻿@using kate.shared.Extensions
+﻿@using Humanizer
 @using XeniaBot.Shared
 @using XeniaBot.WebPanel.Areas.RolePreserve.Models.Audit
 @using XeniaBot.WebPanel.Models
@@ -20,24 +20,21 @@
 }
 
 @await Component.InvokeAsync("GuildBanner",
-    new GuildBannerViewModel()
-    {
-        Guild = StrippedGuild.FromExisting(Model.Guild, Model.GuildSnapshot, Model.GuildId),
-        Parameters = new GuildBannerViewParameters(
-            Model.GuildId, true,
-            [
-                new("Servers", "Server", "List"),
-                new(guildName, "Server", "Index", new Dictionary<string, string>()
-                {
-                    {"id", Model.GuildId.ToString()}
-                }),
-                new("Role Preserve"),
-                new("Audit Log")
-            ])
-    })
+    new GuildBannerViewParameters(
+        Model.GuildId, true,
+        [
+            new("Servers", "Server", "List"),
+            new(guildName, "Server", "Index", new Dictionary<string, string>()
+            {
+                {"id", Model.GuildId.ToString()}
+            }),
+            new("Role Preserve"),
+            new("Audit Log")
+        ]))
+
 <table class="table table-fluid">
     <tr>
-        <th>Id</th>
+        <th>Record Id</th>
         <td>
             <code>@Model.Record.Id</code>
         </td>
@@ -47,13 +44,13 @@
         <td>
             @Model.Record.RecordCreatedAt.ToString("yyyy/MM/dd")
             <br/>
-            @Model.Record.RecordCreatedAt.ToString("HH:mm:ss tt")
+            @Model.Record.RecordCreatedAt.ToString("hh:mm:ss tt") <sup>UTC</sup>
         </td>
     </tr>
     <tr>
         <th>Action</th>
         <td>
-            @Model.Record.Action.ToDescriptionString(Model.Record.Action.ToString())
+            @Model.Record.Action.Humanize(LetterCasing.Title)
         </td>
     </tr>
     @if (Model.Record.TargetUserId != null)
@@ -87,22 +84,25 @@
             <h5>Applied Roles</h5>
         </div>
         <div class="card-body">
-            <table class="table table-fluid">
-                <thead>
-                <tr>
-                    <th>Role</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var appliedRole in Model.Record.AppliedRoles)
+            @foreach (var group in Model.Record.AppliedRoles.GroupBy(e => e.Action))
+            {
+                <h6>@group.Key.Humanize(LetterCasing.Title)</h6>
+                @foreach (var appliedRole in group)
                 {
-                    <tr data-appliedrole-id="@appliedRole.RoleId">
-                        @* TODO: Implement UI for viewing applied roles and utilize GuildRoleCache for role name and position *@
-                    </tr>
+                    @if (Model.RoleLookup.TryGetValue(appliedRole.RoleId, out var strippedRole))
+                    {
+                        @await Component.InvokeAsync("RolePill", new RolePillComponentModel()
+                        {
+                            Role = strippedRole,
+                            TooltipMode = RolePillComponentTooltipMode.RoleIdAndPermissions
+                        })
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Could not find role snapshot"><code>@appliedRole.RoleId</code></span>
+                    }
                 }
-                </tbody>
-            </table>
+            }
         </div>
     </div>
 }
