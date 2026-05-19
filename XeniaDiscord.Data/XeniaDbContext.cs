@@ -36,6 +36,7 @@ public class XeniaDbContext : DbContext
     public DbSet<GuildSnapshotModel> GuildSnapshots { get; set; }
     public DbSet<GuildRoleSnapshotModel> GuildRoleSnapshots { get; set; }
     public DbSet<GuildRolePermissionSnapshotModel> GuildRolePermissionSnapshots { get; set; }
+    public DbSet<GuildRoleColorSnapshotModel> GuildRoleColorSnapshots { get; set; }
 
     public DbSet<GuildSnapshotEventModel> GuildSnapshotEvent { get; set; }
 
@@ -129,6 +130,10 @@ public class XeniaDbContext : DbContext
             b.HasMany(e => e.Permissions)
              .WithOne()
              .HasForeignKey(e => e.GuildRoleSnapshotId);
+            b.HasOne(e => e.RoleColors)
+                .WithOne()
+                .HasForeignKey<GuildRoleColorSnapshotModel>(e => e.GuildRoleSnapshotId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         builder.Entity<GuildRolePermissionSnapshotModel>(b =>
         {
@@ -141,6 +146,11 @@ public class XeniaDbContext : DbContext
                 e.GuildId,
                 e.RoleId
             }).IsDescending();
+        });
+        builder.Entity<GuildRoleColorSnapshotModel>(b =>
+        {
+            b.ToTable(GuildRoleColorSnapshotModel.TableName)
+                .HasKey(e => e.GuildRoleSnapshotId);
         });
         builder.Entity<GuildMemberSnapshotModel>(b =>
         {

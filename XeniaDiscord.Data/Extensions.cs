@@ -51,6 +51,13 @@ public static class DataExtensions
         return null;
     }
 
+    public static uint? ParseUInt(this string? value, bool allowZero = true)
+    {
+        if (uint.TryParse(value?.Trim(), out var result) &&
+            (allowZero || result > 0)) return result;
+        return null;
+    }
+
     public static TService GetRequiredScopedService<TService>(
         this IServiceProvider services,
         IServiceScopeCallbackDelegate initializeScope,
@@ -120,19 +127,14 @@ public class PaginationOptions
 {
     public int Page
     {
-        get => field;
-        set
-        {
-            field = Math.Max(1, value);
-        }
+        get;
+        set => field = Math.Max(1, value);
     } = 1;
+
     public int PageSize
     {
-        get => field;
-        set
-        {
-            field = Math.Max(1, value);
-        }
+        get;
+        set => field = Math.Max(1, value);
     } = 15;
 
     public int Skip => Page > 1 ? (Page - 1) * PageSize : 0;
