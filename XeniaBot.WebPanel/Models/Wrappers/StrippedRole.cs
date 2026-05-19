@@ -1,21 +1,39 @@
-﻿using System;
+﻿using CSharpFunctionalExtensions;
+using Discord;
+using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Discord.WebSocket;
+using Wacton.Unicolour;
+using XeniaDiscord.Common;
+using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaBot.WebPanel.Models;
 
-public class StrippedRole
+public class StrippedRole : IStrippedRole
 {
     /// <summary>
-    /// Hex Color of <see cref="SocketRole.Color"/>. Default is <c>#00000000</c>
+    /// Hex Color of <see cref="SocketRole.Color"/>. Default is <c>#000000</c>
     /// </summary>
-    public string HexColor { get; set; } = "#00000000";
-    
+    public string HexColor { get; set; } = "#000000";
+
+    public Unicolour RoleUnicolour
+        => new(HexColor);
+
+    private static readonly Unicolour Dark = new("404046");
+    private static readonly Unicolour Light = new("e8e8ff");
+    public bool ShouldUseLightText()
+    {
+        var color = RoleUnicolour;
+        if (color.HasConversionError()) return true;
+        var inGamut = color.MapToRgbGamut(GamutMap.RgbClipping);
+        return inGamut.Contrast(Light) > inGamut.Contrast(Dark);
+    }
+
     /// <summary>
     /// Role ID. Cloned from <see cref="SocketRole.Id"/>
     /// </summary>
-    public ulong RoleId { get; set; }
+    public ulong Id { get; set; }
     
     /// <summary>
     /// When the role was created. <see cref="SocketRole.CreatedAt"/>
@@ -36,8 +54,9 @@ public class StrippedRole
     /// Can the current user grant this role?
     /// </summary>
     public bool CanAccess { get; set; }
-    
-    
+
+    public Maybe<GuildPermissions> Permissions { get; set; } = Maybe.None;
+
     /// <summary>
     /// Generate a list of <see cref="StrippedRole"/> from a guild.
     /// </summary>
@@ -51,6 +70,7 @@ public class StrippedRole
             .Concat([int.MinValue])
             .OrderByDescending(v => v)
             .FirstOrDefault();
+        
         var items = new List<StrippedRole>();
         foreach (var i in roles)
         {
@@ -65,11 +85,39 @@ public class StrippedRole
     public static StrippedRole FromRole(DiscordSocketClient client, SocketRole role)
     {
         var instance = new StrippedRole();
-        instance.HexColor = role.Colors.PrimaryColor.ToString() ?? "#00000000";
-        instance.RoleId = role.Id;
+        instance.HexColor = role.Colors.PrimaryColor.ToString() ?? "#000000";
+        instance.Id = role.Id;
         instance.CreatedAt = role.CreatedAt;
         instance.Name = role.Name;
         instance.Position = role.Position;
+        instance.Permissions = role.Permissions;
         return instance;
     }
+
+    public static StrippedRole FromRole(GuildRoleSnapshotModel model)
+    {
+        var instance = new StrippedRole
+        {
+            Id = model.GetRoleId(),
+            CreatedAt = model.CreatedAt,
+            Name = model.Name ?? model.RoleId,
+            Position = model.Position,
+            Permissions = model.ParsePermissions()
+        };
+        instance.HexColor = model.RoleColors == null
+            ? "#000000"
+            : model.RoleColors.GetPrimaryColor().ToString();
+        return instance;
+    }
+}
+
+public interface IStrippedRole
+{
+    string HexColor { get; }
+    ulong Id { get; }
+    DateTimeOffset CreatedAt { get; }
+    string Name { get; }
+    int Position { get; }
+    bool CanAccess { get; }
+    Maybe<GuildPermissions> Permissions { get; }
 }
