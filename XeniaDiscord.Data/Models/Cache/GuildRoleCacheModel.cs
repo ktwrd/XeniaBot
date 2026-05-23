@@ -3,7 +3,6 @@ using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Data.Models.Cache;
 
-// TODO add in XeniaDbContext
 public class GuildRoleCacheModel
 {
     public const string TableName = "Cache_GuildRole";
@@ -50,6 +49,16 @@ public class GuildRoleCacheModel
     /// UTC Date Time of when this record was last updated.
     /// </summary>
     public DateTime RecordUpdatedAt { get; set; }
+
+    /// <summary>
+    /// Is this role deleted? Should not be shown in UI selections if it is deleted.
+    /// </summary>
+    public bool IsDeleted { get; set; }
+    
+    /// <summary>
+    /// Time when this role was deleted
+    /// </summary>
+    public DateTime? DeletedAt { get; set; }
 
     /// <summary>
     /// Foreign Key to <see cref="GuildRoleSnapshotModel.Id"/>

@@ -57,22 +57,31 @@ public class GuildCacheRepository
 
     public async Task UpdateRoleCache(
         XeniaDbContext db,
-        GuildRoleSnapshotModel snapshot)
+        GuildRoleSnapshotModel snapshot,
+        DateTime? now = null,
+        bool? isDeleted = null)
     {
-        var now = DateTime.UtcNow;
+        var nowValue = now.GetValueOrDefault(DateTime.UtcNow);
         var model = await db.GuildRoleCache.FindAsync(snapshot.RoleId);
         if (model == null)
         {
-            await db.GuildRoleCache.AddAsync(new GuildRoleCacheModel()
+            var cacheModel = new GuildRoleCacheModel()
             {
                 GuildId = snapshot.GuildId,
                 RoleId = snapshot.RoleId,
                 Name = snapshot.Name ?? string.Empty,
                 Position = snapshot.Position,
-                RecordCreatedAt = now,
-                RecordUpdatedAt = now,
+                RecordCreatedAt = nowValue,
+                RecordUpdatedAt = nowValue,
                 SnapshotId = snapshot.Id,
-            });
+            };
+            if (isDeleted.HasValue)
+            {
+                cacheModel.IsDeleted = isDeleted.Value;
+                if (cacheModel.IsDeleted) cacheModel.DeletedAt = nowValue;
+                else cacheModel.DeletedAt = null;
+            }
+            await db.GuildRoleCache.AddAsync(cacheModel);
             _log.Debug($"Created record (GuildId={snapshot.GuildId}, RoleId={snapshot.RoleId}, Name={snapshot.Name})");
         }
         else
@@ -81,9 +90,43 @@ public class GuildCacheRepository
                 .ExecuteUpdateAsync(e => e
                     .SetProperty(p => p.Name, snapshot.Name ?? string.Empty)
                     .SetProperty(p => p.Position, snapshot.Position)
-                    .SetProperty(p => p.RecordUpdatedAt, now)
+                    .SetProperty(p => p.RecordUpdatedAt, nowValue)
                     .SetProperty(p => p.SnapshotId, snapshot.Id));
             _log.Debug($"Updated record (GuildId={snapshot.GuildId}, RoleId={snapshot.RoleId}, Name={snapshot.Name})");
+            if (isDeleted.HasValue)
+            {
+                DateTime? deletedAtValue = isDeleted.Value ? nowValue : null;
+                await db.GuildRoleCache.Where(e => e.RoleId == snapshot.RoleId)
+                    .ExecuteUpdateAsync(e => e
+                        .SetProperty(p => p.IsDeleted, isDeleted.Value)
+                        .SetProperty(p => p.DeletedAt, deletedAtValue));
+                _log.Debug($"Marked record as deleted (GuildId={snapshot.GuildId}, RoleId={snapshot.RoleId}, Name={snapshot.Name})");
+            }
         }
+    }
+
+    public async Task<MarkRoleAsDeletedResult> MarkRoleAsDeleted(
+        XeniaDbContext db,
+        ulong roleId,
+        DateTime? deletedAt = null)
+    {
+        var roleIdStr = roleId.ToString();
+        var existing = await db.GuildRoleCache.FirstOrDefaultAsync(e => e.RoleId == roleIdStr);
+        if (existing == null) return MarkRoleAsDeletedResult.RoleNotFound; // role does not exist in cache
+        if (existing.IsDeleted) return MarkRoleAsDeletedResult.RoleAlreadyDeleted;
+        var deletedAtValue = deletedAt.GetValueOrDefault(DateTime.UtcNow);
+        await db.GuildRoleCache.Where(e => e.RoleId == roleIdStr)
+            .ExecuteUpdateAsync(e => e
+                .SetProperty(p => p.IsDeleted, true)
+                .SetProperty(p => p.DeletedAt, deletedAtValue));
+        _log.Debug($"Marked record as deleted (GuildId={existing.GuildId}, RoleId={existing.RoleId}, Name={existing.Name})");
+        return MarkRoleAsDeletedResult.Success;
+    }
+
+    public enum MarkRoleAsDeletedResult
+    {
+        Success,
+        RoleNotFound,
+        RoleAlreadyDeleted
     }
 }

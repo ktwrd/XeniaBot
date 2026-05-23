@@ -312,6 +312,7 @@ public class DiscordSnapshotService : BaseService
     {
         var roleIdStr = role.Id.ToString();
         var guildIdStr = role.Guild.Id.ToString();
+        var now = DateTime.UtcNow;
         GuildRoleSnapshotModel? modelBefore = null;
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
@@ -356,6 +357,7 @@ public class DiscordSnapshotService : BaseService
         {
             model = _roleMapper.Map(role);
             model.SnapshotSource = source;
+            model.RecordCreatedAt = now;
         }
         catch (Exception ex)
         {
@@ -371,8 +373,15 @@ public class DiscordSnapshotService : BaseService
         }
         try
         {
+            bool? isDeletedValue = source switch
+            {
+                GuildRoleSnapshotSource.RoleDelete => true,
+                GuildRoleSnapshotSource.RoleCreate => false,
+                GuildRoleSnapshotSource.RoleEdit => false,
+                _ => null
+            };
             await db.AddAsync(model);
-            await _guildCacheRepository.UpdateRoleCache(db, model);
+            await _guildCacheRepository.UpdateRoleCache(db, model, isDeleted: isDeletedValue, now: now);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
@@ -489,9 +498,16 @@ public class DiscordSnapshotService : BaseService
         try
         {
             await db.AddRangeAsync(roles);
+            bool? isDeletedValue = source switch
+            {
+                DiscordSnapshotSource.RoleDeleted => true,
+                DiscordSnapshotSource.RoleCreated => false,
+                DiscordSnapshotSource.RoleUpdated => false,
+                _ => null
+            };
             foreach (var role in roles)
             {
-                await _guildCacheRepository.UpdateRoleCache(db, role);
+                await _guildCacheRepository.UpdateRoleCache(db, role, isDeleted: isDeletedValue);
             }
         }
         catch (Exception ex)

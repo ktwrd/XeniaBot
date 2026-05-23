@@ -9,7 +9,7 @@ public enum DiscordSnapshotSource
     UserUpdated,
     UserLeft,
     UserBanned,
-    UserUnballed,
+    UserUnbanned,
 
     RoleCreated,
     RoleUpdated,
