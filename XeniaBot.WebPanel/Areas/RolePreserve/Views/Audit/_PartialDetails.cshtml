@@ -4,13 +4,9 @@
 @using XeniaBot.WebPanel.Models
 @using XeniaDiscord.Data
 @model DetailsViewModel
-@if (Model.Alert != null)
-{
-    @await Component.InvokeAsync("Alert", Model.Alert)
-}
-
 @{
     var guildName = Model.Guild?.Name ?? Model.GuildSnapshot?.Name ?? Model.GuildId.ToString();
+    var guildIdStr = Model.GuildId.ToString();
 
     var targetUsername = Model.TargetUser?.FormatUsername() ?? Model.TargetUserSnapshot?.FormatUsername() ?? Model.Record.TargetUserId?.ToString() ?? "Unknown User";
     var targetUserAvatar = Model.TargetUser?.GetDisplayAvatarUrl() ?? Model.TargetUserSnapshot?.DisplayAvatarUrl ?? "/DebugEmpty.png";
@@ -26,11 +22,20 @@
             new("Servers", "Server", "List"),
             new(guildName, "Server", "Index", new Dictionary<string, string>()
             {
-                {"id", Model.GuildId.ToString()}
+                {"id", guildIdStr}
             }),
-            new("Role Preserve"),
+            new("Role Preserve", "Settings", "Index", new Dictionary<string, string>()
+            {
+                { "area", "RolePreserve" },
+                { "id", guildIdStr }
+            }),
             new("Audit Log")
         ]))
+
+@if (Model.Alert != null)
+{
+    @await Component.InvokeAsync("Alert", Model.Alert)
+}
 
 <table class="table table-fluid">
     <tr>

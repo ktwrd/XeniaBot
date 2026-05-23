@@ -15,7 +15,9 @@ public class StrippedRole : IStrippedRole
     /// <summary>
     /// Hex Color of <see cref="SocketRole.Color"/>. Default is <c>#000000</c>
     /// </summary>
-    public string HexColor { get; set; } = "#000000";
+    public string HexColor { get; set; } = DefaultHexColor;
+
+    public const string DefaultHexColor = "#000000";
 
     public Unicolour RoleUnicolour
         => new(HexColor);
@@ -74,7 +76,7 @@ public class StrippedRole : IStrippedRole
         var items = new List<StrippedRole>();
         foreach (var i in roles)
         {
-            var d = FromRole(client, i);
+            var d = FromRole(i);
             d.CanAccess = d.Position < ourHighestRolePosition;
             items.Add(d);
         }
@@ -82,32 +84,35 @@ public class StrippedRole : IStrippedRole
         return items;
     }
 
-    public static StrippedRole FromRole(DiscordSocketClient client, SocketRole role)
+    public static StrippedRole FromRole(SocketRole role)
     {
-        var instance = new StrippedRole();
-        instance.HexColor = role.Colors.PrimaryColor.ToString() ?? "#000000";
-        instance.Id = role.Id;
-        instance.CreatedAt = role.CreatedAt;
-        instance.Name = role.Name;
-        instance.Position = role.Position;
-        instance.Permissions = role.Permissions;
-        return instance;
+        var color = role.Colors.PrimaryColor.ToString() ?? DefaultHexColor;
+        return new StrippedRole
+        {
+            HexColor = color,
+            Id = role.Id,
+            CreatedAt = role.CreatedAt,
+            Name = role.Name,
+            Position = role.Position,
+            Permissions = role.Permissions
+        };
     }
 
     public static StrippedRole FromRole(GuildRoleSnapshotModel model)
     {
-        var instance = new StrippedRole
+        var roleId = model.GetRoleId();
+        var color = model.RoleColors == null
+            ? DefaultHexColor
+            : model.RoleColors.GetPrimaryColor().ToString();
+        return new StrippedRole
         {
-            Id = model.GetRoleId(),
+            Id = roleId,
             CreatedAt = model.CreatedAt,
             Name = model.Name ?? model.RoleId,
             Position = model.Position,
-            Permissions = model.ParsePermissions()
+            Permissions = model.ParsePermissions(),
+            HexColor = color
         };
-        instance.HexColor = model.RoleColors == null
-            ? "#000000"
-            : model.RoleColors.GetPrimaryColor().ToString();
-        return instance;
     }
 }
 

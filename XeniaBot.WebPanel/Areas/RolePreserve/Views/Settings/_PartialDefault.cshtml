@@ -1,0 +1,33 @@
+﻿@using XeniaBot.WebPanel.Areas.RolePreserve.Models.Settings
+@using XeniaBot.WebPanel.Models
+@model DetailsViewModel
+
+@await Component.InvokeAsync("GuildBanner",
+    new GuildBannerViewParameters(
+        Model.GuildId, true,
+        [
+            new("Servers", "Server", "List"),
+            new(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+            {
+                {"id", Model.GuildId.ToString()}
+            }),
+            new("Role Preserve")
+        ]))
+
+@if (Model.Alert != null)
+{
+    @await Component.InvokeAsync("Alert", Model.Alert)
+}
+
+@* show warning if Xenia won't be able to give back roles due to hierarchy issues *@
+@* TODO send hx-post to /Guild/{guildId}/RolePreserve/Settings/_ComponentSave
+    and also swap outerHTML for #guild-rolepreserve-settings
+    check Kasta or GetPsyched.PartnerApp for a refresher on how to implement
+*@
+<form id="guild-rolepreserve-settings"
+      hx-post="">
+      
+    <button type="submit" class="btn btn-success">
+        Save
+    </button>
+</form>
