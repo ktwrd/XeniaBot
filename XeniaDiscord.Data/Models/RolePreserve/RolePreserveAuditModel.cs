@@ -13,6 +13,7 @@ public class RolePreserveAuditModel
         GuildId = "0";
         Action = RolePreserveAuditAction.Unknown;
         AppliedRoles = new();
+        ReferencedRoles = new();
     }
     
     /// <summary>
@@ -59,6 +60,11 @@ public class RolePreserveAuditModel
     /// Property Accessor
     /// </summary>
     public List<RolePreserveAuditAppliedRoleModel> AppliedRoles { get; set; }
+
+    /// <summary>
+    /// Property Accessor - Referenced roles for moderation actions, and should not be used when applying roles.
+    /// </summary>
+    public List<RolePreserveAuditReferencedRoleModel> ReferencedRoles { get; set; }
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong? GetUserId() => UserId.ParseULong(false);

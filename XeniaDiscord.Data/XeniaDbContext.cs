@@ -71,8 +71,9 @@ public class XeniaDbContext : DbContext
     public DbSet<RolePreserveBlacklistedRoleModel> RolePreserveBlacklistedRoles { get; set; }
     public DbSet<RolePreserveAuditModel> RolePreserveAudit { get; set; }
     public DbSet<RolePreserveAuditAppliedRoleModel> RolePreserveAuditAppliedRoles { get; set; }
+    public DbSet<RolePreserveAuditReferencedRoleModel> RolePreserveAuditReferencedRoles { get; set; }
     #endregion
-    
+
     public DbSet<GuildApprovalModel> GuildApprovals { get; set; }
     public DbSet<GuildApprovalLogEventModel> GuildApprovalLogEvents { get; set; }
 
@@ -456,10 +457,19 @@ public class XeniaDbContext : DbContext
                 .WithOne()
                 .HasForeignKey(e => e.RolePreserveAuditId)
                 .IsRequired();
+            b.HasMany(e => e.ReferencedRoles)
+                .WithOne()
+                .HasForeignKey(e => e.RolePreserveAuditId)
+                .IsRequired();
         });
         builder.Entity<RolePreserveAuditAppliedRoleModel>(b =>
         {
             b.ToTable(RolePreserveAuditAppliedRoleModel.TableName)
+                .HasKey(e => new { e.RolePreserveAuditId, e.RoleId });
+        });
+        builder.Entity<RolePreserveAuditReferencedRoleModel>(b =>
+        {
+            b.ToTable(RolePreserveAuditReferencedRoleModel.TableName)
                 .HasKey(e => new { e.RolePreserveAuditId, e.RoleId });
         });
         #endregion
