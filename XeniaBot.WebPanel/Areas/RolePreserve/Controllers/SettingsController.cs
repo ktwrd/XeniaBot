@@ -9,11 +9,16 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared.Helpers;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Areas.RolePreserve.Models.Settings;
+using XeniaBot.WebPanel.Extensions;
 using XeniaBot.WebPanel.Models;
 using XeniaDiscord.Common.Helpers;
+using XeniaDiscord.Common.Services;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.RolePreserve;
+using XeniaDiscord.Data.Models.Snapshot;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.WebPanel.Areas.RolePreserve.Controllers;
 
@@ -24,17 +29,31 @@ namespace XeniaBot.WebPanel.Areas.RolePreserve.Controllers;
 [RestrictToGuild(GuildIdRouteKey = "guildId")]
 public class SettingsController : Controller
 {
+    private readonly GuildCacheRepository _guildCacheRepo;
+    private readonly DiscordSnapshotService _discordSnapshotService;
+    private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
     private readonly DiscordSocketClient _client;
+    private readonly ErrorReportService _err;
     private readonly XeniaDbContext _db;
 
     public SettingsController(IServiceProvider services)
     {
+        _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
+        _discordSnapshotService = services.GetRequiredService<DiscordSnapshotService>();
+        _rolePreserveGuildRepo = services.GetRequiredService<RolePreserveGuildRepository>();
         _client = services.GetRequiredService<DiscordSocketClient>();
+        _err = services.GetRequiredService<ErrorReportService>();
         _db = services.GetRequiredService<XeniaDbContext>();
     }
 
     [Route("", Name = "Guild_RolePreserve_Settings_Index")]
     public async Task<IActionResult> Index(ulong guildId)
+    {
+        var vm = await GetViewModel(guildId);
+        return View("Default", vm);
+    }
+
+    private async Task<DetailsViewModel> GetViewModel(ulong guildId)
     {
         var roles = await GetAvailableRoles(guildId);
         var rolePreserveGuild = await GetRolePreserveGuild(guildId);
@@ -53,8 +72,7 @@ public class SettingsController : Controller
             AvailableChannels = availableChannels
             */
         };
-
-        return View("Default", vm);
+        return vm;
     }
 
     [HttpPost("_ComponentSave", Name = "Guild_RolePreserve_Settings_ComponentSave")]
@@ -82,13 +100,40 @@ public class SettingsController : Controller
             logOpt,
             rolePreserveLogChannel.ParseULong());
         var saveResult = await PerformSave(guildId, saveOptions);
-        throw new NotImplementedException();
+
+        var vm = await GetViewModel(guildId);
+        if (saveResult.IsSuccess)
+        {
+            vm.Alert = new AlertComponentViewModel()
+            {
+                MessageType = "success",
+                Message = "Successfully saved settings",
+                ShowClose = true
+            };
+        }
+        else
+        {
+            var content = string.Join("\n",
+                saveResult.Errors
+                    .Select(e => (string.IsNullOrEmpty(e.Name) ? "" : $"- **{e.Name}:** ") + e.Text));
+            vm.Alert = new AlertComponentViewModel()
+            {
+                MessageType = "danger",
+                Message = $"Failed to save settings:\n{content}",
+                RenderMessageAsMarkdown = true
+            };
+        }
+
+        return PartialView("Default", vm);
     }
 
     private async Task<PerformSaveResult> PerformSave(
         ulong guildId, 
         PerformSaveOptions options)
     {
+        var requestingUser = await HttpContext.GetCurrentDiscordUser();
+        var guildIdStr = guildId.ToString();
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
         var errors = new List<BasicErrorItem>();
         await PerformSaveValidateLogChannel(guildId, options, errors);
 
@@ -99,24 +144,114 @@ public class SettingsController : Controller
                 Errors = errors.ToArray()
             };
         }
-        
-        // remove items in options.RoleBlacklist for ids that don't exist in discord or cache or snapshots.
-        // remove items in options.RoleBlacklist where the associated guild isn't guildId
 
-        // 1. make new db session
-        // 2. start transaction
-        // 3. save guild to cache/snapshot
-        // 4. refresh cache/snapshot for all referenced roles & tables
-        // 5. refresh cache (if needed) for requestor discord user
-        // 6. create or update RolePreserveGuildModel w/ new enable state
-        // 7. find what blacklisted roles need to be added/removed
-        // 8. (in something like RolePreserveService) send log message saying that enable/disable state was changed, and/or blacklisted roles were added/removed
-        throw new NotImplementedException();
+        var availableRoleIdStrs = await _db.GuildRoleSnapshots
+            .Where(e => e.GuildId == guildIdStr)
+            .Select(e => e.RoleId)
+            .Distinct()
+            .ToArrayAsync();
+        ulong[] discordRoleIds = [];
+        if (guild != null)
+            discordRoleIds = guild.Roles.Select(e => e.Id).ToArray();
+        var availableRoleIds = availableRoleIdStrs.Select(e => e.ParseULong(false).GetValueOrDefault(0))
+            .Concat(discordRoleIds)
+            .Where(e => e > 0)
+            .Distinct()
+            .ToArray();
+
+        var existingBlacklistedRoleIdStrs = await _db.RolePreserveBlacklistedRoles
+            .Where(e => e.GuildId == guildIdStr)
+            .Select(e => e.RoleId)
+            .Distinct()
+            .ToArrayAsync();
+        var existingBlacklistedRoleIds = existingBlacklistedRoleIdStrs
+            .Select(e => e.ParseULong(false).GetValueOrDefault(0))
+            .Where(e => e > 0)
+            .Distinct()
+            .ToArray();
+        var blacklistedRoleIds = options.RoleBlacklist
+            .Where(e => e > 0 && availableRoleIds.Contains(e))
+            .ToArray();
+        
+        var blacklistedRoleIdsToRemove = existingBlacklistedRoleIds
+            .Where(e => !blacklistedRoleIds.Contains(e)).Distinct()
+            .ToArray();
+        var blacklistedRoleIdsToAdd = blacklistedRoleIds
+            .Where(e => !existingBlacklistedRoleIds.Contains(e)).Distinct()
+            .ToArray();
+
+
+        await using var db = _db.CreateSession();
+        var guildLastUpdated = await _guildCacheRepo.LastUpdated(db, guildId);
+        var shouldUpdateCache = DateTime.UtcNow - guildLastUpdated.GetValueOrDefault(DateTime.MinValue)
+                           > TimeSpan.FromDays(7);
+        var now = DateTime.UtcNow;
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
+        {
+            // refresh cache/snapshot for guild + roles
+            if (shouldUpdateCache && guild != null)
+            {
+                await _discordSnapshotService.UpdateGuild(
+                    db, guild, now, DiscordSnapshotSource.Unknown,
+                    skipRoles: false, skipMembers: true);
+            }
+
+            if (blacklistedRoleIdsToRemove.Length > 0)
+            {
+                await _rolePreserveGuildRepo.RoleBlacklistRemoveRange(
+                    db,
+                    guildId,
+                    blacklistedRoleIdsToRemove,
+                    doneByUser: requestingUser,
+                    now: now);
+            }
+
+            if (blacklistedRoleIdsToAdd.Length > 0)
+            {
+                await _rolePreserveGuildRepo.RoleBlacklistAddRange(
+                    db,
+                    guildId,
+                    blacklistedRoleIdsToAdd,
+                    doneByUser: requestingUser,
+                    now: now);
+            }
+
+            await _rolePreserveGuildRepo.EnableAsync(db, guildId, options.Enable, requestingUser);
+            // TODO for role preserve logging - TODO send message in role preserve log channel saying what stuff has changed (it's audited anyways)
+
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await trans.RollbackAsync();
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(
+                    $"User {requestingUser?.Username} failed to update Role Preserve Settings for Guild {guild?.Name} (userId={requestingUser?.Id}, guildId={guildId})")
+                .AddSerializedAttachment("options.json", options));
+            await trans.RollbackAsync();
+            return new PerformSaveResult
+            {
+                IsSuccess = false,
+                Errors = [
+                    new BasicErrorItem("Fatal", "Failed to save settings")
+                ]
+            };
+        }
+
+        return new PerformSaveResult
+        {
+            IsSuccess = true,
+            Errors = []
+        };
     }
 
     public class PerformSaveResult
     {
-        public BasicErrorItem[] Errors { get; set; } = [];
+        public bool IsSuccess { get; init; } = false;
+        public BasicErrorItem[] Errors { get; init; } = [];
     }
 
     private async Task PerformSaveValidateLogChannel(

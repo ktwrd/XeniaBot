@@ -50,7 +50,7 @@ public static class HttpContextExtensions
         if (!userId.HasValue) return null;
 
         var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
-        var user = await ExceptionHelper.RetryOnTimedOut(async () => discord.GetUser(userId.Value));
+        var user = ExceptionHelper.RetryOnTimedOut(() => discord.GetUser(userId.Value));
         return user;
     }
 
@@ -60,10 +60,10 @@ public static class HttpContextExtensions
         if (user == null) return null;
 
         var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
-        var guild = await ExceptionHelper.RetryOnTimedOut(async () => discord.GetGuild(guildId));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null) return null;
 
-        var member = await ExceptionHelper.RetryOnTimedOut(async () => guild.GetUser(user.Id));
+        var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
         return member;
     }
 #pragma warning restore S6966
