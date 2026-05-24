@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using CSharpFunctionalExtensions;
+using Discord;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using XeniaDiscord.Data.Models.Cache;
@@ -26,15 +27,19 @@ public class GuildCacheRepository
         };
         await InsertOrUpdate(db, model);
     }
-    
+
     
     public async Task InsertOrUpdate(
         XeniaDbContext db,
         GuildCacheModel model)
     {
-        model.RecordUpdatedAt = DateTime.UtcNow;
-        if (await db.GuildCache.AnyAsync(e => e.Id == model.Id))
+        if (await db.GuildCache.FindAsync(model.Id) != null)
         {
+            if (model.RecordCreatedAt == model.RecordUpdatedAt)
+            {
+                model.RecordUpdatedAt = DateTime.UtcNow;
+            }
+
             await db.GuildCache.Where(e => e.Id == model.Id)
                 .ExecuteUpdateAsync(e => e
                 .SetProperty(p => p.Name, model.Name)
@@ -46,13 +51,30 @@ public class GuildCacheRepository
                 .SetProperty(p => p.SplashUrl, model.SplashUrl)
                 .SetProperty(p => p.DiscoverySplashUrl, model.DiscoverySplashUrl)
                 .SetProperty(p => p.RecordUpdatedAt, model.RecordUpdatedAt));
-            _log.Debug($"Created record (Id={model.Id}, Name={model.Name})");
+            _log.Debug($"Updated record (Id={model.Id}, Name={model.Name})");
         }
         else
         {
             await db.GuildCache.AddAsync(model);
             _log.Debug($"Created record (Id={model.Id}, Name={model.Name})");
         }
+    }
+
+    public async Task Update(XeniaDbContext db, GuildCacheModel model)
+    {
+        if (await db.GuildCache.FindAsync(model.Id) == null) return;
+        await db.GuildCache.Where(e => e.Id == model.Id)
+            .ExecuteUpdateAsync(e => e
+                .SetProperty(p => p.Name, model.Name)
+                .SetProperty(p => p.OwnerUserId, model.OwnerUserId)
+                .SetProperty(p => p.CreatedAt, model.CreatedAt)
+                .SetProperty(p => p.JoinedAt, model.JoinedAt)
+                .SetProperty(p => p.IconUrl, model.IconUrl)
+                .SetProperty(p => p.BannerUrl, model.BannerUrl)
+                .SetProperty(p => p.SplashUrl, model.SplashUrl)
+                .SetProperty(p => p.DiscoverySplashUrl, model.DiscoverySplashUrl)
+                .SetProperty(p => p.RecordUpdatedAt, model.RecordUpdatedAt));
+        _log.Trace($"Updated record (Id={model.Id}, Name={model.Name})");
     }
 
     public async Task UpdateRoleCache(
@@ -103,6 +125,21 @@ public class GuildCacheRepository
                 _log.Debug($"Marked record as deleted (GuildId={snapshot.GuildId}, RoleId={snapshot.RoleId}, Name={snapshot.Name})");
             }
         }
+    }
+
+    public async Task Update(
+        XeniaDbContext db,
+        GuildRoleCacheModel model)
+    {
+        if (await db.GuildRoleCache.FindAsync(model.RoleId) == null) return;
+
+        await db.GuildRoleCache.Where(e => e.RoleId == model.RoleId)
+            .ExecuteUpdateAsync(e => e
+                .SetProperty(p => p.Name, model.Name)
+                .SetProperty(p => p.Position, model.Position)
+                .SetProperty(p => p.RecordUpdatedAt, model.RecordUpdatedAt)
+                .SetProperty(p => p.SnapshotId, model.SnapshotId));
+        _log.Debug($"Updated record (GuildId={model.GuildId}, RoleId={model.RoleId}, Name={model.Name})");
     }
 
     public async Task<MarkRoleAsDeletedResult> MarkRoleAsDeleted(
