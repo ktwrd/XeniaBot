@@ -28,6 +28,17 @@ public class GuildCacheRepository
         await InsertOrUpdate(db, model);
     }
 
+    public async Task<Maybe<DateTime>> LastUpdated(XeniaDbContext db, ulong guildId)
+    {
+        var guildIdStr = guildId.ToString();
+        var records = await db.GuildCache.AsNoTracking()
+            .Where(e => e.Id == guildIdStr)
+            .Select(e => e.RecordCreatedAt)
+            .Take(1)
+            .ToArrayAsync();
+        if (records.Length == 0) return Maybe.None;
+        return records[0];
+    }
     
     public async Task InsertOrUpdate(
         XeniaDbContext db,
