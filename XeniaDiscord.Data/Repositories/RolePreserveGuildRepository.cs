@@ -71,7 +71,7 @@ public class RolePreserveGuildRepository
             await db.RolePreserveGuilds
                 .Where(e => e.GuildId == guildIdStr)
                 .ExecuteUpdateAsync(e => e
-                .SetProperty(p => p.Enabled, enable));
+                    .SetProperty(p => p.Enabled, enable));
             _log.Trace($"Updated Record (GuildId={guildIdStr}, Enabled={enable}");
         }
         else
@@ -185,7 +185,148 @@ public class RolePreserveGuildRepository
             TargetRoleId = roleIdStr
         });
         return RoleBlacklistRemoveResult.Ok;
+    }
 
+    public async Task<RoleBlacklistRemoveResult> RoleBlacklistAddRange(
+        XeniaDbContext db,
+        ulong guildId,
+        ulong[] roleIds,
+        IUser? doneByUser = null,
+        DateTime? now = null)
+    {
+        roleIds = [.. roleIds.Distinct().Where(e => e > 0)];
+        
+        if (roleIds.Length == 0) return RoleBlacklistRemoveResult.Ok;
+        
+        var guildIdStr = guildId.ToString();
+        var nowValue = now.GetValueOrDefault(DateTime.UtcNow);
+        var roleIdStrs = roleIds.Select(e => e.ToString()).ToArray();
+        
+        var existing = await db.RolePreserveBlacklistedRoles
+            .Where(e => ((IEnumerable<string>)roleIdStrs).Contains(e.RoleId))
+            .Select(e => e.RoleId)
+            .ToArrayAsync();
+
+        var addRange = new List<RolePreserveBlacklistedRoleModel>();
+        var addedRoles = new HashSet<string>();
+        foreach (var roleId in roleIds.Select(e => e.ToString()))
+        {
+            if (existing.Contains(roleId)) continue;
+            if (addedRoles.Add(roleId))
+            {
+                addRange.Add(new RolePreserveBlacklistedRoleModel()
+                {
+                    GuildId = guildIdStr,
+                    RoleId = roleId,
+                    CreatedByUserId = doneByUser?.Id.ToString(),
+                    CreatedAt = nowValue
+                });
+            }
+        }
+
+        await db.AddRangeAsync(addRange);
+
+        await AuditAddRange(
+            db,
+            guildId,
+            roleIds,
+            RolePreserveAuditAction.BlacklistAdd,
+            doneByUser?.Id,
+            null,
+            now);
+        return RoleBlacklistRemoveResult.Ok;
+    }
+    public async Task<RoleBlacklistRemoveResult> RoleBlacklistRemoveRange(
+        XeniaDbContext db,
+        ulong guildId,
+        ulong[] roleIds,
+        IUser? doneByUser = null,
+        DateTime? now = null)
+    {
+        roleIds = [.. roleIds.Distinct().Where(e => e > 0)];
+
+        if (roleIds.Length == 0) return RoleBlacklistRemoveResult.Ok;
+        
+        var roleIdStrs = roleIds.Select(e => e.ToString()).ToArray();
+        object[] existing = await db.RolePreserveBlacklistedRoles
+            .Where(e => ((IEnumerable<string>)roleIdStrs).Contains(e.RoleId))
+            .ToArrayAsync();
+        
+        if (existing.Length == 0) return RoleBlacklistRemoveResult.NotFound;
+        
+        db.RemoveRange(existing);
+
+        await AuditAddRange(
+            db,
+            guildId,
+            roleIds,
+            RolePreserveAuditAction.BlacklistRemove,
+            doneByUser?.Id,
+            null,
+            now);
+
+        return RoleBlacklistRemoveResult.Ok;
+    }
+
+    private async Task<RolePreserveAuditModel?> AuditAddRange(
+        XeniaDbContext db,
+        ulong guildId,
+        ulong[] roleIds,
+        RolePreserveAuditAction action,
+        ulong? userId,
+        ulong? targetUserId,
+        DateTime? now = null,
+        Dictionary<ulong, (RolePreserveAuditAppliedRoleAction AppliedAction, string? ExceptionText)>? appliedRolesDict = null)
+    {
+        roleIds = [.. roleIds.Distinct().Where(e => e > 0)];
+        if ((action == RolePreserveAuditAction.AppliedRoles ||
+             action == RolePreserveAuditAction.BlacklistAdd ||
+             action == RolePreserveAuditAction.BlacklistRemove)
+            && roleIds.Length == 0) return null;
+
+        var nowValue = now.GetValueOrDefault(DateTime.UtcNow);
+        var model = new RolePreserveAuditModel
+        {
+            GuildId = guildId.ToString(),
+            Action = action,
+            UserId = userId?.ToString(),
+            TargetUserId = targetUserId?.ToString(),
+            RecordCreatedAt = nowValue
+        };
+        if (action == RolePreserveAuditAction.AppliedRoles)
+        {
+            foreach (var roleId in roleIds)
+            {
+                var item = new RolePreserveAuditAppliedRoleModel
+                {
+                    RolePreserveAuditId = model.Id,
+                    RoleId = roleId.ToString(),
+                };
+                if (appliedRolesDict?.TryGetValue(roleId, out var rs) == true)
+                {
+                    item.Action = rs.AppliedAction;
+                    item.ExceptionText = rs.ExceptionText;
+                }
+                model.AppliedRoles.Add(item);
+            }
+        }
+        else if (roleIds.Length == 1)
+        {
+            model.TargetRoleId = roleIds[0].ToString();
+        }
+        else if (roleIds.Length > 1)
+        {
+            model.ReferencedRoles.AddRange(roleIds
+                .Distinct()
+                .Select(e => new RolePreserveAuditReferencedRoleModel
+                {
+                    RolePreserveAuditId = model.Id,
+                    RoleId = e.ToString(),
+                }));
+        }
+
+        await db.AddAsync(model);
+        return model;
     }
 
     public enum RoleBlacklistRemoveResult
