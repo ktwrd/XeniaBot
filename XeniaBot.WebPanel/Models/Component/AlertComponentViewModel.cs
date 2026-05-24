@@ -3,6 +3,7 @@
 public class AlertComponentViewModel : IAlertViewModel
 {
     public string? Message { get; set; }
+    public bool? RenderMessageAsMarkdown { get; set; }
     public string? MessageType { get; set; }
     public string MessageClass => MessageType == null ? "alert alert-dismissible " : $"alert alert-dismissible alert-{MessageType}";
     public bool ShowClose { get; set; } = false;

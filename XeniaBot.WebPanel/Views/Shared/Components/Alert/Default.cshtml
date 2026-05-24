@@ -1,10 +1,20 @@
-﻿@model AlertComponentViewModel
+﻿@using Markdig
+@model AlertComponentViewModel
 
-
-@if (Model.Message != null)
+@if (!string.IsNullOrEmpty(Model.Message?.Trim()))
 {
     <div class="@(Model.MessageClass) mb-2" role="alert">
-        @Model.Message
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        @if (Model.RenderMessageAsMarkdown == true)
+        {
+            @Html.Raw(Markdown.ToHtml(Model.Message))
+        }
+        else
+        {
+            @Model.Message
+        }
+        @if (Model.ShowClose)
+        {
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        }
     </div>
 }
