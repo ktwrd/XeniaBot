@@ -33,7 +33,7 @@ public class GuildCacheRepository
         var guildIdStr = guildId.ToString();
         var records = await db.GuildCache.AsNoTracking()
             .Where(e => e.Id == guildIdStr)
-            .Select(e => e.RecordCreatedAt)
+            .Select(e => e.RecordUpdatedAt)
             .Take(1)
             .ToArrayAsync();
         if (records.Length == 0) return Maybe.None;
