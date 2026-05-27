@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace XeniaBot.Shared.Helpers;
 
@@ -18,7 +19,7 @@ public static class ExceptionHelper
     /// <remarks>
     /// If <paramref name="count"/> is set to <c>1</c> and it fails, then the exception that was captured will be re-thrown instead of being wrapped in an <see cref="ArgumentException"/>
     /// </remarks>
-    public static async Task RetryOnTimedOut(Func<Task> callback, int count = 3)
+    public static async Task RetryOnTimedOut(Func<Task> callback, int count = DefaultCount)
     {
         count = Math.Max(1, count);
         var exceptions = new List<Exception>(count);
@@ -32,7 +33,7 @@ public static class ExceptionHelper
             catch (Exception ex)
             {
                 exceptions.Add(ex);
-                if (IsTimedOut(ex) && i < 3) continue;
+                if (IsTimedOut(ex) && i < count) continue;
                 // just rethrow if this is the only exception, otherwise throw AggregateException
                 if (exceptions.Count == 1) throw;
                 throw new AggregateException(exceptions);
@@ -44,7 +45,7 @@ public static class ExceptionHelper
     /// Result data from a successful attempt of calling the <paramref name="callback"/> provided.
     /// </returns>
     /// <inheritdoc cref="RetryOnTimedOut(Func{Task}, int)"/>
-    public static async Task<TResult> RetryOnTimedOut<TResult>(Func<Task<TResult>> callback, int count = 3)
+    public static async Task<TResult> RetryOnTimedOut<TResult>(Func<Task<TResult>> callback, int count = DefaultCount)
     {
         count = Math.Max(1, count);
         var exceptions = new List<Exception>(count);
@@ -57,7 +58,7 @@ public static class ExceptionHelper
             catch (Exception ex)
             {
                 exceptions.Add(ex);
-                if (IsTimedOut(ex) && i < 3) continue;
+                if (IsTimedOut(ex) && i < count) continue;
                 // just rethrow if this is the only exception, otherwise throw AggregateException
                 if (exceptions.Count == 1) throw;
                 throw new AggregateException(exceptions);
@@ -67,7 +68,7 @@ public static class ExceptionHelper
     }
 
     /// <inheritdoc cref="RetryOnTimedOut(Func{Task}, int)"/>
-    public static void RetryOnTimedOut(Action callback, int count = 3)
+    public static void RetryOnTimedOut(Action callback, int count = DefaultCount)
     {
         RetryOnTimedOut(InnerCallback, count).GetAwaiter().GetResult();
         return;
@@ -80,7 +81,7 @@ public static class ExceptionHelper
     }
 
     /// <inheritdoc cref="RetryOnTimedOut{TResult}(Func{Task{TResult}}, int)"/>
-    public static TResult RetryOnTimedOut<TResult>(Func<TResult> callback, int count = 3)
+    public static TResult RetryOnTimedOut<TResult>(Func<TResult> callback, int count = DefaultCount)
     {
         return RetryOnTimedOut(InnerCallback, count).GetAwaiter().GetResult();
 
@@ -90,6 +91,8 @@ public static class ExceptionHelper
             return Task.FromResult(result);
         }
     }
+
+    private const int DefaultCount = 10;
 
     /// <summary>
     /// Is the exception provided assumed to be a timeout exception?
