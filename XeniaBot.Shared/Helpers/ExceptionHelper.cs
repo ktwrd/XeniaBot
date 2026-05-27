@@ -99,8 +99,6 @@ public static class ExceptionHelper
     /// Checks if it's <see cref="TimeoutException"/>, then if it's <see cref="TaskCanceledException"/> and the inner exception is <see cref="TimeoutException"/>
     /// or if the exception as a string matches the following regular expression: <c>time(?:d)?\s?out</c>
     /// </summary>
-    /// <param name="exception"></param>
-    /// <returns></returns>
     public static bool IsTimedOut(Exception exception)
     {
         var sc = StringComparison.OrdinalIgnoreCase;
