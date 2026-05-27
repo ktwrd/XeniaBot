@@ -1,6 +1,7 @@
 using Discord;
 using Microsoft.EntityFrameworkCore;
 using XeniaBot.Shared.Helpers;
+using XeniaBot.Shared.Services;
 using XeniaDiscord.Data.Models.GuildApproval;
 
 namespace XeniaDiscord.Common.Services;
@@ -40,42 +41,48 @@ partial class GuildApprovalService
         {
             return new ApproveUserResult(ApproveUserResultKind.UserAlreadyApproved, user, doneByUser, roleId.Value, role);
         }
-        else
+        
+        await ExceptionHelper.RetryOnTimedOut(async () =>
         {
-            await ExceptionHelper.RetryOnTimedOut(async () =>
-            {
-                await user.AddRoleAsync(role);
-            });
-            await using var db = _db.CreateSession();
-            await using var trans = await db.Database.BeginTransactionAsync();
-            try
-            {
-                await db.GuildApprovalLogEvents.AddAsync(new GuildApprovalLogEventModel
-                {
-                    GuildId = guildIdStr,
-                    UserId = user.Id.ToString(),
-                    ApprovedByUserId = doneByUser.Id.ToString()
-                });
-                await db.SaveChangesAsync();
-                await trans.CommitAsync();
-            }
-            catch
-            {
-                await trans.RollbackAsync();
-                throw;
-            }
-        }
+            await user.AddRoleAsync(role);
+        });
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            await SendGreeterMessage(user.Guild, user);
+            await db.GuildApprovalLogEvents.AddAsync(new GuildApprovalLogEventModel
+            {
+                GuildId = guildIdStr,
+                UserId = user.Id.ToString(),
+                ApprovedByUserId = doneByUser.Id.ToString()
+            });
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+        }
+        catch
+        {
+            await trans.RollbackAsync();
+            throw;
+        }
+
+        try
+        {
+            await SendGreeterMessage(db, user.Guild, user);
         }
         catch (Exception ex)
         {
-            _log.Warn(ex, $"Failed to send greeter message for user \"{targetFormatted}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
+            var msg =
+                $"Failed to send greeter message for user \"{targetFormatted}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})";
+            _log.Warn(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithUser(user));
         }
         try
         {
-            await SendLogEvent(user.Guild, new EmbedBuilder()
+            await SendLogEvent(db,
+                user.Guild, new EmbedBuilder()
                 .WithTitle("Approval - Approved User")
                 .WithDescription($"{user.Mention} ({targetFormatted}, {user.Id})")
                 .AddField("Approved By", $"{doneByUser.Mention} ({invokerFormatted}, {doneByUser.Id})")
@@ -84,7 +91,13 @@ partial class GuildApprovalService
         }
         catch (Exception ex)
         {
-            _log.Warn(ex, $"Failed to send log message for guild \"{user.Guild.Name}\" ({user.Guild.Id}) about {invokerFormatted} ({doneByUser.Id}) approving user {targetFormatted} ({user.Id})");
+            var msg =
+                $"Failed to send log message for guild \"{user.Guild.Name}\" ({user.Guild.Id}) about {invokerFormatted} ({doneByUser.Id}) approving user {targetFormatted} ({user.Id})";
+            _log.Warn(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithUser(user));
         }
         return new ApproveUserResult(ApproveUserResultKind.Success, user, doneByUser, roleId.Value, role);
     }

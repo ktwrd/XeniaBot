@@ -3,6 +3,7 @@ using Discord;
 using Microsoft.EntityFrameworkCore;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
+using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.GuildApproval;
 
 namespace XeniaDiscord.Common.Services;
@@ -69,10 +70,10 @@ partial class GuildApprovalService
                 logEmbed.AddField(
                     "Actioned By",
                     string.Join("\n",
-                        "{doneByUser.Mention}",
-                        "`{fmt}`"));
+                        $"{doneByUser.Mention}",
+                        $"`{fmt}`"));
             }
-            await SendLogEvent(guild, logEmbed);
+            await SendLogEvent(db, guild, logEmbed);
         }
         catch (Exception ex)
         {
@@ -139,17 +140,19 @@ partial class GuildApprovalService
 
     #region Send Greeter Message
     public async Task SendGreeterMessage(
+        XeniaDbContext db,
         IGuild guild,
         IGuildUser newUser)
     {
-        if (!await IsGreeterEnabled(guild.Id)) return;
+        if (!await IsGreeterEnabled(db, guild.Id)) return;
 
         var guildIdStr = guild.Id.ToString();
-        var config = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr);
-        await SendGreeterMessage(config, guild, newUser);
+        var config = await db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr);
+        await SendGreeterMessage(db, config, guild, newUser);
     }
 
     private async Task SendGreeterMessage(
+        XeniaDbContext db,
         GuildApprovalModel? config,
         IGuild guild,
         IGuildUser newUser)
@@ -159,7 +162,9 @@ partial class GuildApprovalService
         var channelId = config.GetGreeterChannelId();
         if (!channelId.HasValue)
         {
-            await SendLogEvent(guild,
+            await SendLogEvent(
+                db,
+                guild,
                 new EmbedBuilder()
                     .WithTitle("Approval - Send Greeter Message")
                     .WithDescription(string.Join("\n",
@@ -170,7 +175,9 @@ partial class GuildApprovalService
         }
         if (string.IsNullOrEmpty(config.GreeterMessageTemplate?.Trim()))
         {
-            await SendLogEvent(guild,
+            await SendLogEvent(
+                db, 
+                guild,
                 new EmbedBuilder()
                     .WithTitle("Approval - Send Greeter Message")
                     .WithDescription(string.Join("\n",
@@ -200,13 +207,14 @@ partial class GuildApprovalService
         }
 
         var formattedContent = FormatMessageTemplate(config.GreeterMessageTemplate, guild, newUser);
+        var builtEmbed = new EmbedBuilder().WithDescription(formattedContent).Build();
         await ExceptionHelper.RetryOnTimedOut(async () =>
         {
             if (config.GreeterAsEmbed)
             {
                 await textChannel.SendMessageAsync(
                     messageContent,
-                    embed: new EmbedBuilder().WithDescription(formattedContent).Build());
+                    embed: builtEmbed);
             }
             else
             {
