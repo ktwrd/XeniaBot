@@ -100,17 +100,24 @@ public static class ExceptionHelper
     /// <returns></returns>
     public static bool IsTimedOut(Exception exception)
     {
+        var sc = StringComparison.OrdinalIgnoreCase;
         switch (exception)
         {
             case TimeoutException:
             case TaskCanceledException { InnerException: TimeoutException }:
+            case GatewayReconnectException:
                 return true;
             default:
             {
                 var exceptionStr = exception.ToString();
-                return exceptionStr.Contains("timed out", StringComparison.OrdinalIgnoreCase)
-                       || exceptionStr.Contains("time out", StringComparison.OrdinalIgnoreCase)
-                       || exceptionStr.Contains("timeout", StringComparison.OrdinalIgnoreCase);
+                return exceptionStr.Contains("timed out", sc)
+                       || exceptionStr.Contains("time out", sc)
+                       || exceptionStr.Contains("timeout", sc)
+                       || exceptionStr.Contains("error 503", sc)
+                       || exceptionStr.Contains("service unavailable", sc)
+                       || (exceptionStr.Contains("502", sc) && (exceptionStr.Contains("bad gateway", sc) || exceptionStr.Contains("badgateway", sc)))
+                       || exceptionStr.Contains("unable to connect to the remote server", sc)
+                       || exceptionStr.Contains("connection was closed", sc);
             }
         }
     }
