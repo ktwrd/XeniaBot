@@ -85,7 +85,7 @@ public partial class GuildApprovalService
                         "{doneByUser.Mention}",
                         "`{fmt}`"));
             }
-            await SendLogEvent(guild, logEmbed);
+            await SendLogEvent(db, guild, logEmbed);
         }
         catch (Exception ex)
         {

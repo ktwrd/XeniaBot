@@ -82,7 +82,7 @@ partial class GuildApprovalService
                             "{doneByUser.Mention}",
                             "`{fmt}`"));
                 }
-                await SendLogEvent(guild, logEmbed);
+                await SendLogEvent(db, guild, logEmbed);
             }
         }
         catch (Exception ex)
@@ -151,11 +151,12 @@ partial class GuildApprovalService
 
     #region Send Log Event
     private async Task SendLogEvent(
+        XeniaDbContext db,
         IGuild guild,
         EmbedBuilder embed)
     {
         var guildIdStr = guild.Id.ToString();
-        var logChannelStr = await _db.GuildApprovals.AsNoTracking()
+        var logChannelStr = await db.GuildApprovals.AsNoTracking()
             .Where(e => e.GuildId == guildIdStr && e.Enabled)
             .Select(e => e.LogChannelId)
             .FirstOrDefaultAsync();

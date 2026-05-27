@@ -32,10 +32,12 @@ public partial class GuildApprovalService
         var guildIdStr = guildId.ToString();
         return await _db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled);
     }
-    public async Task<bool> IsGreeterEnabled(ulong guildId)
+    public async Task<bool> IsGreeterEnabled(
+        XeniaDbContext db,
+        ulong guildId)
     {
         var guildIdStr = guildId.ToString();
-        return await _db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled && e.EnableGreeter);
+        return await db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled && e.EnableGreeter);
     }
 
     public static readonly ChannelPermission[] RequiredChannelPermissions = new[]
