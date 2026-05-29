@@ -44,7 +44,8 @@ public class DiscordService
         CreateLatencySanityCheckThread();
     }
 
-    private DateTimeOffset _latencyLastUpdated;
+    private DateTimeOffset? _latencyLastUpdated;
+    private DateTimeOffset? _readyAt;
     private Task OnClientLatencyUpdated(int before, int after)
     {
         _latencyLastUpdated = DateTimeOffset.UtcNow;
@@ -169,12 +170,23 @@ public class DiscordService
         Log.Info("Created thread");
         while (true)
         {
-            var now = DateTimeOffset.UtcNow;
-            if (now - _latencyLastUpdated > TimeSpan.FromMinutes(1))
+            if (_readyAt.HasValue && _latencyLastUpdated.HasValue)
             {
-                Log.Fatal("Latency was last updated >1min ago!!! Aborting process so it can be automatically restarted by docker");
-                Environment.Exit(0);
-                return;
+                if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(1))
+                {
+                    Thread.Sleep(60_000);
+                    continue;
+                }
+                var now = DateTimeOffset.UtcNow;
+                var delta = now > _latencyLastUpdated
+                    ? now - _latencyLastUpdated
+                    : _latencyLastUpdated - now;
+                if (delta > TimeSpan.FromMinutes(1))
+                {
+                    Log.Fatal("Latency was last updated >1min ago!!! Aborting process so it can be automatically restarted by docker");
+                    Environment.Exit(0);
+                    return;
+                }
             }
 
             Thread.Sleep(1_000);
@@ -205,6 +217,7 @@ public class DiscordService
     #region Event Handling
     private async Task OnClientReady()
     {
+        _readyAt = DateTimeOffset.UtcNow;
         InvokeReady();
         if (_interactionHandler != null)
             await _interactionHandler.InitializeAsync();
@@ -218,6 +231,7 @@ public class DiscordService
         {
             await _client.SetGameAsync($"{versionString} | xenia.kate.pet", null);
         }
+        Log.Info("Bot is ready!");
     }
 
     private static Task DiscordClientLogHandler(LogMessage arg)
