@@ -280,14 +280,13 @@ public class DiscordSnapshotService : BaseService
         try
         {
             await db.AddAsync(model);
-
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
         catch (Exception ex)
         {
             await trans.RollbackAsync();
-            var msg = $"Failed to add record into database";
+            const string msg = "Failed to add record into database";
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithNotes(msg)

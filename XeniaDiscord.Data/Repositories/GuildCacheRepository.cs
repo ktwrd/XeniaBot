@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Microsoft.EntityFrameworkCore;
 using NLog;
 using XeniaDiscord.Data.Models.Cache;
 
@@ -11,7 +10,7 @@ public class GuildCacheRepository
     public async Task Ensure(XeniaDbContext db, ulong guildId, IGuild? guild)
     {
         var guildIdStr = guildId.ToString();
-        if (await db.GuildCache.AnyAsync(e => e.Id == guildIdStr)) return;
+        if (await db.GuildCache.FindAsync(guildIdStr) != null) return;
         var model = new GuildCacheModel()
         {
             Id = guildIdStr,
@@ -23,7 +22,7 @@ public class GuildCacheRepository
             SplashUrl = guild?.SplashUrl,
             DiscoverySplashUrl = guild?.DiscoverySplashUrl,
         };
-        await InsertOrUpdate(db, model);
+        await db.GuildCache.AddAsync(model);
     }
     
     
@@ -32,20 +31,19 @@ public class GuildCacheRepository
         GuildCacheModel model)
     {
         model.RecordUpdatedAt = DateTime.UtcNow;
-        if (await db.GuildCache.AnyAsync(e => e.Id == model.Id))
+        var existing = await db.GuildCache.FindAsync(model.Id);
+        if (existing != null)
         {
-            await db.GuildCache.Where(e => e.Id == model.Id)
-                .ExecuteUpdateAsync(e => e
-                .SetProperty(p => p.Name, model.Name)
-                .SetProperty(p => p.OwnerUserId, model.OwnerUserId)
-                .SetProperty(p => p.CreatedAt, model.CreatedAt)
-                .SetProperty(p => p.JoinedAt, model.JoinedAt)
-                .SetProperty(p => p.IconUrl, model.IconUrl)
-                .SetProperty(p => p.BannerUrl, model.BannerUrl)
-                .SetProperty(p => p.SplashUrl, model.SplashUrl)
-                .SetProperty(p => p.DiscoverySplashUrl, model.DiscoverySplashUrl)
-                .SetProperty(p => p.RecordUpdatedAt, model.RecordUpdatedAt));
-            _log.Debug($"Created record (Id={model.Id}, Name={model.Name})");
+            existing.Name = model.Name;
+            existing.OwnerUserId = model.OwnerUserId;
+            existing.CreatedAt = model.CreatedAt;
+            existing.JoinedAt = model.JoinedAt;
+            existing.IconUrl = model.IconUrl;
+            existing.BannerUrl = model.BannerUrl;
+            existing.SplashUrl = model.SplashUrl;
+            existing.DiscoverySplashUrl = model.DiscoverySplashUrl;
+            existing.RecordUpdatedAt = model.RecordUpdatedAt;
+            _log.Debug($"Updated record (Id={model.Id}, Name={model.Name})");
         }
         else
         {
