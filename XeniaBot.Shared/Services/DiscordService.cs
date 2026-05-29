@@ -5,6 +5,7 @@ using NLog;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Sentry;
 using XeniaBot.Shared.Helpers;
 
 using LogSeverity = Discord.LogSeverity;
@@ -68,27 +69,67 @@ public class DiscordService
 
     private async Task ConnectionStatusThread()
     {
+        Log.Info("Created thread");
         await Task.Delay(60_000); // wait 1min before doing the reconnect stuff
+        var connectingTime = 0;
         while (true)
         {
             switch (_client.ConnectionState)
             {
                 case ConnectionState.Disconnected:
+                    connectingTime = 0;
                     try
                     {
                         await _client.StartAsync();
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(ex, "Failed to re-connect");
+                        const string msg = "Failed to re-connect client (after disconnected for some reason)";
+                        Log.Error(ex, msg);
+                        SentrySdk.CaptureException(
+                            new InvalidOperationException(msg,
+                                ex));
                     }
                     await Task.Delay(1000);
                     break;
                 case ConnectionState.Disconnecting:
-                case ConnectionState.Connecting:
                     await Task.Delay(500);
                     break;
+                case ConnectionState.Connecting:
+                    await Task.Delay(500);
+                    connectingTime += 500;
+                    if (connectingTime >= 15_000)
+                    {
+                        try
+                        {
+                            await _client.StopAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            const string msg = "Failed to disconnect after 15s of trying to re-connect";
+                            Log.Error(ex, msg);
+                            SentrySdk.CaptureException(
+                                new InvalidOperationException(msg,
+                                    ex));
+                        }
+                        await Task.Delay(500);
+                        try
+                        {
+
+                            await _client.StartAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            const string msg = "Failed to reconnect after forceful disconnect (which happened after 15s of connecting)";
+                            Log.Error(ex, msg);
+                            SentrySdk.CaptureException(
+                                new InvalidOperationException(msg,
+                                    ex));
+                        }
+                    }
+                    break;
                 case ConnectionState.Connected:
+                    connectingTime = 0;
                     await Task.Delay(5000);
                     break;
             }
