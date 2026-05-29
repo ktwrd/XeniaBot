@@ -187,6 +187,13 @@ public partial class AdmDataModule : InteractionModuleBase
         }
 
         await DeferAsync();
+        // na, not awaiting that...
+        UpdateAllGuildsInternal(cache, cacheMember, snapshot);
+    }
+
+    private async Task UpdateAllGuildsInternal(
+        bool cache, bool cacheMember, bool snapshot)
+    {
         try
         {
             var now = DateTime.UtcNow;
