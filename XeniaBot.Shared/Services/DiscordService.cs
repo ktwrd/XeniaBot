@@ -172,7 +172,7 @@ public class DiscordService
         {
             if (_readyAt.HasValue && _latencyLastUpdated.HasValue)
             {
-                if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(1))
+                if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(5))
                 {
                     Thread.Sleep(60_000);
                     continue;
@@ -181,9 +181,9 @@ public class DiscordService
                 var delta = now > _latencyLastUpdated
                     ? now - _latencyLastUpdated
                     : _latencyLastUpdated - now;
-                if (delta > TimeSpan.FromMinutes(1))
+                if (delta > TimeSpan.FromMinutes(5))
                 {
-                    Log.Fatal("Latency was last updated >1min ago!!! Aborting process so it can be automatically restarted by docker");
+                    Log.Fatal("Latency was last updated >5min ago!!! Aborting process so it can be automatically restarted by docker");
                     Environment.Exit(0);
                     return;
                 }
