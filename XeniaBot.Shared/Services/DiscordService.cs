@@ -39,7 +39,16 @@ public class DiscordService
             MessageReceived?.Invoke(arg);
         };
         _client.Disconnected += OnClientDisconnected;
+        _client.LatencyUpdated += OnClientLatencyUpdated;
         CreateConnectionStatusThread();
+        CreateLatencySanityCheckThread();
+    }
+
+    private DateTimeOffset _latencyLastUpdated;
+    private Task OnClientLatencyUpdated(int before, int after)
+    {
+        _latencyLastUpdated = DateTimeOffset.UtcNow;
+        return Task.CompletedTask;
     }
 
     private static Task OnClientDisconnected(Exception error)
@@ -136,6 +145,42 @@ public class DiscordService
         }
     }
 
+    private void CreateLatencySanityCheckThread()
+    {
+        new Thread(() =>
+        {
+            try
+            {
+                LatencySanityCheckThread();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, $"Failed to run {nameof(LatencySanityCheckThread)}");
+                CreateLatencySanityCheckThread();
+            }
+        })
+        {
+            Name = $"{nameof(DiscordService)}.{nameof(LatencySanityCheckThread)}"
+        }.Start();
+    }
+
+    private void LatencySanityCheckThread()
+    {
+        Log.Info("Created thread");
+        while (true)
+        {
+            var now = DateTimeOffset.UtcNow;
+            if (now - _latencyLastUpdated > TimeSpan.FromMinutes(1))
+            {
+                Log.Fatal("Latency was last updated >1min ago!!! Aborting process so it can be automatically restarted by docker");
+                Environment.Exit(0);
+                return;
+            }
+
+            Thread.Sleep(1_000);
+        }
+    }
+
     public async Task Run()
     {
         await _client.LoginAsync(TokenType.Bot, _configData.DiscordToken);
@@ -177,7 +222,7 @@ public class DiscordService
 
     private static Task DiscordClientLogHandler(LogMessage arg)
     {
-        var discordLog = LogManager.GetLogger("Discord" + (string.IsNullOrEmpty(arg.Source) ? "" : "." + arg.Source));
+        var discordLog = LogManager.LogFactory.GetLogger("Discord" + (string.IsNullOrEmpty(arg.Source) ? "" : "." + arg.Source));
         switch (arg.Severity)
         {
             case LogSeverity.Debug:
