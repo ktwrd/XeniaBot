@@ -19,14 +19,51 @@
     @await Component.InvokeAsync("Alert", Model.Alert)
 }
 
-@* show warning if Xenia won't be able to give back roles due to hierarchy issues *@
-@* TODO send hx-post to /Guild/{guildId}/RolePreserve/Settings/_ComponentSave
-    and also swap outerHTML for #guild-rolepreserve-settings
-    check Kasta or GetPsyched.PartnerApp for a refresher on how to implement
-*@
-<form id="guild-rolepreserve-settings"
-      hx-post="">
-      
+@* TODO show warning if Xenia won't be able to give back roles due to hierarchy issues *@
+@* TODO Implement logic to add roles to blacklist *@
+<form enctype="multipart/form-data"
+      hx-post="/Guild/@Model.GuildId/RolePreserve/Settings/_ComponentSave"
+      hx-target="#guild-rolepreserve-settings"
+      hx-swap="innerHTML">
+    <div class="form-check mb-3">
+        <input class="form-check-input" name="rolePreserveEnable" type="checkbox" value="true" id="role_preserve-enable" checked="@Model.Enable" />
+        <label class="form-check-label" for="role_preserve-enable">Enable Feature</label>
+        <div id="role_preserve-enable-help" class="form-text">
+            Role Preservation restores a members roles when they re-join. Xenia is only able to grant roles if the automatically generated <code>xenia</code> role is above the ones you want to be restored.<br />
+            If you disable Role Preservation, Xenia will continue to capture "snapshots" of what roles your members have, just in-case if you want to enable it or re-enable it.<br />
+            <br />
+            You can also tell Xenia to "ignore" specific roles from being given back to users with the <code>/rolepreserve blacklist-add</code> command.
+            At the moment you can only view "ignored" roles in the dashboard, but in the future, you'll be able to add roles to "ignore" in the dashboard.
+        </div>
+    </div>
+    @{
+        var anyBlacklistedRolesText = Model.RoleBlacklist.Count == 0 ? "no" : "yes";
+    }
+    <hr/>
+    <div class="mb-3">
+        <label class="form-label">Blacklisted Roles</label>
+        <div id="role_preserve-blacklisted_roles" data-xenia-anyblacklistedroles="@anyBlacklistedRolesText">
+            @if (Model.RoleBlacklist.Count == 0)
+            {
+                <span class="badge text-bg-secondary"><i>No blacklisted roles</i></span>
+            }
+            @foreach (var item in Model.RoleBlacklist)
+            {
+                @await Component.InvokeAsync("RolePill", new RolePillComponentModel
+                {
+                    Role = item,
+                    TooltipMode = RolePillComponentTooltipMode.RoleId,
+                    InputOptions = new RolePillInputOptions
+                    {
+                        Name = "rolePreserveBlacklistedRoles",
+                        Value = item.Id.ToString(),
+                        AllowRemoval = false
+                    }
+                })
+            }
+        </div>
+    </div>
+    <hr />
     <button type="submit" class="btn btn-success">
         Save
     </button>

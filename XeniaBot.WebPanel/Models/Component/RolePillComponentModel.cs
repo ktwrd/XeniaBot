@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using CSharpFunctionalExtensions;
 using Humanizer;
 using XeniaDiscord.Common;
@@ -7,9 +8,14 @@ namespace XeniaBot.WebPanel.Models;
 
 public class RolePillComponentModel
 {
+    private readonly Guid _id = Guid.NewGuid();
+    public Guid Guid => _id;
+    public string ElementId => $"role_pill_{Role.Id}_{Guid}";
     public required StrippedRole Role { get; set; }
     public RolePillComponentTooltipMode TooltipMode { get; set; } = RolePillComponentTooltipMode.RoleId;
     public string? CustomTooltipText { get; set; }
+
+    public Maybe<RolePillInputOptions> InputOptions { get; set; }
 
     public string GetBadgeStyle()
     {
@@ -46,6 +52,13 @@ public class RolePillComponentModel
 
         return tooltipText;
     }
+}
+
+public class RolePillInputOptions
+{
+    public required string Name { get; set; }
+    public required string Value { get; set; }
+    public bool AllowRemoval { get; set; }
 }
 
 public enum RolePillComponentTooltipMode
