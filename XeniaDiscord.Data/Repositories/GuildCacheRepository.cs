@@ -1,7 +1,6 @@
 using CSharpFunctionalExtensions;
 using Discord;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver.Linq;
 using NLog;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.Snapshot;
