@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using XeniaBot.MongoData;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
@@ -71,6 +72,15 @@ public partial class ServerController : BaseXeniaController
     [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> ModerationView(ulong id, string? messageType = null, string? message = null)
     {
+        var result = await GetModerationView(id, messageType, message);
+        if (result.IsFailure) return result.Error;
+        return View("Details/ModerationView", result.Value);
+    }
+
+    private async Task<Result<ServerDetailsViewModel, IActionResult>> GetModerationView(
+        ulong id,
+        string? messageType = null, string? message = null)
+    {
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
@@ -82,15 +92,20 @@ public partial class ServerController : BaseXeniaController
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
-        
+
         await PopulateModel(data);
-        if (messageType != null)
-            data.MessageType = messageType;
-        if (message != null)
-            data.Message = message;
-        
-        return View("Details/ModerationView", data);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            data.Alert = new AlertComponentViewModel
+            {
+                MessageType = messageType ?? "info",
+                Message = message,
+                ShowClose = true
+            };
+        }
+        return data;
     }
+
     [HttpGet("~/Server/{id}/Fun")]
     [AuthRequired]
     [RestrictToGuild(GuildIdRouteKey = "id")]

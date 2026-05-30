@@ -16,6 +16,7 @@ public class ServerDetailsViewModel : BaseViewModel,
     IServerCountingComponentViewModel,
     IServerConfessionComponentViewModel
 {
+    public string ActiveTab { get; set; } = string.Empty;
     public required SocketGuildUser User { get; set; }
     public required SocketGuild Guild { get; set; }
     public ICollection<SocketGuildUser> UsersWhoCanAccess { get; set; } = [];
@@ -37,6 +38,7 @@ public class ServerDetailsViewModel : BaseViewModel,
     public long BanSyncRecordCount { get; set; }
     public required GuildConfigWarnStrikeModel WarnStrikeConfig { get; set; }
     public required ConfessionGuildModel ConfessionConfig { get; set; }
+    public AlertComponentViewModel? Alert { get; set; }
 
     public bool IsWarnActive(GuildWarnItemModel model)
     {

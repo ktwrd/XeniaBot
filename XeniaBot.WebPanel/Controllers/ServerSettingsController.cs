@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Discord;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -23,7 +24,7 @@ public partial class ServerController
 {
     [HttpPost("~/Server/{id}/Settings/Log")]
     [AuthRequired]
-    [RestrictToGuild(GuildIdRouteKey = "id", RequiredPermission = Discord.GuildPermission.ManageChannels)]
+    [RestrictToGuild(GuildIdRouteKey = "id", RequiredPermission = GuildPermission.ManageChannels)]
     public async Task<IActionResult> SaveSettings_LogSystem(
         ulong id,
         [FromForm] bool enable,
@@ -124,10 +125,11 @@ public partial class ServerController
                 messageType: "danger",
                 message: $"Failed to save Server Log settings: {ex.GetType().Name} {ex.Message}");
         }
-        
-        return await ModerationView(id,
-            messageType: "success",
-            message: "Server Log settings saved");
+
+        var result = await GetModerationView(id, "success", "Server Log settings saved");
+        if (result.IsFailure) return result.Error;
+        result.Value.ActiveTab = "serverlog";
+        return View("Details/ModerationView", result.Value);
     }
 
     [HttpPost("~/Server/{id}/Settings/RolePreserve")]
@@ -152,8 +154,10 @@ public partial class ServerController
                 throw;
             }
 
-            return await ModerationView(
-                id, messageType: "success", message: $"Role Preserve " + (enable ? "Enabled" : "Disabled"));
+            var result = await GetModerationView(id, "success", "Role Preserve settings saved");
+            result.Value.ActiveTab = "rolepreserve";
+            if (result.IsFailure) return result.Error;
+            return View("Details/ModerationView", result.Value);
         }
         catch (Exception ex)
         {
@@ -161,9 +165,10 @@ public partial class ServerController
                 .ReportException(ex, $"Failed to save role preserve settings");
             _logger.LogError(ex, "Failed to save role preserve settings for Guild {GuildId}",
                 id);
-            return await ModerationView(id,
-                messageType: "danger",
-                message: $"Failed to save Role Preserve settings. {ex.Message}");
+            var result = await GetModerationView(id, "danger", $"Failed to save role preserve settings: {ex.Message}");
+            result.Value.ActiveTab = "rolepreserve";
+            if (result.IsFailure) return result.Error;
+            return View("Details/ModerationView", result.Value);
         }
     }
 
@@ -172,20 +177,31 @@ public partial class ServerController
     [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> SaveSettings_WarnStrike(ulong id, bool enable, int maxStrike, int strikeWindow)
     {
+        var result = await GetModerationView(id);
+        result.Value.ActiveTab = "warnstrike";
+        if (result.IsFailure) return result.Error;
         try
         {
             if (maxStrike < 1)
             {
-                return await ModerationView(id,
-                    messageType: "danger",
-                    message: $"Failed to save Warn Strike settings. Max Strike must be greater than one");
+                result.Value.Alert = new AlertComponentViewModel()
+                {
+                    Message = "Failed to save Warn Strike settings: Max Strike must be greater than one.",
+                    MessageType = "danger",
+                    ShowClose = true
+                };
+                return View("Details/ModerationView", result.Value);
             }
 
             if (strikeWindow < 1)
             {
-                return await ModerationView(id,
-                    messageType: "danger",
-                    message: $"Failed to save Warn Strike settings. Strike Window must be greater than one");
+                result.Value.Alert = new AlertComponentViewModel()
+                {
+                    Message = "Failed to save Warn Strike settings: Strike Window must be greater than one.",
+                    MessageType = "danger",
+                    ShowClose = true
+                };
+                return View("Details/ModerationView", result.Value);
             }
             var warnStrikeService = CoreContext.Instance?.GetRequiredService<WarnStrikeService>()
                 ?? throw new InvalidOperationException($"Could not find service {typeof(WarnStrikeService)}");
@@ -197,17 +213,28 @@ public partial class ServerController
             model.StrikeWindow = TimeSpan.FromDays(strikeWindow).TotalSeconds;
 
             await configRepo.InsertOrUpdate(model);
-            return await ModerationView(
-                id, messageType: "success", message: $"Warn Strike settings saved");
+            result.Value.WarnStrikeConfig = model;
+
+            result.Value.Alert = new AlertComponentViewModel()
+            {
+                Message = "Warn Strike settings saved",
+                MessageType = "success",
+                ShowClose = true
+            };
+            return View("Details/ModerationView", result.Value);
         }
         catch (Exception ex)
         {
             Program.Core.GetRequiredService<ErrorReportService>()?
                 .ReportException(ex, $"Failed to save Warn Strike settings");
             _logger.LogError(ex, "Failed to save Warn Strike settings for Guild {GuildId}", id);
-            return await ModerationView(id,
-                messageType: "danger",
-                message: $"Failed to save Warn Strike settings. {ex.Message}");
+            result.Value.Alert = new AlertComponentViewModel()
+            {
+                Message = $"Failed to save Warn Strike settings: {ex.Message}",
+                MessageType = "danger",
+                ShowClose = true
+            };
+            return View("Details/ModerationView", result.Value);
         }
     }
     
