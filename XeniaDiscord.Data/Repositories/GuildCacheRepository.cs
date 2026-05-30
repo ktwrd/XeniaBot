@@ -1,6 +1,7 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using Discord;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver.Linq;
 using NLog;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.Snapshot;
@@ -13,7 +14,7 @@ public class GuildCacheRepository
     public async Task Ensure(XeniaDbContext db, ulong guildId, IGuild? guild)
     {
         var guildIdStr = guildId.ToString();
-        if (await db.GuildCache.AnyAsync(e => e.Id == guildIdStr)) return;
+        if (await db.GuildCache.FindAsync(guildIdStr) != null) return;
         var model = new GuildCacheModel()
         {
             Id = guildIdStr,
@@ -25,7 +26,7 @@ public class GuildCacheRepository
             SplashUrl = guild?.SplashUrl,
             DiscoverySplashUrl = guild?.DiscoverySplashUrl,
         };
-        await InsertOrUpdate(db, model);
+        await db.GuildCache.AddAsync(model);
     }
 
     public async Task<Maybe<DateTime>> LastUpdated(XeniaDbContext db, ulong guildId)

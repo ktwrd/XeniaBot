@@ -5,6 +5,7 @@ using NLog;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Sentry;
 using XeniaBot.Shared.Helpers;
 
 using LogSeverity = Discord.LogSeverity;
@@ -38,7 +39,17 @@ public class DiscordService
             MessageReceived?.Invoke(arg);
         };
         _client.Disconnected += OnClientDisconnected;
+        _client.LatencyUpdated += OnClientLatencyUpdated;
         CreateConnectionStatusThread();
+        CreateLatencySanityCheckThread();
+    }
+
+    private DateTimeOffset? _latencyLastUpdated;
+    private DateTimeOffset? _readyAt;
+    private Task OnClientLatencyUpdated(int before, int after)
+    {
+        _latencyLastUpdated = DateTimeOffset.UtcNow;
+        return Task.CompletedTask;
     }
 
     private static Task OnClientDisconnected(Exception error)
@@ -68,30 +79,117 @@ public class DiscordService
 
     private async Task ConnectionStatusThread()
     {
+        Log.Info("Created thread");
         await Task.Delay(60_000); // wait 1min before doing the reconnect stuff
+        var connectingTime = 0;
         while (true)
         {
             switch (_client.ConnectionState)
             {
                 case ConnectionState.Disconnected:
+                    connectingTime = 0;
                     try
                     {
                         await _client.StartAsync();
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(ex, "Failed to re-connect");
+                        const string msg = "Failed to re-connect client (after disconnected for some reason)";
+                        Log.Error(ex, msg);
+                        SentrySdk.CaptureException(
+                            new InvalidOperationException(msg,
+                                ex));
                     }
                     await Task.Delay(1000);
                     break;
                 case ConnectionState.Disconnecting:
-                case ConnectionState.Connecting:
                     await Task.Delay(500);
                     break;
+                case ConnectionState.Connecting:
+                    await Task.Delay(500);
+                    connectingTime += 500;
+                    if (connectingTime >= 15_000)
+                    {
+                        try
+                        {
+                            await _client.StopAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            const string msg = "Failed to disconnect after 15s of trying to re-connect";
+                            Log.Error(ex, msg);
+                            SentrySdk.CaptureException(
+                                new InvalidOperationException(msg,
+                                    ex));
+                        }
+                        await Task.Delay(500);
+                        try
+                        {
+
+                            await _client.StartAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            const string msg = "Failed to reconnect after forceful disconnect (which happened after 15s of connecting)";
+                            Log.Error(ex, msg);
+                            SentrySdk.CaptureException(
+                                new InvalidOperationException(msg,
+                                    ex));
+                        }
+                    }
+                    break;
                 case ConnectionState.Connected:
+                    connectingTime = 0;
                     await Task.Delay(5000);
                     break;
             }
+        }
+    }
+
+    private void CreateLatencySanityCheckThread()
+    {
+        new Thread(() =>
+        {
+            try
+            {
+                LatencySanityCheckThread();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, $"Failed to run {nameof(LatencySanityCheckThread)}");
+                CreateLatencySanityCheckThread();
+            }
+        })
+        {
+            Name = $"{nameof(DiscordService)}.{nameof(LatencySanityCheckThread)}"
+        }.Start();
+    }
+
+    private void LatencySanityCheckThread()
+    {
+        Log.Info("Created thread");
+        while (true)
+        {
+            if (_readyAt.HasValue && _latencyLastUpdated.HasValue)
+            {
+                if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(5))
+                {
+                    Thread.Sleep(60_000);
+                    continue;
+                }
+                var now = DateTimeOffset.UtcNow;
+                var delta = now > _latencyLastUpdated
+                    ? now - _latencyLastUpdated
+                    : _latencyLastUpdated - now;
+                if (delta > TimeSpan.FromMinutes(5))
+                {
+                    Log.Fatal("Latency was last updated >5min ago!!! Aborting process so it can be automatically restarted by docker");
+                    Environment.Exit(0);
+                    return;
+                }
+            }
+
+            Thread.Sleep(1_000);
         }
     }
 
@@ -119,6 +217,7 @@ public class DiscordService
     #region Event Handling
     private async Task OnClientReady()
     {
+        _readyAt = DateTimeOffset.UtcNow;
         InvokeReady();
         if (_interactionHandler != null)
             await _interactionHandler.InitializeAsync();
@@ -132,11 +231,12 @@ public class DiscordService
         {
             await _client.SetGameAsync($"{versionString} | xenia.kate.pet", null);
         }
+        Log.Info("Bot is ready!");
     }
 
     private static Task DiscordClientLogHandler(LogMessage arg)
     {
-        var discordLog = LogManager.GetLogger("Discord" + (string.IsNullOrEmpty(arg.Source) ? "" : "." + arg.Source));
+        var discordLog = LogManager.LogFactory.GetLogger("Discord" + (string.IsNullOrEmpty(arg.Source) ? "" : "." + arg.Source));
         switch (arg.Severity)
         {
             case LogSeverity.Debug:

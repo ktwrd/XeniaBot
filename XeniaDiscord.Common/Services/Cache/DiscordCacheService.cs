@@ -140,7 +140,6 @@ public class DiscordCacheService
         var guildIdStr = guild.Id.ToString();
         var userIdStr = userId.ToString();
         var model = await db.GuildMemberCache
-            .AsNoTracking()
             .FirstOrDefaultAsync(e => e.UserId == userIdStr && e.GuildId == guildIdStr)
             ?? new GuildMemberCacheModel
             {

@@ -211,7 +211,7 @@ public class GuildSnapshotModel
     /// <summary>
     /// <inheritdoc cref="IGuild.VanityUrlCode"/>
     /// </summary>
-    [MaxLength(20)]
+    [MaxLength(40)]
     public string? VanityUrlCode { get; set; }
 
     /// <summary>
@@ -291,12 +291,12 @@ public class GuildSnapshotModel
     /// <summary>
     /// <inheritdoc cref="IGuild.PreferredLocale"/>
     /// </summary>
-    [MaxLength(20)]
+    [MaxLength(40)]
     public string PreferredLocale { get; set; }
     /// <summary>
     /// <inheritdoc cref="IGuild.VoiceRegionId"/>
     /// </summary>
-    [MaxLength(20)]
+    [MaxLength(40)]
     public string? VoiceRegionId { get; set; }
 
     /// <summary>

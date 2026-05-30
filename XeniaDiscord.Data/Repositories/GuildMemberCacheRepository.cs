@@ -13,7 +13,7 @@ public class GuildMemberCacheRepository
         GuildMemberCacheModel model)
     {
         model.RecordUpdatedAt = DateTime.UtcNow;
-        if (await db.GuildMemberCache.AnyAsync(e => e.GuildId == model.GuildId && e.UserId == model.UserId))
+        if (await db.GuildMemberCache.FindAsync(model.GuildId, model.UserId) != null)
         {
             await db.GuildMemberCache.Where(e => e.GuildId == model.GuildId && e.UserId == model.UserId)
                 .ExecuteUpdateAsync(e => e
