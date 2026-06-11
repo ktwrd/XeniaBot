@@ -1,23 +1,22 @@
-﻿using System.Collections.Frozen;
-using System.Text;
-using CSharpFunctionalExtensions;
+﻿using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using System.Collections.Frozen;
+using System.Text;
 using XeniaBot.Shared;
-using XeniaBot.Shared.Services;
 using XeniaBot.Shared.Helpers;
+using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
+using XeniaDiscord.Data.Models.RolePreserve;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
-using XeniaDiscord.Data.Models.RolePreserve;
-
+using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
 using ServerLogEvent = XeniaDiscord.Data.Models.ServerLog.ServerLogEvent;
 using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
-using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
 
 namespace XeniaDiscord.Common.Services;
 
@@ -28,7 +27,7 @@ public class RolePreserveService : BaseService
     private readonly XeniaDbContext _db;
     private readonly ErrorReportService _err;
     private readonly DiscordSocketClient _client;
-    private readonly ServerLogRepository _serverLogConfig;
+    private readonly ServerLogRepository _serverLogRepo;
     private readonly RolePreserveUserRepository _userRepository;
     private readonly RolePreserveGuildRepository _guildRepository;
     private readonly ConfigData _configData;
@@ -40,7 +39,7 @@ public class RolePreserveService : BaseService
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
         _err = services.GetRequiredService<ErrorReportService>();
         _client = services.GetRequiredService<DiscordSocketClient>();
-        _serverLogConfig = services.GetRequiredService<ServerLogRepository>();
+        _serverLogRepo = services.GetRequiredService<ServerLogRepository>();
         _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
         _userRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveUserRepository>();
@@ -290,25 +289,11 @@ public class RolePreserveService : BaseService
         RolePreserveAuditModel? auditModel = null)
     {
         if (fail.Count < 1) return;
-        IReadOnlyCollection<ServerLogChannelModel> targetLogChannels;
-        try
-        {
-            targetLogChannels = await _serverLogConfig.GetChannelsForGuild(user.Guild.Id, [ServerLogEvent.MemberJoin], new()
-            {
-                IgnoreDisabledGuilds = true
-            });
-            if (targetLogChannels.Count < 1) return;
-        }
-        catch (Exception ex)
-        {
-            await _err.Submit(new ErrorReportBuilder()
-                .WithException(ex)
-                .WithNotes($"Failed to get Server Log Channel models with event {ServerLogEvent.MemberJoin} for Guild \"{user.Guild.Name}\" ({user.Guild.Id})")
-                .WithUser(user)
-                .WithGuild(user.Guild));
-            return;
-        }
-
+        
+        var maybeLogChannels = await GetChannelsForFailureNotification(user);
+        if (maybeLogChannels.HasNoValue) return;
+        var targetLogChannels = maybeLogChannels.Value;
+        
         var successCount = success.Count.ToString("n0");
         var successPlural = success.Count == 1 ? "" : "s";
         var embed = new EmbedBuilder()
@@ -321,20 +306,9 @@ public class RolePreserveService : BaseService
         {
             embed.WithUrl($"{_configData.DashboardUrl}/RolePreserve/Audit/Details?Id={auditModel.Id}");
         }
-        var failCount = fail.Count.ToString("n0");
-        if (success.Count == 0)
-        {
-            embed.WithDescription($"- {Emotes.Warning} Failed to give user *any* roles");
-            if (fail.Count > 0)
-            {
-                embed.Description += $" ({failCount})";
-            }
-        }
-        else if (fail.Count > 0)
-        {
-            var failPlural = fail.Count == 1 ? "" : "s";
-            if (fail.Count > 0) embed.Description += $"\n- Failed to add {failCount} role{failPlural}.";
-        }
+
+        // TODO generate success/fail data from RolePreserveAuditModel
+        FailureNotificationGetFailContent(embed, success, fail);
 
         const string failFilename = "roles.txt";
         var attachments = new List<FileAttachment>();
@@ -374,6 +348,63 @@ public class RolePreserveService : BaseService
         foreach (var serverLogChannel in targetLogChannels)
         {
             await SendFailureNotificationToChannel(user, embed, attachments, serverLogChannel);
+        }
+    }
+    private async Task<Maybe<IReadOnlyCollection<ServerLogChannelModel>>> GetChannelsForFailureNotification(
+        SocketGuildUser user)
+    {
+        IReadOnlyCollection<ServerLogChannelModel> targetLogChannels;
+        try
+        {
+            targetLogChannels = await _serverLogRepo.GetChannelsForGuild(
+                user.Guild.Id,
+                [ServerLogEvent.RolePerserve],
+                new()
+                {
+                    IgnoreDisabledGuilds = true
+                });
+            if (targetLogChannels.Count < 1)
+            {
+                targetLogChannels = await _serverLogRepo.GetChannelsForGuild(
+                    user.Guild.Id,
+                    [ServerLogEvent.MemberJoin],
+                    new()
+                    {
+                        IgnoreDisabledGuilds = true
+                    });
+            }
+            if (targetLogChannels.Count < 1)
+                return Maybe.None;
+            return Maybe<IReadOnlyCollection<ServerLogChannelModel>>.From(targetLogChannels);
+        }
+        catch (Exception ex)
+        {
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes($"Failed to get Server Log Channel models with event {ServerLogEvent.MemberJoin} or {ServerLogEvent.RolePerserve} for Guild \"{user.Guild.Name}\" ({user.Guild.Id})")
+                .WithUser(user)
+                .WithGuild(user.Guild));
+            return Maybe.None;
+        }
+    }
+    private static void FailureNotificationGetFailContent(
+        EmbedBuilder embed,
+        IReadOnlyCollection<ulong> success,
+        IReadOnlyCollection<ApplyFailure> fail)
+    {
+        var failCount = fail.Count.ToString("n0");
+        if (success.Count == 0)
+        {
+            embed.WithDescription($"- {Emotes.Warning} Failed to give user *any* roles");
+            if (fail.Count > 0)
+            {
+                embed.Description += $" ({failCount})";
+            }
+        }
+        else if (fail.Count > 0)
+        {
+            var failPlural = fail.Count == 1 ? "" : "s";
+            if (fail.Count > 0) embed.Description += $"\n- Failed to add {failCount} role{failPlural}.";
         }
     }
     private enum GetFailEmbedContentError
@@ -430,7 +461,7 @@ public class RolePreserveService : BaseService
         SocketTextChannel? textChannel;
         try
         {
-            textChannel = user.Guild.GetTextChannel(serverLogChannel.GetChannelId())
+            textChannel = ExceptionHelper.RetryOnTimedOut(() => user.Guild.GetTextChannel(serverLogChannel.GetChannelId()))
                           ?? throw new InvalidOperationException($"Channel {serverLogChannel.ChannelId} does not exist (GetTextChannel returned null)");
         }
         catch (Exception ex)
@@ -442,11 +473,11 @@ public class RolePreserveService : BaseService
         {
             if (attachments.Count > 0)
             {
-                await textChannel.SendFilesAsync(attachments, embed: embed.Build());
+                await ExceptionHelper.RetryOnTimedOut(async () => await textChannel.SendFilesAsync(attachments, embed: embed.Build()));
             }
             else
             {
-                await textChannel.SendMessageAsync(embed: embed.Build());
+                await ExceptionHelper.RetryOnTimedOut(async () => await textChannel.SendMessageAsync(embed: embed.Build()));
             }
         }
         catch (Exception ex)
