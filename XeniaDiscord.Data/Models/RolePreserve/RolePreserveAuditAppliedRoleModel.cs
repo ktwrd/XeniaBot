@@ -35,6 +35,18 @@ public class RolePreserveAuditAppliedRoleModel
     public string? ExceptionText { get; set; }
 
     public ulong GetRoleId() => RoleId.ParseRequiredULong(nameof(RoleId), false);
+
+    public bool IsActionFailure()
+        => Action == RolePreserveAuditAppliedRoleAction.FailureUnknown
+        || Action == RolePreserveAuditAppliedRoleAction.FailureMissingPermissions
+        || Action == RolePreserveAuditAppliedRoleAction.FailureMissingPermissionsHierarchy;
+    
+    public bool IsActionSkip()
+        => Action == RolePreserveAuditAppliedRoleAction.SkippedRoleDoesNotExist
+        || Action == RolePreserveAuditAppliedRoleAction.SkippedBlacklisted;
+    
+    public bool IsActionSuccess()
+        => Action == RolePreserveAuditAppliedRoleAction.SuccessGrant;
 }
 
 public enum RolePreserveAuditAppliedRoleAction
