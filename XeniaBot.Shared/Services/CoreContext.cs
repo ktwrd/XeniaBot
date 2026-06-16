@@ -34,6 +34,7 @@ public class CoreContext
             throw new InvalidOperationException("An instance of CoreContext exists already.");
         }
 
+        HumanizerHelper.UpdateVocabulary();
         Details = details;
         RegisteredBaseControllers = [];
         Instance = this;
