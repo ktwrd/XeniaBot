@@ -1,5 +1,7 @@
 ﻿using Discord;
 using System;
+using System.IO;
+using System.Text;
 
 namespace XeniaBot.Shared;
 
@@ -18,5 +20,10 @@ public static class Extensions
         return str.Contains("Missing Access", StringComparison.OrdinalIgnoreCase)
             || str.Contains("50001", StringComparison.OrdinalIgnoreCase)
             || str.Contains("50013", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static MemoryStream ToMemoryStream(this string value, Encoding encoding)
+    {
+        return new MemoryStream(encoding.GetBytes(value));
     }
 }
