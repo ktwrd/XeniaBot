@@ -4,19 +4,14 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using System.Collections.Frozen;
-using System.Text;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.RolePreserve;
-using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
 using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
-using ServerLogEvent = XeniaDiscord.Data.Models.ServerLog.ServerLogEvent;
-using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
 
 namespace XeniaDiscord.Common.Services;
 
@@ -27,9 +22,9 @@ public class RolePreserveService : BaseService
     private readonly XeniaDbContext _db;
     private readonly ErrorReportService _err;
     private readonly DiscordSocketClient _client;
-    private readonly ServerLogRepository _serverLogRepo;
     private readonly RolePreserveUserRepository _userRepository;
     private readonly RolePreserveGuildRepository _guildRepository;
+    private readonly RolePreserveLogService _rolePreserveLogService;
     private readonly ConfigData _configData;
     private readonly ProgramDetails _details;
 
@@ -39,12 +34,12 @@ public class RolePreserveService : BaseService
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
         _err = services.GetRequiredService<ErrorReportService>();
         _client = services.GetRequiredService<DiscordSocketClient>();
-        _serverLogRepo = services.GetRequiredService<ServerLogRepository>();
         _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
         _userRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveUserRepository>();
         _guildRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveGuildRepository>();
         var snapshotService = (scope?.ServiceProvider ?? services).GetRequiredService<DiscordSnapshotService>();
+        _rolePreserveLogService = services.GetRequiredService<RolePreserveLogService>();
         
         if (_details.Platform == XeniaPlatform.Bot)
         {
@@ -151,6 +146,7 @@ public class RolePreserveService : BaseService
     {
         await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
+        var auditId = Guid.NewGuid();
         try
         {
             if (!await _guildRepository.IsEnabled(db, user.Guild.Id))
@@ -173,13 +169,12 @@ public class RolePreserveService : BaseService
 
             var audit = new RolePreserveAuditModel()
             {
+                Id = auditId,
                 GuildId = user.Guild.Id.ToString(),
                 TargetUserId = user.Id.ToString(),
                 Action = RolePreserveAuditAction.AppliedRoles
             };
             
-            var success = new List<ulong>();
-            var fail = new List<ApplyFailure>();
             foreach (var item in roleIds)
             {
                 var roleId = item;
@@ -196,10 +191,6 @@ public class RolePreserveService : BaseService
                 }
                 try
                 {
-                    var snapshot = await db.GuildRoleSnapshots
-                        .AsNoTracking()
-                        .OrderByDescending(e => e.RecordCreatedAt)
-                        .FirstOrDefaultAsync(e => e.RoleId == roleId.ToString());
                     var existingRole = await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
                     // continue, since the role doesn't exist anymore
                     if (existingRole == null)
@@ -220,11 +211,12 @@ public class RolePreserveService : BaseService
                             RoleId = item.ToString(),
                             Action = RolePreserveAuditAppliedRoleAction.FailureMissingPermissionsHierarchy
                         });
-                        fail.Add(new (item, snapshot));
                         continue;
                     }
-                    await user.AddRoleAsync(roleId);
-                    success.Add(roleId);
+                    await user.AddRoleAsync(roleId, new RequestOptions
+                    {
+                        AuditLogReason = $"Role Preserve (Audit ID: {audit.Id})"
+                    });
                     audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
                     {
                         RolePreserveAuditId = audit.Id,
@@ -235,7 +227,6 @@ public class RolePreserveService : BaseService
                 catch (Exception ex)
                 {
                     _log.Warn(ex, $"Failed to grant Role {item} to User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
-                    fail.Add(new(item, null));
                     audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
                     {
                         RolePreserveAuditId = audit.Id,
@@ -246,21 +237,13 @@ public class RolePreserveService : BaseService
                 }
             }
 
-            _log.Trace($"Operation complete (userId={user.Id}, username={user.Username}, success={success.Count}, fail={fail.Count})");
-            if (success.Count < 1)
+            var failCount = audit.AppliedRoles.Count(e => e.IsActionFailure());
+            var successCount = audit.AppliedRoles.Count(e => e.IsActionSuccess());
+            
+            _log.Trace($"Operation complete (userId={user.Id}, username={user.Username}, success={successCount}, fail={failCount})");
+            if (successCount < 1)
             {
                 _log.Trace($"No roles were restored? (guildId={user.Guild.Id}, userId={user.Id}, username={user.Username})");
-            }
-            if (fail.Count > 0)
-            {
-                try
-                {
-                    await SendFailureNotification(user, success.ToFrozenSet(), fail);
-                }
-                catch (Exception ex)
-                {
-                    _log.Error(ex, $"Failed to send failure notification for User \"{user.Username}#{user.Discriminator}\" ({user.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id})");
-                }
             }
 
             await db.AddAsync(audit);
@@ -278,220 +261,30 @@ public class RolePreserveService : BaseService
                 .WithUser(user)
                 .WithGuild(user.Guild));
         }
-    }
-    private sealed record ApplyFailure(ulong RoleId, GuildRoleSnapshotModel? Snapshot);
-    
-    #region Send Failure Notification
-    private async Task SendFailureNotification(
-        SocketGuildUser user,
-        IReadOnlyCollection<ulong> success,
-        IReadOnlyCollection<ApplyFailure> fail,
-        RolePreserveAuditModel? auditModel = null)
-    {
-        if (fail.Count < 1) return;
-        
-        var maybeLogChannels = await GetChannelsForFailureNotification(user);
-        if (maybeLogChannels.HasNoValue) return;
-        var targetLogChannels = maybeLogChannels.Value;
-        
-        var successCount = success.Count.ToString("n0");
-        var successPlural = success.Count == 1 ? "" : "s";
-        var embed = new EmbedBuilder()
-            .WithDescription($"Added {successCount} role{successPlural} successfully.")
-            .WithTitle("Role Preserve - User Joined - " + user.Username)
-            .WithFooter($"User Id: {user.Id}")
-            .WithColor(new Color(255, 255, 255))
-            .WithCurrentTimestamp();
-        if (auditModel != null && _configData.HasDashboard)
-        {
-            embed.WithUrl($"{_configData.DashboardUrl}/RolePreserve/Audit/Details?Id={auditModel.Id}");
-        }
 
-        // TODO generate success/fail data from RolePreserveAuditModel
-        FailureNotificationGetFailContent(embed, success, fail);
-
-        const string failFilename = "roles.txt";
-        var attachments = new List<FileAttachment>();
-        var failureFieldContent = GetFailEmbedContent(fail)
-            .TapError(err =>
-            {
-                if (err != GetFailEmbedContentError.AttachFailures) return;
-                var failAttachmentContent = GetFailAttachment(fail);
-                attachments.Add(new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(failAttachmentContent)), failFilename));
-            })
-            .Finally(r =>
-            {
-                var sb = new StringBuilder();
-                if (r.IsFailure)
-                {
-                    switch (r.Error)
-                    {
-                        case GetFailEmbedContentError.AttachFailures:
-                            sb.Append(Emotes.Warning);
-                            sb.AppendFormat(" Too many roles failed! It's been attached as `{0}`", failFilename);
-                            break;
-                        default:
-                            sb.Append(Emotes.Warning);
-                            sb.Append(" Unknown error: ");
-                            sb.Append(r.Error);
-                            break;
-                    }
-                }
-                else
-                {
-                    sb.Append(r.Value);
-                }
-                
-                return sb.ToString();
-            });
-        embed.AddField("Failed Roles", failureFieldContent);
-        foreach (var serverLogChannel in targetLogChannels)
-        {
-            await SendFailureNotificationToChannel(user, embed, attachments, serverLogChannel);
-        }
-    }
-    private async Task<Maybe<IReadOnlyCollection<ServerLogChannelModel>>> GetChannelsForFailureNotification(
-        SocketGuildUser user)
-    {
-        IReadOnlyCollection<ServerLogChannelModel> targetLogChannels;
+        RolePreserveAuditModel? tmpAuditModel = null;
         try
         {
-            targetLogChannels = await _serverLogRepo.GetChannelsForGuild(
-                user.Guild.Id,
-                [ServerLogEvent.RolePreserve],
-                new()
-                {
-                    IgnoreDisabledGuilds = true
-                });
-            if (targetLogChannels.Count < 1)
-            {
-                targetLogChannels = await _serverLogRepo.GetChannelsForGuild(
-                    user.Guild.Id,
-                    [ServerLogEvent.MemberJoin],
-                    new()
-                    {
-                        IgnoreDisabledGuilds = true
-                    });
-            }
-            if (targetLogChannels.Count < 1)
-                return Maybe.None;
-            return Maybe<IReadOnlyCollection<ServerLogChannelModel>>.From(targetLogChannels);
+            tmpAuditModel = await db.RolePreserveAudit
+                .AsNoTracking()
+                .Include(e => e.AppliedRoles)
+                .ThenInclude(e => e.Role)
+                .Include(e => e.ReferencedRoles)
+                .ThenInclude(e => e.Role)
+                .FirstAsync(e => e.Id == auditId);
+            await _rolePreserveLogService.SendAuditNotification(user, tmpAuditModel);
         }
         catch (Exception ex)
         {
-            await _err.Submit(new ErrorReportBuilder()
-                .WithException(ex)
-                .WithNotes($"Failed to get Server Log Channel models with event {ServerLogEvent.MemberJoin} or {ServerLogEvent.RolePreserve} for Guild \"{user.Guild.Name}\" ({user.Guild.Id})")
-                .WithUser(user)
-                .WithGuild(user.Guild));
-            return Maybe.None;
+            var msg = $"Failed to send failure notification for RolePreserveAudit.ID={auditId} for User \"{user.Username}#{user.Discriminator}\" in Guild \"{user.Guild.Name}\" (userId: {user.Id}, guildId: {user.Guild.Id})";
+            _log.Error(ex, msg);
+            await _err.Submit(
+                new ErrorReportBuilder()
+                    .WithException(ex)
+                    .WithNotes(msg)
+                    .AddSerializedAttachment("rolePreserveAudit.json", tmpAuditModel));
         }
     }
-    private static void FailureNotificationGetFailContent(
-        EmbedBuilder embed,
-        IReadOnlyCollection<ulong> success,
-        IReadOnlyCollection<ApplyFailure> fail)
-    {
-        var failCount = fail.Count.ToString("n0");
-        if (success.Count == 0)
-        {
-            embed.WithDescription($"- {Emotes.Warning} Failed to give user *any* roles");
-            if (fail.Count > 0)
-            {
-                embed.Description += $" ({failCount})";
-            }
-        }
-        else if (fail.Count > 0)
-        {
-            var failPlural = fail.Count == 1 ? "" : "s";
-            if (fail.Count > 0) embed.Description += $"\n- Failed to add {failCount} role{failPlural}.";
-        }
-    }
-    private enum GetFailEmbedContentError
-    {
-        AttachFailures
-    }
-    private static Result<string, GetFailEmbedContentError> GetFailEmbedContent(
-        IReadOnlyCollection<ApplyFailure> items)
-    {
-        /* determined with the following code:
-        const int max = 1024;
-        int lineSize = string.Format("- <@&{0}>\n", ulong.MaxValue).Length; // expected to be 26
-        int iterCount = Convert.ToInt32(Math.Floor(max / (float)(lineSize)));
-         */
-        const int maxCountSafe = 37;
-        if (items.Count > maxCountSafe) return GetFailEmbedContentError.AttachFailures;
-
-        var sb = new StringBuilder();
-        var count = items.Count;
-        for (var i = 0; i < count; i++)
-        {
-            var item = items.ElementAt(i);
-            sb.Append("- <@&");
-            sb.Append(item.RoleId);
-            sb.Append('>');
-            if (i < count - 1)
-            {
-                sb.AppendLine();
-            }
-        }
-        // added just to be safe
-        if (sb.Length >= 1024) return GetFailEmbedContentError.AttachFailures;
-        return sb.ToString();
-    }
-    private static string GetFailAttachment(
-        IReadOnlyCollection<ApplyFailure> items)
-    {
-        var sb = new StringBuilder();
-        foreach (var item in items)
-        {
-            sb.Append(item.RoleId);
-            sb.Append(" - ");
-            sb.Append(item.Snapshot?.Name);
-            sb.AppendLine();
-        }
-        return sb.ToString();
-    }
-    private async Task SendFailureNotificationToChannel(
-        SocketGuildUser user,
-        EmbedBuilder embed,
-        List<FileAttachment> attachments,
-        ServerLogChannelModel serverLogChannel)
-    {
-        SocketTextChannel? textChannel;
-        try
-        {
-            textChannel = ExceptionHelper.RetryOnTimedOut(() => user.Guild.GetTextChannel(serverLogChannel.GetChannelId()))
-                          ?? throw new InvalidOperationException($"Channel {serverLogChannel.ChannelId} does not exist (GetTextChannel returned null)");
-        }
-        catch (Exception ex)
-        {
-            _log.Warn(ex, $"Could not get channel {serverLogChannel.ChannelId} in Guild \"{user.Guild}\" ({user.Guild.Id}) from ServerLogChannel with Id={serverLogChannel.Id}");
-            return;
-        }
-        try
-        {
-            if (attachments.Count > 0)
-            {
-                await ExceptionHelper.RetryOnTimedOut(async () => await textChannel.SendFilesAsync(attachments, embed: embed.Build()));
-            }
-            else
-            {
-                await ExceptionHelper.RetryOnTimedOut(async () => await textChannel.SendMessageAsync(embed: embed.Build()));
-            }
-        }
-        catch (Exception ex)
-        {
-            await _err.Submit(new ErrorReportBuilder()
-                .WithException(ex)
-                .WithNotes($"Failed to send message in channel \"{textChannel.Name}\" ({textChannel.Id}) in Guild \"{user.Guild.Name}\" ({user.Guild.Id}) for user \"{user.Username}#{user.Discriminator}\" ({user.Id})")
-                .WithUser(user)
-                .WithGuild(user.Guild)
-                .WithChannel(textChannel)
-                .AddSerializedAttachment("serverLogChannel.json", serverLogChannel));
-        }
-    }
-    #endregion
 
     public override Task OnReadyDelay()
     {
