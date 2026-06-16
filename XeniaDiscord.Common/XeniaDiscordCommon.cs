@@ -38,6 +38,7 @@ public static class XeniaDiscordCommon
 
             typeof(GuildApprovalService),
             typeof(RolePreserveService),
+            typeof(RolePreserveLogService),
         };
         foreach (var t in types)
         {
