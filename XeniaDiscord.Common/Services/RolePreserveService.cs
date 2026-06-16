@@ -358,7 +358,7 @@ public class RolePreserveService : BaseService
         {
             targetLogChannels = await _serverLogRepo.GetChannelsForGuild(
                 user.Guild.Id,
-                [ServerLogEvent.RolePerserve],
+                [ServerLogEvent.RolePreserve],
                 new()
                 {
                     IgnoreDisabledGuilds = true
@@ -381,7 +381,7 @@ public class RolePreserveService : BaseService
         {
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
-                .WithNotes($"Failed to get Server Log Channel models with event {ServerLogEvent.MemberJoin} or {ServerLogEvent.RolePerserve} for Guild \"{user.Guild.Name}\" ({user.Guild.Id})")
+                .WithNotes($"Failed to get Server Log Channel models with event {ServerLogEvent.MemberJoin} or {ServerLogEvent.RolePreserve} for Guild \"{user.Guild.Name}\" ({user.Guild.Id})")
                 .WithUser(user)
                 .WithGuild(user.Guild));
             return Maybe.None;

@@ -27,5 +27,5 @@ public enum ServerLogEvent
     RoleDelete,
 
     // start custom stuff below
-    RolePerserve = 300
+    RolePreserve = 300
 }
