@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using XeniaDiscord.Data.Models.Cache;
 
 namespace XeniaDiscord.Data.Models.RolePreserve;
 
@@ -16,7 +17,13 @@ public class RolePreserveAuditReferencedRoleModel
 
     /// <summary>
     /// Role Id that was applied, or Xenia tried to (ulong as string)
+    /// Optional foreign key to <see cref="GuildRoleCacheModel.RoleId"/>
     /// </summary>
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string RoleId { get; set; } = "0";
+    
+    /// <summary>
+    /// Property Accessor
+    /// </summary>
+    public GuildRoleCacheModel? Role { get; set; }
 }

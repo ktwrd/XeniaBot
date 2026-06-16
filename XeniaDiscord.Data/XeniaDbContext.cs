@@ -466,11 +466,23 @@ public class XeniaDbContext : DbContext
         {
             b.ToTable(RolePreserveAuditAppliedRoleModel.TableName)
                 .HasKey(e => new { e.RolePreserveAuditId, e.RoleId });
+            
+            b.HasOne(e => e.Role)
+                .WithMany()
+                .HasForeignKey(e => e.RoleId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
         });
         builder.Entity<RolePreserveAuditReferencedRoleModel>(b =>
         {
             b.ToTable(RolePreserveAuditReferencedRoleModel.TableName)
                 .HasKey(e => new { e.RolePreserveAuditId, e.RoleId });
+
+            b.HasOne(e => e.Role)
+                .WithMany()
+                .HasForeignKey(e => e.RoleId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
         });
         #endregion
         
