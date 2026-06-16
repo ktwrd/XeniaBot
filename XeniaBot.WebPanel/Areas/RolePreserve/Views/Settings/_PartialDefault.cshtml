@@ -23,6 +23,10 @@
     @await Component.InvokeAsync("Alert", Model.Alert)
 }
 
+@{
+    var serverLogPage = Url.Action("ModerationView", "Server", new { id = Model.GuildId });
+}
+
 @* TODO show warning if Xenia won't be able to give back roles due to hierarchy issues *@
 @* TODO Implement logic to add roles to blacklist *@
 <form enctype="multipart/form-data"
@@ -37,7 +41,9 @@
             If you disable Role Preservation, Xenia will continue to capture "snapshots" of what roles your members have, just in-case if you want to enable it or re-enable it.<br />
             <br />
             You can also tell Xenia to "ignore" specific roles from being given back to users with the <code>/rolepreserve blacklist-add</code> command.
-            At the moment you can only view "ignored" roles in the dashboard, but in the future, you'll be able to add roles to "ignore" in the dashboard.
+            At the moment you can only view "ignored" roles in the dashboard, but in the future, you'll be able to add roles to "ignore" in the dashboard.<br/>
+            <br/>
+            <strong>If you would like to enable logging, please enable the "Role Preserve" server log event in a channel in the <a href="@serverLogPage">Server Log settings</a> page.</strong>
         </div>
     </div>
     @{
