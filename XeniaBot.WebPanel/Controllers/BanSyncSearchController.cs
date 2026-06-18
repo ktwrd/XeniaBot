@@ -144,22 +144,23 @@ public class BanSyncSearchController : BaseXeniaController
         model.TotalCount = await _bansyncRecordRepo.MutualRecordsCount(guildId, recordsOpts);
         model.OtherGuildCount = model.TotalCount - model.CurrentGuildCount;
 
-        await using var trans = await _db.Database.BeginTransactionAsync();
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
             var guildIconDict = new Dictionary<ulong, string?>();
             var userImageDict = new Dictionary<ulong, string?>();
             foreach (var i in records.Select(e => e.GetGuildId()).Distinct())
             {
-                guildIconDict[i] = await _guildCacheService.GetIconUrl(i);
+                guildIconDict[i] = await _guildCacheService.GetIconUrl(db, i, saveChanges: false);
             }
             foreach (var i in records.Select(e => e.GetUserId()).Distinct())
             {
-                userImageDict[i] = await _userCacheService.GetDisplayAvatarUrl(i);
+                userImageDict[i] = await _userCacheService.GetDisplayAvatarUrl(db, i, saveChanges: false);
             }
             model.UserIdProfileDict = userImageDict;
             model.GuildIdProfileDict = guildIconDict;
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
         catch

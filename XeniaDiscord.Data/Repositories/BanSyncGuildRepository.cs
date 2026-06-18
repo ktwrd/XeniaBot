@@ -21,19 +21,38 @@ public class BanSyncGuildRepository : IDisposable
 
     public async Task<long> CountAll()
     {
-        return await _db.BanSyncGuilds.LongCountAsync();
+        await using var db = _db.CreateSession();
+        return await CountAll(db);
+    }
+    public async Task <long> CountAll(XeniaDbContext db)
+    {
+        return await db.BanSyncGuilds.LongCountAsync();
     }
     public async Task<bool> Exists(ulong guildId)
     {
-        var guildIdStr = guildId.ToString();
-        return await _db.BanSyncGuilds.AnyAsync(e => e.GuildId == guildIdStr);
+        await using var db = _db.CreateSession();
+        return await Exists(db, guildId);
     }
-    public async Task<BanSyncGuildModel?> GetAsync(ulong guildId)
+    public async Task<bool> Exists(XeniaDbContext db, ulong guildId)
     {
         var guildIdStr = guildId.ToString();
-        return await _db.BanSyncGuilds.AsNoTracking()
+        return await db.BanSyncGuilds.AnyAsync(e => e.GuildId == guildIdStr);
+    }
+    
+    public async Task<BanSyncGuildModel?> GetAsync(ulong guildId)
+    {
+        await using var db = _db.CreateSession();
+        return await GetAsync(db, guildId);
+    }
+    public async Task<BanSyncGuildModel?> GetAsync(XeniaDbContext db, ulong guildId)
+    {
+        var guildIdStr = guildId.ToString();
+        return await db.BanSyncGuilds
+            .AsNoTracking()
             .FirstOrDefaultAsync(e => e.GuildId == guildIdStr);
     }
+    
+
     public async Task InsertOrUpdate(BanSyncGuildModel model)
     {
         if (model.GetGuildId() <= 1)

@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Services;
 using XeniaDiscord.Data;
@@ -113,15 +114,20 @@ public class BanSyncModule : InteractionModuleBase
         ITextChannel logChannel)
     {
         await DeferAsync();
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var data = await _guildRepo.GetAsync(Context.Guild.Id)
+            var data = await _guildRepo.GetAsync(db, Context.Guild.Id)
                 ?? new(Context.Guild.Id);
             data.LogChannelId = logChannel.Id.ToString();
-            await _guildRepo.InsertOrUpdate(data);
+            await _guildRepo.InsertOrUpdate(db, data);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
         }
         catch (Exception ex)
         {
+            await trans.RollbackAsync();
             var msg = $"Failed to update log channel to {logChannel.Id} for guild \"{Context.Guild.Name}\" ({Context.Guild.Id})";
             _log.Error(ex, msg);
             try

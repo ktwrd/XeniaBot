@@ -224,8 +224,19 @@ public class BanSyncService : BaseService
                 Enable = false,
                 State = BanSyncGuildState.Unknown
             };
-            await _bansyncGuildRepository.InsertOrUpdate(_db, config);
-            await _db.SaveChangesAsync();
+            await using var db1 = _db.CreateSession();
+            await using var trans1 = await db1.Database.BeginTransactionAsync();
+            try
+            {
+                await _bansyncGuildRepository.InsertOrUpdate(db1, config);
+                await db1.SaveChangesAsync();
+                await trans1.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await trans1.RollbackAsync();
+                _log.Error(ex, $"Failed to create bansync record for Guild \"{guild.Name}\" (guildId={guild.Id})");
+            }
         }
 
         RestBan? banInfo = null;
@@ -337,7 +348,7 @@ public class BanSyncService : BaseService
         {
             throw new BanSyncNotifyFailureException(
                 $"Failed to notify guilds about {user} ({user.Id}) being banned in \"{guild.Name}\" ({guild.Id})",
-                ex, info, null, null, null);
+                ex, info, null, guild, null);
         }
     }
 
@@ -471,7 +482,8 @@ public class BanSyncService : BaseService
         if (logChannel == null) return;
 
         // Check if this user has been banned before, if not then ignore
-        var userInfo = await _bansyncRecordsRepository.GetInfoEnumerable(arg.Id,
+        var userInfo = await _bansyncRecordsRepository.GetInfoEnumerable(
+            arg.Id,
             new BanSyncRecordRepository.QueryOptions()
             {
                 IncludeGhostedRecords = false,
