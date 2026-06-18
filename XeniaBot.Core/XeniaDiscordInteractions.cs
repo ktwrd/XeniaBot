@@ -1,6 +1,7 @@
 ﻿using Discord.Interactions;
 using System;
 using System.Threading.Tasks;
+using XeniaBot.Core.LevelSystem.Modules;
 using XeniaBot.Core.Modules;
 using XeniaBot.Shared.Helpers;
 #pragma warning disable S1186
@@ -32,7 +33,8 @@ public static class XeniaDiscordCoreInteractions
             interactions.AddModuleAsync<RolePreserveComponentModule>(services),
             interactions.AddModuleAsync<TicketModule>(services),
             interactions.AddModuleAsync<TranslateModule>(services),
-            interactions.AddModuleAsync<WeatherModule>(services)
+            interactions.AddModuleAsync<WeatherModule>(services),
+            interactions.AddModuleAsync<XpModule>(services)
             );
         transaction.Finish();
     }
