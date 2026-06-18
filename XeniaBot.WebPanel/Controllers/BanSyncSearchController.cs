@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models.BanSync;
 using XeniaBot.WebPanel.Models.BanSyncSearch;
@@ -47,7 +48,7 @@ public class BanSyncSearchController : BaseXeniaController
         SocketGuild? guild = null;
         try
         {
-            guild = _discord.GetGuild(guildId);
+            guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         }
         catch { }
 
@@ -61,10 +62,12 @@ public class BanSyncSearchController : BaseXeniaController
             });
         }
 
-        var component = await GetMutualRecordsModel(guildId, new()
-        {
-            Page = page
-        });
+        var component = await GetMutualRecordsModel(
+            guildId,
+            new()
+            {
+                Page = page
+            });
         var model = new MutualRecordsListModel
         {
             GuildId = guildId,
@@ -93,7 +96,7 @@ public class BanSyncSearchController : BaseXeniaController
         [FromQuery]
         int page = 1)
     {
-        var guild = _discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         if (guild == null)
         {
             return PartialView("NotFoundPartial", $"Guild not found: {guildId}");

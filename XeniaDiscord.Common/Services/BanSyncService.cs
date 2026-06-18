@@ -383,7 +383,7 @@ public class BanSyncService : BaseService
             SocketGuildUser? guildUser = null;
             try
             {
-                guildUser = guild.GetUser(info.GetUserId());
+                guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(info.GetUserId()));
             }
             catch { }
             if (guildUser == null) continue;
@@ -478,7 +478,7 @@ public class BanSyncService : BaseService
             return;
 
         // Check if config channel has been made, if not then ignore
-        SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig.GetLogChannelId().GetValueOrDefault(0));
+        SocketTextChannel? logChannel = ExceptionHelper.RetryOnTimedOut(() => arg.Guild.GetTextChannel(guildConfig.GetLogChannelId().GetValueOrDefault(0)));
         if (logChannel == null) return;
 
         // Check if this user has been banned before, if not then ignore
@@ -550,12 +550,12 @@ public class BanSyncService : BaseService
 
     public async Task<BanSyncGuildKind> GetGuildKind(ulong guildId)
     {
-        var guild = _client.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
 
         var model = await _bansyncGuildRepository.GetAsync(guildId)
             ?? new(guildId);
 
-        var selfMember = guild.GetUser(_client.CurrentUser.Id);
+        var selfMember = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(_client.CurrentUser.Id));
 
         var logChannelId = model.GetLogChannelId();
         if (!logChannelId.HasValue)
@@ -564,7 +564,7 @@ public class BanSyncService : BaseService
         SocketTextChannel logChannel;
         try
         {
-            logChannel = guild.GetTextChannel(logChannelId.Value);
+            logChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(logChannelId.Value));
             if (logChannel == null)
             {
                 return BanSyncGuildKind.LogChannelMissing;
@@ -651,14 +651,14 @@ public class BanSyncService : BaseService
         {
             try
             {
-                await RefreshBans(_client.GetGuild(guildId));
+                await RefreshBans(ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId)));
             }
             catch (Exception ex)
             {
                 SocketGuild? guild = null;
                 try
                 {
-                    guild = _client.GetGuild(guildId);
+                    guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
                 }
                 catch (Exception gex)
                 {
@@ -951,9 +951,10 @@ public class BanSyncService : BaseService
     /// </summary>
     protected async Task RequestGuildEnable_SendNotification(BanSyncGuildModel model)
     {
-        var guild = _client.GetGuild(model.GetGuildId());
-        var logGuild = _client.GetGuild(_configData.BanSync.GuildId);
-        var logRequestChannel = logGuild.GetTextChannel(_configData.BanSync.RequestChannelId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(model.GetGuildId()));
+        var logGuild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_configData.BanSync.GuildId));
+        var logRequestChannel = ExceptionHelper.RetryOnTimedOut(() => logGuild.GetTextChannel(_configData.BanSync.RequestChannelId));
+        
         // Fetch first text channel to create invite for
         var firstTextChannel = guild.Channels.OfType<ITextChannel>().FirstOrDefault();
 
@@ -965,7 +966,10 @@ public class BanSyncService : BaseService
             {
                 IInviteMetadata? invite = null;
                 if (firstTextChannel != null)
-                    invite = await firstTextChannel.CreateInviteAsync(null);
+                    invite = await ExceptionHelper.RetryOnTimedOut(() => firstTextChannel.CreateInviteAsync(options: new RequestOptions()
+                    {
+                        AuditLogReason = "Invite for enabling BanSync module"
+                    }));
                 inviteUrl = invite?.Url ?? "none";
             }
             catch (Exception ex)

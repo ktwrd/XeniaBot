@@ -42,7 +42,7 @@ public class UserCacheService
         if (dbRecord == null ||
             dbRecord.RecordUpdatedAt < (DateTime.UtcNow - TimeSpan.FromDays(365)))
         {
-            var user = await _client.GetUserAsync(id);
+            var user = ExceptionHelper.RetryOnTimedOut(() => _client.GetUser(id));
             if (user == null) return dbRecord?.DisplayAvatarUrl;
 
             var mapped = dbRecord == null ? _mapper.Map(user) : _mapperMerger.Map(dbRecord, user);

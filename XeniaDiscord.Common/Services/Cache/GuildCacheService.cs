@@ -43,12 +43,7 @@ public class GuildCacheService
         if (existingUrl.Length == 1)
             return existingUrl[0];
 
-        IGuild? guild = null;
-        try
-        {
-            guild = _client.GetGuild(id);
-        }
-        catch { }
+        IGuild? guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(id));
         if (guild == null) return null;
 
         var mapped = _mapper.Map(guild);

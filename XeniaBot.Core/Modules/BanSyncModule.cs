@@ -87,21 +87,33 @@ public class BanSyncModule : InteractionModuleBase
         [Summary(description: "User to get information about.")]
         IUser user)
     {
-        await Context.Interaction.DeferAsync();
-        var data = await _recordRepo.GetInfoEnumerable(user.Id);
+        try
+        {
+            await Context.Interaction.DeferAsync();
+            var data = await _recordRepo.GetInfoEnumerable(user.Id);
 
-        if (data.Count == 0)
-        {
-            await Context.Interaction.FollowupAsync(
-                embed: new EmbedBuilder()
-                    .WithDescription($"No bans found for <@{user.Id}> ({user.Username}, {user.Id})")
-                    .WithColor(Color.Orange)
-                    .Build());
+            if (data.Count == 0)
+            {
+                await Context.Interaction.FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithDescription($"No bans found for <@{user.Id}> ({user.Username}, {user.Id})")
+                        .WithColor(Color.Orange)
+                        .Build());
+            }
+            else
+            {
+                var embed = await _bansyncService.GenerateEmbed(data);
+                await Context.Interaction.FollowupAsync(embed: embed.Build());
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var embed = await _bansyncService.GenerateEmbed(data);
-            await Context.Interaction.FollowupAsync(embed: embed.Build());
+            var msg = $"Failed to get user information for: {user.Id}";
+            _log.Error(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithContext(Context));
         }
     }
 
@@ -169,7 +181,7 @@ public class BanSyncModule : InteractionModuleBase
             await Context.Interaction.RespondAsync($"Failed to parse guildId\n\n{ex.Message}", ephemeral: true);
             return;
         }
-        var targetGuild = await Context.Client.GetGuildAsync(guildId);
+        var targetGuild = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Client.GetGuildAsync(guildId));
         if (targetGuild == null)
         {
             await Context.Interaction.RespondAsync($"Guild `{guildId}` not found", ephemeral: true);
