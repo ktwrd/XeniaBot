@@ -129,6 +129,9 @@ public class BanSyncService : BaseService
 
                 bans = await guild.GetBansAsync(bansArray.Min(e => e.User.Id), Direction.Before, pageSize).ToListAsync();
             }
+
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
         }
         catch (Exception ex)
         {
