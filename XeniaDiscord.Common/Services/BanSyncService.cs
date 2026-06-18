@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Exceptions;
 using XeniaDiscord.Data;
@@ -146,10 +147,10 @@ public class BanSyncService : BaseService
     }
 
     private async Task RefreshBans_ProcessBanCallback(
-            XeniaDbContext db,
-            RestBan ban,
-            SocketGuild guild,
-            bool ignoreExisting)
+        XeniaDbContext db,
+        RestBan ban,
+        SocketGuild guild,
+        bool ignoreExisting)
     {
         try
         {
@@ -253,12 +254,12 @@ public class BanSyncService : BaseService
         RestAuditLogEntry? mostRelevantAuditLogEntry = null;
         try
         {
-            mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry();
+            mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry(guild);
             // wait 1s just to make sure that it's in the audit log
             if (mostRelevantAuditLogEntry == null)
             {
                 await Task.Delay(1000);
-                mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry();
+                mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry(guild);
             }
 
         }
@@ -340,20 +341,22 @@ public class BanSyncService : BaseService
                 $"Failed to notify guilds about {user} ({user.Id}) being banned in \"{guild.Name}\" ({guild.Id})",
                 ex, info, null, null, null);
         }
+    }
 
-        return;
-        async Task<RestAuditLogEntry?> TryGetRelevantAuditLogEntry()
+    private static async Task<RestAuditLogEntry?> TryGetRelevantAuditLogEntry(SocketGuild guild)
+    {
+        return await ExceptionHelper.RetryOnTimedOut(async () =>
         {
+            var now = DateTimeOffset.UtcNow;
             var relatedAuditLogEntries = new List<RestAuditLogEntry>();
-            foreach (var page in await guild.GetAuditLogsAsync(50,
-                actionType: ActionType.Ban).ToListAsync())
+            foreach (var page in await guild.GetAuditLogsAsync(50, actionType: ActionType.Ban).ToListAsync())
             {
                 relatedAuditLogEntries.AddRange(page);
             }
 
             return relatedAuditLogEntries.OrderByDescending(e => e.CreatedAt)
-                .FirstOrDefault(entry => (DateTimeOffset.UtcNow - entry.CreatedAt) <= TimeSpan.FromMinutes(1));
-        }
+                .FirstOrDefault(entry => (now - entry.CreatedAt) <= TimeSpan.FromMinutes(1));
+        });
     }
 
     /// <summary>
@@ -854,7 +857,7 @@ public class BanSyncService : BaseService
         IDMChannel ownerDmsChannel;
         try
         {
-            ownerDmsChannel = await guild.Owner.CreateDMChannelAsync();
+            ownerDmsChannel = await ExceptionHelper.RetryOnTimedOut(async () => await guild.Owner.CreateDMChannelAsync());
         }
         catch (Exception ex)
         {
@@ -871,9 +874,12 @@ public class BanSyncService : BaseService
         }
         try
         {
-            await ownerDmsChannel.SendMessageAsync(
-                baseDmMsg,
-                embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+            {
+                await ownerDmsChannel.SendMessageAsync(
+                    baseDmMsg,
+                    embed: embed.Build());
+            });
         }
         catch (Exception ex)
         {
