@@ -159,9 +159,7 @@ public class BanSyncService : BaseService
             {
                 IncludeGhostedRecords = true
             });
-            if (ignoreExisting &&
-                existing != null &&
-                InfoEquals(existing, ban, guild.Id))
+            if (ignoreExisting && existing != null && InfoEquals(existing, ban, guild.Id))
             {
                 return;
             }
@@ -685,8 +683,9 @@ public class BanSyncService : BaseService
                     $"Members: {guild?.MemberCount}",
                     "```"))
                 .AddField("State", model.State, true)
-                .AddField("Reason", model.Notes ?? "", true)
                 .WithCurrentTimestamp();
+            if (!string.IsNullOrWhiteSpace(model.Notes))
+                embed.AddField("Notes", model.Notes, true);
 
             await logChannel.SendMessageAsync(embed: embed.Build());
         }
@@ -883,7 +882,7 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to send message to {guild.Owner} ({guild.Owner.Id}), who is the owner of \"{guild.Name}\" ({guild.Id})";
+            var msg = $"Failed to send message to \"{guild.Owner.FormatUsername()}\", who is the owner of the guild \"{guild.Name}\" (userId={guild.OwnerId}, guildId={guild.Id})";
             _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
