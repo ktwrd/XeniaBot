@@ -411,6 +411,7 @@ public class RolePreserveComponentModule : InteractionModuleBase<SocketInteracti
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly XeniaDbContext _db;
+    private readonly ConfigData _config;
     public RolePreserveComponentModule(IServiceProvider services)
     {
         try
@@ -422,6 +423,8 @@ public class RolePreserveComponentModule : InteractionModuleBase<SocketInteracti
             _log.Error(ex);
             throw new InvalidOperationException("Failed to get services", ex);
         }
+
+        _config = services.GetRequiredService<ConfigData>();
     }
     
     [ComponentInteraction(RolePreserveModuleHelper.ViewBlacklistedRolesInteractionName)]
@@ -432,7 +435,7 @@ public class RolePreserveComponentModule : InteractionModuleBase<SocketInteracti
         try
         {
             await using var db = _db.CreateSession();
-            var (embed, components) = await RolePreserveModuleHelper.ListEmbed(db, Context.Guild, page);
+            var (embed, components) = await RolePreserveModuleHelper.ListEmbed(_config, db, Context.Guild, page);
             await Context.Interaction.UpdateAsync(
                 p =>
                 {
