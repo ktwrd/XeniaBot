@@ -27,6 +27,7 @@ public class RolePreserveModule : InteractionModuleBase
     private readonly XeniaDbContext _db;
     private readonly RolePreserveGuildRepository _repo;
     private readonly ErrorReportService _error;
+    private readonly ConfigData _config;
     public RolePreserveModule(IServiceProvider services)
     {
         try
@@ -34,6 +35,7 @@ public class RolePreserveModule : InteractionModuleBase
             _db = services.GetRequiredService<XeniaDbContext>();
             _repo = services.GetRequiredService<RolePreserveGuildRepository>();
             _error = services.GetRequiredService<ErrorReportService>();
+            _config = services.GetRequiredService<ConfigData>();
         }
         catch (Exception ex)
         {
@@ -277,7 +279,7 @@ public class RolePreserveModule : InteractionModuleBase
         {
             await DeferAsync();
             await using var db = _db.CreateSession();
-            var (embed, components) = await RolePreserveModuleHelper.ListEmbed(db, Context.Guild, page);
+            var (embed, components) = await RolePreserveModuleHelper.ListEmbed(_config, db, Context.Guild, page);
             if (components != null)
             {
                 await FollowupAsync(
@@ -302,13 +304,13 @@ internal static class RolePreserveModuleHelper
     internal const string ViewBlacklistedRolesInteractionName = "rolepreserve_blacklistedroles_list:page=*";
     internal sealed record ListEmbedResult(EmbedBuilder Embed, ComponentBuilderV2? ComponentBuilder);
     internal static async Task<ListEmbedResult> ListEmbed(
+        ConfigData config,
         XeniaDbContext db,
         IGuild guild,
         int page = 1)
     {
         const int pageSize = 10;
-        const string emptyPageMessageFmt =  "No roles on page `{0}`\nRun `/rolepreserve blacklist` again to see the blacklisted roles."; 
-        
+
         page = int.Max(1, page);
         var skip = pageSize * (page - 1);
         var guildIdStr = guild.Id.ToString();
@@ -319,17 +321,18 @@ internal static class RolePreserveModuleHelper
         var lastPage = Math.Max(1, Convert.ToInt32(Math.Ceiling(totalItemCount / (float)pageSize)));
         
         var components = BuildBlacklistedRolesListingComponents(page, lastPage);
-        
+
+        var pageFmt = page.ToString("N0");
         var embed = new EmbedBuilder()
             .WithTitle("Role Preserve - Blacklisted Roles")
             .WithColor(Color.Blue)
-            .WithFooter($"Page {page}")
+            .WithFooter("Page " + pageFmt)
             .WithCurrentTimestamp();
         
         // only return early if we're past the last page
         if (page > lastPage)
         {
-            embed.Description = string.Format(emptyPageMessageFmt, page);
+            embed.Description = DescriptionForEmptyPage(config, guild.Id, pageFmt);
             return new ListEmbedResult(embed, components);
         }
 
@@ -344,7 +347,7 @@ internal static class RolePreserveModuleHelper
         {
             embed.Description = page == 1
                 ? "No blacklisted roles have been setup. You can do that with `/rolepreserve blacklist-add`"
-                : string.Format(emptyPageMessageFmt, page);
+                : DescriptionForEmptyPage(config, guild.Id, pageFmt);
         }
         else
         {
@@ -352,6 +355,18 @@ internal static class RolePreserveModuleHelper
         }
 
         return new ListEmbedResult(embed, components);
+    }
+
+    private static string DescriptionForEmptyPage(ConfigData config, ulong guildId, string pageFmt)
+    {
+        const string emptyPageMessageFmt = "No roles on page `{0}`\nRun `/rolepreserve blacklist` again to see the blacklisted roles.";
+        const string emptyPageMessageWithDashFmt = emptyPageMessageFmt + "\n\nYou can also see what roles are blacklisted [via the web panel]({1}/Guild/{2}/RolePreserve/Settings).";
+        if (config.HasDashboard)
+            return string.Format(emptyPageMessageWithDashFmt,
+                pageFmt,
+                config.DashboardUrl,
+                guildId);
+        return string.Format(emptyPageMessageFmt, pageFmt);
     }
     private static ComponentBuilderV2? BuildBlacklistedRolesListingComponents(
         int currentPage,
