@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Repositories;
@@ -27,22 +28,28 @@ public class UserCacheService
     }
     public async Task<string?> GetDisplayAvatarUrl(ulong id, bool saveChages = true)
     {
+        await using var db = _db.CreateSession();
+        return await GetDisplayAvatarUrl(db, id, saveChages);
+    }
+    
+    public async Task<string?> GetDisplayAvatarUrl(XeniaDbContext db, ulong id, bool saveChanges = true)
+    {
         var idStr = id.ToString();
-        var dbRecord = await _db.UserCache
+        var dbRecord = await db.UserCache
             .AsNoTracking()
             .Where(e => e.Id == idStr)
             .FirstOrDefaultAsync();
         if (dbRecord == null ||
             dbRecord.RecordUpdatedAt < (DateTime.UtcNow - TimeSpan.FromDays(365)))
         {
-            var user = await _client.GetUserAsync(id);
+            var user = ExceptionHelper.RetryOnTimedOut(() => _client.GetUser(id));
             if (user == null) return dbRecord?.DisplayAvatarUrl;
 
             var mapped = dbRecord == null ? _mapper.Map(user) : _mapperMerger.Map(dbRecord, user);
             await _repo.InsertOrUpdate(_db, mapped);
-            if (saveChages)
+            if (saveChanges)
             {
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
             }
 
             return mapped.DisplayAvatarUrl;

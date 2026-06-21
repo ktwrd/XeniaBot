@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Exceptions;
 using XeniaDiscord.Data;
@@ -129,6 +130,9 @@ public class BanSyncService : BaseService
 
                 bans = await guild.GetBansAsync(bansArray.Min(e => e.User.Id), Direction.Before, pageSize).ToListAsync();
             }
+
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
         }
         catch (Exception ex)
         {
@@ -143,10 +147,10 @@ public class BanSyncService : BaseService
     }
 
     private async Task RefreshBans_ProcessBanCallback(
-            XeniaDbContext db,
-            RestBan ban,
-            SocketGuild guild,
-            bool ignoreExisting)
+        XeniaDbContext db,
+        RestBan ban,
+        SocketGuild guild,
+        bool ignoreExisting)
     {
         try
         {
@@ -155,9 +159,7 @@ public class BanSyncService : BaseService
             {
                 IncludeGhostedRecords = true
             });
-            if (ignoreExisting &&
-                existing != null &&
-                InfoEquals(existing, ban, guild.Id))
+            if (ignoreExisting && existing != null && InfoEquals(existing, ban, guild.Id))
             {
                 return;
             }
@@ -222,8 +224,19 @@ public class BanSyncService : BaseService
                 Enable = false,
                 State = BanSyncGuildState.Unknown
             };
-            await _bansyncGuildRepository.InsertOrUpdate(_db, config);
-            await _db.SaveChangesAsync();
+            await using var db1 = _db.CreateSession();
+            await using var trans1 = await db1.Database.BeginTransactionAsync();
+            try
+            {
+                await _bansyncGuildRepository.InsertOrUpdate(db1, config);
+                await db1.SaveChangesAsync();
+                await trans1.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await trans1.RollbackAsync();
+                _log.Error(ex, $"Failed to create bansync record for Guild \"{guild.Name}\" (guildId={guild.Id})");
+            }
         }
 
         RestBan? banInfo = null;
@@ -250,12 +263,12 @@ public class BanSyncService : BaseService
         RestAuditLogEntry? mostRelevantAuditLogEntry = null;
         try
         {
-            mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry();
+            mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry(guild);
             // wait 1s just to make sure that it's in the audit log
             if (mostRelevantAuditLogEntry == null)
             {
                 await Task.Delay(1000);
-                mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry();
+                mostRelevantAuditLogEntry = await TryGetRelevantAuditLogEntry(guild);
             }
 
         }
@@ -335,22 +348,24 @@ public class BanSyncService : BaseService
         {
             throw new BanSyncNotifyFailureException(
                 $"Failed to notify guilds about {user} ({user.Id}) being banned in \"{guild.Name}\" ({guild.Id})",
-                ex, info, null, null, null);
+                ex, info, null, guild, null);
         }
+    }
 
-        return;
-        async Task<RestAuditLogEntry?> TryGetRelevantAuditLogEntry()
+    private static async Task<RestAuditLogEntry?> TryGetRelevantAuditLogEntry(SocketGuild guild)
+    {
+        return await ExceptionHelper.RetryOnTimedOut(async () =>
         {
+            var now = DateTimeOffset.UtcNow;
             var relatedAuditLogEntries = new List<RestAuditLogEntry>();
-            foreach (var page in await guild.GetAuditLogsAsync(50,
-                actionType: ActionType.Ban).ToListAsync())
+            foreach (var page in await guild.GetAuditLogsAsync(50, actionType: ActionType.Ban).ToListAsync())
             {
                 relatedAuditLogEntries.AddRange(page);
             }
 
             return relatedAuditLogEntries.OrderByDescending(e => e.CreatedAt)
-                .FirstOrDefault(entry => (DateTimeOffset.UtcNow - entry.CreatedAt) <= TimeSpan.FromMinutes(1));
-        }
+                .FirstOrDefault(entry => (now - entry.CreatedAt) <= TimeSpan.FromMinutes(1));
+        });
     }
 
     /// <summary>
@@ -368,7 +383,7 @@ public class BanSyncService : BaseService
             SocketGuildUser? guildUser = null;
             try
             {
-                guildUser = guild.GetUser(info.GetUserId());
+                guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(info.GetUserId()));
             }
             catch { }
             if (guildUser == null) continue;
@@ -463,11 +478,12 @@ public class BanSyncService : BaseService
             return;
 
         // Check if config channel has been made, if not then ignore
-        SocketTextChannel? logChannel = arg.Guild.GetTextChannel(guildConfig.GetLogChannelId().GetValueOrDefault(0));
+        SocketTextChannel? logChannel = ExceptionHelper.RetryOnTimedOut(() => arg.Guild.GetTextChannel(guildConfig.GetLogChannelId().GetValueOrDefault(0)));
         if (logChannel == null) return;
 
         // Check if this user has been banned before, if not then ignore
-        var userInfo = await _bansyncRecordsRepository.GetInfoEnumerable(arg.Id,
+        var userInfo = await _bansyncRecordsRepository.GetInfoEnumerable(
+            arg.Id,
             new BanSyncRecordRepository.QueryOptions()
             {
                 IncludeGhostedRecords = false,
@@ -534,12 +550,12 @@ public class BanSyncService : BaseService
 
     public async Task<BanSyncGuildKind> GetGuildKind(ulong guildId)
     {
-        var guild = _client.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
 
         var model = await _bansyncGuildRepository.GetAsync(guildId)
             ?? new(guildId);
 
-        var selfMember = guild.GetUser(_client.CurrentUser.Id);
+        var selfMember = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(_client.CurrentUser.Id));
 
         var logChannelId = model.GetLogChannelId();
         if (!logChannelId.HasValue)
@@ -548,7 +564,7 @@ public class BanSyncService : BaseService
         SocketTextChannel logChannel;
         try
         {
-            logChannel = guild.GetTextChannel(logChannelId.Value);
+            logChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(logChannelId.Value));
             if (logChannel == null)
             {
                 return BanSyncGuildKind.LogChannelMissing;
@@ -635,14 +651,14 @@ public class BanSyncService : BaseService
         {
             try
             {
-                await RefreshBans(_client.GetGuild(guildId));
+                await RefreshBans(ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId)));
             }
             catch (Exception ex)
             {
                 SocketGuild? guild = null;
                 try
                 {
-                    guild = _client.GetGuild(guildId);
+                    guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
                 }
                 catch (Exception gex)
                 {
@@ -679,8 +695,9 @@ public class BanSyncService : BaseService
                     $"Members: {guild?.MemberCount}",
                     "```"))
                 .AddField("State", model.State, true)
-                .AddField("Reason", model.Notes ?? "", true)
                 .WithCurrentTimestamp();
+            if (!string.IsNullOrWhiteSpace(model.Notes))
+                embed.AddField("Notes", model.Notes, true);
 
             await logChannel.SendMessageAsync(embed: embed.Build());
         }
@@ -851,7 +868,7 @@ public class BanSyncService : BaseService
         IDMChannel ownerDmsChannel;
         try
         {
-            ownerDmsChannel = await guild.Owner.CreateDMChannelAsync();
+            ownerDmsChannel = await ExceptionHelper.RetryOnTimedOut(async () => await guild.Owner.CreateDMChannelAsync());
         }
         catch (Exception ex)
         {
@@ -868,13 +885,16 @@ public class BanSyncService : BaseService
         }
         try
         {
-            await ownerDmsChannel.SendMessageAsync(
-                baseDmMsg,
-                embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+            {
+                await ownerDmsChannel.SendMessageAsync(
+                    baseDmMsg,
+                    embed: embed.Build());
+            });
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to send message to {guild.Owner} ({guild.Owner.Id}), who is the owner of \"{guild.Name}\" ({guild.Id})";
+            var msg = $"Failed to send message to \"{guild.Owner.FormatUsername()}\", who is the owner of the guild \"{guild.Name}\" (userId={guild.OwnerId}, guildId={guild.Id})";
             _log.Error(ex, msg);
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
@@ -931,9 +951,10 @@ public class BanSyncService : BaseService
     /// </summary>
     protected async Task RequestGuildEnable_SendNotification(BanSyncGuildModel model)
     {
-        var guild = _client.GetGuild(model.GetGuildId());
-        var logGuild = _client.GetGuild(_configData.BanSync.GuildId);
-        var logRequestChannel = logGuild.GetTextChannel(_configData.BanSync.RequestChannelId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(model.GetGuildId()));
+        var logGuild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_configData.BanSync.GuildId));
+        var logRequestChannel = ExceptionHelper.RetryOnTimedOut(() => logGuild.GetTextChannel(_configData.BanSync.RequestChannelId));
+        
         // Fetch first text channel to create invite for
         var firstTextChannel = guild.Channels.OfType<ITextChannel>().FirstOrDefault();
 
@@ -945,7 +966,10 @@ public class BanSyncService : BaseService
             {
                 IInviteMetadata? invite = null;
                 if (firstTextChannel != null)
-                    invite = await firstTextChannel.CreateInviteAsync(null);
+                    invite = await ExceptionHelper.RetryOnTimedOut(() => firstTextChannel.CreateInviteAsync(options: new RequestOptions()
+                    {
+                        AuditLogReason = "Invite for enabling BanSync module"
+                    }));
                 inviteUrl = invite?.Url ?? "none";
             }
             catch (Exception ex)

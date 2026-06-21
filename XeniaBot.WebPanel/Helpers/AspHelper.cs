@@ -19,6 +19,7 @@ using XeniaDiscord.Data.Repositories;
 using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
 using RolePreserveGuildModel = XeniaDiscord.Data.Models.RolePreserve.RolePreserveGuildModel;
 using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.WebPanel.Helpers;
 
@@ -49,12 +50,12 @@ public static class AspHelper
         var errorReport = Program.Core.GetRequiredService<ErrorReportService>();
         try
         {
-            var user = discord.GetUser(userId);
+            var user = ExceptionHelper.RetryOnTimedOut(() => discord.GetUser(userId));
             if (user == null)
                 return false;
 
-            var guild = discord.GetGuild(guildId);
-            var guildUser = guild.GetUser(user.Id);
+            var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
+            var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
             if (guildUser == null)
                 return false;
             if (!guildUser.GuildPermissions.Has(permissionRequired))
@@ -64,7 +65,8 @@ public static class AspHelper
         }
         catch (Exception ex)
         {
-            LogManager.GetCurrentClassLogger().Error(ex, $"Failed to run {guildId}, {userId}, {permissionRequired}");
+            LogManager.GetCurrentClassLogger()
+                .Error(ex, $"Failed to run {guildId}, {userId}, {permissionRequired}");
             errorReport.ReportException(
                 ex, $"Failed to run AspHelper.CanAccessGuild ({guildId}, {userId}, {permissionRequired})").GetAwaiter().GetResult();
             return false;
@@ -82,7 +84,7 @@ public static class AspHelper
 
     public static string GetUserProfilePicture(ulong userId)
     {
-        var user = DiscordCacheHelper.TryGetUser(userId).Result;
+        var user = DiscordCacheHelper.TryGetUser(userId).GetAwaiter().GetResult();
         if (user == null)
         {
             return "/Debugempty.png";
@@ -95,13 +97,14 @@ public static class AspHelper
 
     public static string GetUserProfilePicture(SocketGuildUser guildUser)
     {
-        return guildUser.GetGuildAvatarUrl() ?? GetUserProfilePicture(guildUser.Id);
+        return guildUser.GetGuildAvatarUrl()
+            ?? GetUserProfilePicture(guildUser.Id);
     }
 
     public static string GetGuildImage(ulong guildId)
     {
         var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        var guild = discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null)
             return "/Debugempty.png";
 
@@ -112,7 +115,7 @@ public static class AspHelper
     public static string GetGuildName(ulong guildId)
     {
         var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        var guild = discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null)
             return guildId.ToString();
 
@@ -122,7 +125,7 @@ public static class AspHelper
     public static string GetChannelName(ulong guildId, ulong channelId)
     {
         var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
-        var guild = discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null)
             return channelId.ToString();
 
@@ -157,39 +160,44 @@ public static class AspHelper
         ulong serverId, T data) where T : IBaseServerModel
     {
         var discord = services.GetRequiredService<DiscordSocketClient>();
-        var guild = discord.GetGuild(serverId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(serverId));
         data.Guild = guild;
 
         var counterController = services.GetRequiredService<CounterConfigRepository>();
-        data.CounterConfig = await counterController.Get(guild) ?? new CounterGuildModel()
-        {
-            GuildId = serverId
-        };
+        data.CounterConfig = await counterController.Get(guild)
+            ?? new CounterGuildModel()
+            {
+                GuildId = serverId
+            };
 
         var bansyncGuildRepo = services.GetRequiredService<BanSyncGuildRepository>();
-        data.BanSyncConfig = await bansyncGuildRepo.GetAsync(guild.Id) ?? new XeniaDiscord.Data.Models.BanSync.BanSyncGuildModel()
-        {
-            GuildId = guild.Id.ToString()
-        };
+        data.BanSyncConfig = await bansyncGuildRepo.GetAsync(guild.Id)
+            ?? new XeniaDiscord.Data.Models.BanSync.BanSyncGuildModel()
+            {
+                GuildId = guild.Id.ToString()
+            };
 
         var banSyncStateHistory = services.GetRequiredService<BanSyncGuildSnapshotRepository>();
         data.BanSyncStateHistory = await banSyncStateHistory.GetMany(guild.Id);
 
         var xpConfig = services.GetRequiredService<LevelSystemConfigRepository>();
-        data.XpConfig = await xpConfig.Get(guild.Id) ?? new LevelSystemConfigModel()
-        {
-            GuildId = guild.Id
-        };
+        data.XpConfig = await xpConfig.Get(guild.Id)
+            ?? new LevelSystemConfigModel()
+            {
+                GuildId = guild.Id
+            };
 
         var logConfig = services.GetRequiredService<ServerLogRepository>();
-        data.LogConfig = await logConfig.GetGuild(guild.Id, new()
-        {
-            IncludeChannels = true,
-            IncludeGuildCache = true
-        }) ?? new()
-        {
-            GuildId = guild.Id.ToString()
-        };
+        data.LogConfig = await logConfig.GetGuild(
+            guild.Id,
+            new()
+            {
+                IncludeChannels = true,
+                IncludeGuildCache = true
+            }) ?? new()
+            {
+                GuildId = guild.Id.ToString()
+            };
 
         var membersWhoCanAccess = new List<SocketGuildUser>();
         foreach (var item in guild.Users)
@@ -214,13 +222,15 @@ public static class AspHelper
             };
 
         var warnConfig = services.GetRequiredService<GuildWarnItemRepository>();
-        data.WarnItems = await warnConfig.GetLatestGuildItems(guild.Id) ?? new List<GuildWarnItemModel>();
+        data.WarnItems = await warnConfig.GetLatestGuildItems(guild.Id)
+            ?? new List<GuildWarnItemModel>();
 
         var rolePreserveConfig = services.GetRequiredService<RolePreserveGuildRepository>();
-        data.RolePreserve = await rolePreserveConfig.GetAsync(guild.Id) ?? new RolePreserveGuildModel()
-        {
-            GuildId = guild.Id.ToString()
-        };
+        data.RolePreserve = await rolePreserveConfig.GetAsync(guild.Id)
+            ?? new RolePreserveGuildModel()
+            {
+                GuildId = guild.Id.ToString()
+            };
 
         var banSyncRecordService = services.GetRequiredService<BanSyncRecordRepository>();
         data.BanSyncRecordCount = await banSyncRecordService.CountForGuild(guild.Id);
@@ -229,10 +239,11 @@ public static class AspHelper
         data.WarnStrikeConfig = await warnStrikeService.GetStrikeConfig(guild.Id);
 
         var confessionRepo = services.GetRequiredService<ConfessionConfigRepository>();
-        data.ConfessionConfig = await confessionRepo.GetGuild(guild.Id) ?? new ConfessionGuildModel()
-        {
-            GuildId = guild.Id
-        };
+        data.ConfessionConfig = await confessionRepo.GetGuild(guild.Id)
+            ?? new ConfessionGuildModel()
+            {
+                GuildId = guild.Id
+            };
         
         return data;
     }

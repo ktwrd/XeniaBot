@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Repositories;
 
@@ -20,14 +21,15 @@ public class AdminBanSyncComponentViewModel : IGuildViewModel, IBanSyncViewModel
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
         var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
-        Guild = discord.GetGuild(guildId);
-        
         var banSyncConfig = context.RequestServices.GetRequiredService<BanSyncGuildRepository>();
-        BanSyncConfig = await banSyncConfig.GetAsync(guildId) ?? new BanSyncGuildModel()
-        {
-            GuildId = guildId.ToString()
-        };
         var banSyncStateHistory = context.RequestServices.GetRequiredService<BanSyncGuildSnapshotRepository>();
+        
+        Guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
+        BanSyncConfig = await banSyncConfig.GetAsync(guildId)
+            ?? new BanSyncGuildModel()
+            {
+                GuildId = guildId.ToString()
+            };
         BanSyncStateHistory = await banSyncStateHistory.GetMany(guildId);
     }
 }
