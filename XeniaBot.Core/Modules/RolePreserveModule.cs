@@ -127,7 +127,7 @@ public class RolePreserveModule : InteractionModuleBase
     }
     
     [SlashCommand("blacklist-add", "Ignore/blacklist a role")]
-    [RequireUserPermission(GuildPermission.ManageRoles)]
+    [RequireAnyUserPermission(GuildPermission.ManageGuild | GuildPermission.ManageRoles)]
     [RegisterDBLCommand]
     [UsedImplicitly]
     public async Task BlacklistAdd(IRole role)
@@ -199,7 +199,7 @@ public class RolePreserveModule : InteractionModuleBase
     }
     
     [SlashCommand("blacklist-remove", "Remove a ignored/blacklisted role")]
-    [RequireUserPermission(GuildPermission.ManageRoles)]
+    [RequireAnyUserPermission(GuildPermission.ManageGuild | GuildPermission.ManageRoles)]
     [RegisterDBLCommand]
     [UsedImplicitly]
     public async Task BlacklistRemove(IRole role)
@@ -268,7 +268,7 @@ public class RolePreserveModule : InteractionModuleBase
     }
 
     [SlashCommand("blacklist", "List ignored/blacklisted roles")]
-    [RequireUserPermission(GuildPermission.ManageRoles)]
+    [RequireAnyUserPermission(GuildPermission.ManageGuild | GuildPermission.ManageRoles)]
     [RegisterDBLCommand]
     [UsedImplicitly]
     public async Task BlacklistList(int page = 1)
