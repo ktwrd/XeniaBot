@@ -1,10 +1,10 @@
-﻿using System.Text;
-using CSharpFunctionalExtensions;
+﻿using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
 using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using System.Text;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -36,23 +36,25 @@ public class RolePreserveLogService
         {
             await SendFailureNotification(user, auditModel);
         }
+        else
+        {
+            await SendSuccessNotification(user, auditModel);
+        }
     }
     
-    public async Task SendFailureNotification(
+    private async Task SendFailureNotification(
         SocketGuildUser user,
         RolePreserveAuditModel auditModel)
     {
         // don't run method if there are no failures
-        if (auditModel.AppliedRoles.All(e => e.IsActionSuccess() || e.IsActionSkip()))
+        var successCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSuccess());
+        var skipCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSkip());
+        var failCountValue = auditModel.AppliedRoles.Count(e => e.IsActionFailure());
+        if (failCountValue < 1)
             return;
 
         var targetLogChannels = await GetLogChannelsFor(RolePreserveLogKind.Failure, user);
         if (targetLogChannels.Count < 1) return;
-
-        var successCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSuccess());
-        var skipCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSkip());
-        var failCountValue = auditModel.AppliedRoles.Count(e => e.IsActionFailure());
-        if (skipCountValue < 1 && failCountValue < 1) return;
 
         var embed = new EmbedBuilder()
             .WithDescription(FormatDescriptionText(auditModel))
@@ -76,6 +78,45 @@ public class RolePreserveLogService
         }
     }
 
+    private async Task SendSuccessNotification(
+        SocketGuildUser user,
+        RolePreserveAuditModel auditModel)
+    {
+        // don't run method if there are successes
+        var successCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSuccess());
+        var skipCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSkip());
+        if (successCountValue < 1 && skipCountValue < 1) return;
+        
+        var targetLogChannels = await GetLogChannelsFor(RolePreserveLogKind.Success, user);
+        if (targetLogChannels.Count < 1) return;
+
+        var embed = new EmbedBuilder()
+            .WithDescription(FormatDescriptionText(auditModel))
+            .WithTitle("Role Preserve - Success - " + user.Username)
+            .WithFooter($"User Id: {user.Id}")
+            .WithColor(new Color(255, 255, 255))
+            .WithCurrentTimestamp();
+        if (_config.HasDashboard)
+        {
+            embed.WithUrl($"{_config.DashboardUrl}/RolePreserve/Audit/Details?Id={auditModel.Id}");
+        }
+
+        if (_config.HasDashboard)
+        {
+            embed.WithUrl($"{_config.DashboardUrl}/RolePreserve/Audit/Details?Id={auditModel.Id}");
+        }
+
+        NotificationGetDescription(embed, auditModel);
+        var attachments = GenerateAttachments(embed, RolePreserveLogKind.Success, auditModel);
+
+        _log.Info($"Audit ID={auditModel.Id}, Guild ID={user.Guild.Id}, User ID={user.Id}, Username={user.Username} (log channels: {targetLogChannels.Count}, success: {successCountValue}, skip: {skipCountValue})");
+
+        foreach (var serverLogChannel in targetLogChannels)
+        {
+            await SendNotificationToChannel(user, embed, attachments, serverLogChannel);
+        }
+    }
+
     private async Task SendNotificationToChannel(
         SocketGuildUser user,
         EmbedBuilder embed,
@@ -85,14 +126,15 @@ public class RolePreserveLogService
         SocketTextChannel? textChannel;
         try
         {
-            textChannel = ExceptionHelper.RetryOnTimedOut(() => user.Guild.GetTextChannel(serverLogChannel.GetChannelId()))
-                          ?? throw new InvalidOperationException($"Channel {serverLogChannel.ChannelId} does not exist (GetTextChannel returned null)");
+            textChannel = ExceptionHelper.RetryOnTimedOut(() => user.Guild.GetTextChannel(serverLogChannel.GetChannelId()));
+            if (textChannel == null) return; // just return, since it might've been deleted
         }
         catch (Exception ex)
         {
             _log.Warn(ex, $"Could not get channel {serverLogChannel.ChannelId} in Guild \"{user.Guild}\" ({user.Guild.Id}) from ServerLogChannel with Id={serverLogChannel.Id}");
             return;
         }
+        
         try
         {
             if (attachments.Count > 0)
@@ -209,6 +251,7 @@ public class RolePreserveLogService
         return kind switch
         {
             RolePreserveLogKind.Failure => GenerateAttachmentsForFail(embed, auditModel),
+            RolePreserveLogKind.Success => GenerateAttachmentsForSuccess(embed, auditModel),
             _ => throw new NotImplementedException($"For {nameof(RolePreserveLogKind)}={kind}")
         };
     }
@@ -219,6 +262,9 @@ public class RolePreserveLogService
     {
         const string failFilename = "roles-failure.txt";
         var attachments = new List<FileAttachment>();
+        var count = auditModel.AppliedRoles.Count(e => e.IsActionFailure());
+        if (count < 1) return [];
+        
         var content = GenerateFailureEmbedContent(auditModel);
         if (content.HasNoValue)
         {
@@ -228,30 +274,105 @@ public class RolePreserveLogService
                 "List of all the roles that Xenia failed to give to a user."));
         }
 
-        var text = $"{Emotes.Warning} Unknown error, no attachments generated and no content generated!";
         if (content.HasValue)
         {
             embed.AddField("Failed Roles", content.Value);
         }
         else if (attachments.Count > 0)
         {
-            text = $"{Emotes.Warning} Too many roles for an embed! It has been attached as {failFilename}";
+            var text = $"{Emotes.Warning} Too many roles for an embed! It has been attached as {failFilename}";
             GetAuditEventUrl(auditModel)
                 .Tap(url =>
                 {
                     text += $"\n-# [View audit log entry]({url}).";
                 });
+            embed.AddField("Failed Roles", text);
         }
 
-        embed.AddField("Failed Roles", text);
         return attachments;
+    }
+
+    private List<FileAttachment> GenerateAttachmentsForSuccess(
+        EmbedBuilder embed,
+        RolePreserveAuditModel auditModel)
+    {
+        const string filenameSuccess = "roles-success.txt";
+        const string filenameSkip = "roles-skip.txt";
+        var attachments = new List<FileAttachment>();
+        var countSuccess = auditModel.AppliedRoles.Count(e => e.IsActionSuccess());
+        var countSkip = auditModel.AppliedRoles.Count(e => e.IsActionSkip());
+        if (countSuccess < 1 && countSkip < 1) return [];
+        
+        var contentSuccess = GenerateRoleListEmbedContent(auditModel, static e => e.IsActionSuccess());
+        var contentSkip = GenerateRoleListEmbedContent(auditModel, static e => e.IsActionSkip());
+        if (countSuccess > 0 && contentSuccess.HasNoValue)
+        {
+            attachments.Add(new FileAttachment(
+                GenerateRoleListAttachmentContent(auditModel, static e => e.IsActionSuccess()).ToMemoryStream(Encoding.UTF8),
+                filenameSuccess,
+                "List of all the roles that Xenia successfully gave to a user."));
+        }
+        if (countSkip > 0 && contentSkip.HasNoValue)
+        {
+            attachments.Add(new FileAttachment(
+                GenerateRoleListAttachmentContent(auditModel, static e => e.IsActionSkip()).ToMemoryStream(Encoding.UTF8),
+                filenameSkip,
+                "List of all the roles that Xenia skipped."));
+        }
+
+        AddEmbedFieldForRoleListing(
+            auditModel, embed,
+            "Roles Added",
+            filenameSuccess,
+            contentSuccess,
+            countSuccess);
+        AddEmbedFieldForRoleListing(
+            auditModel, embed,
+            "Roles Skipped",
+            filenameSkip,
+            contentSkip,
+            countSkip);
+        return attachments;
+    }
+
+    private void AddEmbedFieldForRoleListing(
+        RolePreserveAuditModel auditModel,
+        EmbedBuilder embed,
+        string title,
+        string filename,
+        Maybe<string> content,
+        int count)
+    {
+        if (content.HasValue)
+        {
+            embed.AddField(title, content.Value);
+        }
+        else if (count > 0)
+        {
+            var text = $"{Emotes.Warning} Too many roles for an embed! It has been attached as `{filename}`";
+            GetAuditEventUrl(auditModel)
+                .Tap(url =>
+                {
+                    text += $"\n-# [View audit log entry]({url}).";
+                });
+            embed.AddField(title, text);
+        }
     }
 
     private static string GenerateFailureAttachmentContent(
         RolePreserveAuditModel auditModel)
     {
+        return GenerateRoleListAttachmentContent(
+            auditModel,
+            static e => e.IsActionFailure());
+    }
+
+    private static string GenerateRoleListAttachmentContent(
+        RolePreserveAuditModel auditModel,
+        Func<RolePreserveAuditAppliedRoleModel, bool> predicate)
+    {
         var sb = new StringBuilder();
-        foreach (var item in auditModel.AppliedRoles.Where(e => e.IsActionFailure()))
+        foreach (var item in auditModel.AppliedRoles.Where(predicate))
         {
             sb.Append(item.RoleId);
             if (!string.IsNullOrEmpty(item.Role?.Name))
@@ -264,11 +385,20 @@ public class RolePreserveLogService
         return sb.ToString();
     }
 
+    private static Maybe<string> GenerateFailureEmbedContent(
+        RolePreserveAuditModel auditModel)
+    {
+        return GenerateRoleListEmbedContent(
+            auditModel,
+            static e => e.IsActionFailure());
+    }
+
     /// <returns>
     /// <see cref="Maybe.None"/> if the roles should be attached instead of an embed field.
     /// </returns>
-    private static Maybe<string> GenerateFailureEmbedContent(
-        RolePreserveAuditModel auditModel)
+    private static Maybe<string> GenerateRoleListEmbedContent(
+        RolePreserveAuditModel auditModel,
+        Func<RolePreserveAuditAppliedRoleModel, bool> predicate)
     {
         /* determined with the following code:
         const int max = 1024;
@@ -277,10 +407,10 @@ public class RolePreserveLogService
          */
         const int maxCountSafe = 37;
         var items = auditModel.AppliedRoles
-            .Where(e => e.IsActionFailure())
+            .Where(predicate)
             .ToArray();
         var count = items.Length;
-        if (count > maxCountSafe) return Maybe.None;
+        if (count is > maxCountSafe or < 1) return Maybe.None;
 
         var sb = new StringBuilder();
         for (var i = 0; i < count; i++)
