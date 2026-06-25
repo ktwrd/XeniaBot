@@ -1,10 +1,12 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Sentry;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -48,16 +50,16 @@ public class InteractionHandler
             lines.Add($"- {item.Name} ({count})");
         }
         Log.Debug($"Loaded [{_interactionService.Modules.Count}] modules\n" + string.Join("\n", lines));
-        _client.InteractionCreated += InteractionCreateAsync;
         _client.ModalSubmitted += ModalSubmittedAsync;
         _client.ButtonExecuted += ButtonExecutedAsync;
+        _client.InteractionCreated += InteractionCreateAsync;
     }
 
     private async Task ButtonExecutedAsync(SocketMessageComponent interaction)
     {
         try
         {
-            var context = new SocketInteractionContext(
+            var context = new SocketInteractionContext<SocketMessageComponent>(
                 _client,
                 interaction);
             var result = await _interactionService.ExecuteCommandAsync(
@@ -82,7 +84,7 @@ public class InteractionHandler
     {
         try
         {
-            var context = new SocketInteractionContext(
+            var context = new SocketInteractionContext<SocketModal>(
                 _client,
                 interaction);
             var result = await _interactionService.ExecuteCommandAsync(
@@ -107,7 +109,7 @@ public class InteractionHandler
     {
         try
         {
-            Log.Trace(interaction.Id);
+            Log.Trace(FormatName(interaction));
             var context = new SocketInteractionContext(
                 _client,
                 interaction);
@@ -127,5 +129,17 @@ public class InteractionHandler
                 scope.SetInteractionInfo(interaction);
             });
         }
+    }
+
+    private static string FormatName(IDiscordInteraction interaction)
+    {
+        var sb = new StringBuilder(interaction.Id.ToString());
+        if (interaction.Data is SocketMessageComponentData messageComponentData)
+        {
+            sb.Append(" - ");
+            sb.Append(messageComponentData.CustomId);
+        }
+
+        return sb.ToString();
     }
 }
