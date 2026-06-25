@@ -510,6 +510,7 @@ public class ServerLogRepository
         }
         if (options.IgnoreDisabledGuilds)
         {
+            if (!options.IncludeServerLogGuild) q = q.Include(e => e.ServerLogGuild);
             q = q.Where(e => e.ServerLogGuild.Enabled);
         }
         return q.AsNoTracking();

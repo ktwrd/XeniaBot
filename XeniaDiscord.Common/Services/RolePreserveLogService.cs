@@ -72,7 +72,7 @@ public class RolePreserveLogService
         
         _log.Info($"Audit ID={auditModel.Id}, Guild ID={user.Guild.Id}, User ID={user.Id}, Username={user.Username} (log channels: {targetLogChannels.Count}, success: {successCountValue}, skip: {skipCountValue}, fail: {failCountValue})");
         
-        foreach (var serverLogChannel in targetLogChannels)
+        foreach (var serverLogChannel in targetLogChannels.DistinctBy(e => e.ChannelId))
         {
             await SendNotificationToChannel(user, embed, attachments, serverLogChannel);
         }
@@ -217,15 +217,13 @@ public class RolePreserveLogService
         var sb = new StringBuilder();
         if (successCountValue > 0 && failCountValue == 0)
         {
-            sb.Append("- ");
             sb.Append(Emotes.Tada);
-            sb.Append("Successfully granted ");
+            sb.Append(" Successfully granted ");
             sb.Append("role".ToQuantity(successCountValue, fmt));
             sb.Append(" to user.");
         }
         else if (successCountValue > 0 && failCountValue > 0)
         {
-            sb.Append("- ");
             sb.Append(Emotes.Warning);
             sb.Append(" Successfully granted user");
             sb.Append("role".ToQuantity(successCountValue, fmt));
@@ -235,7 +233,6 @@ public class RolePreserveLogService
         }
         else if (failCountValue > 0)
         {
-            sb.Append("- ");
             sb.Append(Emotes.Warning);
             sb.Append(" Failed to give user *any* roles. ");
             sb.Append('(');
@@ -489,7 +486,7 @@ public class RolePreserveLogService
                 });
         }
 
-        return targets;
+        return targets.DistinctBy(e => e.ChannelId).ToArray();
     }
     #endregion
 }

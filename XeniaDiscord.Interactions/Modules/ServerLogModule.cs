@@ -17,11 +17,13 @@ public class ServerLogModule : InteractionModuleBase
 {
     private readonly ErrorReportService _err;
     private readonly ServerLogRepository _repo;
+    private readonly ConfigData _config;
 
     public ServerLogModule(IServiceProvider services)
     {
         _err = services.GetRequiredService<ErrorReportService>();
         _repo = services.GetRequiredService<ServerLogRepository>();
+        _config = services.GetRequiredService<ConfigData>();
     }
 
     [UsedImplicitly]
@@ -65,9 +67,12 @@ public class ServerLogModule : InteractionModuleBase
         try
         {
             await _repo.Enable(Context.Guild.Id);
+            var txt = "Server logging has been enabled. It's a good idea to [read the guide](https://xenia.kate.pet/guide/about_moderation) if you haven't already.";
+            if (_config.HasDashboard)
+                txt += $"\n\n-# [You can also configure server logging in the dashboard]({_config.DashboardUrl}/Server/{Context.Guild.Id}/Moderation)";
             await FollowupAsync(embed: new EmbedBuilder()
                 .WithTitle("Server Log - Enable")
-                .WithDescription("Server logging has been enabled. Make sure that you setup your log events [via the dashboard](), or with the `/log` commands.")
+                .WithDescription(txt)
                 .WithColor(Color.Blue)
                 .WithCurrentTimestamp()
                 .Build());
