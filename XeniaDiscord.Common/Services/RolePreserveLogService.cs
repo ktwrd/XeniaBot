@@ -201,9 +201,18 @@ public class RolePreserveLogService
         EmbedBuilder embed,
         RolePreserveAuditModel auditModel)
     {
+        const string fmt = "N0";
         var successCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSuccess());
         var skipCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSkip());
         var failCountValue = auditModel.AppliedRoles.Count(e => e.IsActionFailure());
+
+        if (successCountValue < 1 && skipCountValue < 1 && failCountValue < 1)
+        {
+            embed.WithDescription(
+                "For some reason nothing happened.\n**Please join the Xenia support server and notify a developer.**\n\n" +
+                $"Please send a screenshot of this embed!\n-# `RolePreserveAuditModel.Id={auditModel.Id}`");
+            return;
+        }
 
         var sb = new StringBuilder();
         if (successCountValue > 0 && failCountValue == 0)
@@ -211,7 +220,7 @@ public class RolePreserveLogService
             sb.Append("- ");
             sb.Append(Emotes.Tada);
             sb.Append("Successfully granted ");
-            sb.Append("role".ToQuantity(successCountValue));
+            sb.Append("role".ToQuantity(successCountValue, fmt));
             sb.Append(" to user.");
         }
         else if (successCountValue > 0 && failCountValue > 0)
@@ -219,9 +228,9 @@ public class RolePreserveLogService
             sb.Append("- ");
             sb.Append(Emotes.Warning);
             sb.Append(" Successfully granted user");
-            sb.Append("role".ToQuantity(successCountValue));
+            sb.Append("role".ToQuantity(successCountValue, fmt));
             sb.Append(", but failed to grant them");
-            sb.Append("role".ToQuantity(failCountValue));
+            sb.Append("role".ToQuantity(failCountValue, fmt));
             sb.Append('.');
         }
         else if (failCountValue > 0)
@@ -229,14 +238,16 @@ public class RolePreserveLogService
             sb.Append("- ");
             sb.Append(Emotes.Warning);
             sb.Append(" Failed to give user *any* roles. ");
-            sb.AppendFormat("({0})", "failure".ToQuantity(failCountValue));
+            sb.Append('(');
+            sb.Append("failure".ToQuantity(failCountValue, fmt));
+            sb.Append(')');
         }
 
         if (sb.Length > 0 && skipCountValue > 0)
         {
             sb.Append('\n');
             sb.Append("-# Skipped ");
-            sb.Append("role".ToQuantity(skipCountValue));
+            sb.Append("role".ToQuantity(skipCountValue, fmt));
         }
 
         if (sb.Length > 0) embed.WithDescription(sb.ToString());
@@ -262,14 +273,14 @@ public class RolePreserveLogService
     {
         const string failFilename = "roles-failure.txt";
         var attachments = new List<FileAttachment>();
-        var count = auditModel.AppliedRoles.Count(e => e.IsActionFailure());
+        var count = auditModel.AppliedRoles.Count(static e => e.IsActionFailure());
         if (count < 1) return [];
         
-        var content = GenerateFailureEmbedContent(auditModel);
+        var content = GenerateRoleListEmbedContent(auditModel, static e => e.IsActionFailure());
         if (content.HasNoValue)
         {
             attachments.Add(new FileAttachment(
-                GenerateFailureAttachmentContent(auditModel).ToMemoryStream(Encoding.UTF8),
+                GenerateRoleListAttachmentContent(auditModel, static e => e.IsActionFailure()).ToMemoryStream(Encoding.UTF8),
                 failFilename,
                 "List of all the roles that Xenia failed to give to a user."));
         }
@@ -359,14 +370,6 @@ public class RolePreserveLogService
         }
     }
 
-    private static string GenerateFailureAttachmentContent(
-        RolePreserveAuditModel auditModel)
-    {
-        return GenerateRoleListAttachmentContent(
-            auditModel,
-            static e => e.IsActionFailure());
-    }
-
     private static string GenerateRoleListAttachmentContent(
         RolePreserveAuditModel auditModel,
         Func<RolePreserveAuditAppliedRoleModel, bool> predicate)
@@ -383,14 +386,6 @@ public class RolePreserveLogService
             sb.AppendLine();
         }
         return sb.ToString();
-    }
-
-    private static Maybe<string> GenerateFailureEmbedContent(
-        RolePreserveAuditModel auditModel)
-    {
-        return GenerateRoleListEmbedContent(
-            auditModel,
-            static e => e.IsActionFailure());
     }
 
     /// <returns>
