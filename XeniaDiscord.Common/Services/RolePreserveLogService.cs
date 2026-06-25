@@ -60,7 +60,7 @@ public class RolePreserveLogService
             .WithDescription(FormatDescriptionText(auditModel))
             .WithTitle("Role Preserve - Failure - " + user.Username)
             .WithFooter($"User Id: {user.Id}")
-            .WithColor(new Color(255, 255, 255))
+            .WithColor(Color.DarkRed)
             .WithCurrentTimestamp();
         if (_config.HasDashboard)
         {
@@ -94,7 +94,7 @@ public class RolePreserveLogService
             .WithDescription(FormatDescriptionText(auditModel))
             .WithTitle("Role Preserve - Success - " + user.Username)
             .WithFooter($"User Id: {user.Id}")
-            .WithColor(new Color(255, 255, 255))
+            .WithColor(Color.Blue)
             .WithCurrentTimestamp();
         if (_config.HasDashboard)
         {
