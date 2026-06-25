@@ -16,6 +16,7 @@ public static class XeniaDiscordInteractions
             typeof(GuildApprovalModule),
             typeof(GuildApprovalModalModule),
             typeof(GuildApprovalAdminModule),
+            typeof(ServerLogModule)
         };
         await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();
@@ -29,8 +30,7 @@ public static class XeniaDiscordInteractions
             typeof(AdmRolePreserveModule),
 
             typeof(AdmDataModule),
-            typeof(DeveloperModule),
-            typeof(ServerLogModule)
+            typeof(DeveloperModule)
         };
         var result = await Task.WhenAll(types.Select(type => interactions.AddModuleAsync(type, services)));
         transaction.Finish();
