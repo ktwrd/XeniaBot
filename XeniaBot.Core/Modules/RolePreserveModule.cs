@@ -372,7 +372,13 @@ internal static class RolePreserveModuleHelper
         int currentPage,
         int lastPage)
     {
-        var paginationRow = new List<ButtonBuilder>();
+        var paginationRow = new List<ButtonBuilder>()
+        {
+            new ButtonBuilder()
+                .WithCustomId(ViewBlacklistedRolesInteractionName.Replace("*", currentPage.ToString()))
+                .WithLabel("Refresh")
+                .WithStyle(ButtonStyle.Primary)
+        };
         if (currentPage > 2)
         {
             paginationRow.Add(new ButtonBuilder()
@@ -401,7 +407,6 @@ internal static class RolePreserveModuleHelper
                 .WithLabel("Last")
                 .WithStyle(ButtonStyle.Primary));
         }
-        if (paginationRow.Count < 1) return null;
         return new ComponentBuilderV2()
             .WithActionRow(paginationRow);
     }
@@ -440,7 +445,9 @@ public class RolePreserveComponentModule : InteractionModuleBase<SocketInteracti
                 p =>
                 {
                     p.Embed = embed.Build();
-                    p.Components = components == null ? new Optional<MessageComponent>(): components.Build();
+                    p.Components = components == null 
+                        ? Optional<MessageComponent>.Unspecified
+                        : components.Build();
                 });
         }
         catch (Exception ex)
