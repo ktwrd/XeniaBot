@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
@@ -24,18 +25,18 @@ namespace XeniaBot.Core.Modules;
 public class RolePreserveModule : InteractionModuleBase
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
     private readonly RolePreserveGuildRepository _repo;
     private readonly ErrorReportService _error;
     private readonly ConfigData _config;
+    private readonly IDbContextFactory<XeniaDbContext> _dbFactory;
     public RolePreserveModule(IServiceProvider services)
     {
         try
         {
-            _db = services.GetRequiredService<XeniaDbContext>();
             _repo = services.GetRequiredService<RolePreserveGuildRepository>();
             _error = services.GetRequiredService<ErrorReportService>();
             _config = services.GetRequiredService<ConfigData>();
+            _dbFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         }
         catch (Exception ex)
         {
@@ -51,7 +52,7 @@ public class RolePreserveModule : InteractionModuleBase
     public async Task Enable()
     {
         await DeferAsync();
-        await using var db = _db.CreateSession();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -93,7 +94,7 @@ public class RolePreserveModule : InteractionModuleBase
     public async Task Disable()
     {
         await DeferAsync();
-        await using var db = _db.CreateSession();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -136,7 +137,7 @@ public class RolePreserveModule : InteractionModuleBase
     {
         await DeferAsync();
         const string title = "Role Preserve - Add to blacklist";
-        await using var db = _db.CreateSession();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -208,7 +209,7 @@ public class RolePreserveModule : InteractionModuleBase
     {
         await DeferAsync();
         const string title = "Role Preserve - Remove from blacklist";
-        await using var db = _db.CreateSession();
+        await using var db = await _dbFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -278,7 +279,7 @@ public class RolePreserveModule : InteractionModuleBase
         try
         {
             await DeferAsync();
-            await using var db = _db.CreateSession();
+            await using var db = await _dbFactory.CreateDbContextAsync();
             var (embed, components) = await RolePreserveModuleHelper.ListEmbed(_config, db, Context.Guild, page);
             if (components != null)
             {
@@ -288,8 +289,7 @@ public class RolePreserveModule : InteractionModuleBase
             }
             else
             {
-                await FollowupAsync(
-                    embed: embed.Build());
+                await FollowupAsync(embed: embed.Build());
             }
         }
         catch (Exception ex)
@@ -415,13 +415,13 @@ internal static class RolePreserveModuleHelper
 public class RolePreserveComponentModule : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbFactory;
     private readonly ConfigData _config;
     public RolePreserveComponentModule(IServiceProvider services)
     {
         try
         {
-            _db = services.GetRequiredService<XeniaDbContext>();
+            _dbFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         }
         catch (Exception ex)
         {
@@ -435,11 +435,14 @@ public class RolePreserveComponentModule : InteractionModuleBase<SocketInteracti
     [ComponentInteraction(RolePreserveModuleHelper.ViewBlacklistedRolesInteractionName)]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [UsedImplicitly]
-    public async Task ListComponent(int page = 1)
+    public async Task ListComponent(
+        [MinValue(1)]
+        [DefaultValue(1)]
+        int page)
     {
         try
         {
-            await using var db = _db.CreateSession();
+            await using var db = await _dbFactory.CreateDbContextAsync();
             var (embed, components) = await RolePreserveModuleHelper.ListEmbed(_config, db, Context.Guild, page);
             await Context.Interaction.UpdateAsync(
                 p =>
