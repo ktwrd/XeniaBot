@@ -66,6 +66,11 @@ public class RolePreserveGuildRepository
     public async Task EnableAsync(XeniaDbContext db, ulong guildId, bool enable, IUser? doneByUser = null)
     {
         var guildIdStr = guildId.ToString();
+        // return if we're not really updating anything
+        if (await db.RolePreserveGuilds.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled == enable))
+        {
+            return;
+        }
         if (await db.RolePreserveGuilds.AnyAsync(e => e.GuildId == guildIdStr))
         {
             await db.RolePreserveGuilds
