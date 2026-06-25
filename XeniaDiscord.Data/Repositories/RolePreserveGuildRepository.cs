@@ -102,6 +102,10 @@ public class RolePreserveGuildRepository
             .ToListAsync();
     }
 
+    public Task<List<RolePreserveBlacklistedRoleModel>> GetBlacklistRolesForGuild(
+        XeniaDbContext db,
+        IGuild guild)
+        => GetBlacklistRolesForGuild(db, guild.Id);
     public async Task<List<RolePreserveBlacklistedRoleModel>> GetBlacklistRolesForGuild(
         XeniaDbContext db,
         ulong guildId)
@@ -165,11 +169,18 @@ public class RolePreserveGuildRepository
         GuildMismatch
     }
 
+    public Task<RoleBlacklistRemoveResult> RoleBlacklistRemove(
+        XeniaDbContext db,
+        IGuild guild,
+        ulong roleId,
+        IUser? doneByUser = null)
+        => RoleBlacklistRemove(db, guild.Id, roleId, doneByUser);
+
     public async Task<RoleBlacklistRemoveResult> RoleBlacklistRemove(
         XeniaDbContext db,
         ulong guildId,
         ulong roleId,
-        IGuildUser? doneByUser = null)
+        IUser? doneByUser = null)
     {
         var guildIdStr = guildId.ToString();
         var roleIdStr = roleId.ToString();
@@ -248,6 +259,8 @@ public class RolePreserveGuildRepository
         if (roleIds.Length == 0) return RoleBlacklistRemoveResult.Ok;
         
         var roleIdStrs = roleIds.Select(e => e.ToString()).ToArray();
+        
+        // "object[]" is done to keep "db.RemoveRange" happy
         object[] existing = await db.RolePreserveBlacklistedRoles
             .Where(e => ((IEnumerable<string>)roleIdStrs).Contains(e.RoleId))
             .ToArrayAsync();
