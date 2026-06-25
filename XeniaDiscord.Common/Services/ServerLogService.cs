@@ -84,9 +84,11 @@ public class ServerLogService : BaseService
                 _log.Error(ex, $"Failed to send event (GuildId={options.GuildId}, ChannelEvent={channel.Event}, Event={options.Event})");
             }
         }
+
+        return;
         async Task<bool> ProcessForModel(ServerLogChannelModel channelModel)
         {
-            var logChannel = await ExceptionHelper.RetryOnTimedOut(async () => guild.GetTextChannel(channelModel.GetChannelId()));
+            var logChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(channelModel.GetChannelId()));
             if (logChannel == null) return false;
 
             return await ExceptionHelper.RetryOnTimedOut(async () => await EventHandleProcessInner(logChannel, options));
