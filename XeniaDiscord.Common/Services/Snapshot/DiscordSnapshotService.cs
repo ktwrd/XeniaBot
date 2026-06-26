@@ -19,6 +19,7 @@ public class DiscordSnapshotService : BaseService
     private readonly XeniaDbContext _db;
     private readonly DiscordCacheService _cacheService;
     private readonly GuildCacheRepository _guildCacheRepository;
+    private readonly IDbContextFactory<XeniaDbContext> _dbFactory;
     private readonly IMapper<IRole, GuildRoleSnapshotModel> _roleMapper;
     private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberMapper;
 
@@ -29,7 +30,7 @@ public class DiscordSnapshotService : BaseService
         var client = services.GetRequiredService<DiscordSocketClient>();
         _cacheService = services.GetRequiredService<DiscordCacheService>();
         _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
-
+        _dbFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _roleMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
         _guildMemberMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
 
@@ -242,6 +243,223 @@ public class DiscordSnapshotService : BaseService
         if (after == null) return;
         
         GuildUpdated?.Invoke(before, after);
+    }
+
+    private readonly List<GuildMemberUpdateQueueItem> _guildMemberQueue = [];
+    private readonly SemaphoreSlim _guildMemberQueueLock = new(1, 1);
+
+    public sealed record GuildMemberUpdateQueueItem(
+        DateTimeOffset Timestamp,
+        SocketGuildUser Dto,
+        GuildMemberSnapshotSource Source);
+    public sealed record ReduceGuildMemberQueueResult(
+        IReadOnlyCollection<GuildMemberSnapshotModel> SnapshotsToAdd,
+        IReadOnlyCollection<GuildMemberSnapshotEventModel> SnapshotEventsToAdd);
+    // TODO create unit tests for this so if it's implemented properly before integrating it with everything else
+    public async Task<ReduceGuildMemberQueueResult> ReduceGuildMemberQueue(
+        IEnumerable<GuildMemberUpdateQueueItem> enumerable)
+    {
+        await using var dbo = await _dbFactory.CreateDbContextAsync();
+        var snapshots = new List<GuildMemberSnapshotModel>();
+        var events = new List<GuildMemberSnapshotEventModel>();
+        foreach (var queue in enumerable
+                     .GroupBy(e => new { UserId = e.Dto.Id, GuildId = e.Dto.Guild.Id }))
+        {
+            var queueArr = queue.OrderBy(e => e.Timestamp).ToArray();
+            var local = new List<GuildMemberUpdateQueueItem>();
+            foreach (var item in queueArr)
+            {
+                local.Add(item);
+                if (local.Count < 2) continue;
+                var lastDelta = item.Timestamp - local[0].Timestamp;
+                if (lastDelta <= TimeSpan.FromSeconds(5)) continue;
+                await TriggerLocal(dbo, local);
+                local = [];
+                /*
+                var modelBefore = await GetBeforeGuildMemberSnapshotModel(
+                    queue.Key.GuildId, queue.Key.UserId,
+                    local[0].Timestamp);
+                if (modelBefore == null)
+                {
+                    modelBefore = _guildMemberMapper.Map(local[^1].Dto);
+                    modelBefore.SnapshotSource = local[^1].Source;
+                }
+
+                var modelAfter = _guildMemberMapper.Map(item.Dto);
+                modelAfter.SnapshotSource = item.Source;
+                events.Add(new GuildMemberSnapshotEventModel()
+                {
+                    Timestamp = item.Timestamp.UtcDateTime,
+                    Before = modelBefore,
+                    Current = modelAfter
+                });
+                local = [];
+                */
+            }
+
+            if (local.Count > 0) await TriggerLocal(dbo, local);
+            local = null!;
+        }
+
+        return new ReduceGuildMemberQueueResult(snapshots, events);
+        async Task TriggerLocal(XeniaDbContext db, List<GuildMemberUpdateQueueItem> localList)
+        {
+            var oldest = localList.First();
+            var latest = localList.Last();
+            var modelBefore = await GetBeforeGuildMemberSnapshotModel(
+                db,
+                oldest.Dto.Guild.Id, oldest.Dto.Id,
+                oldest.Timestamp);
+
+            var modelAfter = _guildMemberMapper.Map(latest.Dto);
+            modelAfter.RecordCreatedAt = latest.Timestamp.UtcDateTime;
+            modelAfter.SnapshotSource = latest.Source;
+            snapshots.Add(modelAfter);
+            if (oldest == latest)
+            {
+                events.Add(new GuildMemberSnapshotEventModel()
+                {
+                    Timestamp = modelAfter.RecordCreatedAt,
+                    GuildId = modelAfter.GuildId,
+                    UserId = modelAfter.UserId,
+                    Source = DiscordSnapshotSource.MemberUpdated,
+                    WhatChanged = FindWhatChanged(modelBefore, modelAfter),
+                    BeforeId = modelBefore?.RecordId,
+                    AfterId = modelAfter.RecordId
+                });
+                return;
+            }
+
+            if (modelBefore == null)
+            {
+                modelBefore = _guildMemberMapper.Map(oldest.Dto);
+                modelBefore.RecordCreatedAt = oldest.Timestamp.UtcDateTime;
+                modelBefore.SnapshotSource = oldest.Source;
+                snapshots.Add(modelBefore);
+            }
+
+            events.Add(new GuildMemberSnapshotEventModel()
+            {
+                Timestamp = modelAfter.RecordCreatedAt,
+                GuildId = modelAfter.GuildId,
+                UserId = modelAfter.UserId,
+                Source = DiscordSnapshotSource.MemberUpdated,
+                WhatChanged = FindWhatChanged(modelBefore, modelAfter),
+                BeforeId = modelBefore.RecordId,
+                AfterId = modelAfter.RecordId
+            });
+        }
+    }
+
+    // TODO add more/proper event handling
+    // TODO add logic to save queue to disk or database (or use real software like rabbitmq lol)
+    public async Task ProcessQueue(ReduceGuildMemberQueueResult queue)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        await using var trans = await db.Database.BeginTransactionAsync();
+        try
+        {
+            await db.AddRangeAsync(queue.SnapshotsToAdd);
+            await db.AddRangeAsync(queue.SnapshotEventsToAdd);
+
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await trans.RollbackAsync();
+            throw new InvalidOperationException($"Failed to process queue!", ex);
+        }
+
+        foreach (var @event in queue.SnapshotEventsToAdd)
+        {
+            var eventModel = await db.GuildMemberSnapshotEvents
+                .Include(e => e.Before)
+                .ThenInclude(e => e.Permissions)
+                .Include(e => e.Before)
+                .ThenInclude(e => e.Roles)
+                .ThenInclude(e => e.GuildRoleSnapshot)
+                .Include(e => e.Current)
+                .ThenInclude(e => e.Permissions)
+                .Include(e => e.Current)
+                .ThenInclude(e => e.Roles)
+                .ThenInclude(e => e.GuildRoleSnapshot)
+                .FirstOrDefaultAsync(e => e.Id == @event.Id);
+            GuildMemberUpdated?.Invoke(eventModel?.Before ?? @event.Before, eventModel?.Current ?? @event.Current);
+        }
+    }
+    private static GuildMemberSnapshotEventWhatChanged FindWhatChanged(
+            GuildMemberSnapshotModel? before,
+            GuildMemberSnapshotModel after)
+    {
+        if (before == null) return default;
+        GuildMemberSnapshotEventWhatChanged flags = default;
+        
+        if (!string.Equals(before.Username, after.Username, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(before.Discriminator, after.Discriminator, StringComparison.OrdinalIgnoreCase))
+            flags |= GuildMemberSnapshotEventWhatChanged.Username;
+        
+        if (!string.Equals(before.Nickname, after.Nickname, StringComparison.OrdinalIgnoreCase))
+            flags |= GuildMemberSnapshotEventWhatChanged.Nickname;
+        
+        if (before.IsSelfDeafened != after.IsSelfDeafened ||
+            before.IsSelfMuted != after.IsSelfMuted ||
+            before.IsSuppressed != after.IsSuppressed ||
+            before.IsDeafened != after.IsDeafened ||
+            before.IsMuted != after.IsMuted ||
+            before.IsStreaming != after.IsStreaming ||
+            before.GetVoiceChannelId() != after.GetVoiceChannelId())
+            flags |= GuildMemberSnapshotEventWhatChanged.VoiceStatus;
+        
+        if (!string.Equals(before.GuildAvatarId, after.GuildAvatarId, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(before.AvatarUrl, after.AvatarUrl, StringComparison.OrdinalIgnoreCase))
+            flags |= GuildMemberSnapshotEventWhatChanged.Avatar;
+        
+        var rolesBefore = before.Roles.Select(e => e.RoleId).Distinct().ToHashSet();
+        var rolesAfter = after.Roles.Select(e => e.RoleId).Distinct().ToHashSet();
+        if (rolesBefore.Any(b => !rolesAfter.Contains(b)) ||
+            rolesAfter.Any(a => !rolesBefore.Contains(a)))
+            flags |= GuildMemberSnapshotEventWhatChanged.Roles;
+
+        var permissionsBefore = before.Permissions.Select(e => e.GetValue()).ToArray();
+        var permissionsAfter = after.Permissions.Select(e => e.GetValue()).ToArray();
+        if (permissionsBefore.Any(b => !permissionsAfter.Contains(b)) ||
+            permissionsAfter.Any(a => !permissionsBefore.Contains(a)))
+            flags |= GuildMemberSnapshotEventWhatChanged.Permissions;
+
+        if (before.TimedOutUntil?.Ticks != after.TimedOutUntil?.Ticks ||
+            before.IsPending != after.IsPending)
+            flags |= GuildMemberSnapshotEventWhatChanged.Moderation;
+
+        return flags;
+    }
+
+    private async Task<GuildMemberSnapshotModel?> GetBeforeGuildMemberSnapshotModel(
+        ulong guildId,
+        ulong userId,
+        DateTimeOffset? before)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await GetBeforeGuildMemberSnapshotModel(db, guildId, userId, before);
+    }
+    private async Task<GuildMemberSnapshotModel?> GetBeforeGuildMemberSnapshotModel(
+        XeniaDbContext db,
+        ulong guildId,
+        ulong userId,
+        DateTimeOffset? before)
+    {
+        var guildIdStr = guildId.ToString();
+        var userIdStr = userId.ToString();
+        var q = db.GuildMemberSnapshots.AsNoTracking()
+            .Include(e => e.Roles)
+            .Include(e => e.Permissions)
+            .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr);
+        if (before != null)
+        {
+            var time = before.Value.UtcDateTime;
+            q = q.Where(e => e.RecordCreatedAt < time);
+        }
+        return await q.OrderByDescending(e => e.RecordCreatedAt).FirstOrDefaultAsync();
     }
 
     private async Task ProcessGuildMember(SocketGuildUser socketMemberAfter, GuildMemberSnapshotSource source)

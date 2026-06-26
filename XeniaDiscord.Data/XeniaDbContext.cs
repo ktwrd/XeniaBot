@@ -39,6 +39,7 @@ public class XeniaDbContext : DbContext
     public DbSet<GuildRoleColorSnapshotModel> GuildRoleColorSnapshots { get; set; }
 
     public DbSet<GuildSnapshotEventModel> GuildSnapshotEvent { get; set; }
+    public DbSet<GuildMemberSnapshotEventModel> GuildMemberSnapshotEvents { get; set; }
 
     public DbSet<UserSnapshotModel> UserSnapshots { get; set; }
     public DbSet<PrimaryGuildSnapshotModel> PrimaryGuildSnapshots { get; set; }
@@ -248,6 +249,45 @@ public class XeniaDbContext : DbContext
              .WithMany()
              .HasForeignKey(e => e.CurrentId)
              .IsRequired();
+        });
+        builder.Entity<GuildMemberSnapshotEventModel>(b =>
+        {
+            b.ToTable(GuildMemberSnapshotEventModel.TableName)
+                .HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+                {
+                    e.Timestamp,
+                    e.GuildId,
+                    e.UserId
+                })
+                .IsDescending()
+                .IsUnique(false);
+            b.HasIndex(e => new
+                {
+                    e.GuildId,
+                    e.Timestamp,
+                    e.Source
+                })
+                .IsDescending();
+            b.HasIndex(e => new
+                {
+                    e.Timestamp,
+                    e.GuildId,
+                    e.UserId,
+                    e.WhatChanged
+                })
+                .IsDescending()
+                .IsUnique(false);
+
+            b.HasOne(e => e.Before)
+                .WithMany()
+                .HasForeignKey(e => e.BeforeId)
+                .OnDelete(DeleteBehavior.NoAction);
+            b.HasOne(e => e.Current)
+                .WithMany()
+                .HasForeignKey(e => e.AfterId)
+                .IsRequired();
         });
         #endregion
 
