@@ -5,6 +5,7 @@ public class ApiKeyConfigItem
     public string? Weather { get; set; }
     public ESixConfigItem ESix { get; set; } = ESixConfigItem.Default();
     public string? DiscordBotList { get; set; }
+    public bool? DiscordBotListEnable { get; set; }
     public string? BackpackTF { get; set; }
 
     public static ApiKeyConfigItem Default(ApiKeyConfigItem? i = null)
@@ -13,6 +14,7 @@ public class ApiKeyConfigItem
         i.Weather = null;
         i.ESix = ESixConfigItem.Default();
         i.DiscordBotList = null;
+        i.DiscordBotListEnable = null;
         i.BackpackTF = null;
         return i;
     }

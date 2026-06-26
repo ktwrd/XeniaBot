@@ -86,7 +86,8 @@ public class DiscordBotListService : BaseService
                 await Task.Delay(500);
                 continue;
             }
-            if (string.IsNullOrEmpty(_config.ApiKeys.DiscordBotList))
+            if (string.IsNullOrEmpty(_config.ApiKeys.DiscordBotList) ||
+                _config.ApiKeys.DiscordBotListEnable == false)
             {
                 await Task.Delay(15000);
                 continue;
@@ -130,16 +131,18 @@ public class DiscordBotListService : BaseService
 
     private async Task PostStatistics()
     {
-        if (string.IsNullOrEmpty(_config.ApiKeys.DiscordBotList)) return;
+        if (string.IsNullOrEmpty(_config.ApiKeys.DiscordBotList) ||
+            _config.ApiKeys.DiscordBotListEnable == false) return;
 
         var users = _client.GroupChannels
-            .SelectMany(e => e.Users.Select(e => e.Id))
-            .Concat(_client.Guilds.SelectMany(e => e.Users.Select(e => e.Id)))
-            .ToHashSet();
+            .SelectMany(e => e.Users.Select(x => x.Id))
+            .Concat(_client.Guilds.SelectMany(e => e.Users.Select(x => x.Id)))
+            .Distinct()
+            .Count();
 
         var dto = new DblStatisticsDto()
         {
-            Users = users.Count,
+            Users = users,
             Guilds = _client.Guilds.Count
         };
 
@@ -192,7 +195,7 @@ public class DiscordBotListService : BaseService
     {
         if (string.IsNullOrEmpty(_config.ApiKeys.DiscordBotList)) return;
 
-        var json = JsonSerializer.Serialize(commands, serializerOptions)
+        var json = JsonSerializer.Serialize(commands, SerializerOptions)
             ?? throw new InvalidOperationException($"Failed to convert commands to JSON (result is null)");
 
         var botId = _client.CurrentUser.Id;
@@ -206,7 +209,7 @@ public class DiscordBotListService : BaseService
         await SendAsync(message);
     }
 
-    private readonly static JsonSerializerOptions serializerOptions = new()
+    private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         IncludeFields = true,
         IgnoreReadOnlyFields = false,
