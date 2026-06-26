@@ -73,7 +73,7 @@ public class GuildMemberSnapshotEventModel
 }
 
 [Flags]
-public enum GuildMemberSnapshotEventWhatChanged : ulong
+public enum GuildMemberSnapshotEventWhatChanged : byte
 {
     /// <summary>
     /// <see cref="GuildMemberSnapshotModel.Username"/>
