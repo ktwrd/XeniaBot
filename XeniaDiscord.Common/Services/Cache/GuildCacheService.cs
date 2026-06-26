@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Repositories;
@@ -25,10 +26,16 @@ public class GuildCacheService
         _repo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildCacheRepository>();
     }
 
-    public async Task<string?> GetIconUrl(ulong id, bool saveChages = true)
+    public async Task<string?> GetIconUrl(ulong id, bool saveChanges = true)
+    {
+        await using var db = _db.CreateSession();
+        return await GetIconUrl(db, id, saveChanges);
+    }
+    public async Task<string?> GetIconUrl(XeniaDbContext db, ulong id, bool saveChanges = true)
     {
         var idStr = id.ToString();
-        var existingUrl = await _db.GuildCache.AsNoTracking()
+        var existingUrl = await db.GuildCache
+            .AsNoTracking()
             .Where(e => e.Id == idStr)
             .Select(e => e.IconUrl)
             .Take(1)
@@ -36,19 +43,14 @@ public class GuildCacheService
         if (existingUrl.Length == 1)
             return existingUrl[0];
 
-        IGuild? guild = null;
-        try
-        {
-            guild = _client.GetGuild(id);
-        }
-        catch { }
+        IGuild? guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(id));
         if (guild == null) return null;
 
         var mapped = _mapper.Map(guild);
-        await _repo.InsertOrUpdate(_db, mapped);
-        if (saveChages)
+        await _repo.InsertOrUpdate(db, mapped);
+        if (saveChanges)
         {
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
         return mapped.IconUrl;
     }

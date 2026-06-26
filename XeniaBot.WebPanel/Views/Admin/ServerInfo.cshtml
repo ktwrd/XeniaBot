@@ -13,7 +13,7 @@
 @await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(@Model.Guild.Id))
 
 <div class="row d-flex flex-row mt-3">
-    <div class="col-auto mr-1">
+    <div class="col-auto me-1">
         <div class="card card-sm">
             <div class="card-header">
                 Details
@@ -38,7 +38,7 @@
 
 <h3 id="settings">Settings</h3>
 <div class="row d-flex flex-row">
-    <div class="mr-1 mb-1 col-auto">
+    <div class="me-1 mb-1 col-auto">
         <div class="card card-sm">
             <div class="card-header">
                 Ban Sync
@@ -51,13 +51,13 @@
                  hx-indicator="#settingsBanSync-body .htmx-indicator">
                 <div class="d-flex justify-content-center">
                     <div class="spinner-border htmx-indicator" role="status">
-                        <span class="sr-only">Loading...</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="mr-1 mb-1 col-auto">
+    <div class="me-1 mb-1 col-auto">
         <div class="card card-sm">
             <div class="card-header">
                 BanSync State History
@@ -71,13 +71,13 @@
                  hx-indicator="#banSyncHistory-body .htmx-indicator">
                 <div class="d-flex justify-content-center">
                     <div class="spinner-border htmx-indicator" role="status">
-                        <span class="sr-only">Loading...</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="mr-1 mb-1 col-auto">
+    <div class="me-1 mb-1 col-auto">
         <div class="card card-sm">
             <div class="card-header">
                 Xp System
@@ -91,13 +91,13 @@
                  hx-indicator="#levelSystem-body .htmx-indicator">
                 <div class="d-flex justify-content-center">
                     <div class="spinner-border htmx-indicator" role="status">
-                        <span class="sr-only">Loading...</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="mr-1 mb-1 col-auto">
+    <div class="me-1 mb-1 col-auto">
         <div class="card card-sm">
             <div class="card-header">
                 Confession
@@ -111,13 +111,13 @@
                  hx-indicator="#confession-body .htmx-indicator">
                 <div class="d-flex justify-content-center">
                     <div class="spinner-border htmx-indicator" role="status">
-                        <span class="sr-only">Loading...</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="mr-1 mb-1 col-auto">
+    <div class="me-1 mb-1 col-auto">
         <div class="card card-sm">
             <div class="card-header">
                 Counting
@@ -131,13 +131,13 @@
                  hx-indicator="#counting-body .htmx-indicator">
                 <div class="d-flex justify-content-center">
                     <div class="spinner-border htmx-indicator" role="status">
-                        <span class="sr-only">Loading...</span>
+                        <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="mr-1 mb-1 col-auto">
+    <div class="me-1 mb-1 col-auto">
         <div class="card card-sm">
             <div class="card-header">
                 Role Preserve
@@ -151,7 +151,7 @@
                  hx-indicator="#rolePreserve-body .htmx-indicator">
                  <div class="d-flex justify-content-center">
                      <div class="spinner-border htmx-indicator" role="status">
-                         <span class="sr-only">Loading...</span>
+                        <span class="visually-hidden">Loading...</span>
                      </div>
                  </div>
             </div>

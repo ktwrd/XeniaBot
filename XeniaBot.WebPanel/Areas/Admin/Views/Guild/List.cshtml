@@ -1,0 +1,72 @@
+﻿@using System.Net
+@using Humanizer
+@using XeniaBot.WebPanel.Areas.Admin.Models.Guild
+@model ListModel
+
+@{
+    ViewData["Title"] = "Guilds - Admin";
+    Layout = "_Layout";
+    var now = DateTime.UtcNow;
+    var oneMinuteAgo = TimeSpan.FromMinutes(1);
+}
+
+<h3>Guilds</h3>
+<table class="table table-bordered table-sm">
+    <thead>
+        <tr>
+            <th class="th-sm">Name</th>
+            <th class="th-sm">Members</th>
+            <th class="th-sm">Channels</th>
+            <th class="th-sm">Roles</th>
+            <th class="th-sm">Created:</th>
+            <th class="th-sm">Joined:</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var guild in Model.Items)
+        {
+            <tr data-xb-guild="@guild.Id">
+                <td style="line-height: 2.5rem; vertical-align: middle;">
+                    <img src="@(guild.IconUrl ?? "/DebugEmpty.png")" class="serverListIcon me-2" width="16" height="16" alt="icon" />
+                    @if (!guild.IsMember)
+                    {
+                        <span class="d-inline-block" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="Xenia is not a member of this guild.">
+                            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                        </span>
+                    }
+                    @guild.Name
+                    
+                    <br />
+                    <small><code>@guild.Id</code></small>
+                </td>
+                <td>@(guild.MemberCount?.ToString("n0") ?? string.Empty)</td>
+                <td>@(guild.ChannelCount?.ToString("n0") ?? string.Empty)</td>
+                <td>@(guild.RoleCount?.ToString("n0") ?? string.Empty)</td>
+                <td>
+                    @guild.FormatCreatedAt(now)
+                    <br />
+                    <sup>@guild.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</sup>
+                </td>
+                <td>
+                    @if (guild.JoinedAt.HasValue)
+                    {
+                        @guild.FormatJoinedAt(now)
+                        <br/>
+                        <sup>@guild.JoinedAt.Value.ToString("yyyy/MM/dd HH:mm:ss")</sup>
+                    }
+                </td>
+                <td>
+
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script type="text/javascript">
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
+    </script>
+}

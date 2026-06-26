@@ -13729,7 +13729,7 @@ $.extend( true, DataTable.ext.classes, {
 		input: "form-control form-control-sm"
 	},
 	length: {
-		select: "custom-select custom-select-sm form-control form-control-sm"
+		select: "form-select form-select-sm form-control form-control-sm"
 	},
 	processing: {
 		container: "dt-processing card"
@@ -13783,10 +13783,10 @@ DataTable.ext.renderer.layout.bootstrap = function ( settings, container, items 
 			klass = 'col-12';
 		}
 		else if (key === 'start') {
-			klass = 'col-md-auto mr-auto';
+			klass = 'col-md-auto me-auto';
 		}
 		else if (key === 'end') {
-			klass = 'col-md-auto ml-auto';
+			klass = 'col-md-auto ms-auto';
 		}
 		else {
 			klass = 'col-md';

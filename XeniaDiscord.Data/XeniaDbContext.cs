@@ -31,8 +31,11 @@ public class XeniaDbContext : DbContext
     public DbSet<GuildMemberPermissionSnapshotModel> GuildMemberPermissionSnapshots { get; set; }
     public DbSet<GuildMemberRoleSnapshotModel> GuildMemberRoleSnapshots { get; set; }
 
+    public DbSet<GuildSnapshotModel> GuildSnapshots { get; set; }
     public DbSet<GuildRoleSnapshotModel> GuildRoleSnapshots { get; set; }
     public DbSet<GuildRolePermissionSnapshotModel> GuildRolePermissionSnapshots { get; set; }
+
+    public DbSet<GuildSnapshotEventModel> GuildSnapshotEvent { get; set; }
 
     public DbSet<UserSnapshotModel> UserSnapshots { get; set; }
     public DbSet<PrimaryGuildSnapshotModel> PrimaryGuildSnapshots { get; set; }
@@ -94,6 +97,18 @@ public class XeniaDbContext : DbContext
         #endregion
 
         #region Snapshots
+        builder.HasPostgresEnum<DiscordSnapshotSource>();
+        builder.Entity<GuildSnapshotModel>(b =>
+        {
+            b.ToTable(GuildSnapshotModel.TableName).HasKey(e => e.RecordId);
+
+            b.HasIndex(e => new
+            {
+                e.RecordCreatedAt,
+                e.GuildId
+            }).IsDescending();
+        });
+
         builder.Entity<GuildRoleSnapshotModel>(b =>
         {
             b.ToTable(GuildRoleSnapshotModel.TableName).HasKey(e => e.Id);
@@ -190,6 +205,32 @@ public class XeniaDbContext : DbContext
         {
             b.ToTable(PrimaryGuildSnapshotModel.TableName)
              .HasKey(e => e.RecordId);
+        });
+
+        builder.Entity<GuildSnapshotEventModel>(b =>
+        {
+            b.ToTable(GuildSnapshotEventModel.TableName).HasKey(e => e.Id);
+
+            b.HasIndex(e => new
+            {
+                e.Timestamp,
+                e.GuildId
+            }).IsDescending();
+
+            b.HasIndex(e => new
+            {
+                e.GuildId,
+                e.Timestamp,
+                e.Source
+            }).IsDescending();
+
+            b.HasOne(e => e.Before)
+             .WithMany()
+             .HasForeignKey(e => e.BeforeId);
+            b.HasOne(e => e.Current)
+             .WithMany()
+             .HasForeignKey(e => e.CurrentId)
+             .IsRequired();
         });
         #endregion
 

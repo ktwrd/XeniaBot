@@ -18,14 +18,14 @@
     @if (AspHelper.IsCurrentUserAdmin(this.Context))
     {
         <hr/>
-        <label for="ghost-record">Set Ghost State</label>
+        <label class="form-label" for="ghost-record">Set Ghost State</label>
         <div class="btn-group" id="host-record" role="group" aria-label="Ghost Record">
-            <a class="btn btn-sm btn-outline-dark"
+            <a class="btn btn-sm btn-secondary"
                hx-get="/BanSync/Record/@Model.Record.Id/Ghost/True"
                hx-target=".container">
                 True
             </a>
-            <a class="btn btn-sm btn-outline-dark"
+            <a class="btn btn-sm btn-secondary"
                hx-get="/BanSync/Record/@Model.Record.Id/Ghost/False"
                hx-target=".container">
                 False

@@ -4,7 +4,7 @@ public class AlertComponentViewModel : IAlertViewModel
 {
     public string? Message { get; set; }
     public string? MessageType { get; set; }
-    public string MessageClass => MessageType == null ? "alert " : $"alert alert-{MessageType}";
+    public string MessageClass => MessageType == null ? "alert alert-dismissible " : $"alert alert-dismissible alert-{MessageType}";
     public bool ShowClose { get; set; } = false;
 
     public static AlertComponentViewModel FromExisting(IAlertViewModel model, bool showClose = false)

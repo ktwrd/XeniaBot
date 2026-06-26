@@ -47,7 +47,8 @@ else
             hx-indicator=".htmx-indicator"
             id="serverListContainer">
         </div>
-    } else
+    }
+    else
     {
         <table class="table table-bordered table-sm server-listing table-fs-listing">
             <thead>
@@ -69,7 +70,7 @@ else
 }
 <div class="d-flex justify-content-center">
     <div class="spinner-border htmx-indicator" role="status">
-        <span class="sr-only">Loading...</span>
+        <span class="visually-hidden">Loading...</span>
     </div>
 </div>
 <ul class="p-0" style="list-style: none">
@@ -77,9 +78,9 @@ else
         <strong><i class="bi bi-info-circle-fill"></i> Flags</strong>
     </li>
     <li>
-        <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Yellow Star"></i> Server Owner
+        <i class="bi bi-star-fill" style="color: var(--bs-yellow)" alt="Yellow Star"></i> Server Owner
     </li>
     <li>
-        <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Silver Star"></i> Has <code>Administrator</code> Permission
+        <i class="bi bi-star-fill" style="color: var(--bs-secondary);" alt="Silver Star"></i> Has <code>Administrator</code> Permission
     </li>
 </ul>

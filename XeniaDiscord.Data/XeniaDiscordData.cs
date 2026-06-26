@@ -11,14 +11,16 @@ public static class XeniaDiscordData
         IServiceCollection services,
         bool includeAsSingleton)
     {
-        services.AddScoped<DatabaseMigrationService>();
+        if (includeAsSingleton)
+        {
+            services.AddSingleton<DatabaseMigrationService>();
+        }
+        else
+        {
+            services.AddScoped<DatabaseMigrationService>();
+        }
 
         RegisterRepositories(services, includeAsSingleton);
-
-        if (!includeAsSingleton) return;
-
-        services.AddSingleton<DatabaseMigrationService>()
-                .AddSingleton<IBaseService, DatabaseMigrationService>();
     }
     public static void RegisterRepositories(
         IServiceCollection services,

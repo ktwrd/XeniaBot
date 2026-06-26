@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.Discord" />
+    <PackageReference Include="Humanizer" />
     <PackageReference Include="Markdig" />
     <PackageReference Include="Microsoft.AspNetCore.Components" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />

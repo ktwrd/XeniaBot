@@ -184,6 +184,7 @@ public interface IGuildMemberSnapshot : ISnapshot
     public ulong? GetVoiceChannelId();
 }
 
+// TODO migrate to DiscordSnapshotSource
 public enum GuildMemberSnapshotSource
 {
     Unknown = 0,
@@ -191,4 +192,6 @@ public enum GuildMemberSnapshotSource
     MemberUpdate = 11,
 
     RoleDelete = 20,
+
+    GuildJoined = 30
 }

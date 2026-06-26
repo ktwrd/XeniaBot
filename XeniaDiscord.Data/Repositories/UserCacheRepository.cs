@@ -13,7 +13,7 @@ public class UserCacheRepository
         UserCacheModel model)
     {
         model.RecordUpdatedAt = DateTime.UtcNow;
-        if (await db.UserCache.AnyAsync(e => e.Id == model.Id))
+        if (await db.UserCache.FindAsync(model.Id) != null)
         {
             await db.UserCache.Where(e => e.Id == model.Id)
                 .ExecuteUpdateAsync(e => e

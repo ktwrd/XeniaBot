@@ -98,13 +98,15 @@ public static class Program
             RegisterModules = CoreContextRegisterModules,
             RegisterDeveloperModules = CoreContextRegisterDeveloperModules
         };
+        LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
             SentrySdk.Init(static options =>
             {
                 Update(options);
             });
-            LogManager.Configuration?.AddSentry(static options =>
+            LogManager.Configuration ??= new();
+            LogManager.Configuration!.AddSentry(static options =>
             {
                 Update(options);
             });

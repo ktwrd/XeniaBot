@@ -46,6 +46,11 @@ public class ServerLogService : BaseService
 
     public async Task EventHandle(EventHandleOptions options)
     {
+        if (!await _serverLogRepo.IsEnabled(options.GuildId))
+        {
+            _log.Trace($"Skipping notification since guild is disabled (guildId={options.GuildId}, event={options.Event})");
+            return;
+        }
         var targetChannels = await _serverLogRepo.GetChannelsForGuild(options.GuildId, [options.Event, ServerLogEvent.Fallback]);
         var guild = _discord.GetGuild(options.GuildId);
 
@@ -64,7 +69,7 @@ public class ServerLogService : BaseService
             {
                 if (channel.Event == ServerLogEvent.Fallback && nonFallbackSent)
                 {
-                    _log.Trace($"Non-fallback event(s) successfully ran. Skipping fallback channels. (GuildId={options.GuildId}, ChannelEvent={channel.Event}, Event={options.Event})");
+                    _log.Trace($"Non-fallback event(s) successfully ran. Skipping fallback channel(s). (GuildId={options.GuildId}, ChannelEvent={channel.Event}, Event={options.Event})");
                     continue;
                 }
 
@@ -95,17 +100,19 @@ public class ServerLogService : BaseService
             if (options.Attachments.Count < 1)
             {
                 await channel.SendMessageAsync(embeds: [.. options.Embeds.Select(e => e.Build())]);
-                return true;
             }
-
-            var attachmentList = options.Attachments.Count > 10
-                ? options.Attachments.Take(10) : options.Attachments;
-            if (options.Attachments.Count > 10)
+            else
             {
-                _log.Warn($"More than 10 attachments defined when handling event {options.Event} in channel \"{channel.Name}\" in guild \"{guild.Name}\" (guildId={guild.Id}, channelId={channel.Id})");
+                var attachmentList = options.Attachments.Count > 10
+                    ? options.Attachments.Take(10) : options.Attachments;
+                if (options.Attachments.Count > 10)
+                {
+                    _log.Warn($"More than 10 attachments defined when handling event {options.Event} in channel \"{channel.Name}\" in guild \"{guild.Name}\" (guildId={guild.Id}, channelId={channel.Id})");
+                }
+
+                await channel.SendFilesAsync(attachmentList, embeds: [.. options.Embeds.Select(e => e.Build())]);
             }
 
-            await channel.SendFilesAsync(attachmentList, embeds: [.. options.Embeds.Select(e => e.Build())]);
             return true;
         }
         catch (Exception ex)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using XeniaBot.MongoData.Models;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;

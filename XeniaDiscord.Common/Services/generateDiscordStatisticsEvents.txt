@@ -1,0 +1,86 @@
+﻿ApplicationCommandCreated|SocketApplicationCommand
+ApplicationCommandDeleted|SocketApplicationCommand
+ApplicationCommandUpdated|SocketApplicationCommand
+AuditLogCreated|SocketAuditLogEntry,SocketGuild
+AutocompleteExecuted|SocketAutocompleteInteraction
+AutoModActionExecuted|SocketGuild,AutoModRuleAction,AutoModActionExecutedData
+AutoModRuleCreated|SocketAutoModRule
+AutoModRuleDeleted|SocketAutoModRule
+AutoModRuleUpdated|Cacheable<SocketAutoModRule, ulong>;SocketAutoModRule
+ButtonExecuted|SocketMessageComponent
+ChannelCreated|SocketChannel
+ChannelDestroyed|SocketChannel
+ChannelUpdated|SocketChannel,SocketChannel
+CurrentUserUpdated|SocketSelfUser;SocketSelfUser
+EntitlementCreated|SocketEntitlement
+EntitlementDeleted|Cacheable<SocketEntitlement, ulong>
+EntitlementUpdated|Cacheable<SocketEntitlement, ulong>;SocketEntitlement
+GuildAvailable|SocketGuild
+GuildJoinRequestDeleted|Cacheable<SocketGuildUser, ulong>;SocketGuild
+GuildMembersDownloaded|SocketGuild
+GuildMemberUpdated|Cacheable<SocketGuildUser, ulong>;SocketGuildUser
+GuildScheduledEventCancelled|SocketGuildEvent
+GuildScheduledEventCompleted|SocketGuildEvent
+GuildScheduledEventCreated|SocketGuildEvent
+GuildScheduledEventStarted|SocketGuildEvent
+GuildScheduledEventUpdated|Cacheable<SocketGuildEvent,ulong>;SocketGuildEvent
+GuildScheduledEventUserAdd|Cacheable<SocketUser, RestUser, IUser, ulong>;SocketGuildEvent
+GuildScheduledEventUserRemove|Cacheable<SocketUser, RestUser, IUser, ulong>;SocketGuildEvent
+GuildStickerCreated|SocketCustomSticker
+GuildStickerDeleted|SocketCustomSticker
+GuildStickerUpdated|SocketCustomSticker,SocketCustomSticker
+GuildUnavailable|SocketGuild
+GuildUpdated|SocketGuild,SocketGuild
+IntegrationCreated|IIntegration
+IntegrationDeleted|IGuild;ulong;Optional<ulong>
+IntegrationUpdated|IIntegration
+InteractionCreated|SocketInteraction
+InviteCreated|SocketInvite
+InviteDeleted|SocketGuildChannel,string
+JoinedGuild|SocketGuild
+LeftGuild|SocketGuild
+MessageCommandExecuted|SocketMessageCommand
+MessageDeleted|Cacheable<IMessage, ulong>;Cacheable<IMessageChannel, ulong>
+MessageReceived|SocketMessage
+MessagesBulkDeleted|IReadOnlyCollection<Cacheable<IMessage, ulong>>;Cacheable<IMessageChannel, ulong>
+MessageUpdated|Cacheable<IMessage, ulong>;SocketMessage;ISocketMessageChannel
+ModalSubmitted|SocketModal
+PollVoteAdded|Cacheable<IUser, ulong>;Cacheable<ISocketMessageChannel, IRestMessageChannel, IMessageChannel, ulong>;Cacheable<IUserMessage, ulong>;Cacheable<SocketGuild, RestGuild, IGuild, ulong>?;ulong
+PollVoteRemoved|Cacheable<IUser, ulong>;Cacheable<ISocketMessageChannel, IRestMessageChannel, IMessageChannel, ulong>;Cacheable<IUserMessage, ulong>;Cacheable<SocketGuild, RestGuild, IGuild, ulong>?;ulong
+PresenceUpdated|SocketUser,SocketPresence,SocketPresence
+ReactionAdded|Cacheable<IUserMessage, ulong>;Cacheable<IMessageChannel, ulong>;SocketReaction
+ReactionRemoved|Cacheable<IUserMessage, ulong>;Cacheable<IMessageChannel, ulong>;SocketReaction
+ReactionsCleared|Cacheable<IUserMessage, ulong>;Cacheable<IMessageChannel, ulong>
+ReactionsRemovedForEmote|Cacheable<IUserMessage, ulong>;Cacheable<IMessageChannel, ulong>;IEmote
+RecipientAdded|SocketGroupUser
+RecipientRemoved|SocketGroupUser
+RequestToSpeak|SocketStageChannel,SocketGuildUser
+RoleCreated|SocketRole
+RoleDeleted|SocketRole
+RoleUpdated|SocketRole,SocketRole
+SelectMenuExecuted|SocketMessageComponent
+SlashCommandExecuted|SocketSlashCommand
+SpeakerAdded|SocketStageChannel,SocketGuildUser
+SpeakerRemoved|SocketStageChannel,SocketGuildUser
+StageEnded|SocketStageChannel
+StageStarted|SocketStageChannel
+StageUpdated|SocketStageChannel,SocketStageChannel
+SubscriptionCreated|SocketSubscription
+SubscriptionDeleted|Cacheable<SocketSubscription, ulong>
+SubscriptionUpdated|Cacheable<SocketSubscription, ulong>;SocketSubscription
+ThreadCreated|SocketThreadChannel
+ThreadDeleted|Cacheable<SocketThreadChannel, ulong>
+ThreadMemberJoined|SocketThreadUser
+ThreadMemberLeft|SocketThreadUser
+ThreadUpdated|Cacheable<SocketThreadChannel, ulong>;SocketThreadChannel
+UserBanned|SocketUser,SocketGuild
+UserCommandExecuted|SocketUserCommand
+UserIsTyping|Cacheable<IUser, ulong>;Cacheable<IMessageChannel, ulong>
+UserJoined|SocketGuildUser
+UserLeft|SocketGuild,SocketUser
+UserUnbanned|SocketUser,SocketGuild
+UserUpdated|SocketUser,SocketUser
+UserVoiceStateUpdated|SocketUser,SocketVoiceState,SocketVoiceState
+VoiceChannelStatusUpdated|Cacheable<SocketVoiceChannel, ulong>;string;string
+VoiceServerUpdated|SocketVoiceServer
+WebhooksUpdated|SocketGuild,SocketChannel

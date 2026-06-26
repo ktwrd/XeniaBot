@@ -3,9 +3,9 @@
 
 @if (@Model.Label != null)
 {
-    <label for="@Model.Id">@Model.Label</label>
+    <label class="form-label" for="@Model.Id">@Model.Label</label>
 }
-<select class="custom-select"
+<select class="form-select"
         form="@Model.ParentFormId"
         name="@Model.Name"
         id="@Model.Id">

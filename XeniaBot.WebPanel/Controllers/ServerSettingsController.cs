@@ -26,6 +26,7 @@ public partial class ServerController
     [RestrictToGuild(GuildIdRouteKey = "id", RequiredPermission = Discord.GuildPermission.ManageChannels)]
     public async Task<IActionResult> SaveSettings_LogSystem(
         ulong id,
+        [FromForm] bool enable,
         [FromForm] string jsonData)
     {
         var guildIdStr = id.ToString();
@@ -49,14 +50,18 @@ public partial class ServerController
             data = JsonSerializer.Deserialize<List<JsTypeServerLogConfigItem>>(jsonStringData) ?? [];
 
             var guildModel = await _serverLogRepository.GetGuild(id)
-                ?? new ServerLogGuildModel(id)
-                {
-                    Enabled = true
-                };
+                ?? new ServerLogGuildModel(id);
+            guildModel.Enabled = enable;
+
             await _guildCacheRepo.Ensure(db, guild.Id, guild);
-            if (!await db.ServerLogGuilds.AnyAsync(e => e.GuildId == guildModel.GuildId))
+            if (await db.ServerLogGuilds.FindAsync(guildModel.GuildId) == null)
             {
                 await db.ServerLogGuilds.AddAsync(guildModel);
+            }
+            else
+            {
+                await db.ServerLogGuilds.Where(e => e.GuildId == guildModel.GuildId)
+                    .ExecuteUpdateAsync(e => e.SetProperty(p => p.Enabled, guildModel.Enabled));
             }
             var existing = await db.ServerLogChannels.AsNoTracking().Where(e => e.GuildId == guildIdStr).ToListAsync();
 

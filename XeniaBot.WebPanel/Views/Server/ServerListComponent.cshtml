@@ -25,11 +25,11 @@
                         <span>
                             @if (@item.Guild.OwnerId == @item.GuildUser.Id)
                             {
-                                <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
+                                <i class="bi bi-star-fill" style="color: var(--bs-yellow)" alt="Server Owner"></i>
                             }
                             else if (@item.GuildUser.GuildPermissions.Administrator)
                             {
-                                <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Server Administrator"></i>
+                                <i class="bi bi-star-fill" style="color: var(--bs-secondary);" alt="Server Administrator"></i>
                             }
                             <a asp-area="" asp-route-id="@item.Guild.Id" asp-controller="Server" asp-action="Index">@item.Guild.Name</a>
                         </span>
@@ -58,11 +58,11 @@ else
                 <img src="@(item.Guild.IconUrl ?? "/DebugEmpty.png")" class="serverListIcon"/>
                 @if (@item.Guild.OwnerId == @item.GuildUser.Id)
                 {
-                    <i class="bi bi-star-fill" style="color: var(--yellow)" alt="Server Owner"></i>
+                    <i class="bi bi-star-fill" style="color: var(--bs-yellow)" alt="Server Owner"></i>
                 }
                 else if (@item.GuildUser.GuildPermissions.Administrator)
                 {
-                    <i class="bi bi-star-fill" style="color: var(--secondary);" alt="Server Administrator"></i>
+                    <i class="bi bi-star-fill" style="color: var(--bs-secondary);" alt="Server Administrator"></i>
                 }
                 @item.Guild.Name
             </td>

@@ -1,6 +1,7 @@
 ﻿using Discord.Interactions;
 using System;
 using System.Threading.Tasks;
+using XeniaBot.Core.LevelSystem.Modules;
 using XeniaBot.Core.Modules;
 using XeniaBot.Shared.Helpers;
 
@@ -27,10 +28,10 @@ public static class XeniaDiscordCoreInteractions
             interactions.AddModuleAsync<RandomAnimalModule>(services),
             interactions.AddModuleAsync<ReminderModule>(services),
             interactions.AddModuleAsync<RolePreserveModule>(services),
-            interactions.AddModuleAsync<ServerLogModule>(services),
             interactions.AddModuleAsync<TicketModule>(services),
             interactions.AddModuleAsync<TranslateModule>(services),
-            interactions.AddModuleAsync<WeatherModule>(services)
+            interactions.AddModuleAsync<WeatherModule>(services),
+            interactions.AddModuleAsync<XpModule>(services)
             );
         transaction.Finish();
     }

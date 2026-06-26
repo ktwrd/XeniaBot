@@ -3,7 +3,14 @@
 
 
 <div class="@Model.CalculatedClasses">
-    <input class="form-check-input" type="checkbox" value="true" id="@Model.Id" name="@Model.Name" checked="@Model.State" form="@Model.ParentFormId"/>
+    @if (string.IsNullOrEmpty(Model.ParentFormId))
+    {
+        <input class="form-check-input" type="checkbox" value="true" id="@Model.Id" name="@Model.Name" checked="@Model.State" />
+    }
+    else
+    {
+        <input class="form-check-input" type="checkbox" value="true" id="@Model.Id" name="@Model.Name" checked="@Model.State" form="@Model.ParentFormId" />
+    }
     <label class="form-check-label" for="@Model.Id">
         @Model.Label
     </label>

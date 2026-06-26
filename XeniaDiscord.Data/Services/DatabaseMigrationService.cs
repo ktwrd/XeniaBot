@@ -15,20 +15,50 @@ public class DatabaseMigrationService : BaseService
         _err = services.GetRequiredService<ErrorReportService>();
     }
 
-    /// <summary>
-    /// Called when all services have been added to the collection.
-    /// </summary>
-    /// <returns></returns>
+    private bool hasInitialized = false;
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Creates a new thread to actually do the work.
+    /// This method will not exit until <see cref="InitializeThread"/> has finished running.
+    /// </remarks>
     public override async Task InitializeAsync()
     {
+        if (hasInitialized) return;
+
+        new Thread(() =>
+        {
+            try
+            {
+                InitializeThread().Wait();
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, $"Failed to call {nameof(InitializeThread)}");
+            }
+            finally
+            {
+                hasInitialized = true;
+            }
+        })
+        {
+            Name = $"Xenia.{nameof(DatabaseMigrationService)}.{nameof(InitializeAsync)}"
+        }.Start();
+
+        while (!hasInitialized) await Task.Delay(500);
+    }
+
+    private async Task InitializeThread()
+    {
         using var scope = Services.CreateScope();
-        using var db = scope.ServiceProvider.GetRequiredService<XeniaDbContext>();
+        await using var db = scope.ServiceProvider.GetRequiredService<XeniaDbContext>();
 
         var migrationsEnumerable = await db.Database.GetPendingMigrationsAsync();
         var migrationsArray = migrationsEnumerable.ToArray();
         if (migrationsArray.Length < 1)
         {
-            _log.Info("No pending migrations.");
+            _log.Info("No pending migrations");
+            hasInitialized = true;
             return;
         }
 
@@ -39,34 +69,17 @@ public class DatabaseMigrationService : BaseService
         {
             await db.Database.MigrateAsync();
             await db.SaveChangesAsync();
+            hasInitialized = true;
         }
         catch (Exception ex)
         {
+            hasInitialized = true;
             var msg = $"Failed to apply {migrationCount} migration(s)";
             _log.Error(ex, msg);
-            await _err.ReportException(ex, msg,
-                new Dictionary<string, string>()
-                {
-                    {"migrations.txt", string.Join("\n", migrationsArray) }
-                });
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .AddSerializedAttachment("migrations.txt", string.Join("\n", migrationsArray)));
         }
-    }
-
-    /// <summary>
-    /// Not implemented
-    /// </summary>
-    public override Task OnReady()
-    {
-        // not implemented
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Not implemented
-    /// </summary>
-    public virtual Task OnReadyDelay()
-    {
-        // not implemented
-        return Task.CompletedTask;
     }
 }

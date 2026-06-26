@@ -13,16 +13,14 @@ else
     @if (Model.InputGroup)
     {
         <div class="input-group mb-3">
-            <div class="input-group-prepend">
-                <span class="input-group-text" id="@Model.Id" style="width: 12rem;">@Model.DisplayName</span>
-            </div>
+            <span class="input-group-text" id="@(Model.Id)-label" style="width: 12rem;">@Model.DisplayName</span>
             @await Component.InvokeAsync("InputRaw", Model)
         </div>
     }
     else
     {
         <div class="form-group mb-3">
-            <label for="@Model.Id">@Model.DisplayName</label>
+            <label class="form-label" for="@Model.Id">@Model.DisplayName</label>
             @await Component.InvokeAsync("InputRaw", Model)
         </div>
     }

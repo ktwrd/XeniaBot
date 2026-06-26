@@ -71,6 +71,15 @@
 <form id="log_settings" enctype="application/x-www-form-urlencoded" method="post" asp-controller="Server" asp-action="SaveSettings_LogSystem" asp-route-id="@Model.Guild.Id">
     <div class="row">
         <div class="col">
+            <div class="form-check mb-3">
+                <input class="form-check-input" name="enable" type="checkbox" value="true" id="server_log_enable" checked="@Model.LogConfig.Enabled" />
+                <label class="form-check-label" for="server_log_enable">Enable</label>
+                <small id="server_log_enable_help" class="form-text text-muted">This will only enable/disable server log messages from being sent. Information used for server logging will still be stored.</small>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
             <div id="server-log-channel-config" xeniaDiscord-channelData="@channelDataBase64">
                 <input type="hidden" name="jsonData" value="@configDataBase64" />
                 <div id="server-log-channel-config-table">
@@ -89,20 +98,22 @@
                 <hr/>
                 <div class="d-flex flex-row flex-wrap mb-3" id="server-log-channel-add">
                     <div class="form-group m-2">
-                        <label for="server-log-select-event">Event</label>
-                        <select id="server-log-select-event" class="form-control">
-
+                        <label class="form-label" for="server-log-select-event">Event</label>
+                        <select id="server-log-select-event" class="form-control" aria-describedby="server-log-select-event-help">
                         </select>
-                        <small id="server-log-select-event-help" class="form-text text-muted">Select an event that should be sent to a channel.</small>
+                        <small id="server-log-select-event-help" class="form-text text-muted">
+                            Select an event that should be sent to a channel.
+                        </small>
                     </div>
                     <div class="form-group m-2">
-                        <label for="server-log-select-channel">Channel</label>
-                        <select id="server-log-select-channel" class="form-control">
+                        <label class="form-label" for="server-log-select-channel">Channel</label>
+                        <select id="server-log-select-channel" class="form-control" aria-describedby="server-log-select-channel-help">
 
                         </select>
                         <small id="server-log-select-channel-help" class="form-text text-muted">
                             Channel that the selected event should be used with.<br/>
-                            More than one event can be used per channel, and more than one channel can have the same event.</small>
+                            More than one event can be used per channel, and more than one channel can have the same event.
+                        </small>
                     </div>
                     <div class="form-group" style="margin-top: 2.5rem;">
                         <button class="btn btn-primary" xenia-action="add" type="button">Add</button>

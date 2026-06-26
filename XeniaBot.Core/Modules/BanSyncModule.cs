@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Common.Services;
 using XeniaDiscord.Data;
@@ -86,21 +87,33 @@ public class BanSyncModule : InteractionModuleBase
         [Summary(description: "User to get information about.")]
         IUser user)
     {
-        await Context.Interaction.DeferAsync();
-        var data = await _recordRepo.GetInfoEnumerable(user.Id);
+        try
+        {
+            await Context.Interaction.DeferAsync();
+            var data = await _recordRepo.GetInfoEnumerable(user.Id);
 
-        if (data.Count == 0)
-        {
-            await Context.Interaction.FollowupAsync(
-                embed: new EmbedBuilder()
-                    .WithDescription($"No bans found for <@{user.Id}> ({user.Username}, {user.Id})")
-                    .WithColor(Color.Orange)
-                    .Build());
+            if (data.Count == 0)
+            {
+                await Context.Interaction.FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithDescription($"No bans found for <@{user.Id}> ({user.Username}, {user.Id})")
+                        .WithColor(Color.Orange)
+                        .Build());
+            }
+            else
+            {
+                var embed = await _bansyncService.GenerateEmbed(data);
+                await Context.Interaction.FollowupAsync(embed: embed.Build());
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var embed = await _bansyncService.GenerateEmbed(data);
-            await Context.Interaction.FollowupAsync(embed: embed.Build());
+            var msg = $"Failed to get user information for: {user.Id}";
+            _log.Error(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithContext(Context));
         }
     }
 
@@ -113,15 +126,20 @@ public class BanSyncModule : InteractionModuleBase
         ITextChannel logChannel)
     {
         await DeferAsync();
+        await using var db = _db.CreateSession();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var data = await _guildRepo.GetAsync(Context.Guild.Id)
+            var data = await _guildRepo.GetAsync(db, Context.Guild.Id)
                 ?? new(Context.Guild.Id);
             data.LogChannelId = logChannel.Id.ToString();
-            await _guildRepo.InsertOrUpdate(data);
+            await _guildRepo.InsertOrUpdate(db, data);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
         }
         catch (Exception ex)
         {
+            await trans.RollbackAsync();
             var msg = $"Failed to update log channel to {logChannel.Id} for guild \"{Context.Guild.Name}\" ({Context.Guild.Id})";
             _log.Error(ex, msg);
             try
@@ -163,7 +181,7 @@ public class BanSyncModule : InteractionModuleBase
             await Context.Interaction.RespondAsync($"Failed to parse guildId\n\n{ex.Message}", ephemeral: true);
             return;
         }
-        var targetGuild = await Context.Client.GetGuildAsync(guildId);
+        var targetGuild = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Client.GetGuildAsync(guildId));
         if (targetGuild == null)
         {
             await Context.Interaction.RespondAsync($"Guild `{guildId}` not found", ephemeral: true);

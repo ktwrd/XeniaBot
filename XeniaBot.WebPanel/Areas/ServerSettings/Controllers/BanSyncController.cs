@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Areas.ServerSettings.Models.BanSync;
 using XeniaBot.WebPanel.Controllers;
@@ -54,7 +55,7 @@ public class BanSyncController : BaseXeniaController
         if (userId == null)
             return PartialView("NotFoundPartial", "User not found");
 
-        var guild = _discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         if (guild == null)
             return PartialView("NotFoundPartial", "Guild not found");
 
@@ -98,10 +99,10 @@ public class BanSyncController : BaseXeniaController
                 model.Alert.Message = "Ban Sync access has already been requested and denied.";
                 break;
             case BanSyncGuildState.Blacklisted:
-                model.Alert.Message = $"Your server has been blacklisted";
+                model.Alert.Message = "Your server has been blacklisted";
                 break;
             case BanSyncGuildState.Active:
-                model.Alert.Message = $"Your server already has Ban Sync enabled";
+                model.Alert.Message = "Your server already has Ban Sync enabled";
                 break;
             case BanSyncGuildState.Unknown:
                 // Request ban sync
@@ -135,7 +136,7 @@ public class BanSyncController : BaseXeniaController
         ulong guildId,
         string? logChannel = null)
     {
-        var guild = _discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         if (guild == null) return PartialView("NotFoundPartial", "Guild not found");
 
         var model = await GetModel(guild);
