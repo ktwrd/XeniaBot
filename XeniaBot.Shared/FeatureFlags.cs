@@ -12,12 +12,12 @@ public static class FeatureFlags
     private static readonly Logger Log = LogManager.GetLogger(nameof(FeatureFlags));
     #region Parsing
     /// <summary>
-    /// Parses an environment variable as a boolean. When trimmed&lowercased to `true` it will return true, but anything else will return `false`.
+    /// Parses an environment variable as a boolean. When trimmed and lowercased to <c>true</c> it will return <see langword="true"/>, but anything else will return <c>false</c>
     /// When the environment variable isn't found, it wil default to <see cref="defaultValue"/>
     /// </summary>
     /// <param name="environmentKey"></param>
     /// <param name="defaultValue">Used when environment variable is not set.</param>
-    /// <returns>`true` when envar is true, `false` when not true, <see cref="defaultValue"/> when not found.</returns>
+    /// <returns><see langword="true"/> when envar is true, <see langword="false"/> when not true, <see cref="defaultValue"/> when not found.</returns>
     private static bool ParseBool(string environmentKey, bool defaultValue)
     {
         var item = Environment.GetEnvironmentVariable(environmentKey)
@@ -27,7 +27,7 @@ public static class FeatureFlags
     }
 
     /// <summary>
-    /// Just <see cref="Environment.GetEnvironmentVariable(string variable)"/> but when null it's <see cref="defaultValue"/>
+    /// Just <see cref="Environment.GetEnvironmentVariable(string)"/> but when null it's <see cref="defaultValue"/>
     /// </summary>
     private static string ParseString(string environmentKey, string defaultValue)
     {
@@ -35,7 +35,7 @@ public static class FeatureFlags
     }
 
     /// <summary>
-    /// Parse environment variable into a string array, seperated by the `;` character
+    /// Parse environment variable into a string array, separated by the <c>;</c> character
     /// </summary>
     /// <param name="envKey">Environment Key to search in</param>
     /// <param name="defaultValue">Default return value when null</param>
@@ -51,7 +51,7 @@ public static class FeatureFlags
     /// - Fetch Environment variable (when null, set to <see cref="defaultValue"/> as string)
     /// - Do regex match ^([0-9]+)$
     /// - When success, parse item as integer then return
-    /// - When fail, return default value
+    /// - When failed, return default value
     /// </summary>
     /// <returns></returns>
     private static int ParseInt(string envKey, int defaultValue)
@@ -131,7 +131,7 @@ public static class FeatureFlags
     /// <summary>
     /// Key: CONFIG_CONTENT
     /// Default: {}
-    /// Default (with <see cref="ConfigContentIsBase64"/>: e30=
+    /// Default (with <see cref="ConfigContentIsBase64"/>): e30=
     ///
     /// Will use this variable as the config when <see cref="ConfigFromEnvironment"/> is set.
     ///

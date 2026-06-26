@@ -1,5 +1,4 @@
 ﻿@model XeniaBot.WebPanel.Models.RoleSelectRawComponentModel
-@using Discord.WebSocket
 @if ((Model.SelectedRoleId ?? 0) == 0)
 {
     <option value="" selected>None</option>
@@ -11,6 +10,6 @@ else
 <hr/>
 @foreach (var role in Model.Roles.OrderBy(v => v.Position))
 {
-    <option value="@role.RoleId" disabled="@(!role.CanAccess)">@role.Name</option>
+    <option value="@role.Id" disabled="@(!role.CanAccess)">@role.Name</option>
 }
 

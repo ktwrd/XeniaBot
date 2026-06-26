@@ -24,11 +24,16 @@ public class ServerLogRepository
         _discordClient = services.GetRequiredService<DiscordSocketClient>();
     }
 
+    public Task<bool> IsEnabled(IGuild guild)
+        => IsEnabled(guild.Id);
     public async Task<bool> IsEnabled(ulong guildId)
     {
         await using var db = _db.CreateSession();
         return await IsEnabled(db, guildId);
     }
+
+    public Task<bool> IsEnabled(XeniaDbContext db, IGuild guild)
+        => IsEnabled(db, guild.Id);
     public async Task<bool> IsEnabled(XeniaDbContext db, ulong guildId)
     {
         var guildIdStr = guildId.ToString();
@@ -37,11 +42,21 @@ public class ServerLogRepository
         return model?.Enabled != false;
     }
 
+    public Task<ServerLogGuildModel?> GetGuild(
+        IGuild guild,
+        GuildQueryOptions? options = null)
+        => GetGuild(guild.Id, options);
     public async Task<ServerLogGuildModel?> GetGuild(ulong guildId, GuildQueryOptions? options = null)
     {
         await using var db = _db.CreateSession();
         return await GetGuild(db, guildId, options);
     }
+
+    public Task<ServerLogGuildModel?> GetGuild(
+        XeniaDbContext db,
+        IGuild guild,
+        GuildQueryOptions? options = null)
+        => GetGuild(db, guild.Id, options);
     public async Task<ServerLogGuildModel?> GetGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -63,6 +78,11 @@ public class ServerLogRepository
             .FirstOrDefaultAsync();
     }
 
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        XeniaDbContext db,
+        IGuild guild,
+        ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(db, guild.Id, options);
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -75,6 +95,12 @@ public class ServerLogRepository
         return await Apply(query, options)
             .ToListAsync();
     }
+
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        IGuild guild,
+        ulong channelId,
+        ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(guild.Id, channelId, options);
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         ulong guildId,
         ulong channelId,
@@ -83,6 +109,13 @@ public class ServerLogRepository
         await using var db = _db.CreateSession();
         return await GetChannelsForGuild(db, guildId, channelId, options);
     }
+
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        XeniaDbContext db,
+        IGuild guild,
+        ulong channelId,
+        ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(db, guild.Id, channelId, options);
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -97,6 +130,7 @@ public class ServerLogRepository
     }
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(ulong guildId, ServerLogEvent[] events, ChannelQueryOptions? options = null)
     {
+        if (events.Length == 0) return [];
         await using var db = _db.CreateSession();
         return await GetChannelsForGuild(db, guildId, events, options);
     }
@@ -106,6 +140,7 @@ public class ServerLogRepository
         ServerLogEvent[] events,
         ChannelQueryOptions? options = null)
     {
+        if (events.Length == 0) return [];
         var guildIdStr = guildId.ToString();
         var eventsSet = events.ToHashSet();
         var query = db.ServerLogChannels
@@ -475,6 +510,7 @@ public class ServerLogRepository
         }
         if (options.IgnoreDisabledGuilds)
         {
+            if (!options.IncludeServerLogGuild) q = q.Include(e => e.ServerLogGuild);
             q = q.Where(e => e.ServerLogGuild.Enabled);
         }
         return q.AsNoTracking();

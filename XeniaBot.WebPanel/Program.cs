@@ -89,14 +89,8 @@ public static class Program
         LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
-            SentrySdk.Init(static options =>
-            {
-                Update(options);
-            });
-            LogManager.Configuration?.AddSentry(options =>
-            {
-                Update(options);
-            });
+            SentrySdk.Init(Update);
+            LogManager.Configuration?.AddSentry(Update);
         }
 
         LogManager.GetLogger("Main").Info($"Running version {Details.VersionRaw}");
@@ -121,6 +115,7 @@ public static class Program
         options.Release = Version?.ToString();
         options.SendDefaultPii = true;
         options.AttachStacktrace = true;
+        options.EnableLogs = true;
         options.Environment = Details.Debug ? "production" : "debug";
         options.TracesSampleRate = 1.0;
         options.IsGlobalModeEnabled = false;

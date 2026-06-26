@@ -1,0 +1,20 @@
+﻿@using Microsoft.AspNetCore.Http
+@using XeniaBot.WebPanel.Extensions
+@inject IHttpContextAccessor HttpContextAccessor
+@model XeniaBot.WebPanel.Areas.RolePreserve.Models.Settings.DetailsViewModel
+@{
+    if (HttpContextAccessor?.HttpContext?.IsHtmxRequest() == true)
+    {
+        Layout = null;
+    }
+    else
+    {
+        ViewBag.Title = $"Role Preserve - {Model.Guild.Name}";
+        Layout = "_Layout";
+    }
+}
+<div id="guild-rolepreserve-settings">
+    @{
+        await Html.RenderPartialAsync("_PartialDefault");
+    }
+</div>

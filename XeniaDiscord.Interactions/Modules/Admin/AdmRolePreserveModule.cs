@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System.Diagnostics;
@@ -13,6 +14,7 @@ namespace XeniaDiscord.Interactions.Modules.Admin;
 [Group("adm-rp", "Admin: Role Preserve")]
 [CommandContextType(InteractionContextType.Guild)]
 [RequireDeveloper]
+[UsedImplicitly]
 public class AdmRolePreserveModule : InteractionModuleBase
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();

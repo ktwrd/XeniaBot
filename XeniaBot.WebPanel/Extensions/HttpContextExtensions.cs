@@ -1,9 +1,13 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Discord;
+using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
+using XeniaBot.WebPanel.Helpers;
 
 namespace XeniaBot.WebPanel.Extensions;
 
@@ -34,4 +38,33 @@ public static class HttpContextExtensions
             where string.Equals(scheme.Name, provider, StringComparison.OrdinalIgnoreCase)
             select scheme).Any();
     }
+
+    public static bool IsLoggedIn(this HttpContext context)
+        => context.User?.Identity?.IsAuthenticated == true;
+
+#pragma warning disable S6966
+    public static async Task<IUser?> GetCurrentDiscordUser(this HttpContext context)
+    {
+        if (context.User?.Identity?.IsAuthenticated != true) return null;
+        var userId = AspHelper.GetUserId(context);
+        if (!userId.HasValue) return null;
+
+        var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
+        var user = ExceptionHelper.RetryOnTimedOut(() => discord.GetUser(userId.Value));
+        return user;
+    }
+
+    public static async Task<IGuildUser?> GetCurrentDiscordGuildMember(this HttpContext context, ulong guildId)
+    {
+        var user = await context.GetCurrentDiscordUser();
+        if (user == null) return null;
+
+        var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
+        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
+        if (guild == null) return null;
+
+        var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
+        return member;
+    }
+#pragma warning restore S6966
 }

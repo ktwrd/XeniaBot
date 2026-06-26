@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using XeniaBot.Core.LevelSystem.Modules;
 using XeniaBot.Core.Modules;
 using XeniaBot.Shared.Helpers;
+#pragma warning disable S1186
+#pragma warning disable IDE0130
 
 namespace XeniaDiscord;
 
@@ -28,6 +30,7 @@ public static class XeniaDiscordCoreInteractions
             interactions.AddModuleAsync<RandomAnimalModule>(services),
             interactions.AddModuleAsync<ReminderModule>(services),
             interactions.AddModuleAsync<RolePreserveModule>(services),
+            interactions.AddModuleAsync<RolePreserveComponentModule>(services),
             interactions.AddModuleAsync<TicketModule>(services),
             interactions.AddModuleAsync<TranslateModule>(services),
             interactions.AddModuleAsync<WeatherModule>(services),

@@ -6,8 +6,8 @@ namespace XeniaBot.WebPanel.Models;
 
 public class StrippedCategory
 {
-    public IEnumerable<ulong> ChannelIds { get; set; }
-    public string Name { get; set; }
+    public IEnumerable<ulong> ChannelIds { get; set; } = [];
+    public string Name { get; set; } = string.Empty;
     public int Position { get; set; }
     public ulong Id { get; set; }
 

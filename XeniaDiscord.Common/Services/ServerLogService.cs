@@ -31,16 +31,21 @@ public class ServerLogService : BaseService
     {
         var options = new EventHandleOptions(guildId, @event)
             .AddEmbeds(embeds)
-            .AddAttachments(attachments?.Select(e => new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(e.Value)), e.Key)) ?? []);
+            .WithAttachments(attachments?.Select(e => new FileAttachment(new MemoryStream(Encoding.UTF8.GetBytes(e.Value)), e.Key)) ?? []);
 
         await EventHandle(options);
     }
+
+    public Task EventHandle(IGuild guild, ServerLogEvent @event, EmbedBuilder embed, List<FileAttachment>? attachments = null)
+        => EventHandle(guild.Id, @event, [embed], attachments);
+    public Task EventHandle(IGuild guild, ServerLogEvent @event, EmbedBuilder[] embeds, List<FileAttachment>? attachments = null)
+        => EventHandle(guild.Id, @event, embeds, attachments);
 
     public async Task EventHandle(ulong guildId, ServerLogEvent @event, EmbedBuilder[] embeds, List<FileAttachment>? attachments = null)
     {
         var options = new EventHandleOptions(guildId, @event)
             .AddEmbeds(embeds)
-            .AddAttachments(attachments ?? []);
+            .WithAttachments(attachments ?? []);
         await EventHandle(options);
     }
 
@@ -84,9 +89,11 @@ public class ServerLogService : BaseService
                 _log.Error(ex, $"Failed to send event (GuildId={options.GuildId}, ChannelEvent={channel.Event}, Event={options.Event})");
             }
         }
+
+        return;
         async Task<bool> ProcessForModel(ServerLogChannelModel channelModel)
         {
-            var logChannel = await ExceptionHelper.RetryOnTimedOut(async () => guild.GetTextChannel(channelModel.GetChannelId()));
+            var logChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(channelModel.GetChannelId()));
             if (logChannel == null) return false;
 
             return await ExceptionHelper.RetryOnTimedOut(async () => await EventHandleProcessInner(logChannel, options));
@@ -175,10 +182,14 @@ public class ServerLogService : BaseService
             Attachments = new List<FileAttachment>(10);
         }
 
+        public EventHandleOptions(IGuild guild, ServerLogEvent @event)
+            : this(guild.Id, @event)
+        { }
+
         public ulong GuildId { get; }
         public ServerLogEvent Event { get; }
         public ICollection<EmbedBuilder> Embeds { get; }
-        public ICollection<FileAttachment> Attachments { get; }
+        public ICollection<FileAttachment> Attachments { get; private set; }
 
         public EventHandleOptions AddEmbeds(params IEnumerable<EmbedBuilder> embeds)
         {
@@ -186,13 +197,23 @@ public class ServerLogService : BaseService
             return this;
         }
 
+        public EventHandleOptions WithAttachments(params IEnumerable<FileAttachment> attachments)
+        {
+            if (attachments is ICollection<FileAttachment> attachmentsCollection)
+                Attachments = attachmentsCollection;
+            else
+                Attachments = new List<FileAttachment>(attachments);
+            return this;
+        }
         public EventHandleOptions AddAttachments(params IEnumerable<FileAttachment> attachments)
         {
             foreach (var embed in attachments) Attachments.Add(embed);
             return this;
         }
 
-        public EventHandleOptions AddAttachment(string filename, string content,
+        public EventHandleOptions AddAttachment(
+            string filename,
+            string content,
             string? description = null,
             bool spoiler = false)
         {

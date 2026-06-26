@@ -47,7 +47,7 @@ public class RoleConfigRepository : BaseRepository<RoleConfigModel>
     /// <param name="name"></param>
     /// <param name="group"></param>
     /// <returns>IEnumerable of role configs</returns>
-    public async Task<ICollection<RoleConfigModel>?> GetAll(
+    public async Task<ICollection<RoleConfigModel>> GetAll(
         bool all = false,
         ulong? guildId = null,
         ulong? roleId = null,
@@ -92,7 +92,7 @@ public class RoleConfigRepository : BaseRepository<RoleConfigModel>
 
 
         var results = await BaseFind(filter);
-        return results.ToList();
+        return await results.ToListAsync();
     }
 
     public async Task<ICollection<RoleConfigModel>?> GetAll()

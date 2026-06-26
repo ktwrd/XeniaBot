@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using XeniaBot.Shared;
 using XeniaDiscord.Data.Repositories;
 using XeniaDiscord.Data.Services;
+#pragma warning disable S1186
+#pragma warning disable IDE0130
 
 namespace XeniaDiscord;
 
@@ -22,6 +23,7 @@ public static class XeniaDiscordData
 
         RegisterRepositories(services, includeAsSingleton);
     }
+
     public static void RegisterRepositories(
         IServiceCollection services,
         bool includeAsSingleton = false)

@@ -1,12 +1,9 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
-using XeniaBot.WebPanel.Models;
 
 namespace XeniaBot.WebPanel;
 
@@ -24,7 +21,7 @@ public class RequireSuperuserAttribute : ActionFilterAttribute
 
         // Decline access to users that aren't a superuser.
         var userId = AspHelper.GetUserId(context.HttpContext) ?? 0;
-        if (!CoreContext.Instance?.GetRequiredService<ConfigData>().UserWhitelist.Contains((ulong)userId) ?? false)
+        if (CoreContext.Instance?.GetRequiredService<ConfigData>().UserWhitelist.Contains(userId) != true)
         {
             context.Result = new ViewResult
             {

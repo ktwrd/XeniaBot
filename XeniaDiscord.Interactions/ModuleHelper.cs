@@ -6,9 +6,8 @@ namespace XeniaDiscord.Interactions;
 
 public static class ModuleHelper
 {
-
     /// <summary>
-    /// Callback for <see cref="PerformTransaction(Func{XeniaDbContext, Task{bool}})"/>
+    /// Callback for <see cref="PerformTransaction(IServiceProvider, PerformTransactionCallback)"/>
     /// </summary>
     /// <param name="db"></param>
     /// <returns>
@@ -16,6 +15,7 @@ public static class ModuleHelper
     /// Otherwise, it will rollback the transaction.
     /// </returns>
     public delegate Task<bool> PerformTransactionCallback(XeniaDbContext db);
+    
     public static async Task<TimeSpan> PerformTransaction(IServiceProvider services, PerformTransactionCallback callback)
     {
         var sw = new Stopwatch();

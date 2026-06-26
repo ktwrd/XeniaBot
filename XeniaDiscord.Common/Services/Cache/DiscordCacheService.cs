@@ -1,17 +1,18 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using System.Data;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
-using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
 
+[UsedImplicitly]
 public class DiscordCacheService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
@@ -25,8 +26,6 @@ public class DiscordCacheService
     private readonly IMapper<IUser, UserCacheModel> _userMapper;
     private readonly IMapperMerger<IUser, GuildMemberCacheModel> _memberMergerMapper;
     private readonly IMapperMerger<IGuild, GuildCacheModel> _guildMergerMapper;
-    private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberSnapshotMapper;
-    private readonly IMapper<IRole, GuildRoleSnapshotModel> _guildRoleSnapshotMapper;
     public DiscordCacheService(IServiceProvider services)
     {
         _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
@@ -39,14 +38,12 @@ public class DiscordCacheService
         _userMapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
         _memberMergerMapper = services.GetRequiredService<IMapperMerger<IUser, GuildMemberCacheModel>>();
         _guildMergerMapper = services.GetRequiredService<IMapperMerger<IGuild, GuildCacheModel>>();
-        _guildMemberSnapshotMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
-        _guildRoleSnapshotMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
     }
 
     #region Guild
     public async Task UpdateGuild(IGuild guild)
     {
-        using var db = _db.CreateSession();
+        await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -102,7 +99,7 @@ public class DiscordCacheService
     public Task UpdateGuildMember(IGuildUser member) => UpdateGuildMember(member.Guild, member);
     public async Task UpdateGuildMember(IGuild guild, IUser user)
     {
-        using var db = _db.CreateSession();
+        await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -120,16 +117,19 @@ public class DiscordCacheService
         XeniaDbContext db,
         IGuild guild, ulong userId)
     {
+#pragma warning disable S6966
         IUser? member = null;
         try
         {
-            member = await guild.GetUserAsync(userId);
-            member ??= _client.GetUser(userId);
+            member = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetUserAsync(userId));
+            // ReSharper disable once AsyncMethodWithoutAwait
+            member ??= await ExceptionHelper.RetryOnTimedOut(async () => _client.GetUser(userId));
         }
         catch (Exception ex)
         {
             _log.Warn(ex, $"Failed to get Member {userId} in Guild \"{guild.Name}\" ({guild.Id})");
         }
+#pragma warning restore S6966
         await UpdateGuildMember(db, guild, userId, member);
     }
     
@@ -141,7 +141,7 @@ public class DiscordCacheService
         var userIdStr = userId.ToString();
         var model = await db.GuildMemberCache
             .FirstOrDefaultAsync(e => e.UserId == userIdStr && e.GuildId == guildIdStr)
-            ?? new()
+            ?? new GuildMemberCacheModel
             {
                 GuildId = guildIdStr,
                 UserId = userIdStr,

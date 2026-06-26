@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using XeniaBot.Shared;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -18,10 +17,11 @@ namespace XeniaBot.WebPanel;
 public class RestrictToGuildAttribute : ActionFilterAttribute
 {
     /// <summary>
-    /// Key for the Route Data that contains the Guild Id this should be restricted to.
+    /// Key for the Route Data that contains the Guild ID this should be restricted to.
     /// </summary>
     [DefaultValue(null)]
     public string? GuildIdRouteKey { get; set; }
+
     /// <summary>
     /// Permission that the Requesting User requires to access the page this Attribute is applied on.
     /// </summary>
@@ -41,9 +41,9 @@ public class RestrictToGuildAttribute : ActionFilterAttribute
         if (!AuthAttributeHelper.HandleAuth(context))
             return;
 
-        ulong? targetGuildId = AuthAttributeHelper.ParseGuildIdFromRouteData(context, GuildIdRouteKey);
+        var targetGuildId = AuthAttributeHelper.ParseGuildIdFromRouteData(context, GuildIdRouteKey);
         
-        if (targetGuildId == null)
+        if (!targetGuildId.HasValue)
         {
             context.Result = new ViewResult
             {
@@ -60,7 +60,7 @@ public class RestrictToGuildAttribute : ActionFilterAttribute
         }
 
 
-        if (!AuthAttributeHelper.HandleUserAccessGuild(context, (ulong)targetGuildId!))
+        if (!AuthAttributeHelper.HandleUserAccessGuild(context, targetGuildId.Value))
         {
             return;
         }

@@ -23,7 +23,7 @@ public class ProgramDetails
     public bool SetStatus { get; set; } = false;
 
     /// <summary>
-    /// Unique tag identifiying the instance in a cluster.
+    /// Unique tag identifying the instance in a cluster.
     /// </summary>
     public string? PlatformTag { get; set; }
 
@@ -56,7 +56,7 @@ public class ProgramDetails
             var sb = new StringBuilder(Version);
             if (VersionRaw?.Build > 365)
             {
-                sb.AppendFormat(" ({0})", VersionDate.ToString("yyyy/MM/dd HH:mm:ss"));
+                sb.AppendFormat(" ({0:yyyy/MM/dd HH:mm:ss})", VersionDate);
             }
             return sb.ToString();
         }

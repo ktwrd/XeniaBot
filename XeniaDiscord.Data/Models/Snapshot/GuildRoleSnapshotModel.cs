@@ -106,9 +106,27 @@ public class GuildRoleSnapshotModel
     /// Property Accessor
     /// </summary>
     public List<GuildRolePermissionSnapshotModel> Permissions { get; set; }
+    
+    /// <summary>
+    /// Property Accessor
+    /// </summary>
+    public GuildRoleColorSnapshotModel? RoleColors { get; set; }
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
     public ulong GetRoleId() => RoleId.ParseRequiredULong(nameof(RoleId), false);
+
+    public GuildPermissions ParsePermissions()
+    {
+        if (Permissions == null)
+            throw new InvalidOperationException($"{nameof(Permissions)} was not included when querying database");
+        var value = (GuildPermission)0;
+        foreach (var item in Permissions)
+        {
+            value |= item.GetValue();
+        }
+
+        return new GuildPermissions((ulong)value);
+    }
 }
 
 public enum GuildRoleSnapshotSource
