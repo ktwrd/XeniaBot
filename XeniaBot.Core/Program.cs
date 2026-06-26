@@ -101,15 +101,9 @@ public static class Program
         LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
-            SentrySdk.Init(static options =>
-            {
-                Update(options);
-            });
+            SentrySdk.Init(Update);
             LogManager.Configuration ??= new();
-            LogManager.Configuration!.AddSentry(static options =>
-            {
-                Update(options);
-            });
+            LogManager.Configuration!.AddSentry(Update);
         }
         Core.MainAsync(args, CoreContextBeforeServiceBuild).Wait();
     }
@@ -170,12 +164,46 @@ public static class Program
     {
         if (e.ExceptionObject is Exception ex)
         {
-            SentrySdk.CaptureException(ex);
-            log.Fatal(ex, $"Unhandled exception! ({nameof(e.IsTerminating)}: {e.IsTerminating})");
-            if (Core.Services.GetRequiredService<DiscordService>().IsReady)
+            var cex = new XeniaFatalException(e, Core.Services.GetService<DiscordService>());
+            log.Fatal(cex);
+            SentryId? eventId = null;
+            try
             {
-                DiscordHelper.ReportError(ex, $"Unhandled exception! ({nameof(e.IsTerminating)}: {e.IsTerminating})").Wait();
+                eventId = SentrySdk.CaptureException(cex);
             }
+            catch (Exception iex)
+            {
+                log.Warn(iex, "Failed to report fatal exception");
+            }
+
+            try
+            {
+                var errorReportService = Core.Services.GetService<ErrorReportService>();
+                if (Core.Services.GetService<DiscordService>()?.IsReady == true &&
+                    errorReportService != null)
+                {
+                    errorReportService.Submit(new ErrorReportBuilder()
+                        .WithException(ex)
+                        .WithNotes("Unhandled exception" + (e.IsTerminating ? "\nApplication is terminating!" : string.Empty))).Wait();
+                }
+            }
+            catch (Exception iex)
+            {
+                log.Fatal(iex, $"Failed to submit error for SentryId={eventId}");
+            }
+
+            try
+            {
+                SentrySdk.Flush(TimeSpan.FromSeconds(15));
+            }
+            catch (Exception iex)
+            {
+                log.Warn(iex, "Failed to flush sentry");
+            }
+        }
+        else
+        {
+            log.Fatal("Unhandled exception!\n" + e.ExceptionObject);
         }
         Console.Error.WriteLine("OH SHIT, UNHANDLED EXCEPTION!!!\n" + e.ExceptionObject?.ToString());
         if (Debug)
@@ -188,4 +216,54 @@ public static class Program
     {
         Core.OnQuit(exitCode);
     }
+}
+
+public class XeniaFatalException : Exception
+{
+    public XeniaFatalException(
+        UnhandledExceptionEventArgs eventArgs,
+        DiscordService? discordService)
+        : base(FormatMessage(eventArgs, discordService), GetException(eventArgs))
+    {
+        IsTerminating = eventArgs.IsTerminating;
+        IsDiscordReady = discordService?.IsReady;
+    }
+
+    private static string FormatMessage(UnhandledExceptionEventArgs e, DiscordService? discordService)
+    {
+        const string a = "Unhandled exception";
+        const string b = " - Application is terminating!";
+        const string c = " (discord was ready)";
+        const string d = " (discord was not ready)";
+        var r = (e.IsTerminating ? a + b : a);
+        if (discordService == null) return r;
+        return discordService.IsReady ? c : d;
+    }
+
+    private static Exception GetException(UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex) return ex;
+        string? jsonData;
+        try
+        {
+            jsonData = JsonSerializer.Serialize(e, SerializerOptions);
+        }
+        catch
+        {
+            jsonData = e.ExceptionObject?.ToString();
+        }
+
+        return new Exception($"Type: {e.ExceptionObject?.GetType()}\n{jsonData}");
+    }
+
+    private static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
+    {
+        WriteIndented = true,
+        ReferenceHandler = ReferenceHandler.Preserve,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+    
+    public bool IsTerminating { get; }
+    
+    public bool? IsDiscordReady { get; }
 }
