@@ -683,7 +683,8 @@ public class ServerLogBotService : BaseService
         {
             var previousContent = previous?.Content ?? "";
             var currentContent = current.Content ?? "";
-            if (previousContent == currentContent) return;
+            if (previous?.ContentClean == null ||
+                previousContent == currentContent) return;
 
             var author = await ExceptionHelper.RetryOnTimedOut<IUser?>(async () => await _discord.GetUserAsync(current.AuthorId));
             if (author == null) return;
