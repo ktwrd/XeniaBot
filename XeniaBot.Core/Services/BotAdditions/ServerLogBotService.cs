@@ -690,7 +690,7 @@ public class ServerLogBotService : BaseService
         {
             var previousContent = previous?.Content ?? "";
             var currentContent = current.Content ?? "";
-            if (previous?.ContentClean == null ||
+            if (previous?.Content == null ||
                 previousContent == currentContent) return;
 
             var author = ExceptionHelper.RetryOnTimedOut<IUser?>(() => _discord.GetUser(current.AuthorId));
