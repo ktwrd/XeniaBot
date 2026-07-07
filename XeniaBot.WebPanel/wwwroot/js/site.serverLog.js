@@ -22,7 +22,9 @@ const serverLogEvents = [
 
     'RoleCreate',
     'RoleEdit',
-    'RoleDelete'
+    'RoleDelete',
+
+    'RolePreserve'
 ];
 
 /**
