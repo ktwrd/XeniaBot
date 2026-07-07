@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -6,11 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.DiscordCache.Models;
@@ -27,6 +25,7 @@ using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
+[UsedImplicitly]
 public class ServerLogBotService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogBotService));
@@ -264,9 +263,10 @@ public class ServerLogBotService : BaseService
     }
 
     #region Other Member Events
-    private async Task DiscordOnUserJoined(SocketGuildUser user)
+    private Task DiscordOnUserJoined(SocketGuildUser? user)
     {
-        if (user == null) return;
+        if (user == null)
+            return Task.CompletedTask;
         new Thread((roleArg) =>
         {
             if (roleArg is not SocketGuildUser socketGuildUser) return;
@@ -279,10 +279,12 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserJoinedThread)}");
             }
         }).Start(user);
+        return Task.CompletedTask;
     }
-    private async Task DiscordOnUserLeft(SocketGuild guild, SocketUser user)
+    private Task DiscordOnUserLeft(SocketGuild? guild, SocketUser? user)
     {
-        if (guild == null || user == null) return;
+        if (guild == null || user == null)
+            return Task.CompletedTask;
         new Thread((threadOptions) =>
         {
             if (threadOptions is not DiscordGuildUserPair pair) return;
@@ -295,10 +297,12 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserLeftThread)}");
             }
         }).Start(new DiscordGuildUserPair(guild, user));
+        return Task.CompletedTask;
     }
-    private async Task DiscordOnUserBanned(SocketUser user, SocketGuild guild)
+    private Task DiscordOnUserBanned(SocketUser? user, SocketGuild? guild)
     {
-        if (guild == null || user == null) return;
+        if (guild == null || user == null)
+            return Task.CompletedTask;
         new Thread((threadOptions) =>
         {
             if (threadOptions is not DiscordGuildUserPair pair) return;
@@ -311,10 +315,12 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserBannedThread)}");
             }
         }).Start(new DiscordGuildUserPair(guild, user));
+        return Task.CompletedTask;
     }
-    private async Task DiscordOnUserUnbanned(SocketUser user, SocketGuild guild)
+    private Task DiscordOnUserUnbanned(SocketUser? user, SocketGuild? guild)
     {
-        if (guild == null || user == null) return;
+        if (guild == null || user == null)
+            return Task.CompletedTask;
         new Thread((threadOptions) =>
         {
             if (threadOptions is not DiscordGuildUserPair pair) return;
@@ -327,9 +333,10 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserUnbannedThread)}");
             }
         }).Start(new DiscordGuildUserPair(guild, user));
+        return Task.CompletedTask;
     }
 
-    private sealed record DiscordGuildUserPair(SocketGuild Guild, SocketUser User);
+    private sealed record DiscordGuildUserPair(SocketGuild? Guild, SocketUser? User);
 
     private async Task DiscordOnUserJoinedThread(SocketGuildUser user)
     {
@@ -369,7 +376,7 @@ public class ServerLogBotService : BaseService
                 .WithUser(user));
         }
     }
-    private async Task DiscordOnUserLeftThread(DiscordGuildUserPair options)
+    private async Task DiscordOnUserLeftThread(DiscordGuildUserPair? options)
     {
         if (options == null) return;
 
@@ -434,7 +441,7 @@ public class ServerLogBotService : BaseService
                 .WithGuild(guild));
         }
     }
-    private async Task<bool> DiscordOnUserKickThread(SocketGuild guild, SocketUser user, IAuditLogEntry auditLogEntry)
+    private async Task<bool> DiscordOnUserKickThread(SocketGuild? guild, SocketUser? user, IAuditLogEntry? auditLogEntry)
     {
         if (guild == null || user == null || auditLogEntry == null) return false;
         try
@@ -472,7 +479,7 @@ public class ServerLogBotService : BaseService
             return false;
         }
     }
-    private async Task DiscordOnUserBannedThread(DiscordGuildUserPair options)
+    private async Task DiscordOnUserBannedThread(DiscordGuildUserPair? options)
     {
         if (options == null) return;
 
@@ -517,7 +524,7 @@ public class ServerLogBotService : BaseService
                 .WithGuild(guild));
         }
     }
-    private async Task DiscordOnUserUnbannedThread(DiscordGuildUserPair options)
+    private async Task DiscordOnUserUnbannedThread(DiscordGuildUserPair? options)
     {
         if (options == null) return;
 
