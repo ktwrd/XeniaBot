@@ -176,7 +176,7 @@ public class TicketService : BaseService
             Config = config,
             Guild = guild,
             Role = role,
-            RoleMembers = role.Members.ToArray(),
+            RoleMembers = role.Members.ToArray<IGuildUser>(),
             LogChannel = logChannel,
             TicketChannel = ticketChannel
         };
