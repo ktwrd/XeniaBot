@@ -1,5 +1,4 @@
-﻿using XeniaBot.DiscordCache.Helpers;
-using Discord;
+﻿using Discord;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace XeniaBot.DiscordCache.Models;
@@ -47,7 +46,7 @@ public class CacheUserModel
         Activities = Array.Empty<CacheUserActivity>();
     }
 
-    public CacheUserModel Update(IUser user)
+    public virtual void Update(IUser user)
     {
         Snowflake = user.Id;
         CreatedAt = user.CreatedAt;
@@ -69,14 +68,15 @@ public class CacheUserModel
             .Where(v => v != null)
             .Cast<CacheUserActivity>().ToArray();
         PrimaryGuild = user.PrimaryGuild == null ? null : new CacheUserPrimaryGuild(user.PrimaryGuild.Value);
-        return this;
     }
+
     public static CacheUserModel? FromExisting(IUser? user)
     {
         if (user == null)
             return null;
 
         var instance = new CacheUserModel();
-        return instance.Update(user);
+        instance.Update(user);
+        return instance;
     }
 }
