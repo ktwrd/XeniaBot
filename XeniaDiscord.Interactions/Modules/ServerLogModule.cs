@@ -3,6 +3,7 @@ using Discord.Interactions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Repositories;
@@ -170,8 +171,8 @@ public class ServerLogModule : InteractionModuleBase
             .WithCurrentTimestamp();
         try
         {
-            var currentMember = await Context.Guild.GetCurrentUserAsync();
-            var ourChannelPermissions = currentMember.GetPermissions(channel);
+            var currentMember = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Guild.GetCurrentUserAsync());
+            var ourChannelPermissions = ExceptionHelper.RetryOnTimedOut(() => currentMember.GetPermissions(channel));
             var missingPermissions = new List<string>();
             if (!ourChannelPermissions.ViewChannel)
             {

@@ -24,20 +24,19 @@ public class ModerationModule : InteractionModuleBase
             .WithTitle("Failed to safely fetch user");
         try
         {
-            DiscordSocketClient client = (DiscordSocketClient)Context.Client;
+            var client = (DiscordSocketClient)Context.Client;
             if (client == null)
             {
-
                 throw new NonfatalException("Failed to fetch discord client");
             }
 
-            SocketGuild? guild = client.GetGuild(Context.Guild.Id);
+            var guild = ExceptionHelper.RetryOnTimedOut(() => client.GetGuild(Context.Guild.Id));
             if (guild == null)
             {
                 throw new NonfatalException($"Failed to fetch guild ({Context.Guild.Id})");
             }
 
-            SocketGuildUser? member = guild.GetUser(userId);
+            var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(userId));
             if (member == null)
             {
                 throw new NonfatalException($"Member not found ({userId})");
@@ -47,17 +46,13 @@ public class ModerationModule : InteractionModuleBase
         }
         catch (NonfatalException e)
         {
-            await Context.Interaction.RespondAsync(
-                embed: embed.WithDescription(e.Message).Build(),
-                ephemeral: true);
+            await ExceptionHelper.RetryOnTimedOut(async () => await Context.Interaction.RespondAsync(embed: embed.WithDescription(e.Message).Build(), ephemeral: true));
             return null;
         }
         catch (Exception e)
         {
             embed.WithDescription($"Fatal Error! This has been reported to the developers.\n```\n{e.Message}\n```");
-            await Context.Interaction.RespondAsync(
-                embed: embed.Build(),
-                ephemeral: true);
+            await ExceptionHelper.RetryOnTimedOut(async () => await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true));
             await DiscordHelper.ReportError(e, Context);
         }
         return null;
@@ -101,7 +96,7 @@ public class ModerationModule : InteractionModuleBase
 
             embed.WithColor(reachedWarnLimit ? Color.Red : Color.Blue);
 
-            await FollowupAsync(embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await FollowupAsync(embed: embed.Build()));
         }
         catch (Exception e)
         {
@@ -113,7 +108,7 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await FollowupAsync(embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await FollowupAsync(embed: embed.Build()));
             await DiscordHelper.ReportError(e, Context);
             return;
         }
@@ -137,7 +132,7 @@ public class ModerationModule : InteractionModuleBase
             {
                 embed.WithDescription($"No active warns found for <@{user.Id}>")
                     .WithColor(Color.Orange);
-                await FollowupAsync(embed: embed.Build());
+                await ExceptionHelper.RetryOnTimedOut(async () => await FollowupAsync(embed: embed.Build()));
                 return;
             }
 
@@ -176,7 +171,7 @@ public class ModerationModule : InteractionModuleBase
                     $"\n\n**Member has {data.Count} active warn{(data.Count > 1 ? 's'.ToString() : string.Empty)}**, but the limit is {warnStrikeConfig.MaxStrike}!\n" +
                     $"Action immediately or ignore this notification.";
             }
-            await FollowupAsync(embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await FollowupAsync(embed: embed.Build()));
         }
         catch (Exception ex)
         {
@@ -188,10 +183,8 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await FollowupAsync(
-                embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await FollowupAsync(embed: embed.Build()));
             await DiscordHelper.ReportError(ex, Context);
-            return;
         }
     }
     
@@ -221,8 +214,9 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await Context.Interaction.RespondAsync(embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await Context.Interaction.RespondAsync(embed: embed.Build()));
             await DiscordHelper.ReportError(e, Context);
+            return;
         }
 
         embed.WithDescription($"Successfully kicked `{user.Username}#{user.DiscriminatorValue}`")
@@ -230,8 +224,7 @@ public class ModerationModule : InteractionModuleBase
         if (reason != null)
             embed.AddField("Reason", reason);
         
-        await Context.Interaction.RespondAsync(
-            embed: embed.Build());
+        await ExceptionHelper.RetryOnTimedOut(async () => await Context.Interaction.RespondAsync(embed: embed.Build()));
     }
 
     [SlashCommand("ban", "Ban member from server")]
@@ -247,8 +240,7 @@ public class ModerationModule : InteractionModuleBase
         if (pruneDays < 0)
         {
             embed.WithColor(Color.Red).WithDescription("Parameter `pruneDays` cannot be less than `0`");
-            await Context.Interaction.RespondAsync(
-                embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await Context.Interaction.RespondAsync(embed: embed.Build()));
             return;
         }
 
@@ -266,8 +258,7 @@ public class ModerationModule : InteractionModuleBase
                 "```"
             }));
             embed.WithColor(Color.Red);
-            await Context.Interaction.RespondAsync(
-                embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await Context.Interaction.RespondAsync(embed: embed.Build()));
             await DiscordHelper.ReportError(e, Context);
             return;
         }
@@ -283,7 +274,7 @@ public class ModerationModule : InteractionModuleBase
         if (reason != null)
             embed.AddField("Reason", reason);
         
-        await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`");
+        await ExceptionHelper.RetryOnTimedOut(async () => await Context.Interaction.RespondAsync($"Banned member `{user.Username}#{user.DiscriminatorValue}`"));
     }
 
 
@@ -298,37 +289,39 @@ public class ModerationModule : InteractionModuleBase
         var guild = client.GetGuild(Context.Guild.Id);
         
         // Use Context.Channel when no channel given.
-        SocketTextChannel targetChannel = guild.GetTextChannel(channel?.Id ?? Context.Channel.Id);
-        SocketTextChannel currentChannel = guild.GetTextChannel(Context.Channel.Id);
+        var targetChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(channel?.Id ?? Context.Channel.Id));
+        var currentChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(Context.Channel.Id));
 
         // Let the user know that it might take a while.
         
         await Context.Interaction.RespondAsync($"Calculating (this may take a while)");
-        List<IMessage> messageList = new List<IMessage>();
+        var messageList = new List<IMessage>();
         try
         {
             messageList = await FetchRecursiveMessages(targetChannel, count);
         }
         catch (Exception e)
         {
-            
-            await currentChannel.SendMessageAsync(embed: DiscordHelper.BaseEmbed()
+            var errEmbed = DiscordHelper.BaseEmbed()
                 .WithTitle("Failed to fetch message list")
                 .WithDescription($"```\n{e.Message}\n```")
-                .WithColor(Color.Red).Build());
+                .WithColor(Color.Red);
+            await ExceptionHelper.RetryOnTimedOut(async () => await currentChannel.SendMessageAsync(embed: errEmbed.Build()));
             await DiscordHelper.ReportError(e, Context);
             return;
         }
 
         if (messageList.Count < 1)
         {
-            await currentChannel.SendMessageAsync(embed: DiscordHelper.BaseEmbed()
+            var embedNone = DiscordHelper.BaseEmbed()
                 .WithTitle("No messages found")
-                .WithColor(Color.Red).Build());
+                .WithColor(Color.Red);
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+                await currentChannel.SendMessageAsync(embed: embedNone.Build()));
             return;
         }
 
-        var notifyMessage = await currentChannel.SendMessageAsync(embed: DiscordHelper.BaseEmbed()
+        var embed = DiscordHelper.BaseEmbed()
             .WithTitle($"Purged {messageList.Count} messages")
             .WithDescription(string.Join("\n", new string[]
             {
@@ -336,27 +329,31 @@ public class ModerationModule : InteractionModuleBase
                 $"From: {messageList.Last().Timestamp}",
                 $"To  : {messageList.First().Timestamp}",
                 $"```"
-            })).Build());
+            }));
+        var notifyMessage = await ExceptionHelper.RetryOnTimedOut(async () => await currentChannel.SendMessageAsync(embed: embed.Build()));
         try
         {
             await targetChannel.DeleteMessagesAsync(messageList);
         }
         catch (Exception e)
         {
-            await notifyMessage.ReplyAsync(embed: DiscordHelper.BaseEmbed()
+            var errEmbed = DiscordHelper.BaseEmbed()
                 .WithTitle("Failed to delete messages")
                 .WithDescription($"```\n{e.Message}\n```")
-                .WithColor(Color.Red).Build());
+                .WithColor(Color.Red);
+            await ExceptionHelper.RetryOnTimedOut(async () => await notifyMessage.ReplyAsync(embed: errEmbed.Build()));
             await DiscordHelper.ReportError(e, Context);
         }
     }
 
     private static async Task<List<IMessage>> FetchRecursiveMessages(SocketTextChannel channel, int? max = null)
     {
-        List<IMessage> messageList = new List<IMessage>();
-        IEnumerable<IMessage> messages = await channel.GetMessagesAsync(Math.Min(max ?? 100, 300)).FlattenAsync();
+        var messages = await channel.GetMessagesAsync(Math.Min(max ?? 100, 300)).FlattenAsync();
+        if (messages == null) return [];
         
-        bool allowContinue = true;
+        var messageList = new List<IMessage>();
+
+        var allowContinue = true;
         while (allowContinue)
         {
             foreach (var item in messages)
@@ -372,7 +369,7 @@ public class ModerationModule : InteractionModuleBase
                 var isLast = messages.Last().Id == item.Id;
                 if (isLast)
                 {
-                    messages = await channel.GetMessagesAsync(fromMessageId: item.Id, Direction.Before).FlattenAsync();
+                    messages = await ExceptionHelper.RetryOnTimedOut(async () => await channel.GetMessagesAsync(fromMessageId: item.Id, Direction.Before).FlattenAsync());
                     var last = messages.LastOrDefault();
                     if (last == null || last?.Id == item.Id || last?.Timestamp > item.Timestamp)
                     {

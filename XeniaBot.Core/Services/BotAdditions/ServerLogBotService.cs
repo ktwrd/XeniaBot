@@ -626,7 +626,7 @@ public class ServerLogBotService : BaseService
             var authorId = message?.Author.Id ?? funkyMessage?.AuthorId ?? 0;
             if (authorId != 0)
             {
-                author = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetUser(authorId));
+                author = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(authorId));
             }
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Deleted")
@@ -686,10 +686,10 @@ public class ServerLogBotService : BaseService
             if (previous?.ContentClean == null ||
                 previousContent == currentContent) return;
 
-            var author = await ExceptionHelper.RetryOnTimedOut<IUser?>(async () => await _discord.GetUserAsync(current.AuthorId));
+            var author = ExceptionHelper.RetryOnTimedOut<IUser?>(() => _discord.GetUser(current.AuthorId));
             if (author == null) return;
 
-            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
+            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent, currentContent));
             var username = author.FormatUsername().Replace('`', '\'').PadRight(1, ' ');
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Edited")

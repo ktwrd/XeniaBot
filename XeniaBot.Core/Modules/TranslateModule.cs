@@ -37,7 +37,7 @@ public class TranslateModule : InteractionModuleBase
                 Description = ex.Message,
                 Color = new Color(255, 0 ,0)
             };
-            await Context.Interaction.RespondAsync(embed: failEmbed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () => await FollowupAsync(embed: failEmbed.Build()));
             await DiscordHelper.ReportError(ex, Context);
             return;
         }
@@ -51,6 +51,6 @@ public class TranslateModule : InteractionModuleBase
         embed.AddField($"From ({result.SpecifiedSourceLanguage ?? result.DetectedSourceLanguage})", result.OriginalText);
         embed.AddField($"To ({result.TargetLanguage})", result.TranslatedText);
         embed.WithFooter("Translated with Google Cloud Translate API");
-        await Context.Interaction.RespondAsync(embed: embed.Build());
+        await ExceptionHelper.RetryOnTimedOut(async () => await FollowupAsync(embed: embed.Build()));
     }
 }

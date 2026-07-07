@@ -479,7 +479,7 @@ public class BanSyncService : BaseService
             return;
 
         // Check if config channel has been made, if not then ignore
-        SocketTextChannel? logChannel = ExceptionHelper.RetryOnTimedOut(() => arg.Guild.GetTextChannel(guildConfig.GetLogChannelId().GetValueOrDefault(0)));
+        var logChannel = ExceptionHelper.RetryOnTimedOut(() => arg.Guild.GetTextChannel(guildConfig.GetLogChannelId().GetValueOrDefault(0)));
         if (logChannel == null) return;
 
         // Check if this user has been banned before, if not then ignore

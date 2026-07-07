@@ -63,7 +63,7 @@ public sealed class DiscordAuditLogService : BaseService
 
     private async Task<AuditLogEntryResult> GetLatest(ulong guildId, ActionType action, Maybe<TimeSpan> doneWithinTheLast, Func<IAuditLogEntry, bool> predicate)
     {
-        var guild = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetGuild(guildId));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         if (guild == null)
         {
             return ErrorCode.GuildNotFound;
