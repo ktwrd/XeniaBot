@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using NLog;
 using System;
 using System.Net.Http;
@@ -17,18 +18,21 @@ public class RandomAnimalModule : InteractionModuleBase
     private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(RandomAnimalModule));
     [SlashCommand("fox", "Get a random image of a fox")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Fox()
     {
         await Boilerplate("fox");
     }
     [SlashCommand("yeen", "Get a random image of a yeen")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Yeen()
     {
         await Boilerplate("yeen");
     }
     [SlashCommand("dog", "Get a random image of a dog")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Dog()
     {
         await Boilerplate("dog");

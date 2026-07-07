@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.MongoData.Repositories;
@@ -13,14 +14,22 @@ namespace XeniaBot.Core.Modules;
 [CommandContextType(InteractionContextType.Guild)]
 public class ConfessionAdminModule : InteractionModuleBase
 {
+    private readonly ConfessionService _service;
+    private readonly ConfessionConfigRepository _repo;
+
+    public ConfessionAdminModule(IServiceProvider services)
+    {
+        _service = services.GetRequiredService<ConfessionService>();
+        _repo = services.GetRequiredService<ConfessionConfigRepository>();
+    }
+
     [SlashCommand("purge", "Remove all traces of the Confession Module from this guild")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
     [RequireBotPermission(GuildPermission.ManageMessages)]
     [RegisterDBLCommand]
     public async Task Purge()
     {
-        var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
-        var item = await controller.GetGuild(Context.Guild.Id);
+        var item = await _repo.GetGuild(Context.Guild.Id);
         if (item == null)
         {
             await Context.Interaction.RespondAsync("Guild not registered in database");
@@ -29,7 +38,7 @@ public class ConfessionAdminModule : InteractionModuleBase
 
         try
         {
-            await controller.Delete(item);
+            await _repo.Delete(item);
         }
         catch (Exception ex)
         {
@@ -60,14 +69,12 @@ public class ConfessionAdminModule : InteractionModuleBase
             return;
         }
 
-        var controller = Program.Core.GetRequiredService<ConfessionService>();
-        var config = Program.Core.GetRequiredService<ConfessionConfigRepository>();
-        var item = await config.GetGuild(Context.Guild.Id);
+        var item = await _repo.GetGuild(Context.Guild.Id);
         if (item != null)
         {
-            await config.Delete(item);
+            await _repo.Delete(item);
         }
-        await controller.InitializeModal(
+        await _service.InitializeModal(
             Context.Guild.Id,
             confessionOutputChannel.Id,
             confessionModalChannel.Id);

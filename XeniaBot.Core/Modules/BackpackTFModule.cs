@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Discord;
+using Discord.Interactions;
+using JetBrains.Annotations;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Discord;
-using Discord.Interactions;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Services.Wrappers;
 using XeniaBot.Shared;
-
 using DColor = Discord.Color;
 
 namespace XeniaBot.Core.Modules;
@@ -15,8 +16,18 @@ namespace XeniaBot.Core.Modules;
 [Group("tf2", "Backpack.tf Integration")]
 public class BackpackTFModule : InteractionModuleBase
 {
+    private readonly BackpackTFService _service;
+    private readonly ProgramDetails _programDetails;
+
+    public BackpackTFModule(IServiceProvider services)
+    {
+        _service = services.GetRequiredService<BackpackTFService>();
+        _programDetails = services.GetRequiredService<ProgramDetails>();
+    }
+
     [SlashCommand("currency", "List currencies and their current worth")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task GetCurrencyPlural()
     {
         await Context.Interaction.DeferAsync();
@@ -26,8 +37,7 @@ public class BackpackTFModule : InteractionModuleBase
             .WithCurrentTimestamp();
         try
         {
-            var controller = Program.Core.GetRequiredService<BackpackTFService>();
-            var data = await controller.GetCurrenciesAsync();
+            var data = await _service.GetCurrenciesAsync();
             if (data == null)
             {
                 embed.WithDescription($"Failed to fetch currency data!!")
@@ -38,9 +48,9 @@ public class BackpackTFModule : InteractionModuleBase
 
             foreach (var item in data)
             {
-                decimal refinedCost = controller.GetRefinedCost(item.Price);
-                decimal keyCost = controller.GetKeyCost(item.Price);
-                decimal dollarCost = controller.GetDollarCost(item.Price);
+                var refinedCost = _service.GetRefinedCost(item.Price);
+                var keyCost = _service.GetKeyCost(item.Price);
+                var dollarCost = _service.GetDollarCost(item.Price);
 
                 embed.AddField(item.Name, string.Join("\n",
                     item.Price.ToString(),
@@ -61,8 +71,7 @@ public class BackpackTFModule : InteractionModuleBase
             embed.WithDescription($"Failed to get currency data! `{ex.Message}`")
                 .WithColor(DColor.Red);
             
-            var programDetails = Program.Core.GetRequiredService<ProgramDetails>();
-            if (programDetails.Debug)
+            if (_programDetails.Debug)
             {
                 using var ms = new MemoryStream(Encoding.UTF8.GetBytes(ex.ToString()));
                 await Context.Interaction.FollowupWithFileAsync(

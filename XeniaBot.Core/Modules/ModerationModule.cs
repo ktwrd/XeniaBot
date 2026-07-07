@@ -5,10 +5,13 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Services;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Modules;
@@ -16,6 +19,22 @@ namespace XeniaBot.Core.Modules;
 [CommandContextType(InteractionContextType.Guild)]
 public class ModerationModule : InteractionModuleBase
 {
+
+    private readonly WarnStrikeService _warnStrikeService;
+    private readonly WarnService _warnService;
+    private readonly ConfigData _configData;
+    private readonly ErrorReportService _err;
+    private readonly DiscordSocketClient _client;
+
+    public ModerationModule(IServiceProvider services)
+    {
+        _warnStrikeService = services.GetRequiredService<WarnStrikeService>();
+        _warnService = services.GetRequiredService<WarnService>();
+        _configData = services.GetRequiredService<ConfigData>();
+        _err = services.GetRequiredService<ErrorReportService>();
+        _client = services.GetRequiredService<DiscordSocketClient>();
+    }
+
     /// <exception cref="NonfatalException">When failed to fetch client/guild/member. This should be displayed to the user as well as the developers.</exception>
     private async Task<SocketGuildUser?> SafelyFetchUser(ulong userId)
     {
@@ -61,6 +80,7 @@ public class ModerationModule : InteractionModuleBase
     [SlashCommand("warn", "Warn member")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task WarnMember(IUser user, string reason)
     {
         await DeferAsync();
@@ -68,10 +88,7 @@ public class ModerationModule : InteractionModuleBase
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Member");
         try
         {
-            var strikeService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
-            var warnService = CoreContext.Instance.GetRequiredService<WarnService>();
-            
-            var data = await warnService.CreateWarnAsync(
+            var data = await _warnService.CreateWarnAsync(
                 Context.Guild,
                 user, 
                 Context.User, 
@@ -79,8 +96,8 @@ public class ModerationModule : InteractionModuleBase
             embed.WithDescription($"Warned member <@{user.Id}>");
             embed.WithFooter($"{data.WarnId}");
 
-            var warnStrikeConfig = await strikeService.GetStrikeConfig(Context.Guild.Id);
-            var (reachedWarnLimit, activeWarns) = await strikeService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
+            var warnStrikeConfig = await _warnStrikeService.GetStrikeConfig(Context.Guild.Id);
+            var (reachedWarnLimit, activeWarns) = await _warnStrikeService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
             if (reachedWarnLimit)
             {
                 embed.AddField(
@@ -88,7 +105,7 @@ public class ModerationModule : InteractionModuleBase
                     $"Has {activeWarns!.Count} active warns (limit is {warnStrikeConfig.MaxStrike})\nAction immediately or ignore this message.");
             }
             
-            if (CoreContext.Instance.Config.Data.HasDashboard)
+            if (_configData.HasDashboard)
             {
                 embed.Description +=
                     $"\n[View on Dashboard]({Program.Core.Config.Data.DashboardUrl}/Warn/Info/{data.WarnId})";
@@ -117,16 +134,15 @@ public class ModerationModule : InteractionModuleBase
     [SlashCommand("warns", "Get all warns for user. Only top 10")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task MemberWarns(SocketGuildUser user)
     {
         await DeferAsync();
         var embed = DiscordHelper.BaseEmbed().WithTitle("Member Warns");
         try
         {
-            var warnService = CoreContext.Instance.GetRequiredService<WarnStrikeService>();
-            var config = CoreContext.Instance.GetRequiredService<ConfigData>();
-            var warnStrikeConfig = await warnService.GetStrikeConfig(Context.Guild.Id);
-            var (reachedWarnLimit, data) = await warnService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
+            var warnStrikeConfig = await _warnStrikeService.GetStrikeConfig(Context.Guild.Id);
+            var (reachedWarnLimit, data) = await _warnStrikeService.UserReachedWarnLimit(Context.Guild.Id, user.Id);
 
             if (data?.Count < 1)
             {
@@ -138,9 +154,9 @@ public class ModerationModule : InteractionModuleBase
 
             string encaseWithDashboardUrl(GuildWarnItemModel item)
             {
-                if (config?.HasDashboard ?? false)
+                if (_configData.HasDashboard)
                 {
-                    return $" ([View on Dashboard]({config.DashboardUrl}/Warn/Info/{item.WarnId}))";
+                    return $" ([View on Dashboard]({_configData.DashboardUrl}/Warn/Info/{item.WarnId}))";
                 }
                 return "";
             }
@@ -149,18 +165,18 @@ public class ModerationModule : InteractionModuleBase
             {
                 var item = data[i];
             
-                embed.AddField(DateTimeOffset.FromUnixTimeMilliseconds(item.CreatedAtTimestamp).ToString("yyyy MMMM dd, h:mm:ss tt"), string.Join("\n",
-                    new string[]
-                    {
+                embed.AddField(
+                    DateTimeOffset.FromUnixTimeMilliseconds(item.CreatedAtTimestamp).ToString("yyyy MMMM dd, h:mm:ss tt"),
+                    string.Join("\n",
                         $"Created by <@{item.ActionedUserId}>" + encaseWithDashboardUrl(item),
                         "```",
                         item.Description.Length < 1
                             ? "<no description>"
                             : item.Description.Length > 500
-                                ? item.Description.Substring(500) + "..."
+                                ? item.Description[500..] + "..."
                                 : item.Description,
                         "```"
-                    }), true);
+                    ), true);
             }
 
             embed.WithDescription($"{data.Count} records for <@{user.Id}> " + (data.Count > 10 ? $" (10 shown)" : ""))
@@ -192,6 +208,7 @@ public class ModerationModule : InteractionModuleBase
     [RequireUserPermission(GuildPermission.KickMembers)]
     [RequireBotPermission(GuildPermission.KickMembers | GuildPermission.ViewAuditLog)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task KickMember(SocketGuildUser user, string? reason = null)
     {
         SocketGuildUser? member = await SafelyFetchUser(user.Id);
@@ -231,6 +248,7 @@ public class ModerationModule : InteractionModuleBase
     [RequireUserPermission(GuildPermission.BanMembers)]
     [RequireBotPermission(GuildPermission.BanMembers | GuildPermission.ViewAuditLog)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task BanMember(SocketGuildUser user, string? reason = null, 
         [Summary(description: "How many days of messages should be deleted when this member is banned")]
         int pruneDays=0)
@@ -281,12 +299,12 @@ public class ModerationModule : InteractionModuleBase
     [SlashCommand("purge", "Purge messages")]
     [RequireUserPermission(GuildPermission.ManageMessages)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task PurgeMessages(
         int count,
         [ChannelTypes(ChannelType.Text)] IChannel? channel = null)
     {
-        var client = Program.Core.GetRequiredService<DiscordSocketClient>();
-        var guild = client.GetGuild(Context.Guild.Id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(Context.Guild.Id));
         
         // Use Context.Channel when no channel given.
         var targetChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(channel?.Id ?? Context.Channel.Id));

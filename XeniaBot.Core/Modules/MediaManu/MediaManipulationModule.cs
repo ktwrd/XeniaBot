@@ -7,6 +7,7 @@ using NLog;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 using NVImage = NetVips.Image;
@@ -55,6 +56,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
     }
     [SlashCommand("caption", "Add a caption to a piece of media")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Caption(string caption,
         IAttachment attachment,
         [Summary(description: "Export as a GIF")]
@@ -307,6 +309,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
 
     [SlashCommand("speechbubble", "Add a speech bubble to an image or a gif.")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task SpeechBubble(IAttachment attachment,
         [Summary(description: "When True, the speech bubble will be on the bottom, and when False it will be on top.")]
         bool flip = false,
