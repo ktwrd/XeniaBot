@@ -220,7 +220,7 @@ partial class AdminController
         await model.PopulateModel(HttpContext, id);
         try
         {
-            await using var db = _db.CreateSession();
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
             await using var trans = await db.Database.BeginTransactionAsync();
             try
             {

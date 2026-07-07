@@ -1,4 +1,6 @@
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Prometheus;
@@ -16,13 +18,11 @@ public partial class DiscordStatisticsService : BaseService
     private readonly ConfigData _configData;
     private readonly PrometheusService _prom;
     private readonly ProgramDetails _details;
-    private readonly XeniaDbContext _db;
-    private readonly IServiceScope? _dbScope;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     public void Shutdown()
     {
         _prom.ServerStart -= InitializePrometheus;
         _prom.ReloadMetrics -= ReloadMetrics;
-        _dbScope?.Dispose();
     }
     public DiscordStatisticsService(IServiceProvider services) : base(services)
     {
@@ -32,8 +32,8 @@ public partial class DiscordStatisticsService : BaseService
         _client = services.GetRequiredService<DiscordSocketClient>();
 
         _prom = services.GetRequiredService<PrometheusService>();
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out _dbScope);
-        
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
+
         _statGuilds = _prom.CreateGauge(
             "xenia_discord_guild_count",
             "Amount of guilds this bot is in",

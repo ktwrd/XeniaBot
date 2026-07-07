@@ -19,7 +19,6 @@ namespace XeniaDiscord.Common.Services;
 public class RolePreserveService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(RolePreserveService));
-    private readonly XeniaDbContext _db;
     private readonly ErrorReportService _err;
     private readonly DiscordSocketClient _client;
     private readonly RolePreserveUserRepository _userRepository;
@@ -27,20 +26,22 @@ public class RolePreserveService : BaseService
     private readonly RolePreserveLogService _rolePreserveLogService;
     private readonly ConfigData _configData;
     private readonly ProgramDetails _details;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
     public RolePreserveService(IServiceProvider services)
         : base(services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
         _err = services.GetRequiredService<ErrorReportService>();
         _client = services.GetRequiredService<DiscordSocketClient>();
         _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
-        _userRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveUserRepository>();
-        _guildRepository = (scope?.ServiceProvider ?? services).GetRequiredService<RolePreserveGuildRepository>();
-        var snapshotService = (scope?.ServiceProvider ?? services).GetRequiredService<DiscordSnapshotService>();
+        _userRepository = services.GetRequiredService<RolePreserveUserRepository>();
+        _guildRepository = services.GetRequiredService<RolePreserveGuildRepository>();
+        var snapshotService = services.GetRequiredService<DiscordSnapshotService>();
         _rolePreserveLogService = services.GetRequiredService<RolePreserveLogService>();
-        
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
+
+
         if (_details.Platform == XeniaPlatform.Bot)
         {
             _client.UserJoined += ClientOnUserJoined;
@@ -76,7 +77,7 @@ public class RolePreserveService : BaseService
         if (role == null) return;
 
         // remove from blacklist & remove from preserved roles
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -124,7 +125,7 @@ public class RolePreserveService : BaseService
             return;
         }
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -144,7 +145,7 @@ public class RolePreserveService : BaseService
     
     private async Task ClientOnUserJoined(SocketGuildUser user)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         var auditId = Guid.NewGuid();
         try
@@ -315,7 +316,7 @@ public class RolePreserveService : BaseService
 
     public async Task PreserveAll(DateTime? startedAt = null)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -373,7 +374,7 @@ public class RolePreserveService : BaseService
     
     public async Task PreserveGuild(SocketGuild guild, DateTime? startedAt = null)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -406,8 +407,8 @@ public class RolePreserveService : BaseService
     {
         var guild = _client.GetGuild(guildId);
         if (guild == null) return $"Guild does not exist: `{guildId}`";
-        
-        await using var db = _db.CreateSession();
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

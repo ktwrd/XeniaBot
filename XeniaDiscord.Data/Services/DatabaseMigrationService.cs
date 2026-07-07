@@ -30,7 +30,7 @@ public class DatabaseMigrationService : BaseService
         {
             try
             {
-                InitializeThread().Wait();
+                InitializeThread().GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

@@ -21,7 +21,6 @@ namespace XeniaDiscord.Interactions.Modules.Admin;
 public partial class AdmDataModule : InteractionModuleBase
 {
     private readonly ConfigData _config;
-    private readonly XeniaDbContext _db;
     private readonly DiscordSnapshotService _snapshotService;
     private readonly DiscordCacheService _discordCacheService;
     private readonly DiscordSocketClient _client;
@@ -31,7 +30,6 @@ public partial class AdmDataModule : InteractionModuleBase
     {
         _services = services;
         _config = services.GetRequiredService<ConfigData>();
-        _db = services.GetRequiredService<XeniaDbContext>();
         _snapshotService = services.GetRequiredService<DiscordSnapshotService>();
         _discordCacheService = services.GetRequiredService<DiscordCacheService>();
         _client = services.GetRequiredService<DiscordSocketClient>();
@@ -46,6 +44,7 @@ public partial class AdmDataModule : InteractionModuleBase
     }
 
     [SlashCommand("guild", "Update data for specific guild")]
+    [UsedImplicitly]
     public async Task UpdateGuild(
         [Summary(description: "Guild ID. Xenia must be a member")]
         string guildId,
@@ -115,6 +114,7 @@ public partial class AdmDataModule : InteractionModuleBase
     }
 
     [SlashCommand("guild-current", "Update data for current Guild")]
+    [UsedImplicitly]
     public async Task UpdateCurrentGuild(
         [Summary(description: DescriptionIncludeCache)]
         bool cache = true,
@@ -167,6 +167,7 @@ public partial class AdmDataModule : InteractionModuleBase
     }
 
     [SlashCommand("guilds-all", "Update all guilds. Might take a while")]
+    [UsedImplicitly]
     public async Task UpdateAllGuilds(
         [Summary(description: DescriptionIncludeCache)]
         bool cache = true,

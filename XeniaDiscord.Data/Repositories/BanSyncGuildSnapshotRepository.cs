@@ -4,23 +4,19 @@ using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Data.Repositories;
 
-public class BanSyncGuildSnapshotRepository : IDisposable
+public class BanSyncGuildSnapshotRepository
 {
-    public void Dispose()
-    {
-        _serviceScope?.Dispose();
-    }
-    private readonly IServiceScope? _serviceScope;
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     public BanSyncGuildSnapshotRepository(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out _serviceScope);
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
     public async Task<ICollection<BanSyncGuildSnapshotModel>> GetMany(ulong guildId)
     {
         var guildIdStr = guildId.ToString();
-        return await _db.BanSyncGuildSnapshots.AsNoTracking()
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await db.BanSyncGuildSnapshots.AsNoTracking()
             .Where(e => e.GuildId == guildIdStr)
             .OrderByDescending(e => e.Timestamp)
             .ToListAsync();

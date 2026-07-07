@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaDiscord.Data.Models.RolePreserve;
 
@@ -8,16 +9,16 @@ namespace XeniaDiscord.Data.Repositories;
 public class RolePreserveGuildRepository
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
     public RolePreserveGuildRepository(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
     
     public async Task<RolePreserveGuildModel?> GetAsync(ulong guildId, QueryOptions? options = null)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await GetAsync(db, guildId, options);
     }
     
@@ -33,7 +34,10 @@ public class RolePreserveGuildRepository
     }
 
     public Task<bool> IsEnabled(ulong guildId)
-        => IsEnabled(_db, guildId);
+    {
+        using var db = _dbContextFactory.CreateDbContext();
+        return IsEnabled(db, guildId);
+    }
 
     public async Task<bool> IsEnabled(
         XeniaDbContext db,

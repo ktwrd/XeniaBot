@@ -27,6 +27,7 @@ public class AdmRolePreserveModule : InteractionModuleBase
     }
 
     [SlashCommand("preserve-all", "re-seed rolepreserve db in all guilds")]
+    [UsedImplicitly]
     public async Task PreserveAll()
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id)) return;

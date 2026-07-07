@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaBot.Shared;
@@ -26,7 +27,7 @@ public class BanSyncService : BaseService
     private readonly BanSyncRecordRepository _bansyncRecordsRepository;
     private readonly AuditLogEntryCacheRepository _auditLogEntryRepository;
     private readonly ProgramDetails _programDetails;
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
     public BanSyncService(IServiceProvider services)
         : base(services)
@@ -34,10 +35,10 @@ public class BanSyncService : BaseService
         _client = services.GetRequiredService<DiscordSocketClient>();
         _configData = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
-        _bansyncGuildRepository = (scope?.ServiceProvider ?? services).GetRequiredService<BanSyncGuildRepository>();
-        _bansyncRecordsRepository = (scope?.ServiceProvider ?? services).GetRequiredService< BanSyncRecordRepository>();
-        _auditLogEntryRepository = (scope?.ServiceProvider ?? services).GetRequiredService<AuditLogEntryCacheRepository>();
+        _bansyncGuildRepository = services.GetRequiredService<BanSyncGuildRepository>();
+        _bansyncRecordsRepository = services.GetRequiredService< BanSyncRecordRepository>();
+        _auditLogEntryRepository = services.GetRequiredService<AuditLogEntryCacheRepository>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
 
         _programDetails = services.GetRequiredService<ProgramDetails>();
 
@@ -113,7 +114,7 @@ public class BanSyncService : BaseService
         long total = 0;
 
         _log.Debug($"Fetching bans for guild \"{guild.Name}\" ({guild.Id})");
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -224,7 +225,7 @@ public class BanSyncService : BaseService
                 Enable = false,
                 State = BanSyncGuildState.Unknown
             };
-            await using var db1 = _db.CreateSession();
+            await using var db1 = await _dbContextFactory.CreateDbContextAsync();
             await using var trans1 = await db1.Database.BeginTransactionAsync();
             try
             {
@@ -291,7 +292,7 @@ public class BanSyncService : BaseService
 
         BanSyncRecordModel? info = null;
         UserPartialSnapshotModel? partialUserInfo = null;
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

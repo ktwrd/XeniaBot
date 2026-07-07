@@ -11,7 +11,7 @@ public static class XeniaDiscordInteractions
     public static async Task RegisterModules(InteractionService interactions, IServiceProvider services)
     {
         var transaction = SentryHelper.CreateTransaction();
-        var types = new Type[]
+        var types = new[]
         {
             typeof(GuildApprovalModule),
             typeof(GuildApprovalModalModule),

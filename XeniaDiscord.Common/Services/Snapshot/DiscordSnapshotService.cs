@@ -1,9 +1,10 @@
 using Discord;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using JetBrains.Annotations;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
@@ -16,19 +17,19 @@ namespace XeniaDiscord.Common.Services;
 public class DiscordSnapshotService : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
     private readonly DiscordCacheService _cacheService;
     private readonly GuildCacheRepository _guildCacheRepository;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly IMapper<IRole, GuildRoleSnapshotModel> _roleMapper;
     private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberMapper;
 
     private readonly ErrorReportService _err;
     public DiscordSnapshotService(IServiceProvider services) : base(services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
         var client = services.GetRequiredService<DiscordSocketClient>();
         _cacheService = services.GetRequiredService<DiscordCacheService>();
         _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
 
         _roleMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
         _guildMemberMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
@@ -207,7 +208,7 @@ public class DiscordSnapshotService : BaseService
     private async Task ProcessGuild(SocketGuild guild, DiscordSnapshotSource source,
         bool skipRoles = false, bool skipMembers = false)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -248,7 +249,7 @@ public class DiscordSnapshotService : BaseService
     {
         var userIdStr = socketMemberAfter.Id.ToString();
         var guildIdStr = socketMemberAfter.Guild.Id.ToString();
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         GuildMemberSnapshotModel? modelBefore = null;
         try
@@ -313,7 +314,7 @@ public class DiscordSnapshotService : BaseService
         var guildIdStr = role.Guild.Id.ToString();
         var now = DateTime.UtcNow;
         GuildRoleSnapshotModel? modelBefore = null;
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

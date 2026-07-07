@@ -111,7 +111,7 @@ partial class DiscordStatisticsService
         using var trans = SentryHelper.CreateTransaction();
         try
         {
-            await using var db = _db.CreateSession();
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
             var recordByGuilds = await db.BanSyncRecords
                 .AsNoTracking()
                 .Include(e => e.BanSyncGuild)
@@ -149,7 +149,7 @@ partial class DiscordStatisticsService
         var trans = SentryHelper.CreateTransaction();
         try
         {
-            await using var db = _db.CreateSession();
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
             var guildsByState = await db.BanSyncGuilds
                 .AsNoTracking()
                 .GroupBy(e => e.State)
@@ -214,7 +214,7 @@ partial class DiscordStatisticsService
         var trans = SentryHelper.CreateTransaction();
         try
         {
-            await using var db = _db.CreateSession();
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
             foreach (var guild in _client.Guilds)
             {
                 var guildIdStr = guild.Id.ToString();

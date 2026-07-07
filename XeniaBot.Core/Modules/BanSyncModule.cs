@@ -7,6 +7,7 @@ using NLog;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -30,7 +31,7 @@ public class BanSyncModule : InteractionModuleBase
     private readonly BanSyncGuildRepository _guildRepo;
     private readonly BanSyncRecordRepository _recordRepo;
 
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
     public BanSyncModule(IServiceProvider services)
     {
@@ -41,7 +42,7 @@ public class BanSyncModule : InteractionModuleBase
         _guildRepo = services.GetRequiredService<BanSyncGuildRepository>();
         _recordRepo = services.GetRequiredService<BanSyncRecordRepository>();
 
-        _db = services.GetRequiredService<XeniaDbContext>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
     [SlashCommand("refresh", "Refresh bans in this guild")]
@@ -126,7 +127,7 @@ public class BanSyncModule : InteractionModuleBase
         ITextChannel logChannel)
     {
         await DeferAsync();
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -164,6 +165,7 @@ public class BanSyncModule : InteractionModuleBase
     
     [SlashCommand("setguildstate", "Set state field of guild")]
     [RequireDeveloper]
+    [UsedImplicitly]
     public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
@@ -235,7 +237,8 @@ public class BanSyncModule : InteractionModuleBase
         }
 
         var guildIdStr = Context.Interaction.GuildId!.ToString();
-        var logChannelIdStr = await _db.BanSyncGuilds
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var logChannelIdStr = await db.BanSyncGuilds
             .AsNoTracking()
             .Where(e => e.GuildId == guildIdStr)
             .Select(e => e.LogChannelId)

@@ -10,7 +10,7 @@ partial class DiscordStatisticsService
 {
     protected void InitializeIncreaseEvents()
     {
-        _client.﻿ApplicationCommandCreated += ClientIncOn﻿ApplicationCommandCreated;
+        _client.ApplicationCommandCreated += ClientIncOnApplicationCommandCreated;
         _client.ApplicationCommandDeleted += ClientIncOnApplicationCommandDeleted;
         _client.ApplicationCommandUpdated += ClientIncOnApplicationCommandUpdated;
         _client.AuditLogCreated += ClientIncOnAuditLogCreated;
@@ -98,9 +98,9 @@ partial class DiscordStatisticsService
         _client.WebhooksUpdated += ClientIncOnWebhooksUpdated;
     }
 
-    private Task ClientIncOn﻿ApplicationCommandCreated(SocketApplicationCommand arg1)
+    private Task ClientIncOnApplicationCommandCreated(SocketApplicationCommand arg1)
     {
-        IncreaseEvent(DiscordStatisticsEventType.﻿ApplicationCommandCreated);
+        IncreaseEvent(DiscordStatisticsEventType.ApplicationCommandCreated);
         return Task.CompletedTask;
     }
     private Task ClientIncOnApplicationCommandDeleted(SocketApplicationCommand arg1)

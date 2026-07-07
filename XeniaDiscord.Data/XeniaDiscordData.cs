@@ -12,49 +12,23 @@ public static class XeniaDiscordData
         IServiceCollection services,
         bool includeAsSingleton)
     {
-        if (includeAsSingleton)
-        {
-            services.AddSingleton<DatabaseMigrationService>();
-        }
-        else
-        {
-            services.AddScoped<DatabaseMigrationService>();
-        }
-
-        RegisterRepositories(services, includeAsSingleton);
+        services.AddSingleton<DatabaseMigrationService>();
+        RegisterRepositories(services);
     }
 
     public static void RegisterRepositories(
-        IServiceCollection services,
-        bool includeAsSingleton = false)
+        IServiceCollection services)
     {
-        var types = new[]
-        {
-            typeof(AuditLogEntryCacheRepository),
-
-            typeof(BanSyncGuildRepository),
-            typeof(BanSyncRecordRepository),
-            typeof(BanSyncGuildSnapshotRepository),
-            
-            typeof(GuildCacheRepository),
-            typeof(GuildMemberCacheRepository),
-            typeof(UserCacheRepository),
-
-            typeof(ServerLogRepository),
-            typeof(GuildApprovalRepository),
-            typeof(RolePreserveGuildRepository),
-            typeof(RolePreserveUserRepository),
-        };
-        foreach (var i in types)
-        {
-            if (includeAsSingleton)
-            {
-                services.AddSingleton(i);
-            }
-            else
-            {
-                services.AddScoped(i);
-            }
-        }
+        services.AddSingleton<AuditLogEntryCacheRepository>()
+            .AddSingleton<BanSyncGuildRepository>()
+            .AddSingleton<BanSyncRecordRepository>()
+            .AddSingleton<BanSyncGuildSnapshotRepository>()
+            .AddSingleton<GuildApprovalRepository>()
+            .AddSingleton<GuildCacheRepository>()
+            .AddSingleton<GuildMemberCacheRepository>()
+            .AddSingleton<UserCacheRepository>()
+            .AddSingleton<ServerLogRepository>()
+            .AddSingleton<RolePreserveGuildRepository>()
+            .AddSingleton<RolePreserveUserRepository>();
     }
 }

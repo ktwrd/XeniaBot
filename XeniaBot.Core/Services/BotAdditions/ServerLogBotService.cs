@@ -34,10 +34,10 @@ public class ServerLogBotService : BaseService
     private readonly DiscordCacheService _discordCache;
     private readonly DiscordSnapshotService _discordSnapshot;
     private readonly ErrorReportService _errorService;
-    private readonly XeniaDbContext _db;
     private readonly ServerLogService _serverLogService;
     private readonly DiscordAuditLogService _auditLogService;
     private readonly ServerLogEventHandler _handler;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     public ServerLogBotService(IServiceProvider services)
         : base(services)
     {
@@ -48,7 +48,7 @@ public class ServerLogBotService : BaseService
         _serverLogService = services.GetRequiredService<ServerLogService>();
         _auditLogService = services.GetRequiredService<DiscordAuditLogService>();
         _handler = services.GetRequiredService<ServerLogEventHandler>();
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
 
         var details = services.GetRequiredService<ProgramDetails>();
 
@@ -72,7 +72,7 @@ public class ServerLogBotService : BaseService
         GuildRoleSnapshotModel? before,
         GuildRoleSnapshotModel model)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await _handler.HandleGuildRoleUpdate(db, before, model);
     }
     #endregion
@@ -90,7 +90,7 @@ public class ServerLogBotService : BaseService
             _log.Trace($"Event. No before state (guildId={model.GuildId}, userId={model.UserId}, recordId={model.RecordId})");
             return;
         }
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         DiscordSnapshotMemberUpdateInfo? info = null;
         try
         {

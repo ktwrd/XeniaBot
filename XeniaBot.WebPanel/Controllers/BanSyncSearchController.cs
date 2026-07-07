@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace XeniaBot.WebPanel.Controllers;
 [Route("~/BanSync/Search")]
 public class BanSyncSearchController : BaseXeniaController
 {
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly BanSyncGuildRepository _bansyncGuildRepo;
     private readonly BanSyncRecordRepository _bansyncRecordRepo;
     private readonly DiscordSocketClient _discord;
@@ -28,7 +29,7 @@ public class BanSyncSearchController : BaseXeniaController
     private readonly UserCacheService _userCacheService;
     public BanSyncSearchController(IServiceProvider services)
     {
-        _db = services.GetRequiredService<XeniaDbContext>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _bansyncGuildRepo = services.GetRequiredService<BanSyncGuildRepository>();
         _bansyncRecordRepo = services.GetRequiredService<BanSyncRecordRepository>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
@@ -147,7 +148,7 @@ public class BanSyncSearchController : BaseXeniaController
         model.TotalCount = await _bansyncRecordRepo.MutualRecordsCount(guildId, recordsOpts);
         model.OtherGuildCount = model.TotalCount - model.CurrentGuildCount;
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

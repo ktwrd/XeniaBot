@@ -16,7 +16,7 @@ namespace XeniaDiscord.Common.Services;
 public class DiscordCacheService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
     private readonly DiscordSocketClient _client;
     private readonly UserCacheRepository _userCacheRepository;
@@ -28,7 +28,7 @@ public class DiscordCacheService
     private readonly IMapperMerger<IGuild, GuildCacheModel> _guildMergerMapper;
     public DiscordCacheService(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
 
         _client = services.GetRequiredService<DiscordSocketClient>();
         _userCacheRepository = services.GetRequiredService<UserCacheRepository>();
@@ -43,7 +43,7 @@ public class DiscordCacheService
     #region Guild
     public async Task UpdateGuild(IGuild guild)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -99,7 +99,7 @@ public class DiscordCacheService
     public Task UpdateGuildMember(IGuildUser member) => UpdateGuildMember(member.Guild, member);
     public async Task UpdateGuildMember(IGuild guild, IUser user)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -173,7 +173,7 @@ public class DiscordCacheService
 
     public async Task UpdateUser(IUser user)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

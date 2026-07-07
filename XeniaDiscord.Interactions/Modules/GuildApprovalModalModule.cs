@@ -15,17 +15,17 @@ namespace XeniaDiscord.Interactions.Modules;
 [CommandContextType(InteractionContextType.Guild)]
 public class GuildApprovalModalModule : InteractionModuleBase
 {
-    private readonly XeniaDbContext _db;
     private readonly ErrorReportService _err;
     private readonly ValidationService _validation;
     private readonly GuildApprovalRepository _repo;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public GuildApprovalModalModule(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
         _err = services.GetRequiredService<ErrorReportService>();
         _validation = services.GetRequiredService<ValidationService>();
-        _repo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildApprovalRepository>();
+        _repo = services.GetRequiredService<GuildApprovalRepository>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
     private async Task HandleSetupGreeterModalInternal(SetupGreeterModal modal)
@@ -64,9 +64,10 @@ public class GuildApprovalModalModule : InteractionModuleBase
             return;
         }
 
-            await DeferAsync();
+        await DeferAsync();
         var guildIdStr = Context.Guild.Id.ToString();
-        var model = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr)
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var model = await db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr)
             ?? new()
             {
                 GuildId = guildIdStr
@@ -77,7 +78,6 @@ public class GuildApprovalModalModule : InteractionModuleBase
         model.GreeterMessageTemplate = modal.GreeterMessageTemplate;
         model.GreeterAsEmbed = modal.GreeterAsEmbed == ModalYesNo.Yes;
         
-        await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

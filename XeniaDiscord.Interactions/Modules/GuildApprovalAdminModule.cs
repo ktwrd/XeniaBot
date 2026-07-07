@@ -22,17 +22,17 @@ namespace XeniaDiscord.Interactions.Modules;
 [CommandContextType(InteractionContextType.Guild)]
 public class GuildApprovalAdminModule : InteractionModuleBase
 {
-    private readonly XeniaDbContext _db;
     private readonly ErrorReportService _err;
     private readonly GuildApprovalService _service;
     private readonly GuildApprovalRepository _repo;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public GuildApprovalAdminModule(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
         _err = services.GetRequiredService<ErrorReportService>();
-        _service = (scope?.ServiceProvider ?? services).GetRequiredService<GuildApprovalService>();
-        _repo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildApprovalRepository>();
+        _service = services.GetRequiredService<GuildApprovalService>();
+        _repo = services.GetRequiredService<GuildApprovalRepository>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
     [UsedImplicitly]
@@ -67,14 +67,14 @@ public class GuildApprovalAdminModule : InteractionModuleBase
 
 
             var guildIdStr = Context.Guild.Id.ToString();
-            var model = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr)
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
+            var model = await db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr)
                 ?? new()
                 {
                     GuildId = guildIdStr
                 };
             model.Enabled = true;
             
-            await using var db = _db.CreateSession();
             await using var trans = await db.Database.BeginTransactionAsync();
             try
             {
@@ -264,7 +264,8 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         try
         {
             var guildIdStr = Context.Guild.Id.ToString();
-            if (!await _db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr && !string.IsNullOrEmpty(e.GreeterMessageTemplate)))
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
+            if (!await db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr && !string.IsNullOrEmpty(e.GreeterMessageTemplate)))
             {
                 embed.WithDescription("No greeter message has been configured.")
                     .WithColor(Color.Orange);
@@ -272,7 +273,7 @@ public class GuildApprovalAdminModule : InteractionModuleBase
                 return;
             }
             
-            var content = await _db.GuildApprovals.Where(e => e.GuildId == guildIdStr)
+            var content = await db.GuildApprovals.Where(e => e.GuildId == guildIdStr)
                 .Select(e => e.GreeterMessageTemplate)
                 .FirstOrDefaultAsync();
             if (string.IsNullOrEmpty(content?.Trim()))
@@ -322,7 +323,8 @@ public class GuildApprovalAdminModule : InteractionModuleBase
         try
         {
             var guildId = Context.Guild.Id.ToString();
-            config = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildId);
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
+            config = await db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildId);
             var modal = new SetupGreeterModal();
             if (config != null)
             {

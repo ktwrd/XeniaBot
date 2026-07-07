@@ -29,7 +29,7 @@ partial class GuildApprovalService
                 guild);
         }
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

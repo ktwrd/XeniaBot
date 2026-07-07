@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System.Text.Json;
+using JetBrains.Annotations;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
@@ -30,7 +31,7 @@ namespace XeniaDiscord.Interactions.DataMigration.Modules;
 public class DataMigrationModule : InteractionModuleBase
 {
     private readonly ConfigData _config;
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly DiscordSocketClient _discord;
     private readonly BanSyncConfigRepository _mongoBanSyncConfigRepository;
     private readonly BanSyncStateHistoryRepository _mongoBanSyncStateHistoryRepository;
@@ -47,7 +48,7 @@ public class DataMigrationModule : InteractionModuleBase
     public DataMigrationModule(IServiceProvider services)
     {
         _config = services.GetRequiredService<ConfigData>();
-        _db = services.GetRequiredService<XeniaDbContext>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _discord = services.GetRequiredService<DiscordSocketClient>();
 
         _mongoBanSyncConfigRepository = services.GetRequiredService<BanSyncConfigRepository>();
@@ -63,6 +64,7 @@ public class DataMigrationModule : InteractionModuleBase
     }
 
     [SlashCommand("bansync", "Migrate all BanSync-related tables")]
+    [UsedImplicitly]
     public async Task BanSync()
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
@@ -71,7 +73,7 @@ public class DataMigrationModule : InteractionModuleBase
             return;
         }
         await Context.Interaction.RespondAsync("Started processing. You'll get updates about anything.");
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -203,6 +205,7 @@ public class DataMigrationModule : InteractionModuleBase
     }
     
     [SlashCommand("srvlog-cfg", "Configuration for Server Logging")]
+    [UsedImplicitly]
     public async Task ServerLogConfig()
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
@@ -211,7 +214,7 @@ public class DataMigrationModule : InteractionModuleBase
             return;
         }
         await Context.Interaction.RespondAsync("Started processing. You'll get updates about anything.");
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -329,6 +332,7 @@ public class DataMigrationModule : InteractionModuleBase
     }
 
     [SlashCommand("rolepreserve", "Migrate: Role Preservation")]
+    [UsedImplicitly]
     public async Task RolePreserve()
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
@@ -455,7 +459,7 @@ public class DataMigrationModule : InteractionModuleBase
             return;
         }
         await Context.Interaction.RespondAsync("Started processing. You'll get updates about anything.");
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

@@ -21,8 +21,6 @@ public class XeniaDbContext : DbContext
     {
         _ops = options;
     }
-    public XeniaDbContext CreateSession() => new(_ops);
-
     #region Partial Snapshots
     public DbSet<UserPartialSnapshotModel> UserPartialSnapshots { get; set; }
     public DbSet<GuildPartialSnapshotModel> GuildPartialSnapshots { get; set; }

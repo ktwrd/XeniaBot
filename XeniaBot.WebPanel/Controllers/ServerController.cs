@@ -1,13 +1,14 @@
-﻿using Discord;
+﻿using CSharpFunctionalExtensions;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
 using XeniaBot.MongoData;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
@@ -23,17 +24,18 @@ public partial class ServerController : BaseXeniaController
 {
     private readonly ILogger<ServerController> _logger;
     private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly ErrorReportService _errorReporting;
     private readonly GuildCacheRepository _guildCacheRepo;
     private readonly ServerLogRepository _serverLogRepository;
     private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
-
     public ServerController(
         IServiceProvider services,
         ILogger<ServerController> logger)
         : base()
     {
         _db = services.GetRequiredService<XeniaDbContext>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _errorReporting = services.GetRequiredService<ErrorReportService>();
         _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
         _serverLogRepository = services.GetRequiredService<ServerLogRepository>();

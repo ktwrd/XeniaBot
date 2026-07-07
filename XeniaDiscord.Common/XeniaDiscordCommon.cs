@@ -16,41 +16,25 @@ public static class XeniaDiscordCommon
         bool includeAsSingleton)
     {
         services.AddSingleton<ApplicationEmoteService>()
-                .AddSingleton<BanSyncService>()
-                .AddSingleton<DiscordAuditLogService>()
-                .AddSingleton<DiscordBotListService>()
-                .AddSingleton<DiscordStatisticsService>()
-                .AddSingleton<DiscordCacheEventHandler>()
-                .AddSingleton<ServerLogEventHandler>()
-                .AddSingleton<ServerLogService>()
-                .AddSingleton<ValidationService>()
-                .AddSingleton<IXeniaOnReady, ApplicationEmoteService>(svc => svc.GetRequiredService<ApplicationEmoteService>());
+            .AddSingleton<BanSyncService>()
+            .AddSingleton<DiscordAuditLogService>()
+            .AddSingleton<DiscordBotListService>()
+            .AddSingleton<DiscordStatisticsService>()
+            .AddSingleton<DiscordCacheEventHandler>()
+            .AddSingleton<ServerLogEventHandler>()
+            .AddSingleton<ServerLogService>()
+            .AddSingleton<ValidationService>()
+            .AddSingleton<IXeniaOnReady, ApplicationEmoteService>(svc => svc.GetRequiredService<ApplicationEmoteService>());
 
         RegisterMappers(services);
 
-        var types = new[]
-        {
-            typeof(DiscordCacheService),
-            typeof(DiscordSnapshotService),
-
-            typeof(UserCacheService),
-            typeof(GuildCacheService),
-
-            typeof(GuildApprovalService),
-            typeof(RolePreserveService),
-            typeof(RolePreserveLogService),
-        };
-        foreach (var t in types)
-        {
-            if (includeAsSingleton)
-            {
-                services.AddSingleton(t);
-            }
-            else
-            {
-                services.AddScoped(t);
-            }
-        }
+        services.AddSingleton<DiscordCacheService>()
+            .AddSingleton<DiscordSnapshotService>()
+            .AddSingleton<UserCacheService>()
+            .AddSingleton<GuildApprovalService>()
+            .AddSingleton<GuildCacheService>()
+            .AddSingleton<RolePreserveService>()
+            .AddSingleton<RolePreserveLogService>();
     }
 
     private static void RegisterMappers(IServiceCollection services)

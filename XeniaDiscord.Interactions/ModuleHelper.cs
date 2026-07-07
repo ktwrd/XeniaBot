@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using XeniaDiscord.Data;
 
 namespace XeniaDiscord.Interactions;
@@ -20,7 +21,8 @@ public static class ModuleHelper
     {
         var sw = new Stopwatch();
         sw.Start();
-        await using var db = services.GetRequiredService<XeniaDbContext>().CreateSession();
+        var dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
+        await using var db = await dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

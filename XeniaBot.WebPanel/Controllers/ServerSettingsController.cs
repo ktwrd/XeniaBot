@@ -43,7 +43,7 @@ public partial class ServerController
         string? jsonStringData = null;
         List<JsTypeServerLogConfigItem>? data = null;
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -139,7 +139,7 @@ public partial class ServerController
     {
         try
         {
-            await using var db = _db.CreateSession();
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
             await using var trans = await db.Database.BeginTransactionAsync();
             try
             {

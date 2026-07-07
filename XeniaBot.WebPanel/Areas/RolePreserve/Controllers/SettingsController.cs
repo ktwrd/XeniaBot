@@ -35,6 +35,7 @@ public class SettingsController : Controller
     private readonly DiscordSocketClient _client;
     private readonly ErrorReportService _err;
     private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
     public SettingsController(IServiceProvider services)
     {
@@ -44,6 +45,7 @@ public class SettingsController : Controller
         _client = services.GetRequiredService<DiscordSocketClient>();
         _err = services.GetRequiredService<ErrorReportService>();
         _db = services.GetRequiredService<XeniaDbContext>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
     [Route("", Name = "Guild_RolePreserve_Settings_Index")]
@@ -181,7 +183,7 @@ public class SettingsController : Controller
             .ToArray();
 
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         var guildLastUpdated = await _guildCacheRepo.LastUpdated(db, guildId);
         var shouldUpdateCache = DateTime.UtcNow - guildLastUpdated.GetValueOrDefault(DateTime.MinValue)
                            > TimeSpan.FromDays(7);
