@@ -1,7 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data.Models.BanSync;
 
@@ -175,7 +172,7 @@ partial class DiscordStatisticsService
         var trans = SentryHelper.CreateTransaction();
         try
         {
-            await using var db = _db.CreateSession();
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
             var guildSnapshotCount = await db.BanSyncGuildSnapshots.AsNoTracking().LongCountAsync();
             _statBanSyncGuildSnapshots.Set(guildSnapshotCount);
             trans.Finish();
