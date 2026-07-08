@@ -4,8 +4,9 @@ using XeniaDiscord.Common.Handlers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
 using XeniaDiscord.Common.Mappers.DiscordSnapshot;
 using XeniaDiscord.Common.Services;
-#pragma warning disable S1186
+// ReSharper disable CheckNamespace
 #pragma warning disable IDE0130
+#pragma warning disable S1186
 
 namespace XeniaDiscord;
 

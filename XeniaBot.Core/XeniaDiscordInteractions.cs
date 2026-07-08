@@ -4,8 +4,9 @@ using System.Threading.Tasks;
 using XeniaBot.Core.LevelSystem.Modules;
 using XeniaBot.Core.Modules;
 using XeniaBot.Shared.Helpers;
-#pragma warning disable S1186
+// ReSharper disable CheckNamespace
 #pragma warning disable IDE0130
+#pragma warning disable S1186
 
 namespace XeniaDiscord;
 

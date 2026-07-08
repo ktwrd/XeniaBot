@@ -2,7 +2,9 @@
 using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Interactions.Modules;
 using XeniaDiscord.Interactions.Modules.Admin;
+// ReSharper disable CheckNamespace
 #pragma warning disable IDE0130
+#pragma warning disable S1186
 
 namespace XeniaDiscord;
 
