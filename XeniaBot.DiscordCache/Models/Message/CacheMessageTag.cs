@@ -116,15 +116,15 @@ public class CacheMessageTagUserValue : BaseCacheMessageTag, ICacheUserModel
     #endregion
 
     #region IUser
-    public string AvatarId { get; set; } = string.Empty;;
-    public string Discriminator { get; set; } = string.Empty;;
+    public string AvatarId { get; set; } = string.Empty;
+    public string Discriminator { get; set; } = string.Empty;
     public ushort DiscriminatorValue { get; set; }
 
     public bool IsBot { get; set; }
     public bool IsWebhook { get; set; }
-    public string Username { get; set; } = string.Empty;;
-    public string GlobalName { get; set; } = string.Empty;;
-    public string AvatarDecorationHash { get; set; } = string.Empty;;
+    public string Username { get; set; } = string.Empty;
+    public string GlobalName { get; set; } = string.Empty;
+    public string AvatarDecorationHash { get; set; } = string.Empty;
     [BsonIgnoreIfNull]
     public ulong? AvatarDecorationSkuId { get; set; }
     [BsonIgnoreIfNull]
@@ -133,7 +133,7 @@ public class CacheMessageTagUserValue : BaseCacheMessageTag, ICacheUserModel
     public CacheUserPrimaryGuild? PrimaryGuild { get; set; }
 
     #region IMentionable
-    public string Mention { get; set; } = string.Empty;;
+    public string Mention { get; set; } = string.Empty;
     #endregion
 
     #region IPresence
