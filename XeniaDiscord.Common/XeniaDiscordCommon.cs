@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaDiscord.Common.Handlers;
+using XeniaDiscord.Common.Mappers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
 using XeniaDiscord.Common.Mappers.DiscordSnapshot;
 using XeniaDiscord.Common.Services;
@@ -44,7 +45,11 @@ public static class XeniaDiscordCommon
         DiscordGuildToGuildCacheModelMapper.RegisterService(services);
         DiscordUserToGuildMemberCacheModelMapper.RegisterService(services);
 
+        MessageSourceToDtoMapper.RegisterService(services);
+        MessageTypeToDtoMapper.RegisterService(services);
+
         RoleToSnapshotModelMapper.RegisterService(services);
         GuildUserToSnapshotModelMapper.RegisterService(services);
+        MessageToSnapshotModelMapper.RegisterService(services);
     }
 }
