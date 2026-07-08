@@ -12,7 +12,9 @@ public class CacheMessageTag : ITag
     public TagType Type { get; set; }
     public ulong Key { get; set; }
     
-    public ICacheMessageTagValue? Value { get; set; }
+    public BaseCacheMessageTag? Value { get; set; }
+    
+    [BsonIgnore]
     object? ITag.Value => this.Value;
 
     public string? ValueJson { get; set; }
@@ -62,14 +64,35 @@ public class CacheMessageTag : ITag
         return instance.Update(tag);
     }
 }
-
-public interface ICacheMessageTagValue
+[BsonDiscriminator(RootClass = true)]
+[BsonKnownTypes(
+    typeof(CacheMessageTagEmoteValue),
+    typeof(CacheMessageTagUserValue),
+    typeof(CacheMessageTagRoleValue))]
+public class BaseCacheMessageTag
 {
 }
 
 [BsonDiscriminator("CacheEmote")]
-public class CacheMessageTagEmoteValue : CacheEmote, ICacheMessageTagValue
+public class CacheMessageTagEmoteValue : BaseCacheMessageTag, ICacheEmote
 {
+    [BsonIgnoreIfNull]
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// ulong stored as string
+    /// </summary>
+    [BsonIgnoreIfNull]
+    public string? Id { get; set; }
+
+    [BsonIgnoreIfNull]
+    public bool? Animated { get; set; }
+
+    public void Update(IEmote emote)
+    {
+        this.UpdateValues(emote);
+    }
+
     public static CacheMessageTagEmoteValue? FromExisting(Emote? emote)
     {
         if (emote == null) return null;
@@ -80,8 +103,58 @@ public class CacheMessageTagEmoteValue : CacheEmote, ICacheMessageTagValue
 }
 
 [BsonDiscriminator("CacheUserModel")]
-public class CacheMessageTagUserValue : CacheUserModel, ICacheMessageTagValue
+public class CacheMessageTagUserValue : BaseCacheMessageTag, ICacheUserModel
 {
+    #region IDiscordCacheBaseModel
+    public ulong Snowflake { get; set; }
+    public long ModifiedAtTimestamp { get; set; }
+    #endregion
+
+    #region ICacheUserModel
+    #region ISnowflakeEntity
+    public DateTimeOffset CreatedAt { get; set; }
+    #endregion
+
+    #region IUser
+    public string AvatarId { get; set; } = string.Empty;;
+    public string Discriminator { get; set; } = string.Empty;;
+    public ushort DiscriminatorValue { get; set; }
+
+    public bool IsBot { get; set; }
+    public bool IsWebhook { get; set; }
+    public string Username { get; set; } = string.Empty;;
+    public string GlobalName { get; set; } = string.Empty;;
+    public string AvatarDecorationHash { get; set; } = string.Empty;;
+    [BsonIgnoreIfNull]
+    public ulong? AvatarDecorationSkuId { get; set; }
+    [BsonIgnoreIfNull]
+    public UserProperties? PublicFlags { get; set; }
+    [BsonIgnoreIfNull]
+    public CacheUserPrimaryGuild? PrimaryGuild { get; set; }
+
+    #region IMentionable
+    public string Mention { get; set; } = string.Empty;;
+    #endregion
+
+    #region IPresence
+    public UserStatus Status { get; set; }
+    public ClientType[] ActiveClients { get; set; }
+    public CacheUserActivity[] Activities { get; set; }
+    #endregion
+    #endregion
+    #endregion
+
+    public CacheMessageTagUserValue()
+    {
+        ActiveClients = Array.Empty<ClientType>();
+        Activities = Array.Empty<CacheUserActivity>();
+    }
+
+    public virtual void Update(IUser user)
+    {
+        this.UpdateValues(user);
+    }
+
     public new static CacheMessageTagUserValue? FromExisting(IUser? user)
     {
         if (user == null) return null;
@@ -92,8 +165,33 @@ public class CacheMessageTagUserValue : CacheUserModel, ICacheMessageTagValue
 }
 
 [BsonDiscriminator("CacheRole")]
-public class CacheMessageTagRoleValue : CacheRole, ICacheMessageTagValue
+public class CacheMessageTagRoleValue : BaseCacheMessageTag, ICacheRole
 {
+    #region ICacheRole
+    public ulong? RoleId { get; set; }
+    public ulong GuildId { get; set; }
+    public string Color { get; set; } = string.Empty;
+    public bool IsHoisted { get; set; }
+    public bool IsManaged { get; set; }
+    public bool IsMentionable { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Icon { get; set; }
+    public CacheEmote? Emoji { get; set; }
+    public CacheGuildPermissions Permissions { get; set; } = CacheGuildPermissions.None;
+    public int Position { get; set; }
+    public RoleTags? Tags { get; set; }
+    #endregion
+
+    public CacheMessageTagRoleValue()
+    {
+        this.UseDefaultValues();
+    }
+
+    public void Update(IRole role)
+    {
+        this.UpdateValues(role);
+    }
+
     public new static CacheMessageTagRoleValue? FromExisting(IRole? value)
     {
         if (value == null) return null;
