@@ -119,20 +119,26 @@ public class GuildCacheRepository
         }
         else
         {
-            await db.GuildRoleCache.Where(e => e.RoleId == snapshot.RoleId)
-                .ExecuteUpdateAsync(e => e
-                    .SetProperty(p => p.Name, snapshot.Name ?? string.Empty)
-                    .SetProperty(p => p.Position, snapshot.Position)
-                    .SetProperty(p => p.RecordUpdatedAt, nowValue)
-                    .SetProperty(p => p.SnapshotId, snapshot.Id));
+            model.Name = snapshot.Name ?? string.Empty;
+            model.Position = snapshot.Position;
+            model.RecordUpdatedAt = nowValue;
+            model.SnapshotId = snapshot.Id;
+            // await db.GuildRoleCache.Where(e => e.RoleId == snapshot.RoleId)
+            //     .ExecuteUpdateAsync(e => e
+            //         .SetProperty(p => p.Name, snapshot.Name ?? string.Empty)
+            //         .SetProperty(p => p.Position, snapshot.Position)
+            //         .SetProperty(p => p.RecordUpdatedAt, nowValue)
+            //         .SetProperty(p => p.SnapshotId, snapshot.Id));
             _log.Debug($"Updated record (GuildId={snapshot.GuildId}, RoleId={snapshot.RoleId}, Name={snapshot.Name})");
             if (isDeleted.HasValue)
             {
                 DateTime? deletedAtValue = isDeleted.Value ? nowValue : null;
-                await db.GuildRoleCache.Where(e => e.RoleId == snapshot.RoleId)
-                    .ExecuteUpdateAsync(e => e
-                        .SetProperty(p => p.IsDeleted, isDeleted.Value)
-                        .SetProperty(p => p.DeletedAt, deletedAtValue));
+                model.IsDeleted = isDeleted.Value;
+                model.DeletedAt = deletedAtValue;
+                // await db.GuildRoleCache.Where(e => e.RoleId == snapshot.RoleId)
+                //     .ExecuteUpdateAsync(e => e
+                //         .SetProperty(p => p.IsDeleted, isDeleted.Value)
+                //         .SetProperty(p => p.DeletedAt, deletedAtValue));
                 _log.Debug($"Marked record as deleted (GuildId={snapshot.GuildId}, RoleId={snapshot.RoleId}, Name={snapshot.Name})");
             }
         }

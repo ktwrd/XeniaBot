@@ -381,6 +381,7 @@ public class DiscordSnapshotService : BaseService
                 _ => null
             };
             await db.AddAsync(model);
+            await db.SaveChangesAsync();
             await _guildCacheRepository.UpdateRoleCache(db, model, isDeleted: isDeletedValue, now: now);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
