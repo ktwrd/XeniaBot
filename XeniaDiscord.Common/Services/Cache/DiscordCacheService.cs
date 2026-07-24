@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Globalization;
+using Discord;
 using Discord.WebSocket;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
@@ -26,6 +28,9 @@ public class DiscordCacheService
     private readonly IMapper<IUser, UserCacheModel> _userMapper;
     private readonly IMapperMerger<IUser, GuildMemberCacheModel> _memberMergerMapper;
     private readonly IMapperMerger<IGuild, GuildCacheModel> _guildMergerMapper;
+
+    private readonly IMapper<GuildRoleSnapshotModel, GuildRoleCacheModel> _roleSnapshotToCacheMapper;
+    private readonly IMapperUpdater<GuildRoleSnapshotModel, GuildRoleCacheModel> _roleSnapshotToCacheMapperUpdater;
     public DiscordCacheService(IServiceProvider services)
     {
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
@@ -38,6 +43,9 @@ public class DiscordCacheService
         _userMapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
         _memberMergerMapper = services.GetRequiredService<IMapperMerger<IUser, GuildMemberCacheModel>>();
         _guildMergerMapper = services.GetRequiredService<IMapperMerger<IGuild, GuildCacheModel>>();
+
+        _roleSnapshotToCacheMapper = services.GetRequiredService<IMapper<GuildRoleSnapshotModel, GuildRoleCacheModel>>();
+        _roleSnapshotToCacheMapperUpdater = services.GetRequiredService<IMapperUpdater<GuildRoleSnapshotModel, GuildRoleCacheModel>>();
     }
 
     #region Guild
@@ -91,6 +99,48 @@ public class DiscordCacheService
             {
                 _log.Warn(ex, $"Failed to update member \"{member.GlobalName}\" ({member.Username}, {member.Id}) in guild \"{guild.Name}\" ({guild.Id})");
             }
+        }
+    }
+
+    public async Task UpdateGuildRoles(
+        XeniaDbContext db,
+        IGuild guild,
+        DateTime? now = null)
+    {
+        var nowValue = now ?? DateTime.UtcNow;
+        var guildIdStr = guild.Id.ToString();
+        var roleIds = await db.GuildRoleSnapshots
+            .Where(r => r.GuildId == guildIdStr)
+            .Select(e => e.RoleId)
+            .Distinct()
+            .ToListAsync();
+        foreach (var roleIdStr in roleIds)
+        {
+            var snapshotModel = await db.GuildRoleSnapshots
+                .Where(r => r.RoleId == roleIdStr)
+                .OrderByDescending(r => r.RecordCreatedAt)
+                .FirstOrDefaultAsync();
+            if (snapshotModel == null) continue;
+            var cacheModel = await db.GuildRoleCache.FindAsync(roleIdStr);
+            if (cacheModel == null)
+            {
+                cacheModel = _roleSnapshotToCacheMapper.Map(snapshotModel);
+                cacheModel.RecordCreatedAt = nowValue;
+                cacheModel = (await db.GuildRoleCache.AddAsync(cacheModel)).Entity;
+            }
+            else
+            {
+                _roleSnapshotToCacheMapperUpdater.Update(cacheModel, snapshotModel);
+            }
+
+            if (guild.Roles.All(e => e.Id.ToString(CultureInfo.InvariantCulture) != roleIdStr))
+            {
+                cacheModel.IsDeleted = true;
+                cacheModel.DeletedAt = nowValue;
+            }
+
+            cacheModel.RecordUpdatedAt = nowValue;
+            cacheModel.SnapshotId = snapshotModel.Id;
         }
     }
     #endregion
