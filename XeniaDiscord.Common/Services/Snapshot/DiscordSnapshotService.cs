@@ -540,6 +540,7 @@ public class DiscordSnapshotService : BaseService
                     DiscordSnapshotSource.MemberUpdated => GuildMemberSnapshotSource.MemberUpdate,
                     DiscordSnapshotSource.RoleDeleted => GuildMemberSnapshotSource.RoleDelete,
                     DiscordSnapshotSource.JoinedGuild => GuildMemberSnapshotSource.GuildJoined,
+                    DiscordSnapshotSource.AdminTask => GuildMemberSnapshotSource.AdminTask,
                     _ => GuildMemberSnapshotSource.Unknown
                 };
                 members.Add(mapped);
