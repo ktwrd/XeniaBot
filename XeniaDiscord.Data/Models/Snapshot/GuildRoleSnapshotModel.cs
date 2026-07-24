@@ -134,5 +134,7 @@ public enum GuildRoleSnapshotSource
     Unknown = 0,
     RoleCreate,
     RoleEdit,
-    RoleDelete
+    RoleDelete,
+    
+    AdminTask = 1000
 }

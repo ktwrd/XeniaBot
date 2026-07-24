@@ -18,4 +18,6 @@ public enum DiscordSnapshotSource
     JoinedGuild,
     LeftGuild,
     GuildUpdated,
+
+    AdminTask = 1000,
 }
