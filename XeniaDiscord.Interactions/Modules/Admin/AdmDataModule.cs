@@ -6,9 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System.Text;
 using Humanizer;
+using Microsoft.EntityFrameworkCore;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Common.Services;
+using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaDiscord.Interactions.Modules.Admin;
@@ -169,7 +171,8 @@ public partial class AdmDataModule : InteractionModuleBase
         await DeferAsync();
         
         // na, not awaiting that...
-        await UpdateAllGuildsInternal(new UpdateGuildTaskFlags(cache, cacheMember, snapshot));
+        await Task.Delay(5_000);
+        UpdateAllGuildsInternal(new UpdateGuildTaskFlags(cache, cacheMember, snapshot));
     }
 
     [SlashCommand("role-guild", "Update role data for specific guild")]
@@ -317,14 +320,19 @@ public partial class AdmDataModule : InteractionModuleBase
         return elapsedSnapshot + elapsedCache;
     }
 
-    private async Task<TimeSpan> UpdateGuildTask(IGuild guild, DateTime now, UpdateGuildTaskFlags flags)
+    private Task<TimeSpan> UpdateGuildTask(
+        IGuild guild, DateTime now, UpdateGuildTaskFlags flags)
+        => UpdateGuildTask(_services.GetRequiredService<IDbContextFactory<XeniaDbContext>>(), guild, now, flags);
+    private async Task<TimeSpan> UpdateGuildTask(
+        IDbContextFactory<XeniaDbContext> dbFactory,
+        IGuild guild, DateTime now, UpdateGuildTaskFlags flags)
     {
         if (flags is { Cache: false, CacheMember: false, Snapshot: false }) return TimeSpan.Zero;
         
         var elapsed = TimeSpan.Zero;
         if (flags.Cache || flags.CacheMember)
         {
-            var elapsedCache = await ModuleHelper.PerformTransaction(_services, async db =>
+            var elapsedCache = await ModuleHelper.PerformTransaction(dbFactory, async db =>
             {
                 await _discordCacheService.UpdateGuild(db, guild, now: now, includeMembers: flags.CacheMember);
                 return true;
@@ -334,9 +342,9 @@ public partial class AdmDataModule : InteractionModuleBase
 
         if (flags.Snapshot)
         {
-            var elapsedSnapshot = await ModuleHelper.PerformTransaction(_services, async db =>
+            var elapsedSnapshot = await ModuleHelper.PerformTransaction(dbFactory, async db =>
             {
-                await _snapshotService.UpdateGuild(db, guild, now, DiscordSnapshotSource.GuildUpdated);
+                await _snapshotService.UpdateGuild(db, guild, now, DiscordSnapshotSource.AdminTask);
                 return true;
             });
             elapsed = TimeSpan.FromTicks(elapsed.Ticks + elapsedSnapshot.Ticks);
@@ -347,6 +355,7 @@ public partial class AdmDataModule : InteractionModuleBase
 
     private async Task UpdateAllGuildsInternal(UpdateGuildTaskFlags flags)
     {
+        var dbContextFactory = _services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         try
         {
             var now = DateTime.UtcNow;
@@ -357,7 +366,7 @@ public partial class AdmDataModule : InteractionModuleBase
                 if (guild.Id == 826825694205444107) continue; // lmfao fuck this server. it has 16k bots in it
                 try
                 {
-                    var elapsedInner = await UpdateGuildTask(guild, now, flags);
+                    var elapsedInner = await UpdateGuildTask(dbContextFactory, guild, now, flags);
                     elapsed = TimeSpan.FromTicks(elapsed.Ticks + elapsedInner.Ticks);
                 }
                 catch (Exception ex)
