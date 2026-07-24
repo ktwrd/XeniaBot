@@ -89,6 +89,9 @@ public class DiscordCacheService
 
         if (!includeMembers) return;
 
+        IEnumerable<IGuildUser> users;
+        if (guild is SocketGuild socketGuild) users = socketGuild.Users;
+        else users = await guild.GetUsersAsync();
         foreach (var member in await guild.GetUsersAsync())
         {
             try
