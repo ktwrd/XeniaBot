@@ -20,7 +20,8 @@ public static class DataExtensions
             Username = config.Username,
             Password = config.Password,
             Database = config.DatabaseName,
-            ApplicationName = "XeniaDiscord"
+            ApplicationName = "XeniaDiscord",
+            IncludeErrorDetail = true,
         };
         return b.ConnectionString;
     }
