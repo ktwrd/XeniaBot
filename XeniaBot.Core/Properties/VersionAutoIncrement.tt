@@ -36,7 +36,7 @@ namespace XeniaBot.Core
 
 <#+
 int Major = 1;
-int Minor = 17;
+int Minor = 18;
 static DateTimeOffset NowDate = DateTimeOffset.UtcNow;
 static DateTime StartedDate = new DateTime(year: 2022, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc);
 int DaysSince = Convert.ToInt32(Math.Round((NowDate - StartedDate).TotalDays));
