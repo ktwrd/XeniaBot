@@ -458,18 +458,16 @@ public class DiscordSnapshotService : BaseService
                 .WithRole(role));
             return;
         }
+        bool? isDeletedValue = source switch
+        {
+            GuildRoleSnapshotSource.RoleDelete => true,
+            GuildRoleSnapshotSource.RoleCreate => false,
+            GuildRoleSnapshotSource.RoleEdit => false,
+            _ => null
+        };
         try
         {
-            bool? isDeletedValue = source switch
-            {
-                GuildRoleSnapshotSource.RoleDelete => true,
-                GuildRoleSnapshotSource.RoleCreate => false,
-                GuildRoleSnapshotSource.RoleEdit => false,
-                _ => null
-            };
             await db.AddAsync(model);
-            await db.SaveChangesAsync();
-            await _guildCacheRepository.UpdateRoleCache(db, model, isDeleted: isDeletedValue, now: now);
             await db.SaveChangesAsync();
             await trans.CommitAsync();
         }
@@ -484,6 +482,23 @@ public class DiscordSnapshotService : BaseService
                 .WithRole(role)
                 .AddSerializedAttachment("model.json", model));
             return;
+        }
+
+        try
+        {
+            await using var db2 = await _dbContextFactory.CreateDbContextAsync();
+            await _guildCacheRepository.UpdateRoleCache(db2, model, isDeleted: isDeletedValue, now: now);
+            await db2.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to update cache for role (roleId={role.Id}, guildId={role.Guild.Id}, source={source}, snapshotId={model.Id})";
+            _log.Error(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithRole(role)
+                .AddSerializedAttachment("model.json", model));
         }
         try
         {
