@@ -44,6 +44,7 @@ public static class XeniaDiscordCommon
         DiscordUserToUserCacheModelMapper.RegisterService(services);
         DiscordGuildToGuildCacheModelMapper.RegisterService(services);
         DiscordUserToGuildMemberCacheModelMapper.RegisterService(services);
+        RoleSnapshotToCacheModelMapper.RegisterService(services);
 
         MessageSourceToDtoMapper.RegisterService(services);
         MessageTypeToDtoMapper.RegisterService(services);
