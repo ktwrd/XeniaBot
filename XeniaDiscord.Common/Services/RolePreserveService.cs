@@ -1,4 +1,5 @@
-﻿using CSharpFunctionalExtensions;
+﻿using System.Globalization;
+using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
+using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.RolePreserve;
 using XeniaDiscord.Data.Models.Snapshot;
 using XeniaDiscord.Data.Repositories;
@@ -27,6 +29,8 @@ public class RolePreserveService : BaseService
     private readonly ConfigData _configData;
     private readonly ProgramDetails _details;
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
+    private readonly IMapper<IRole, GuildRoleSnapshotModel> _roleToSnapshotMapper;
+    private readonly IMapper<GuildRoleSnapshotModel, GuildRoleCacheModel> _roleSnapshotToCacheMapper;
 
     public RolePreserveService(IServiceProvider services)
         : base(services)
@@ -40,7 +44,8 @@ public class RolePreserveService : BaseService
         var snapshotService = services.GetRequiredService<DiscordSnapshotService>();
         _rolePreserveLogService = services.GetRequiredService<RolePreserveLogService>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
-
+        _roleToSnapshotMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
+        _roleSnapshotToCacheMapper = services.GetRequiredService<IMapper<GuildRoleSnapshotModel, GuildRoleCacheModel>>();
 
         if (_details.Platform == XeniaPlatform.Bot)
         {
@@ -142,6 +147,67 @@ public class RolePreserveService : BaseService
             // TODO submit to ErrorReportService
         }
     }
+
+    private async Task EnsureRoleInCache(
+        XeniaDbContext db,
+        DateTime now,
+        IGuildUser user,
+        ulong roleId)
+    {
+        var guildIdStr = user.GuildId.ToString(CultureInfo.InvariantCulture);
+        var roleIdStr = roleId.ToString(CultureInfo.InvariantCulture);
+        var existingRoleCache = await db.GuildRoleCache.FindAsync(roleIdStr);
+        if (existingRoleCache == null)
+        {
+            var existingRole = user.Guild.Roles.All(r => r.Id != roleId)
+                ? null
+                : await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
+            var latestRoleSnapshot = await db.GuildRoleSnapshots
+                .Where(e => e.RoleId == roleIdStr)
+                .OrderByDescending(e => e.RecordCreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (latestRoleSnapshot == null)
+            {
+                latestRoleSnapshot = new GuildRoleSnapshotModel()
+                {
+                    RecordCreatedAt = now,
+                    SnapshotSource = GuildRoleSnapshotSource.Unknown,
+                    GuildId = guildIdStr,
+                    RoleId = roleIdStr,
+                    Name = null,
+                    CreatedAt = SnowflakeUtils.FromSnowflake(roleId).UtcDateTime,
+                    Position = -1,
+                    Flags = RoleFlags.None,
+                    IsManaged = false,
+                    IsMentionable = false,
+                    IsHoisted = false
+                };
+                if (existingRole != null)
+                {
+                    latestRoleSnapshot = _roleToSnapshotMapper.Map(existingRole);
+                    latestRoleSnapshot.RecordCreatedAt = now;
+                }
+                await db.AddAsync(latestRoleSnapshot);
+
+                existingRoleCache = _roleSnapshotToCacheMapper.Map(latestRoleSnapshot);
+                if (existingRole == null)
+                {
+                    existingRoleCache.IsDeleted = true;
+                    existingRoleCache.DeletedAt = latestRoleSnapshot.RecordCreatedAt;
+                }
+                await db.AddAsync(existingRoleCache);
+            }
+            else
+            {
+                existingRoleCache = _roleSnapshotToCacheMapper.Map(latestRoleSnapshot);
+            }
+            existingRoleCache.RecordUpdatedAt = now;
+            existingRoleCache.RecordCreatedAt = now;
+            existingRoleCache.SnapshotId = latestRoleSnapshot.Id;
+            await db.AddAsync(existingRoleCache);
+        }
+    }
     
     private async Task ClientOnUserJoined(SocketGuildUser user)
     {
@@ -175,11 +241,12 @@ public class RolePreserveService : BaseService
                 TargetUserId = user.Id.ToString(),
                 Action = RolePreserveAuditAction.AppliedRoles
             };
-            
+
             foreach (var item in roleIds)
             {
                 var roleId = item;
                 if (roleId == user.Guild.EveryoneRole.Id) continue;
+                await EnsureRoleInCache(db, audit.RecordCreatedAt, user, roleId);
                 if (blacklist.Any(e => e.RoleId == item.ToString()))
                 {
                     audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
@@ -192,7 +259,9 @@ public class RolePreserveService : BaseService
                 }
                 try
                 {
-                    var existingRole = await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
+                    var existingRole = user.Guild.Roles.All(r => r.Id != roleId)
+                        ? null
+                        : await ExceptionHelper.RetryOnTimedOut(async () => await user.Guild.GetRoleAsync(roleId));
                     // continue, since the role doesn't exist anymore
                     if (existingRole == null)
                     {
