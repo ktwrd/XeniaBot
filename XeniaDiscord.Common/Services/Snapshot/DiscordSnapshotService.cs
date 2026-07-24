@@ -302,7 +302,94 @@ public class DiscordSnapshotService : BaseService
                 .AddSerializedAttachment("model.json", model));
             return;
         }
+
+        await PreventSpamForProcessGuildMember(db, modelBefore, model);
+    }
+
+    private async Task PreventSpamForProcessGuildMember(
+        XeniaDbContext db,
+        GuildMemberSnapshotModel? modelBefore,
+        GuildMemberSnapshotModel model)
+    {
+        var guildIdStr = model.GuildId;
+        var userIdStr = model.UserId;
+        var source = model.SnapshotSource;
+        await Task.Delay(1000);
+        var shouldReturnEarly = false;
+        await ProcessGuildMemberLock.WaitAsync();
+        try
+        {
+            if (ProcessGuildMemberLockData.Any(e =>
+                    e.GuildId == guildIdStr && e.UserId == userIdStr && e.Source == source))
+            {
+                shouldReturnEarly = true;
+            }
+            else
+            {
+                ProcessGuildMemberLockData.Add(new ProcessGuildMemberLockRecord(guildIdStr, userIdStr, source));
+            }
+        }
+        finally
+        {
+            ProcessGuildMemberLock.Release();
+        }
+
+        if (shouldReturnEarly) return;
+
+        await Task.Delay(500);
+        var modelLatest = await GetLatestGuildMemberFor(db, guildIdStr, userIdStr, source);
+        while (modelLatest != null && modelLatest.RecordId != model.RecordId)
+        {
+            if (modelLatest.RecordId == model.RecordId)
+                break;
+
+            if (modelLatest.RecordCreatedAt > model.RecordCreatedAt)
+            {
+                var modelLatestRecordId = modelLatest.RecordId;
+                model = await db.GuildMemberSnapshots.Where(e => e.RecordId == modelLatestRecordId)
+                    .AsNoTracking()
+                    .Include(e => e.Roles)
+                    .ThenInclude(e => e.GuildRoleSnapshot)
+                    .Include(e => e.Permissions)
+                    .FirstAsync();
+            }
+
+            await Task.Delay(500);
+
+            modelLatest = await GetLatestGuildMemberFor(db, guildIdStr, userIdStr, source);
+            if (modelLatest == null || modelLatest.RecordId == model.RecordId)
+                break;
+        }
+
         GuildMemberUpdated?.Invoke(modelBefore, model);
+        await ProcessGuildMemberLock.WaitAsync();
+        try
+        {
+            ProcessGuildMemberLockData.RemoveAll(e =>
+                e.GuildId == guildIdStr && e.UserId == userIdStr && e.Source == source);
+        }
+        finally
+        {
+            ProcessGuildMemberLock.Release();
+        }
+    }
+
+    private sealed record ProcessGuildMemberLockRecord(string GuildId, string UserId, GuildMemberSnapshotSource Source);
+
+    private readonly SemaphoreSlim ProcessGuildMemberLock = new(1, 1);
+    private readonly List<ProcessGuildMemberLockRecord> ProcessGuildMemberLockData = [];
+
+    private async Task<GuildMemberSnapshotModel?> GetLatestGuildMemberFor(
+        XeniaDbContext db,
+        string guildIdStr,
+        string userIdStr,
+        GuildMemberSnapshotSource source)
+    {
+        var rec = await db.GuildMemberSnapshots
+            .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr && e.SnapshotSource == source)
+            .OrderByDescending(e => e.RecordCreatedAt)
+            .FirstOrDefaultAsync();
+        return rec;
     }
 
     private async Task ProcessRole(
