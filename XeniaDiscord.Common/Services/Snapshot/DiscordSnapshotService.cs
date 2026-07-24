@@ -487,6 +487,7 @@ public class DiscordSnapshotService : BaseService
                     DiscordSnapshotSource.RoleCreated => GuildRoleSnapshotSource.RoleCreate,
                     DiscordSnapshotSource.RoleUpdated => GuildRoleSnapshotSource.RoleEdit,
                     DiscordSnapshotSource.RoleDeleted => GuildRoleSnapshotSource.RoleDelete,
+                    DiscordSnapshotSource.AdminTask => GuildRoleSnapshotSource.AdminTask,
                     _ => GuildRoleSnapshotSource.Unknown
                 };
                 roles.Add(mapped);
