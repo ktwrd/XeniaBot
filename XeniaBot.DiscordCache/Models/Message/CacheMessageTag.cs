@@ -1,7 +1,7 @@
 ﻿using Discord;
+using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MongoDB.Bson.Serialization.Attributes;
 
 namespace XeniaBot.DiscordCache.Models;
 
@@ -88,6 +88,17 @@ public class CacheMessageTagEmoteValue : BaseCacheMessageTag, ICacheEmote
     [BsonIgnoreIfNull]
     public bool? Animated { get; set; }
 
+    [BsonExtraElements()]
+    [JsonIgnore]
+    public IDictionary<string, object?> ExtraElements
+    {
+        get => field;
+        set
+        {
+            field = value;
+        }
+    } = new Dictionary<string, object?>();
+
     public void Update(IEmote emote)
     {
         this.UpdateValues(emote);
@@ -144,6 +155,17 @@ public class CacheMessageTagUserValue : BaseCacheMessageTag, ICacheUserModel
     #endregion
     #endregion
 
+    [BsonExtraElements()]
+    [JsonIgnore]
+    public IDictionary<string, object?> ExtraElements
+    {
+        get => field;
+        set
+        {
+            field = value;
+        }
+    } = new Dictionary<string, object?>();
+
     public CacheMessageTagUserValue()
     {
         ActiveClients = Array.Empty<ClientType>();
@@ -181,6 +203,17 @@ public class CacheMessageTagRoleValue : BaseCacheMessageTag, ICacheRole
     public int Position { get; set; }
     public RoleTags? Tags { get; set; }
     #endregion
+
+    [BsonExtraElements()]
+    [JsonIgnore]
+    public IDictionary<string, object?> ExtraElements
+    {
+        get => field;
+        set
+        {
+            field = value;
+        }
+    } = new Dictionary<string, object?>();
 
     public CacheMessageTagRoleValue()
     {
