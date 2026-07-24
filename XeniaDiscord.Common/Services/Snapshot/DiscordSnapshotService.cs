@@ -525,7 +525,10 @@ public class DiscordSnapshotService : BaseService
         DiscordSnapshotSource source)
     {
         var members = new List<GuildMemberSnapshotModel>();
-        foreach (var member in await guild.GetUsersAsync())
+        IEnumerable<IGuildUser> users;
+        if (guild is SocketGuild socketGuild) users = socketGuild.Users;
+        else users = await guild.GetUsersAsync();
+        foreach (var member in users)
         {
             try
             {
