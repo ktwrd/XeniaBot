@@ -354,6 +354,7 @@ public partial class AdmDataModule : InteractionModuleBase
             var count = 0;
             foreach (var guild in _client.Guilds)
             {
+                if (guild.Id == 826825694205444107) continue; // lmfao fuck this server. it has 16k bots in it
                 try
                 {
                     var elapsedInner = await UpdateGuildTask(guild, now, flags);
