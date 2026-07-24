@@ -96,7 +96,8 @@ public class GuildCacheRepository
     {
         var nowValue = now.GetValueOrDefault(DateTime.UtcNow);
         var model = await db.GuildRoleCache.FindAsync(snapshot.RoleId);
-        if (model == null)
+        if (model == null &&
+            await db.GuildRoleCache.CountAsync(e => e.RoleId == snapshot.RoleId) == 0)
         {
             var cacheModel = new GuildRoleCacheModel()
             {
@@ -119,6 +120,16 @@ public class GuildCacheRepository
         }
         else
         {
+            model ??= new GuildRoleCacheModel()
+            {
+                GuildId = snapshot.GuildId,
+                RoleId = snapshot.RoleId,
+                Name = snapshot.Name ?? string.Empty,
+                Position = snapshot.Position,
+                RecordCreatedAt = nowValue,
+                RecordUpdatedAt = nowValue,
+                SnapshotId = snapshot.Id,
+            };
             model.Name = snapshot.Name ?? string.Empty;
             model.Position = snapshot.Position;
             model.RecordUpdatedAt = nowValue;
@@ -141,6 +152,7 @@ public class GuildCacheRepository
                 //         .SetProperty(p => p.DeletedAt, deletedAtValue));
                 _log.Debug($"Marked record as deleted (GuildId={snapshot.GuildId}, RoleId={snapshot.RoleId}, Name={snapshot.Name})");
             }
+            db.Update(model);
         }
     }
 
