@@ -13,7 +13,9 @@ public enum BanSyncGuildKind
     [Description("Your server is blacklisted from the BanSync feature.")]
     Blacklisted,
 
-    [Description("Missing permission \"Ban Members\"")]
+    [Description("Xenia is missing the \"Ban Members\" permission.\n"
+                 + "**This is required** to view who's been banned in your server."
+                 + " ([Source](https://docs.discord.com/developers/resources/guild#get-guild-bans))")]
     MissingBanMembersPermission,
 
     [Description("Log Channel doesn't exist in this guild.")]
