@@ -11,6 +11,7 @@ using XeniaBot.MongoData.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.LevelSystem.Services;
 
@@ -51,7 +52,7 @@ public class LevelSystemService : BaseService
             {
                 taskList.Add(new Task(delegate
                 {
-                    ReGrantGuildMembers(guild.Id).Wait();
+                    ReGrantGuildMembers(guild.Id).GetAwaiter().GetResult();
                 }));
             }
 
@@ -84,11 +85,11 @@ public class LevelSystemService : BaseService
         var taskList = new List<Task>();
         foreach (var member in guild.Users)
         {
-            if (member != null && !member.IsBot)
+            if (member is { IsBot: false })
             {
                 taskList.Add(new Task(delegate
                 {
-                    ClientOnUserJoined(member).Wait();
+                    ClientOnUserJoined(member).GetAwaiter().GetResult();
                 }));
             }
         }
@@ -113,13 +114,11 @@ public class LevelSystemService : BaseService
             var member = guild.GetUser(model.UserId);
             foreach (var item in roleGrantList)
             {
+                if (current.UserLevel < item.RequiredLevel) continue;
                 try
                 {
-                    if (current.UserLevel >= item.RequiredLevel)
-                    {
-                        var role = await guild.GetRoleAsync(item.RoleId);
-                        await member.AddRoleAsync(role);
-                    }
+                    var role = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(item.RoleId));
+                    await ExceptionHelper.RetryOnTimedOut(async () => await member.AddRoleAsync(role));
                 }
                 catch (Exception ex)
                 {
@@ -183,7 +182,8 @@ public class LevelSystemService : BaseService
                 
                 if (result.DidLevelUp && targetChannel != null)
                 {
-                    await targetChannel.SendMessageAsync($"<@{message.Author.Id}> You've advanced to *level {result.Metadata.UserLevel}*!");
+                    var text = $"<@{message.Author.Id}> You've advanced to *level {result.Metadata.UserLevel}*!";
+                    await ExceptionHelper.RetryOnTimedOut(async () => await targetChannel.SendMessageAsync(text));
                 }
             }
             catch (Exception e)
@@ -194,11 +194,11 @@ public class LevelSystemService : BaseService
     }
     private Task _client_MessageReceived(SocketMessage rawMessage)
     {
-        new Thread(async () =>
+        new Thread(() =>
         {
             try
             {
-                await ClientMessageReceived(rawMessage);
+                ClientMessageReceived(rawMessage).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
