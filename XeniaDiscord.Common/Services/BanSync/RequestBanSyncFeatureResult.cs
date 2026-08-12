@@ -7,60 +7,67 @@ namespace XeniaDiscord.Common.Services.BanSync;
 public class RequestBanSyncFeatureResult(ConfigData configData, BanSyncGuildKind kind, BanSyncGuildModel model)
 {
     public bool Success => GuildKind == BanSyncGuildKind.Valid;
-    public BanSyncGuildKind GuildKind { get; } = kind;
-    public BanSyncGuildModel GuildModel { get; } = model;
+    public BanSyncGuildKind GuildKind => kind;
+    public BanSyncGuildModel GuildModel => model;
 
-    private const string MsgPendingRequest =
-        "Unable to request for BanSync again, since you're already waiting for your server to be reviewed.";
+    internal const string MsgPendingRequest =
+        "Unable to request for BanSync feature again, since you're already waiting for your server to be reviewed.";
     
-    private const string MsgEmbedNotEnoughMembers =
+    internal const string MsgEmbedNotEnoughMembers =
         "Your server doesn't have enough members.\n" +
         "It needs at least `{0}`";
-    private const string MsgWebNotEnoughMembers =
+    internal const string MsgWebNotEnoughMembers =
         "Unable to request for BanSync, Your server doesn't have enough members.\n" +
         "It needs at least `{0}` to request the BanSync feature.";
     
-    private const string MsgLogChannelCannotSendMessages =
+    internal const string MsgLogChannelCannotSendMessages =
         "Xenia is missing the `Send Messages` permission in the configured log channel{0}";
-    private const string MsgWebLogChannelCannotSendMessages =
-        "Unable to request for BanSync, since " +
+    internal const string MsgWebLogChannelCannotSendMessages =
+        "Unable to request for BanSync feature, since " +
         MsgLogChannelCannotSendMessages;
 
-    private const string MsgLogChannelCannotSendEmbeds =
+    internal const string MsgLogChannelCannotSendEmbeds =
         "Xenia is missing the `Embed Links` permission in the configured log channel{0}";
-    private const string MsgWebLogChannelCannotSendEmbeds =
-        "Unabel to request for BanSync feature, since " +
+    internal const string MsgWebLogChannelCannotSendEmbeds =
+        "Unable to request for BanSync feature, since " +
         MsgLogChannelCannotSendEmbeds;
 
-    private const string MsgMissingBanMembersPermission =
+    internal const string MsgMissingBanMembersPermission =
         "Xenia is missing the \"Ban Members\" permission.\n" +
-        "**This is required** for Xenia to view who's been banned in your server.";
-    private const string MsgEmbedMissingBanMembersPermission =
+        "**This is required** for Xenia to see who's been banned in your server.";
+    internal const string MsgEmbedMissingBanMembersPermission =
         MsgMissingBanMembersPermission + "\n" +
         "-# [Source](https://docs.discord.com/developers/resources/guild#get-guild-bans)";
 
-    private const string MsgLogChannelMissing =
+    internal const string MsgLogChannelMissing =
         "Log channel has not been configured, please do so with the command: `/bansync setchannel`";
-    private const string MsgWebLogChannelMissing =
+    internal const string MsgWebLogChannelMissing =
         "Unable to request for BanSync feature since you haven't configured a log channel.";
     
-    private const string MsgLogChannelCannotAccess =
-        "Xenia is unable to access the log channel that you've configured.\n" +
+    internal const string MsgLogChannelCannotAccess =
+        "Xenia is unable to access the log channel that you've configured{0}\n" +
         "Please make sure it still exists, and that Xenia has the correct permissions. " +
         "([see guide](https://xenia.kate.pet/guide/required_permissions#content-bansync))";
-    private const string MsgWebLogChannelCannotAccess =
-        "Unable to request for BanSync since " +
-        MsgLogChannelCannotAccess;
+    internal const string MsgWebLogChannelCannotAccess =
+        "Unable to request for BanSync feature since Xenia is unable to access the log channel that is currently configured.\n" +
+        "Please make sure that it still exists, and that Xenia has the correct permissions. " +
+        "([see guide](https://xenia.kate.pet/guide/required_permissions#content-bansync))\n" +
+        "If it does not exist anymore, please select a new one from the settings below.";
 
-    private const string MsgTooYoung =
+    internal const string MsgTooYoung =
         "Your server is too young, it must be at least {0}";
-    private const string MsgWebTooYoung =
+    internal const string MsgWebTooYoung =
         "Unable to request for BanSync feature since your server is too young. it must be at least {0}";
 
-    private const string MsgBlacklisted = "Your server is blacklist from the BanSync feature.";
-    private const string MsgWebBlacklisted = "Unable to request for BanSync feature, " + MsgBlacklisted;
-    
-    private const string MoreInfoSuffix = "For more information, please [join our support server]({0}).";
+    internal const string MsgInternalError = "Internal error.";
+    internal const string MsgWebInternalError = "Failed to request for BanSync feature due to an internal error.";
+
+    internal const string MsgBlacklisted = "Your server is blacklist from the BanSync feature.";
+    internal const string MsgWebBlacklisted = "Unable to request for BanSync feature since your server has been blacklisted.";
+
+    internal const string MsgValid = "Congratulations! Your server is eligible for the BanSync Feature!";
+
+    internal const string MoreInfoSuffix = "For more information, please [join our support server]({0}).";
 
     public string FormatMessage(FormatMessageKind formatKind)
     {
@@ -116,7 +123,7 @@ public class RequestBanSyncFeatureResult(ConfigData configData, BanSyncGuildKind
             case BanSyncGuildKind.LogChannelCannotAccess:
                 return formatKind switch
                 {
-                    FormatMessageKind.MessageEmbed => MsgLogChannelCannotAccess,
+                    FormatMessageKind.MessageEmbed => string.Format(MsgLogChannelCannotAccess, embedLogChannelSuffix),
                     FormatMessageKind.Dashboard => MsgWebLogChannelCannotAccess
                 };
             case BanSyncGuildKind.LogChannelCannotSendMessages:
@@ -132,9 +139,13 @@ public class RequestBanSyncFeatureResult(ConfigData configData, BanSyncGuildKind
                     FormatMessageKind.Dashboard => string.Format(MsgWebLogChannelCannotSendEmbeds, ".")
                 };
             case BanSyncGuildKind.InternalError:
-                return "Failed to request for BanSync feature: Internal error.";
+                return formatKind switch
+                {
+                    FormatMessageKind.MessageEmbed => MsgInternalError,
+                    FormatMessageKind.Dashboard => MsgWebInternalError
+                };
             case BanSyncGuildKind.Valid:
-                return "Congratulations! Your server is eligible for the BanSync Feature!";
+                return MsgValid;
 
         }
 
