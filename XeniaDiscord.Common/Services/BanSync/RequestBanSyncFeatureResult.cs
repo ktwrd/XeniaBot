@@ -10,20 +10,24 @@ public class RequestBanSyncFeatureResult(ConfigData configData, BanSyncGuildKind
     public BanSyncGuildKind GuildKind { get; } = kind;
     public BanSyncGuildModel GuildModel { get; } = model;
 
-    private const string MsgEmbedNotEnoughMembers = "Your server doesn't have enough members.\n" +
-                                                    "It needs at least `{0}`";
-    private const string MsgWebNotEnoughMembers = "Unable to request for BanSync, Your server doesn't have enough members.\n" +
-                                                  "It needs at least `{0}` to request the BanSync feature.";
+    private const string MsgPendingRequest =
+        "Unable to request for BanSync again, since you're already waiting for your server to be reviewed.";
+    
+    private const string MsgEmbedNotEnoughMembers =
+        "Your server doesn't have enough members.\n" +
+        "It needs at least `{0}`";
+    private const string MsgWebNotEnoughMembers =
+        "Unable to request for BanSync, Your server doesn't have enough members.\n" +
+        "It needs at least `{0}` to request the BanSync feature.";
+    
     private const string MsgLogChannelCannotSendMessages =
         "Xenia is missing the `Send Messages` permission in the configured log channel{0}";
-
     private const string MsgWebLogChannelCannotSendMessages =
         "Unable to request for BanSync, since " +
         MsgLogChannelCannotSendMessages;
 
     private const string MsgLogChannelCannotSendEmbeds =
         "Xenia is missing the `Embed Links` permission in the configured log channel{0}";
-
     private const string MsgWebLogChannelCannotSendEmbeds =
         "Unabel to request for BanSync feature, since " +
         MsgLogChannelCannotSendEmbeds;
@@ -31,33 +35,33 @@ public class RequestBanSyncFeatureResult(ConfigData configData, BanSyncGuildKind
     private const string MsgMissingBanMembersPermission =
         "Xenia is missing the \"Ban Members\" permission.\n" +
         "**This is required** for Xenia to view who's been banned in your server.";
-
     private const string MsgEmbedMissingBanMembersPermission =
         MsgMissingBanMembersPermission + "\n" +
         "-# [Source](https://docs.discord.com/developers/resources/guild#get-guild-bans)";
 
     private const string MsgLogChannelMissing =
         "Log channel has not been configured, please do so with the command: `/bansync setchannel`";
-
     private const string MsgWebLogChannelMissing =
         "Unable to request for BanSync feature since you haven't configured a log channel.";
+    
     private const string MsgLogChannelCannotAccess =
         "Xenia is unable to access the log channel that you've configured.\n" +
         "Please make sure it still exists, and that Xenia has the correct permissions. " +
         "([see guide](https://xenia.kate.pet/guide/required_permissions#content-bansync))";
+    private const string MsgWebLogChannelCannotAccess =
+        "Unable to request for BanSync since " +
+        MsgLogChannelCannotAccess;
 
-    private const string MsgWebLogChannelCannotAccess = "Unable to request for BanSync since " +
-                                                        MsgLogChannelCannotAccess;
-
-    private const string MsgTooYoung = "Your server is too young, it must be at least {0}";
-    private const string MsgWebTooYoung = "Unable to request for BanSync feature since your server is too young. it must be at least {0}";
+    private const string MsgTooYoung =
+        "Your server is too young, it must be at least {0}";
+    private const string MsgWebTooYoung =
+        "Unable to request for BanSync feature since your server is too young. it must be at least {0}";
 
     private const string MsgBlacklisted = "Your server is blacklist from the BanSync feature.";
     private const string MsgWebBlacklisted = "Unable to request for BanSync feature, " + MsgBlacklisted;
+    
     private const string MoreInfoSuffix = "For more information, please [join our support server]({0}).";
 
-    private const string MsgPendingRequest =
-        "Unable to request for BanSync again, since you're already waiting for your server to be reviewed.";
     public string FormatMessage(FormatMessageKind formatKind)
     {
         var logChannelId = GuildModel.GetLogChannelId();
