@@ -103,6 +103,7 @@ public class BanSyncService : BaseService
             && string.Equals(ParseReason(self.Reason), ParseReason(other.Reason), StringComparison.OrdinalIgnoreCase);
     }
 
+    #region Refresh Bans
     public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
     public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
     {
@@ -205,7 +206,9 @@ public class BanSyncService : BaseService
                 .AddSerializedAttachment("ban.json", ban));
         }
     }
+    #endregion
 
+    #region On User Banned
     /// <summary>
     /// Add user to database and notify mutual servers.
     /// </summary>
@@ -366,7 +369,8 @@ public class BanSyncService : BaseService
                 ex, info, null, guild, null);
         }
     }
-
+    #endregion
+    
     private static async Task<RestAuditLogEntry?> TryGetRelevantAuditLogEntry(SocketGuild guild)
     {
         return await ExceptionHelper.RetryOnTimedOut(async () =>
@@ -671,29 +675,28 @@ public class BanSyncService : BaseService
         await SetGuildState_Notify(config);
         await SetGuildState_NotifyGuild(config, oldConfig);
 
-        if (state == BanSyncGuildState.Active && doRefreshBans)
+        if (state != BanSyncGuildState.Active || !doRefreshBans) return config;
+        
+        try
         {
+            await RefreshBans(ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId)));
+        }
+        catch (Exception ex)
+        {
+            SocketGuild? guild = null;
             try
             {
-                await RefreshBans(ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId)));
+                guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
             }
-            catch (Exception ex)
+            catch (Exception gex)
             {
-                SocketGuild? guild = null;
-                try
-                {
-                    guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
-                }
-                catch (Exception gex)
-                {
-                    _log.Error(gex, $"Failed to fetch Guild with Id {guildId}");
-                }
-                await _err.Submit(new ErrorReportBuilder()
-                    .WithException(ex)
-                    .WithGuild(guild)
-                    .WithNotes($"Failed to refresh bans in guild \"{guild?.Name}\" ({guildId})")
-                    .AddSerializedAttachment("bansyncGuild.json", config));
+                _log.Error(gex, $"Failed to fetch Guild with Id {guildId}");
             }
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithGuild(guild)
+                .WithNotes($"Failed to refresh bans in guild \"{guild?.Name}\" ({guildId})")
+                .AddSerializedAttachment("bansyncGuild.json", config));
         }
 
         return config;
@@ -704,6 +707,7 @@ public class BanSyncService : BaseService
         try
         {
             var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(model.GetGuildId()));
+            if (guild == null) return;
             var logGuild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_configData.BanSync.GuildId));
             var logChannel = ExceptionHelper.RetryOnTimedOut(() => logGuild.GetTextChannel(_configData.BanSync.LogChannelId));
 
@@ -936,7 +940,7 @@ public class BanSyncService : BaseService
     /// Request for BanSync to be enabled on the guild specified.
     /// </summary>
     /// <param name="guildId">GuildId to request the BanSync feature on.</param>
-    /// <returns>Updated <see cref="ConfigBanSyncModel"/></returns>
+    /// <returns>Updated <see cref="BanSyncGuildModel"/></returns>
     public async Task<BanSyncGuildModel> RequestGuildEnable(ulong guildId)
     {
         var config = await _bansyncGuildRepository.GetAsync(guildId)
