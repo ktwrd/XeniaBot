@@ -183,6 +183,28 @@ public class LevelSystemService : BaseService
         }
     }
 
+    private Task _client_MessageReceived(SocketMessage rawMessage)
+    {
+        ThreadPool.QueueUserWorkItem(ThreadProcessMessageReceived, rawMessage);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Thread logic for when <see cref="_client_MessageReceived"/> is invoked
+    /// </summary>
+    /// <param name="state">Must be <see cref="SocketMessage"/> or this does nothing</param>
+    private void ThreadProcessMessageReceived(object? state)
+    {
+        if (state is not SocketMessage message) return;
+        try
+        {
+            ClientMessageReceived(message).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _log.Error(ex, $"Failed to process message (id={message.Id}, author={message.Author.Id},{message.Author.Username})");
+        }
+    }
     private async Task ClientMessageReceived(SocketMessage rawMessage)
     {
         // Ignore messages from bots & webhooks
@@ -224,7 +246,7 @@ public class LevelSystemService : BaseService
                 var targetChannel = message.Channel;
                 if (guildConfig.LevelUpChannel != null)
                 {
-                    var tc = context.Guild.GetTextChannel((ulong)guildConfig.LevelUpChannel);
+                    var tc = ExceptionHelper.RetryOnTimedOut(() => context.Guild.GetTextChannel((ulong)guildConfig.LevelUpChannel));
                     if (tc != null)
                         targetChannel = tc;
                 }
@@ -241,28 +263,6 @@ public class LevelSystemService : BaseService
             {
                 await DiscordHelper.ReportError(e, context);
             }
-        }
-    }
-    private Task _client_MessageReceived(SocketMessage rawMessage)
-    {
-        ThreadPool.QueueUserWorkItem(ThreadProcessMessageReceived, rawMessage);
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Thread logic for when <see cref="_client_MessageReceived"/> is invoked
-    /// </summary>
-    /// <param name="state">Must be <see cref="SocketMessage"/> or this does nothing</param>
-    private void ThreadProcessMessageReceived(object? state)
-    {
-        if (state is not SocketMessage message) return;
-        try
-        {
-            ClientMessageReceived(message).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-        catch (Exception ex)
-        {
-            _log.Error(ex, $"Failed to process message (id={message.Id}, author={message.Author.Id},{message.Author.Username})");
         }
     }
 
