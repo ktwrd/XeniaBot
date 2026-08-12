@@ -11,7 +11,7 @@ using JetBrains.Annotations;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
-using XeniaDiscord.Common.Services;
+using XeniaDiscord.Common.Services.BanSync;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Repositories;

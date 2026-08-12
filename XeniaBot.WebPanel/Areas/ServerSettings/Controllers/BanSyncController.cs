@@ -11,7 +11,7 @@ using XeniaBot.WebPanel.Areas.ServerSettings.Models.BanSync;
 using XeniaBot.WebPanel.Controllers;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
-using XeniaDiscord.Common.Services;
+using XeniaDiscord.Common.Services.BanSync;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Repositories;
 

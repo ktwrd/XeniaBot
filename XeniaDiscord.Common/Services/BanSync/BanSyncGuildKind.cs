@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace XeniaDiscord.Common.Services;
+namespace XeniaDiscord.Common.Services.BanSync;
 
 public enum BanSyncGuildKind
 {

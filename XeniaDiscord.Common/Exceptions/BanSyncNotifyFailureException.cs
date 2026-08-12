@@ -4,7 +4,7 @@ using XeniaDiscord.Data.Models.BanSync;
 namespace XeniaDiscord.Common.Exceptions;
 
 /// <summary>
-/// Exception that is thrown when <see cref="Services.BanSyncService"/>
+/// Exception that is thrown when <see cref="Services.BanSync.BanSyncService"/>
 /// failed to notify a guild of a member being banned.
 /// </summary>
 public class BanSyncNotifyFailureException : Exception

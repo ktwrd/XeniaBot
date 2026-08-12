@@ -14,7 +14,7 @@ using XeniaDiscord.Data.Models.Cache;
 using XeniaDiscord.Data.Models.PartialSnapshot;
 using XeniaDiscord.Data.Repositories;
 
-namespace XeniaDiscord.Common.Services;
+namespace XeniaDiscord.Common.Services.BanSync;
 
 public class BanSyncService : BaseService
 {

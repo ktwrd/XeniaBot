@@ -5,6 +5,7 @@ using XeniaDiscord.Common.Mappers;
 using XeniaDiscord.Common.Mappers.DiscordCache;
 using XeniaDiscord.Common.Mappers.DiscordSnapshot;
 using XeniaDiscord.Common.Services;
+using XeniaDiscord.Common.Services.BanSync;
 // ReSharper disable CheckNamespace
 #pragma warning disable IDE0130
 #pragma warning disable S1186
