@@ -1,9 +1,10 @@
 ﻿using Discord.WebSocket;
-using kate.shared.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -41,8 +42,8 @@ public class BanSyncController : BaseXeniaController
     [RestrictToGuild(GuildIdRouteKey = "guildId")]
     public async Task<IActionResult> BanSyncGet(ulong guildId)
     {
-        var guild = _discord.GetGuild(guildId);
-        if (guild == null) return PartialView("NotFoundPartial", "Guild not found");
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
+        if (guild == null) return PartialView("NotFoundPartial", "Guild not found: " + guildId);
 
         var model = await GetModel(guild);
         return PartialView("BanSyncComponent", model);
@@ -59,14 +60,14 @@ public class BanSyncController : BaseXeniaController
 
         var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         if (guild == null)
-            return PartialView("NotFoundPartial", "Guild not found");
+            return PartialView("NotFoundPartial", "Guild not found: " + guildId);
 
         var configData = await _bansyncGuildRepository.GetAsync(guild.Id)
             ?? new(guild.Id);
         var logChannelId = configData.GetLogChannelId();
 
         var model = await GetModel(guild);
-
+        // make sure that log channel is set
         if (logChannelId == null || logChannelId <= 1)
         {
             model.Alert = new()
@@ -77,7 +78,8 @@ public class BanSyncController : BaseXeniaController
             return PartialView("BanSyncComponent", model);
         }
 
-        var logChannel = guild.GetTextChannel(logChannelId.Value);
+        // make sure that log channel still exists
+        var logChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(logChannelId.Value));
         if (logChannel == null)
         {
             model.Alert = new AlertComponentViewModel
@@ -88,7 +90,7 @@ public class BanSyncController : BaseXeniaController
             return PartialView("BanSyncComponent", model);
         }
 
-        var guildKind = await _bansyncService.GetGuildKind(guild.Id);
+        var guildKind = await _bansyncService.GetGuildKind(guild);
         model.Alert = new AlertComponentViewModel
         {
             MessageType = "warning",
@@ -114,7 +116,8 @@ public class BanSyncController : BaseXeniaController
         }
 
         // Request ban sync
-        if (configData.State == BanSyncGuildState.Unknown && guildKind == BanSyncGuildKind.Valid)
+        if (configData.State == BanSyncGuildState.Unknown &&
+            guildKind is { GuildKind: BanSyncGuildKind.Valid, Success: true })
         {
             try
             {
@@ -127,72 +130,25 @@ public class BanSyncController : BaseXeniaController
             }
             catch (Exception ex)
             {
-                await _errorReporting.ReportException(ex, $"Failed to request ban sync access in guild {guildId}");
+                await _errorReporting.Submit(new ErrorReportBuilder()
+                    .WithException(ex)
+                    .WithNotes($"Failed to request BanSync feature for guild \"{guild.Name}\" ({guildId})"));
                 model.Alert = new()
                 {
                     MessageType = "danger",
-                    Message = $"Unable to request Ban Sync: Failed to request.\n{ex.Message}"
+                    Message = "Unable to request Ban Sync: Internal Error (reported to developers)"
                 };
             }
             return PartialView("BanSyncComponent", model);
         }
 
         // attempting to request for BanSync, but it's not valid
-        switch (guildKind)
+        model.Alert = new()
         {
-            case BanSyncGuildKind.TooYoung:
-            case BanSyncGuildKind.Blacklisted:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = $"Unable to request for BanSync, {guildKind.ToDescriptionString(guildKind.ToString())}"
-                };
-                break;
-            case BanSyncGuildKind.LogChannelMissing:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = $"Unable to request for BanSync, Log Channel not found: {logChannel.Name} ({logChannel.Id})"
-                };
-                break;
-            case BanSyncGuildKind.LogChannelCannotAccess:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = $"Unable to request for BanSync, cannot access log channel: {logChannel.Name} ({logChannel.Id})\nPlease double-check the permissions in that channel."
-                };
-                break;
-            case BanSyncGuildKind.LogChannelCannotSendMessages:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = $"Unable to request for BanSync, Missing Permission \"Send Messages\" in log channel: {logChannel.Name} ({logChannel.Id})"
-                };
-                break;
-            case BanSyncGuildKind.LogChannelCannotSendEmbeds:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = $"Unable to request for BanSync, Missing Permission \"Embed Links\" in log channel: {logChannel.Name} ({logChannel.Id})"
-                };
-                break;
-            case BanSyncGuildKind.MissingBanMembersPermission:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    RenderMessageAsMarkdown = true,
-                    Message = $"Unable to request for BanSync, {guildKind.ToDescriptionString(guildKind.ToString())}"
-                };
-                break;
-            case BanSyncGuildKind.NotEnoughMembers:
-                model.Alert = new()
-                {
-                    MessageType = "danger",
-                    Message = "Unable to request for BanSync, Your server doesn't have enough members. It needs at least `35` to request the BanSync feature."
-                };
-                break;
-        }
-
+            MessageType = "danger",
+            RenderMessageAsMarkdown = true,
+            Message = guildKind.FormatMessage(FormatMessageKind.Dashboard)
+        };
         return PartialView("BanSyncComponent", model);
     }
 
@@ -208,6 +164,7 @@ public class BanSyncController : BaseXeniaController
 
         var model = await GetModel(guild);
 
+        // check if logChannel is a valid ulong
         if (!ParseChannelId(logChannel, out var logResult))
         {
             model.Alert = new()
@@ -217,15 +174,46 @@ public class BanSyncController : BaseXeniaController
             };
             return PartialView("BanSyncComponent", model);
         }
+
+        // check if the channel exists
+        var textChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(logResult.ChannelId));
+        var selfMember = ExceptionHelper.RetryOnTimedOut(() => guild.CurrentUser.GetPermissions(textChannel));
+        if (textChannel == null)
+        {
+            model.Alert = new()
+            {
+                MessageType = "danger",
+                Message = "Log channel not found!"
+            };
+            return PartialView("BanSyncComponent", model);
+        }
+
+        // check if missing permissions
+        var missingPermissions = new List<string>(2);
+        if (!selfMember.SendMessages) missingPermissions.Add("Send Messages");
+        if (!selfMember.EmbedLinks) missingPermissions.Add("Embed Links");
+        if (missingPermissions.Count > 0)
+        {
+            model.Alert = new()
+            {
+                MessageType = "danger",
+                Message = "Cannot set log channel, missing one or more permissions:\n" +
+                          string.Join("\n", missingPermissions.Select(e => "- " + e)),
+                RenderMessageAsMarkdown = true
+            };
+            return PartialView("BanSyncComponent", model);
+        }
+        
+        // otherwise, success!
         var guildModel = await _bansyncGuildRepository.GetAsync(guild.Id)
             ?? new(guild.Id);
         guildModel.LogChannelId = logResult.ChannelId.ToString();
         await _bansyncGuildRepository.InsertOrUpdate(guildModel);
-
+        // TODO rewrite validation logic to be a method in BanSyncService to reduce duplicated code for discord commands
         model.Alert = new()
         {
             MessageType = "success",
-            Message = $"Successfully saved Ban Sync Log channel"
+            Message = "Successfully saved Ban Sync Log channel"
         };
         return PartialView("BanSyncComponent", model);
     }

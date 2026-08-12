@@ -1,13 +1,14 @@
 ﻿using Discord;
 using Discord.Interactions;
-using kate.shared.Extensions;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
+using Discord.WebSocket;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -18,7 +19,7 @@ using XeniaDiscord.Data.Repositories;
 
 namespace XeniaBot.Core.Modules;
 
-[Group("bansync", "Recieve ban notifications across guilds")]
+[Group("bansync", "Receive ban notifications across guilds")]
 [CommandContextType(InteractionContextType.Guild)]
 public class BanSyncModule : InteractionModuleBase
 {
@@ -30,6 +31,7 @@ public class BanSyncModule : InteractionModuleBase
     private readonly BanSyncService _bansyncService;
     private readonly BanSyncGuildRepository _guildRepo;
     private readonly BanSyncRecordRepository _recordRepo;
+    private readonly DiscordSocketClient _discordClient;
 
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
@@ -37,7 +39,8 @@ public class BanSyncModule : InteractionModuleBase
     {
         _config = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
-     
+        _discordClient = services.GetRequiredService<DiscordSocketClient>();
+
         _bansyncService = services.GetRequiredService<BanSyncService>();
         _guildRepo = services.GetRequiredService<BanSyncGuildRepository>();
         _recordRepo = services.GetRequiredService<BanSyncRecordRepository>();
@@ -47,29 +50,50 @@ public class BanSyncModule : InteractionModuleBase
 
     [SlashCommand("refresh", "Refresh bans in this guild")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
+    [UsedImplicitly]
     public async Task Refresh()
     {
         await DeferAsync();
         try
         {
+            var guild = ExceptionHelper.RetryOnTimedOut(() => _discordClient.GetGuild(Context.Guild.Id));
+            if (guild == null)
+            {
+                await FollowupAsync("Internal error (Guild not found)");
+                return;
+            }
+
+            if (guild.MemberCount > 300)
+            {
+                await FollowupAsync(
+                    embed: new EmbedBuilder()
+                        .WithTitle("BanSync - Refresh")
+                        .WithDescription(
+                            "Your guild is too large to have BanSync records refreshed by a server admin.\n" +
+                            $"Please join our [support server]({_config.SupportServerUrl}) to have a developer refresh them for you.")
+                        .WithColor(Color.Red)
+                        .WithCurrentTimestamp()
+                        .Build());
+                return;
+            }
             await _bansyncService.RefreshBans(Context.Guild.Id);
             
             await FollowupAsync(
                 embed: new EmbedBuilder()
                     .WithTitle("BanSync - Refresh")
                     .WithDescription("Bans were refreshed successfully.")
-                    .WithColor(Color.Red)
+                    .WithColor(Color.Blue)
                     .WithCurrentTimestamp()
                     .Build());
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to refresh bans for Guild {Context.Guild.Name} ({Context.Guild.Id})";
+            var msg = $"Failed to refresh bans for Guild \"{Context.Guild.Name}\" ({Context.Guild.Id})";
             _log.Error(ex, msg);
             await FollowupAsync(
                 embed: new EmbedBuilder()
                     .WithTitle("BanSync - Action Failed")
-                    .WithDescription("Failed to refresh bans in this guild")
+                    .WithDescription("Failed to refresh bans in this guild (this has been reported to the developers)")
                     .AddField("Error Message", ex.Message[..Math.Min(ex.Message.Length, 1000)])
                     .WithColor(Color.Red)
                     .WithCurrentTimestamp()
@@ -84,6 +108,7 @@ public class BanSyncModule : InteractionModuleBase
     [SlashCommand("userinfo", "Get ban sync details about user")]
     [RequireUserPermission(GuildPermission.BanMembers)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task UserDetails(
         [Summary(description: "User to get information about.")]
         IUser user)
@@ -103,7 +128,7 @@ public class BanSyncModule : InteractionModuleBase
             }
             else
             {
-                var embed = await _bansyncService.GenerateEmbed(data);
+                var embed = _bansyncService.GenerateEmbed(data);
                 await Context.Interaction.FollowupAsync(embed: embed.Build());
             }
         }
@@ -115,18 +140,43 @@ public class BanSyncModule : InteractionModuleBase
                 .WithException(ex)
                 .WithNotes(msg)
                 .WithContext(Context));
+            await FollowupAsync(embed: new EmbedBuilder()
+                .WithTitle("BanSync - Get User Info")
+                .WithDescription("Failed to get user information. This has been reported to the developers")
+                .WithCurrentTimestamp()
+                .WithColor(Color.Red)
+                .Build());
         }
     }
 
     [SlashCommand("setchannel", "Set the log channel where ban notifications get sent.")]
     [RequireUserPermission(ChannelPermission.ManageChannels)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task SetChannel(
         [Summary(description: "Channel where BanSync notifications will be sent to.")]
         [ChannelTypes(ChannelType.Text)]
         ITextChannel logChannel)
     {
         await DeferAsync();
+
+        var selfMember = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Guild.GetCurrentUserAsync());
+        var selfPerms = selfMember.GetPermissions(logChannel);
+        var missingPermissions = new List<string>(2);
+        if (!selfPerms.SendMessages) missingPermissions.Add("Send Messages");
+        if (!selfPerms.EmbedLinks) missingPermissions.Add("Embed Links");
+        if (missingPermissions.Count > 0)
+        {
+            var embedResult = new EmbedBuilder()
+                .WithColor(Color.Orange)
+                .WithCurrentTimestamp()
+                .WithTitle("BanSync Set Channel - Missing Permissions")
+                .WithDescription("Xenia is missing one or more permissions in " + logChannel.Mention + "\n" +
+                                 string.Join("\n", missingPermissions.Select(e => $"- {e}")) + "\n\n" +
+                                 "-# [See full list of required permissions](https://xenia.kate.pet/guide/required_permissions#content-bansync)");
+            await Context.Interaction.FollowupAsync(embed: embedResult.Build());
+        }
+
         await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
@@ -160,7 +210,9 @@ public class BanSyncModule : InteractionModuleBase
                 .Build());
             return;
         }
-        await Context.Interaction.FollowupAsync($"Updated Log Channel to <#{logChannel.Id}>");
+
+        var successMsg = $"Updated Log Channel to {logChannel.Mention}";
+        await Context.Interaction.FollowupAsync(successMsg);
     }
     
     [SlashCommand("setguildstate", "Set state field of guild")]
@@ -170,34 +222,31 @@ public class BanSyncModule : InteractionModuleBase
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
         {
-            await Context.Interaction.RespondAsync("Invalid permissions.");
+            await Context.Interaction.RespondAsync("Invalid permissions");
             return;
         }
-        ulong guildId = 0;
-        try
+
+        if (!ulong.TryParse(guild, out var guildId))
         {
-            guildId = ulong.Parse(guild);
-        }
-        catch (Exception ex)
-        {
-            await Context.Interaction.RespondAsync($"Failed to parse guildId\n\n{ex.Message}", ephemeral: true);
+            await Context.Interaction.RespondAsync($"Invalid Guild ID: {guildId}", ephemeral: true);
             return;
         }
         var targetGuild = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Client.GetGuildAsync(guildId));
         if (targetGuild == null)
         {
-            await Context.Interaction.RespondAsync($"Guild `{guildId}` not found", ephemeral: true);
+            await Context.Interaction.RespondAsync($"Guild not found: `{guildId}`", ephemeral: true);
             return;
         }
 
         try
         {
             await _bansyncService.SetGuildState(guildId, state, reason);
-            await Context.Interaction.RespondAsync($"Set state of `{targetGuild.Name}` to `{state}`");
+            var n = targetGuild.Name.Replace("`", "'");
+            await Context.Interaction.RespondAsync($"Set state of `{n}` to `{state}`");
         }
         catch (Exception ex)
         {
-            var msg = $"Failed to set state to {state} for guild {targetGuild.Name} ({guildId})";
+            var msg = $"Failed to set state to {state} for guild \"{targetGuild.Name}\" ({guildId})";
             _log.Error(ex, msg);
             await Context.Interaction.RespondAsync($"Failed to set guild state\n```\n{ex.Message}\n```", ephemeral: true);
             await _err.Submit(new ErrorReportBuilder()
@@ -211,64 +260,36 @@ public class BanSyncModule : InteractionModuleBase
     [SlashCommand("request", "Request for this guild to have BanSync support")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task RequestGuild()
     {
-        var kind = await _bansyncService.GetGuildKind(Context.Guild.Id);
+        var kindRes = await _bansyncService.GetGuildKind(Context.Guild);
 
         var embed = new EmbedBuilder()
             .WithTitle("Request BanSync Access")
             .WithColor(Color.Red)
             .WithCurrentTimestamp();
 
-        switch (kind)
+        embed.Description = kindRes.FormatMessage(FormatMessageKind.MessageEmbed);
+        embed.Color = kindRes.Success ? Color.Green : Color.Red;
+        switch (kindRes.GuildKind)
         {
-            case BanSyncGuildKind.LogChannelMissing:
-                embed.Color = Color.Red;
-                embed.Description = "You must set a log channel with `/bansync setchannel`.";
-                await Context.Interaction.RespondAsync(embed: embed.Build());
-                return;
-            case BanSyncGuildKind.LogChannelCannotAccess:
-                embed.Color = Color.Red;
-                embed.Description = string.Join("\n",
-                    "Xenia is unable to access the log channel that was set.",
-                    "Please double-check the permissions in that channel.");
+            case BanSyncGuildKind.PendingRequest:
+                embed.Color = Color.Blue;
+                break;
+            case BanSyncGuildKind.LogChannelMissing or BanSyncGuildKind.LogChannelCannotAccess:
                 await Context.Interaction.RespondAsync(embed: embed.Build());
                 return;
         }
 
-        var guildIdStr = Context.Interaction.GuildId!.ToString();
         await using var db = await _dbContextFactory.CreateDbContextAsync();
-        var logChannelIdStr = await db.BanSyncGuilds
-            .AsNoTracking()
-            .Where(e => e.GuildId == guildIdStr)
-            .Select(e => e.LogChannelId)
-            .FirstOrDefaultAsync();
-        var logChannelId = logChannelIdStr?.ParseULong(false);
-        var logChannelSuffixStr = logChannelId.HasValue ? $": <#{logChannelId}>" : ".";
-        embed.Description = kind switch
-        {
-            BanSyncGuildKind.NotEnoughMembers => "Your server doesn't have enough members. It needs at least `35`.",
-            BanSyncGuildKind.Blacklisted => "Your server is blacklisted from the BanSync feature.",
-            BanSyncGuildKind.MissingBanMembersPermission
-                => "Xenia is missing the \"Ban Members\" permission.\n"
-                + "**This is required** to view who's been banned in your server.\n"
-                + "-# [Source](https://docs.discord.com/developers/resources/guild#get-guild-bans)",
-            BanSyncGuildKind.LogChannelCannotAccess
-                => $"Xenia cannot access or view your BanSync log channel{logChannelSuffixStr}",
-            BanSyncGuildKind.LogChannelCannotSendMessages
-                => $"Xenia doesn't have permission to send messages in your BanSync log channel{logChannelSuffixStr}",
-            BanSyncGuildKind.LogChannelCannotSendEmbeds
-                => $"Xenia doesn't have permission to send embeds in your BanSync log channel{logChannelSuffixStr}",
-            _ => kind.ToDescriptionString(kind.ToString())
-        };
-
-
-        if (kind != BanSyncGuildKind.Valid)
+        
+        if (kindRes.GuildKind != BanSyncGuildKind.Valid)
         {
             if (string.IsNullOrEmpty(embed.Description))
             {
                 embed.Description = "Unable to request for BanSync";
-                embed.AddField("Reason", kind, true);
+                embed.AddField("Reason", kindRes.GuildKind, true);
             }
             await Context.Interaction.RespondAsync(embed: embed.Build());
             return;
@@ -288,7 +309,7 @@ public class BanSyncModule : InteractionModuleBase
             await _err.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithContext(Context)
-                .AddAttachment("bansyncGuild-kind.txt", $"{kind}: {kind.ToDescriptionString(kind.ToString())}"));
+                .AddAttachment("bansyncGuildKind.txt", $"{kindRes.GuildKind}: {embed.Description}"));
             return;
         }
         
@@ -301,8 +322,8 @@ public class BanSyncModule : InteractionModuleBase
         }
 
         embed.Description = $"Failed to request BanSync for this guild.\n`{guildConfig.State}`";
-        if (guildConfig.State == BanSyncGuildState.Blacklisted ||
-            guildConfig.State == BanSyncGuildState.RequestDenied)
+        if (guildConfig.State is BanSyncGuildState.Blacklisted or BanSyncGuildState.RequestDenied &&
+            !string.IsNullOrWhiteSpace(guildConfig.Notes))
         {
             var notes = guildConfig.Notes?.Trim();
             if (notes?.Length > 1021)

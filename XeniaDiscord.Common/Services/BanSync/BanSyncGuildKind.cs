@@ -4,10 +4,13 @@ namespace XeniaDiscord.Common.Services.BanSync;
 
 public enum BanSyncGuildKind
 {
-    [Description("Your server is too young. It must be at least 3 months old.")]
+    [Description("Guild is already waiting for BanSync feature to be enabled!")]
+    PendingRequest,
+
+    [Description("Your server is too young. It must be at least 12 weeks old.")]
     TooYoung,
 
-    [Description("Your server doesn't have enough members.")]
+    [Description("Not enough members, needs at least 35.")]
     NotEnoughMembers,
 
     [Description("Your server is blacklisted from the BanSync feature.")]

@@ -18,8 +18,11 @@ namespace XeniaDiscord.Common.Services.BanSync;
 
 public class BanSyncService : BaseService
 {
+    public const int MinimumMemberLimit = 35;
+    public const string MinimumServerAgeLabel = "12 weeks old (about 3 months)";
+    public static TimeSpan MinimumServerAge => TimeSpan.FromDays(28);
+    
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(BanSyncService));
-
     private readonly DiscordSocketClient _client;
     private readonly ConfigData _configData;
     private readonly ErrorReportService _err;
@@ -387,6 +390,7 @@ public class BanSyncService : BaseService
         });
     }
 
+    #region Notify
     /// <summary>
     /// Notify all guilds that the user is in that the user has been banned.
     /// </summary>
@@ -519,12 +523,12 @@ public class BanSyncService : BaseService
         if (userInfo.Count < 1) return;
 
         // Create embed then send message in log channel.
-        var embed = await GenerateEmbed(userInfo);
+        var embed = GenerateEmbed(userInfo);
         await ExceptionHelper.RetryOnTimedOut(async () =>
             await logChannel.SendMessageAsync(embed: embed.Build()));
     }
 
-    public async Task<EmbedBuilder> GenerateEmbed(ICollection<BanSyncRecordModel> data)
+    public EmbedBuilder GenerateEmbed(ICollection<BanSyncRecordModel> data)
     {
         var sortedData = data.OrderByDescending(v => v.CreatedAt).ToArray();
         var last = sortedData[^1];
@@ -570,21 +574,19 @@ public class BanSyncService : BaseService
         string? reason,
         string ts)
     {
-        var nonUserFildContent = string.Join("\n",
+        var nonUserFieldContent = string.Join("\n",
             string.IsNullOrEmpty(reason) ? DefaultReasonText : string.Format(FieldContentReasonTemplate, ""),
             ts);
-        return 1024 - nonUserFildContent.Length;
+        return 1024 - nonUserFieldContent.Length;
     }
+    #endregion
 
-    public async Task<BanSyncGuildKind> GetGuildKind(ulong guildId)
+    #region Get Guild Kind
+    private BanSyncGuildKind GetGuildKindInternal(
+        SocketGuild guild,
+        SocketGuildUser selfMember,
+        BanSyncGuildModel model)
     {
-        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
-
-        var model = await _bansyncGuildRepository.GetAsync(guildId)
-            ?? new(guildId);
-
-        var selfMember = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(_client.CurrentUser.Id));
-
         var logChannelId = model.GetLogChannelId();
         if (!logChannelId.HasValue)
             return BanSyncGuildKind.LogChannelMissing;
@@ -600,7 +602,7 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
-            _log.Error(ex, $"Failed to get channel {logChannelId} in Guild {guild.Name} ({guildId})");
+            _log.Error(ex, $"Failed to get channel {logChannelId} in Guild \"{guild.Name}\" ({guild.Id})");
             return BanSyncGuildKind.LogChannelCannotAccess;
         }
 
@@ -608,13 +610,10 @@ public class BanSyncService : BaseService
         {
             var permissions = selfMember.GetPermissions(logChannel);
             if (!permissions.Has(ChannelPermission.SendMessages))
-            {
                 return BanSyncGuildKind.LogChannelCannotSendMessages;
-            }
-            else if (!permissions.Has(ChannelPermission.EmbedLinks))
-            {
+            
+            if (!permissions.Has(ChannelPermission.EmbedLinks))
                 return BanSyncGuildKind.LogChannelCannotSendEmbeds;
-            }
         }
         catch (Exception ex)
         {
@@ -624,14 +623,40 @@ public class BanSyncService : BaseService
 
         if (model is { State: BanSyncGuildState.Blacklisted })
             return BanSyncGuildKind.Blacklisted;
-
-        if (guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
+        
+        if (model is { State: BanSyncGuildState.PendingRequest })
+            return BanSyncGuildKind.PendingRequest;
+        
+        if (guild.CreatedAt > DateTimeOffset.UtcNow.AddDays(-MinimumServerAge.TotalDays))
             return BanSyncGuildKind.TooYoung;
-        else if (guild.MemberCount < 35)
+        if (guild.MemberCount < MinimumMemberLimit)
             return BanSyncGuildKind.NotEnoughMembers;
-        else
-            return BanSyncGuildKind.Valid;
+        
+        return BanSyncGuildKind.Valid;
     }
+
+    public async Task<RequestBanSyncFeatureResult> GetGuildKind<TGuild>(TGuild guild)
+        where TGuild : IGuild
+    {
+        var model = await _bansyncGuildRepository.GetAsync(guild.Id)
+                    ?? new(guild.Id);
+        var guildValue = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guild.Id));
+        var selfMember = ExceptionHelper.RetryOnTimedOut(() => guildValue.GetUser(_client.CurrentUser.Id));
+        var kind = GetGuildKindInternal(guildValue, selfMember, model);
+        return new RequestBanSyncFeatureResult(_configData, kind, model);
+    }
+
+    public async Task<BanSyncGuildKind> GetGuildKind(ulong guildId)
+    {
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
+
+        var model = await _bansyncGuildRepository.GetAsync(guildId)
+            ?? new(guildId);
+
+        var selfMember = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(_client.CurrentUser.Id));
+        return GetGuildKindInternal(guild, selfMember, model);
+    }
+    #endregion
 
     /// <summary>
     /// Set guild state and write to log channel.
@@ -654,7 +679,7 @@ public class BanSyncService : BaseService
         var oldConfig = await _bansyncGuildRepository.GetAsync(guildId);
 
         reason = string.IsNullOrEmpty(reason?.Trim()) ? "" : reason.Trim();
-        if (state == BanSyncGuildState.Blacklisted || state == BanSyncGuildState.RequestDenied)
+        if (state is BanSyncGuildState.Blacklisted or BanSyncGuildState.RequestDenied)
         {
             if (string.IsNullOrEmpty(reason))
                 throw new InvalidOperationException($"Reason parameter is required (GuildId={guildId}, State={state})");
@@ -945,6 +970,10 @@ public class BanSyncService : BaseService
     {
         var config = await _bansyncGuildRepository.GetAsync(guildId)
             ?? new(guildId);
+
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
+        if (guild == null) return config;
+
         // When state is blacklisted/denied/pending, reject
         if (config.State == BanSyncGuildState.Blacklisted ||
             config.State == BanSyncGuildState.RequestDenied ||
@@ -953,16 +982,9 @@ public class BanSyncService : BaseService
             return config;
         }
 
-        // Ignore when log channel is missing or we can't access it.
-        var guildState = await GetGuildKind(guildId);
-        if (guildState == BanSyncGuildKind.LogChannelMissing ||
-            guildState == BanSyncGuildKind.LogChannelCannotAccess ||
-            guildState == BanSyncGuildKind.LogChannelCannotSendMessages ||
-            guildState == BanSyncGuildKind.LogChannelCannotSendEmbeds ||
-            guildState == BanSyncGuildKind.TooYoung ||
-            guildState == BanSyncGuildKind.NotEnoughMembers ||
-            guildState == BanSyncGuildKind.Blacklisted ||
-            guildState == BanSyncGuildKind.InternalError) // also return on internal error
+        // Make sure that they can actually request for BanSync
+        var guildState = await GetGuildKind(guild);
+        if (!guildState.Success)
             return config;
 
         config.State = BanSyncGuildState.PendingRequest;
