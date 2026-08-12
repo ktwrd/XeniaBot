@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
+using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
@@ -33,12 +34,13 @@ public class MiscModule : InteractionModuleBase
 
     [SlashCommand("info", "Information about Xenia")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Info()
     {
         var embed = DiscordHelper.BaseEmbed()
             .WithDescription(string.Join(" ",
                 "Heya I'm Xenia, a general-purpose Discord Bot made by [kate](https://kate.pet).",
-                "If you're having any issues with using Xenia, don't hesitate to open a [Git Issue](https://github.com/ktwrd/xeniabot/issues)."
+                "If you're having any issues with using Xenia, don't hesitate to open a [Git Issue](https://github.com/ktwrd/XeniaBot/issues)."
             ))
             .AddField("Statistics", string.Join("\n",
                 "```",
@@ -55,6 +57,7 @@ public class MiscModule : InteractionModuleBase
 
     [SlashCommand("dashboard", "Fetch Dashboard information")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Dashboard()
     {
         if (_config.HasDashboard)
@@ -78,6 +81,8 @@ public class MiscModule : InteractionModuleBase
     }
 
     [SlashCommand("metricreload", "Reload Prometheus Metrics")]
+    [UsedImplicitly]
+    [RequireDeveloper]
     public async Task ReloadMetrics()
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
@@ -115,6 +120,7 @@ public class MiscModule : InteractionModuleBase
 
     [SlashCommand("invite", "Get invite link for Xenia")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Invite()
     {
         var inviteLink =
@@ -129,6 +135,8 @@ public class MiscModule : InteractionModuleBase
     }
 
     [SlashCommand("fetch_config", "Fetch data from config file")]
+    [RequireDeveloper]
+    [UsedImplicitly]
     public async Task FetchConfig()
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
@@ -146,6 +154,7 @@ public class MiscModule : InteractionModuleBase
 
     [SlashCommand("dadjoke", "Ya know, jokes that your dad would make?")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task DadJoke()
     {
         try
