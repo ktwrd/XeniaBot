@@ -10,7 +10,7 @@ partial class DiscordStatisticsService
 {
     protected void InitializeIncreaseEvents()
     {
-        _client.ApplicationCommandCreated += ClientIncOnApplicationCommandCreated;
+        _client.﻿ApplicationCommandCreated += ClientIncOn﻿ApplicationCommandCreated;
         _client.ApplicationCommandDeleted += ClientIncOnApplicationCommandDeleted;
         _client.ApplicationCommandUpdated += ClientIncOnApplicationCommandUpdated;
         _client.AuditLogCreated += ClientIncOnAuditLogCreated;
@@ -59,7 +59,6 @@ partial class DiscordStatisticsService
         _client.ModalSubmitted += ClientIncOnModalSubmitted;
         _client.PollVoteAdded += ClientIncOnPollVoteAdded;
         _client.PollVoteRemoved += ClientIncOnPollVoteRemoved;
-        _client.PresenceUpdated += ClientIncOnPresenceUpdated;
         _client.ReactionAdded += ClientIncOnReactionAdded;
         _client.ReactionRemoved += ClientIncOnReactionRemoved;
         _client.ReactionsCleared += ClientIncOnReactionsCleared;
@@ -98,9 +97,9 @@ partial class DiscordStatisticsService
         _client.WebhooksUpdated += ClientIncOnWebhooksUpdated;
     }
 
-    private Task ClientIncOnApplicationCommandCreated(SocketApplicationCommand arg1)
+    private Task ClientIncOn﻿ApplicationCommandCreated(SocketApplicationCommand arg1)
     {
-        IncreaseEvent(DiscordStatisticsEventType.ApplicationCommandCreated);
+        IncreaseEvent(DiscordStatisticsEventType.﻿ApplicationCommandCreated);
         return Task.CompletedTask;
     }
     private Task ClientIncOnApplicationCommandDeleted(SocketApplicationCommand arg1)
@@ -341,11 +340,6 @@ partial class DiscordStatisticsService
     private Task ClientIncOnPollVoteRemoved(Cacheable<IUser, ulong> arg1, Cacheable<ISocketMessageChannel, IRestMessageChannel, IMessageChannel, ulong> arg2, Cacheable<IUserMessage, ulong> arg3, Cacheable<SocketGuild, RestGuild, IGuild, ulong>? arg4, ulong arg5)
     {
         IncreaseEvent(DiscordStatisticsEventType.PollVoteRemoved);
-        return Task.CompletedTask;
-    }
-    private Task ClientIncOnPresenceUpdated(SocketUser arg1, SocketPresence arg2, SocketPresence arg3)
-    {
-        IncreaseEvent(DiscordStatisticsEventType.PresenceUpdated);
         return Task.CompletedTask;
     }
     private Task ClientIncOnReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
