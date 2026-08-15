@@ -55,8 +55,8 @@ public class CoreContext
 
         var objectSerializer = new ObjectSerializer(type
             => ObjectSerializer.DefaultAllowedTypes(type)
-            || type.FullName?.StartsWith("XeniaBot") == true
-            || type.FullName?.StartsWith("XeniaDiscord") == true);
+            || type.FullName?.StartsWith("XeniaBot", StringComparison.OrdinalIgnoreCase) == true
+            || type.FullName?.StartsWith("XeniaDiscord", StringComparison.OrdinalIgnoreCase) == true);
         BsonSerializer.RegisterSerializer(objectSerializer);
 
         InitMongoClient();
