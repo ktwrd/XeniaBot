@@ -18,7 +18,6 @@ public static class XeniaDiscordCoreInteractions
         await Task.WhenAll(
             interactions.AddModuleAsync<MediaManipulationModule>(services),
             interactions.AddModuleAsync<BackpackTFModule>(services),
-            interactions.AddModuleAsync<BanSyncModule>(services),
             interactions.AddModuleAsync<ConfessionAdminModule>(services),
             interactions.AddModuleAsync<ConfigModule>(services),
             interactions.AddModuleAsync<CounterModule>(services),
@@ -30,8 +29,6 @@ public static class XeniaDiscordCoreInteractions
             interactions.AddModuleAsync<ModerationModule>(services),
             interactions.AddModuleAsync<RandomAnimalModule>(services),
             interactions.AddModuleAsync<ReminderModule>(services),
-            interactions.AddModuleAsync<RolePreserveModule>(services),
-            interactions.AddModuleAsync<RolePreserveComponentModule>(services),
             interactions.AddModuleAsync<TicketModule>(services),
             interactions.AddModuleAsync<TranslateModule>(services),
             interactions.AddModuleAsync<WeatherModule>(services),

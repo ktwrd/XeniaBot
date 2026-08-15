@@ -4,10 +4,6 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord.WebSocket;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
@@ -17,7 +13,7 @@ using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Repositories;
 
-namespace XeniaBot.Core.Modules;
+namespace XeniaDiscord.Interactions.Modules;
 
 [Group("bansync", "Receive ban notifications across guilds")]
 [CommandContextType(InteractionContextType.Guild)]
@@ -218,7 +214,10 @@ public class BanSyncModule : InteractionModuleBase
     [SlashCommand("setguildstate", "Set state field of guild")]
     [RequireDeveloper]
     [UsedImplicitly]
-    public async Task SetGuildState(string guild, BanSyncGuildState state, string reason = "")
+    public async Task SetGuildState(
+        string guild,
+        BanSyncGuildState state,
+        string reason = "")
     {
         if (!_config.UserWhitelist.Contains(Context.User.Id))
         {
