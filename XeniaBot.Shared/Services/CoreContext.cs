@@ -41,7 +41,7 @@ public class CoreContext
         Config = new ConfigService(Details);
         Discord = new DiscordSocketClient(new DiscordSocketConfig()
         {
-            GatewayIntents = GatewayIntents.All,
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
             UseInteractionSnowflakeDate = false,
             AlwaysDownloadUsers = true,
             ShardId = Config.Data.ShardId
