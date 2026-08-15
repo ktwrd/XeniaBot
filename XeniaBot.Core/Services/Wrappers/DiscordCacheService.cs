@@ -36,12 +36,12 @@ public class DiscordCacheService : BaseService
     public DiscordCacheGenericRepository<CacheStageChannelModel> CacheStageChannelConfig { get; }
     public DiscordCacheGenericRepository<CacheTextChannelModel> CacheTextChannelConfig { get; }
     private readonly UserConfigRepository _userConfig;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     public DiscordCacheService(IServiceProvider services)
         : base(services)
     {
         _userConfig = services.GetRequiredService<UserConfigRepository>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         CacheMessageConfig = new DiscordCacheGenericRepository<CacheMessageModel>(CacheMessageModel.CollectionName, services);
         CacheUserConfig = new DiscordCacheGenericRepository<CacheUserModel>(CacheUserModel.CollectionName, services);
         CacheGuildMemberConfig =
@@ -277,7 +277,7 @@ public class DiscordCacheService : BaseService
         };
 
     /// <summary>
-    /// Invoked when <see cref="DiscordSocketClient.GuildMemberUpdated"/> is fired.
+    /// Invoked when <see cref="DiscordShardedClient.GuildMemberUpdated"/> is fired.
     /// </summary>
     /// <param name="oldMember">Previous member state</param>
     /// <param name="newMember">Current member state</param>

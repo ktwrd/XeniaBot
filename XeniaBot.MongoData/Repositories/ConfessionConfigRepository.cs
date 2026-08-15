@@ -13,11 +13,11 @@ namespace XeniaBot.MongoData.Repositories;
 [XeniaController]
 public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     public ConfessionConfigRepository(IServiceProvider services)
         : base("confesionGuildModel", services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
     }
     
     public async Task InitializeModal(ulong guildId, ulong channelId, ulong modalChannelId)

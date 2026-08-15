@@ -24,7 +24,7 @@ public class ModerationModule : InteractionModuleBase
     private readonly WarnService _warnService;
     private readonly ConfigData _configData;
     private readonly ErrorReportService _err;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
     public ModerationModule(IServiceProvider services)
     {
@@ -32,7 +32,7 @@ public class ModerationModule : InteractionModuleBase
         _warnService = services.GetRequiredService<WarnService>();
         _configData = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
     }
 
     /// <exception cref="NonfatalException">When failed to fetch client/guild/member. This should be displayed to the user as well as the developers.</exception>
@@ -43,13 +43,7 @@ public class ModerationModule : InteractionModuleBase
             .WithTitle("Failed to safely fetch user");
         try
         {
-            var client = (DiscordSocketClient)Context.Client;
-            if (client == null)
-            {
-                throw new NonfatalException("Failed to fetch discord client");
-            }
-
-            var guild = ExceptionHelper.RetryOnTimedOut(() => client.GetGuild(Context.Guild.Id));
+            var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(Context.Guild.Id));
             if (guild == null)
             {
                 throw new NonfatalException($"Failed to fetch guild ({Context.Guild.Id})");

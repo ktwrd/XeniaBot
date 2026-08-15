@@ -49,7 +49,7 @@ public static class HttpContextExtensions
         var userId = AspHelper.GetUserId(context);
         if (!userId.HasValue) return null;
 
-        var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
+        var discord = context.RequestServices.GetRequiredService<DiscordShardedClient>();
         var user = ExceptionHelper.RetryOnTimedOut(() => discord.GetUser(userId.Value));
         return user;
     }
@@ -59,7 +59,7 @@ public static class HttpContextExtensions
         var user = await context.GetCurrentDiscordUser();
         if (user == null) return null;
 
-        var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
+        var discord = context.RequestServices.GetRequiredService<DiscordShardedClient>();
         var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null) return null;
 

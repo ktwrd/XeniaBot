@@ -14,13 +14,13 @@ namespace XeniaDiscord.Data.Repositories;
 public class ServerLogRepository
 {
     private readonly GuildCacheRepository _guildCacheRepo;
-    private readonly DiscordSocketClient _discordClient;
+    private readonly DiscordShardedClient _discordClient;
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public ServerLogRepository(IServiceProvider services)
     {
         _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
-        _discordClient = services.GetRequiredService<DiscordSocketClient>();
+        _discordClient = services.GetRequiredService<DiscordShardedClient>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 

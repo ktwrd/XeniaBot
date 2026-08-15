@@ -9,10 +9,10 @@ namespace XeniaDiscord.Common.Services;
 
 public class ValidationService
 {
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     public ValidationService(IServiceProvider services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
     }
 
     public async Task<Result<GuildPermissionsResult, FailureData>> Permissions(

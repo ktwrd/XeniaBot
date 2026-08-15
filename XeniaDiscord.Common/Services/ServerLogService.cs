@@ -15,12 +15,12 @@ public class ServerLogService : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly ServerLogRepository _serverLogRepo;
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
 
     public ServerLogService(IServiceProvider services) : base(services)
     {
         _serverLogRepo = services.GetRequiredService<ServerLogRepository>();
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
     }
 
     #region Event Handle

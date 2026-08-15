@@ -16,13 +16,13 @@ namespace XeniaDiscord.Interactions.Modules;
 [UsedImplicitly]
 public partial class DeveloperModule : InteractionModuleBase
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ErrorReportService _error;
     private readonly BanSyncGuildRepository _bansyncGuildRepo;
     private readonly ConfigData _config;
     public DeveloperModule(IServiceProvider services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _error = services.GetRequiredService<ErrorReportService>();
         _bansyncGuildRepo = services.GetRequiredService<BanSyncGuildRepository>();
         _config = services.GetRequiredService<ConfigData>();

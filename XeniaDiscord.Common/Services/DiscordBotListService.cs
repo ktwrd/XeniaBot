@@ -15,14 +15,14 @@ namespace XeniaDiscord.Common.Services;
 public class DiscordBotListService : BaseService
 {
     private readonly ConfigData _config;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly InteractionService _interactionService;
     private readonly HttpClient _httpClient = new();
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public DiscordBotListService(IServiceProvider services) : base(services)
     {
         _config = services.GetRequiredService<ConfigData>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _interactionService = services.GetRequiredService<InteractionService>();
 
         isReady = _client.CurrentUser != null;
@@ -134,7 +134,7 @@ public class DiscordBotListService : BaseService
         if (string.IsNullOrEmpty(_config.ApiKeys.DiscordBotList) ||
             _config.ApiKeys.DiscordBotListEnable == false) return;
 
-        var users = _client.GroupChannels
+        var users = _client.Shards.SelectMany(e => e.GroupChannels)
             .SelectMany(e => e.Users.Select(x => x.Id))
             .Concat(_client.Guilds.SelectMany(e => e.Users.Select(x => x.Id)))
             .Distinct()
@@ -159,7 +159,12 @@ public class DiscordBotListService : BaseService
     private async Task<IEnumerable<ApplicationCommandDto>> FindCommands()
     {
         var dblCommands = _interactionService.SlashCommands.Where(command => command.Attributes.Any(e => e is RegisterDBLCommandAttribute)).ToList();
-        var commands = await _client.GetGlobalApplicationCommandsAsync();
+        var commands = new List<SocketApplicationCommand>();
+        foreach (var shard in _client.Shards)
+        {
+            var c = await shard.GetGlobalApplicationCommandsAsync();
+            commands.AddRange(c);
+        }
 
         var mapped = new List<ApplicationCommandDto>();
         foreach (var command in commands)

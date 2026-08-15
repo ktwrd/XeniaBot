@@ -32,7 +32,7 @@ public class DataMigrationModule : InteractionModuleBase
 {
     private readonly ConfigData _config;
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly BanSyncConfigRepository _mongoBanSyncConfigRepository;
     private readonly BanSyncStateHistoryRepository _mongoBanSyncStateHistoryRepository;
     private readonly BanSyncInfoRepository _mongoBanSyncInfoRepository;
@@ -49,7 +49,7 @@ public class DataMigrationModule : InteractionModuleBase
     {
         _config = services.GetRequiredService<ConfigData>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
 
         _mongoBanSyncConfigRepository = services.GetRequiredService<BanSyncConfigRepository>();
         _mongoBanSyncStateHistoryRepository = services.GetRequiredService<BanSyncStateHistoryRepository>();

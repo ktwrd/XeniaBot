@@ -53,7 +53,7 @@ namespace XeniaBot.Shared.Models
         /// </summary>
         [Browsable(false)]
         [BsonElement("_id")]
-        public T Id { get; set; }
+        public T 0Id { get; set; }
 
         /// <summary>
         /// Reset the value of <see cref="Id"/> to a new value.

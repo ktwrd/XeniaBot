@@ -26,7 +26,7 @@ public class DiscordSnapshotService : BaseService
     private readonly ErrorReportService _err;
     public DiscordSnapshotService(IServiceProvider services) : base(services)
     {
-        var client = services.GetRequiredService<DiscordSocketClient>();
+        var client = services.GetRequiredService<DiscordShardedClient>();
         _cacheService = services.GetRequiredService<DiscordCacheService>();
         _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();

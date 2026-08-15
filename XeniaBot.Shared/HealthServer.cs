@@ -10,12 +10,12 @@ namespace XeniaBot.Shared;
 public class HealthServer
 {
     private readonly ProgramDetails _programDetails;
-    private readonly DiscordSocketClient _socketClient;
+    private readonly DiscordShardedClient _socketClient;
     private readonly ConfigData _config;
 
     public HealthServer(
         ProgramDetails programDetails,
-        DiscordSocketClient socketClient,
+        DiscordShardedClient socketClient,
         ConfigData config)
     {
         _programDetails = programDetails;
@@ -48,7 +48,8 @@ public class HealthServer
             StartTimestamp = _programDetails.StartTimestamp,
             Version = _programDetails.Version,
             ServiceName = s,
-            Latency = _socketClient.Latency
+            Latency = _socketClient.Latency,
+            ShardCount = _socketClient.Shards.Count
         };
         var json = JsonSerializer.Serialize(data, CoreContext.SerializerOptions);
         return json;

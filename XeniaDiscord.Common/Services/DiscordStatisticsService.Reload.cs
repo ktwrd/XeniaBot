@@ -197,7 +197,7 @@ partial class DiscordStatisticsService
         if (!_configData.Prometheus.Enable) return Task.CompletedTask;
 
         long count = 0;
-        count += _client.GroupChannels.Count;
+        count += _client.Shards.Sum(e => e.GroupChannels.Count);
         count += _client.PrivateChannels.Count;
         count += _client.Guilds.Select(e => e.Channels.Count).Sum();
 

@@ -21,13 +21,13 @@ namespace XeniaBot.Shared.Services;
 public class ErrorReportService : BaseService
 {
     private static readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ErrorReportService));
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ConfigData _config;
 
     public ErrorReportService(IServiceProvider services)
         : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _config = services.GetRequiredService<ConfigData>();
         if (_config == null)
         {

@@ -17,12 +17,12 @@ public class ApplicationEmoteService : IXeniaOnReady
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly ProgramDetails _details;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
     public ApplicationEmoteService(IServiceProvider services)
     {
         _details = services.GetRequiredService<ProgramDetails>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
     }
 
     public Task OnReady()
@@ -69,7 +69,8 @@ public class ApplicationEmoteService : IXeniaOnReady
     private async Task OnReadyThread()
     {
         _log.Trace("Created thread");
-        _applicationEmotes =  await ExceptionHelper.RetryOnTimedOut(async () => await _client.GetApplicationEmotesAsync());
+        var shard = _client.Shards.First();
+        _applicationEmotes =  await ExceptionHelper.RetryOnTimedOut(async () => await shard.GetApplicationEmotesAsync());
         foreach (var (kind, resourceName) in InternalEmojiKeys)
         {
             var emojiName = kind.ToDescriptionString();
@@ -86,7 +87,7 @@ public class ApplicationEmoteService : IXeniaOnReady
             using var discordImage = new Image(stream);
             try
             {
-                await ExceptionHelper.RetryOnTimedOut(async () => await _client.CreateApplicationEmoteAsync(emojiName, discordImage));
+                await ExceptionHelper.RetryOnTimedOut(async () => await shard.CreateApplicationEmoteAsync(emojiName, discordImage));
                 _log.Info($"Created emoji: {emojiName}");
             }
             catch (Exception ex)
@@ -94,7 +95,7 @@ public class ApplicationEmoteService : IXeniaOnReady
                 _log.Error(ex, $"Failed to create emoji \"{emojiName}\" (resourceName={resourceName})");
             }
         }
-        _applicationEmotes =  await ExceptionHelper.RetryOnTimedOut(async () => await _client.GetApplicationEmotesAsync());
+        _applicationEmotes =  await ExceptionHelper.RetryOnTimedOut(async () => await shard.GetApplicationEmotesAsync());
         _ready = true;
     }
 

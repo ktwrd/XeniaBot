@@ -16,7 +16,7 @@ public class AdminRolePreserveComponentViewModel : IGuildViewModel, IAlertViewMo
     public string? MessageType { get; set; }
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
-        var discord = CoreContext.Instance!.GetRequiredService<DiscordSocketClient>();
+        var discord = CoreContext.Instance!.GetRequiredService<DiscordShardedClient>();
         var repo = context.RequestServices.GetRequiredService<RolePreserveGuildRepository>();
         Guild = discord.GetGuild(guildId);
         RolePreserve = await repo.GetAsync(Guild.Id) ?? new RolePreserveGuildModel(Guild.Id);

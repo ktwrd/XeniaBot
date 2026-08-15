@@ -16,13 +16,13 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class FlightCheckService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(FlightCheckService));
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly ConfigData _config;
     private readonly ErrorReportService _errReportService;
     public FlightCheckService(IServiceProvider services)
         : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _config = services.GetRequiredService<ConfigData>();
         _errReportService = services.GetRequiredService<ErrorReportService>();
         

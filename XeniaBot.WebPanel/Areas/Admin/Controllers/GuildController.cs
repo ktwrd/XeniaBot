@@ -20,14 +20,14 @@ namespace XeniaBot.WebPanel.Areas.Admin.Controllers;
 public class GuildController : Controller
 {
     private readonly ILogger<GuildController> _logger;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly XeniaDbContext _db;
     public GuildController(
         IServiceProvider services,
         ILogger<GuildController> logger)
     {
         _logger = logger;
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _db = services.GetRequiredService<XeniaDbContext>();
     }
 

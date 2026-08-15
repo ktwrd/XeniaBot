@@ -20,7 +20,7 @@ public class DiscordCacheService
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly UserCacheRepository _userCacheRepository;
     private readonly GuildCacheRepository _guildCacheRepository;
     private readonly GuildMemberCacheRepository _guildMemberCacheRepository;
@@ -35,7 +35,7 @@ public class DiscordCacheService
     {
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
 
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _userCacheRepository = services.GetRequiredService<UserCacheRepository>();
         _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
         _guildMemberCacheRepository = services.GetRequiredService<GuildMemberCacheRepository>();

@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
+using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson.Serialization;
@@ -16,6 +17,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Discord.Net.Rest;
 using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Services;
@@ -39,12 +41,12 @@ public class CoreContext
         RegisteredBaseControllers = [];
         Instance = this;
         Config = new ConfigService(Details);
-        Discord = new DiscordSocketClient(new DiscordSocketConfig()
+        Discord = new DiscordShardedClient(new DiscordSocketConfig()
         {
             GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
             UseInteractionSnowflakeDate = false,
             AlwaysDownloadUsers = true,
-            ShardId = Config.Data.ShardId
+            // ShardId = Config.Data.ShardId
         });
     }
 
@@ -118,7 +120,7 @@ public class CoreContext
     }
     public ProgramDetails Details { get; private set; }
     public ConfigService Config { get; private set; }
-    public DiscordSocketClient Discord { get; private set; }
+    public DiscordShardedClient Discord { get; private set; }
     /// <summary>
     /// Created after <see cref="InjectServices"/> is called in <see cref="MainAsync"/>
     /// </summary>
@@ -195,10 +197,18 @@ public class CoreContext
             .AddSingleton(this)
             .AddSingleton(Details)
             .AddSingleton<CronDaemon>()
+            
             .AddSingleton(Config)
-            .AddSingleton(Config.Data)
+            .AddSingleton<ConfigData>(static s => s.GetRequiredService<ConfigService>().Data)
+            
             .AddSingleton(Discord)
-            .AddSingleton<IDiscordClient>(Discord)
+            .AddSingleton<IDiscordClient>(static svc => svc.GetRequiredService<DiscordShardedClient>())
+            .AddSingleton<BaseSocketClient>(static svc => svc.GetRequiredService<DiscordShardedClient>())
+            .AddSingleton<IRestClientProvider>(static svc => svc.GetRequiredService<DiscordShardedClient>())
+            .AddSingleton<DiscordRestClient>(static svc => svc.GetRequiredService<IRestClientProvider>().RestClient)
+            
+            .AddSingleton<DiscordClientProxy>()
+            .AddSingleton<IDiscordClientProxy>(static svc => svc.GetRequiredService<DiscordClientProxy>())
             .AddSingleton<HealthServer>();
 
         var mongoDb = GetDatabase();
@@ -208,10 +218,13 @@ public class CoreContext
             OnQuit(1);
         }
 
-        var s = new InteractionService(Discord);
-
         services.AddSingleton(mongoDb)
-            .AddSingleton(s)
+            .AddSingleton(static svc => new InteractionService(
+                svc.GetRequiredService<IRestClientProvider>(),
+                new InteractionServiceConfig()
+                {
+                    UseCompiledLambda = true
+                }))
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
             .AddSingleton<InteractionHandler>();

@@ -17,7 +17,7 @@ public class AdminCountingComponentViewModel : IGuildViewModel, IAlertViewModel,
     
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
-        var discord = CoreContext.Instance!.GetRequiredService<DiscordSocketClient>();
+        var discord = CoreContext.Instance!.GetRequiredService<DiscordShardedClient>();
         Guild = discord.GetGuild(guildId);
         var repo = CoreContext.Instance!.GetRequiredService<CounterConfigRepository>();
         CounterConfig = await repo.Get(Guild) ?? new CounterGuildModel()

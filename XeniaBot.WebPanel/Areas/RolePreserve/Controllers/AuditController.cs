@@ -24,12 +24,12 @@ namespace XeniaBot.WebPanel.Areas.RolePreserve.Controllers;
 [RestrictToGuild(GuildIdRouteKey = "guildId", RequiredPermission = GuildPermission.ViewAuditLog)]
 public class AuditController : Controller
 {
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly XeniaDbContext _db;
 
     public AuditController(IServiceProvider services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _db = services.GetRequiredService<XeniaDbContext>();
     }
 

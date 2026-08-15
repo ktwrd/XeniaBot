@@ -5,6 +5,7 @@ using Discord;
 using Discord.WebSocket;
 using XeniaBot.DiscordCache.Models;
 using XeniaBot.DiscordCache.Repositories;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.DiscordCache.Helpers;
@@ -37,10 +38,10 @@ public static class DiscordCacheHelper
 
     public static async Task<IUser?> TryGetUser(ulong userId)
     {
-        var discord = CoreContext.Instance?.GetRequiredService<DiscordSocketClient>();
+        var discord = CoreContext.Instance?.GetRequiredService<DiscordShardedClient>();
         if (discord == null)
-            throw new NoNullAllowedException($"Failed to get Service {nameof(DiscordSocketClient)}");
-        var discordUser = await discord.GetUserAsync(userId);
+            throw new NoNullAllowedException($"Failed to get Service {nameof(DiscordShardedClient)}");
+        var discordUser = ExceptionHelper.RetryOnTimedOut(() => discord.GetUser(userId));
         if (discordUser != null)
             return discordUser;
 

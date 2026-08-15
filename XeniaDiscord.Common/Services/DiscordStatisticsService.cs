@@ -14,7 +14,7 @@ namespace XeniaDiscord.Common.Services;
 public partial class DiscordStatisticsService : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ConfigData _configData;
     private readonly PrometheusService _prom;
     private readonly ProgramDetails _details;
@@ -29,7 +29,7 @@ public partial class DiscordStatisticsService : BaseService
         _details = services.GetRequiredService<ProgramDetails>();
 
         _configData = services.GetRequiredService<ConfigData>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
 
         _prom = services.GetRequiredService<PrometheusService>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();

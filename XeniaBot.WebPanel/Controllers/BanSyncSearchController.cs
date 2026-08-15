@@ -24,7 +24,7 @@ public class BanSyncSearchController : BaseXeniaController
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly BanSyncGuildRepository _bansyncGuildRepo;
     private readonly BanSyncRecordRepository _bansyncRecordRepo;
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly GuildCacheService _guildCacheService;
     private readonly UserCacheService _userCacheService;
     public BanSyncSearchController(IServiceProvider services)
@@ -32,7 +32,7 @@ public class BanSyncSearchController : BaseXeniaController
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _bansyncGuildRepo = services.GetRequiredService<BanSyncGuildRepository>();
         _bansyncRecordRepo = services.GetRequiredService<BanSyncRecordRepository>();
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _guildCacheService = services.GetRequiredService<GuildCacheService>();
         _userCacheService = services.GetRequiredService<UserCacheService>();
     }

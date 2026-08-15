@@ -12,7 +12,7 @@ using XeniaDiscord.Interactions.Helpers;
 
 namespace XeniaDiscord.Interactions.Modules;
 
-public class RolePreserveComponentModule : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+public class RolePreserveComponentModule : InteractionModuleBase<ShardedInteractionContext<SocketMessageComponent>>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly IDbContextFactory<XeniaDbContext> _dbFactory;

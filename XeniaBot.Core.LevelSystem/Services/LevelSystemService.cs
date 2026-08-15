@@ -21,7 +21,7 @@ namespace XeniaBot.Core.LevelSystem.Services;
 public class LevelSystemService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(LevelSystemService));
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly Random _random;
     private readonly SemaphoreSlim _randomLock = new(1, 1);
     private readonly LevelMemberRepository _memberConfig;
@@ -30,7 +30,7 @@ public class LevelSystemService : BaseService
     public LevelSystemService(IServiceProvider services)
         : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _config = services.GetRequiredService<LevelSystemConfigRepository>();
         _memberConfig = services.GetRequiredService<LevelMemberRepository>();
         _configData = services.GetRequiredService<ConfigData>();
@@ -214,7 +214,7 @@ public class LevelSystemService : BaseService
         // ensures we don't process system/other bot messages
         if (rawMessage is not SocketUserMessage message) return;
         
-        var context = new SocketCommandContext(_client, message);
+        var context = new ShardedCommandContext(_client, message);
         if (context.Guild == null) return;
         
         var data = await _memberConfig.Get(message.Author.Id, context.Guild.Id);

@@ -27,7 +27,7 @@ public class BanSyncModule : InteractionModuleBase
     private readonly BanSyncService _bansyncService;
     private readonly BanSyncGuildRepository _guildRepo;
     private readonly BanSyncRecordRepository _recordRepo;
-    private readonly DiscordSocketClient _discordClient;
+    private readonly DiscordShardedClient _discordClient;
 
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
@@ -35,7 +35,7 @@ public class BanSyncModule : InteractionModuleBase
     {
         _config = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
-        _discordClient = services.GetRequiredService<DiscordSocketClient>();
+        _discordClient = services.GetRequiredService<DiscordShardedClient>();
 
         _bansyncService = services.GetRequiredService<BanSyncService>();
         _guildRepo = services.GetRequiredService<BanSyncGuildRepository>();

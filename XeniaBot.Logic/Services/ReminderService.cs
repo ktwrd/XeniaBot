@@ -24,14 +24,14 @@ public class ReminderService : BaseService
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ReminderService));
     private readonly CoreContext _core;
     private readonly ConfigData _configData;
-    private readonly DiscordSocketClient _discordClient;
+    private readonly DiscordShardedClient _discordClient;
     private readonly ReminderRepository _reminderDb;
     public ReminderService(IServiceProvider services)
         : base(services)
     {
         _core = services.GetRequiredService<CoreContext>();
         _configData = services.GetRequiredService<ConfigData>();
-        _discordClient = services.GetRequiredService<DiscordSocketClient>();
+        _discordClient = services.GetRequiredService<DiscordShardedClient>();
         _reminderDb = services.GetRequiredService<ReminderRepository>();
         CurrentReminders = new List<string>();
     }
@@ -280,9 +280,9 @@ public class ReminderService : BaseService
                 return;
             if (model.HasReminded)
                 return;
-            
-            var channel = await _discordClient.GetChannelAsync(model.ChannelId);
-            if (!(channel is ITextChannel textChannel))
+
+            var channel = ExceptionHelper.RetryOnTimedOut(() => _discordClient.GetChannel(model.ChannelId));
+            if (channel is not ITextChannel textChannel)
             {
                 _log.Error($"Channel for Reminder {reminderId} isn't a text channel");
                 return;

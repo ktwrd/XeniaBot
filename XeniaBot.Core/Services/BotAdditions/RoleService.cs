@@ -10,7 +10,7 @@ using JetBrains.Annotations;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
-
+using XeniaBot.Shared.Helpers;
 using ReactionMessage = Discord.Cacheable<Discord.IUserMessage, ulong>;
 using ReactionChannel = Discord.Cacheable<Discord.IMessageChannel, ulong>;
 
@@ -21,13 +21,13 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class RoleService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(RoleService));
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly RoleConfigRepository _config;
     private readonly RoleMessageConfigRepository _messageConfig;
     public RoleService(IServiceProvider services)
         : base (services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _config = services.GetRequiredService<RoleConfigRepository>();
         _messageConfig = services.GetRequiredService<RoleMessageConfigRepository>();
     }
@@ -55,20 +55,20 @@ public class RoleService : BaseService
 
     public async Task GrantUser(IGuildUser user, RoleConfigModel model)
     {
-        var guild = _client.GetGuild(user.Guild.Id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(user.Guild.Id));
         if (guild == null)
             throw new InvalidOperationException(GuildNotFoundForUserMessage(user));
-        var member = guild.GetUser(user.Id);
+        var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
         if (member == null)
             throw new InvalidOperationException(MemberNotFoundInGuildMessage(guild, user));
 
         var memberRoleIds = member.Roles.Select(e => e.Id).ToHashSet();
 
-        var targetRole = await guild.GetRoleAsync(model.RoleId);
+        var targetRole = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(model.RoleId));
 
         if (model.BlacklistRoleId != 0)
         {
-            var blacklistRole = await guild.GetRoleAsync(model.BlacklistRoleId);
+            var blacklistRole = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(model.BlacklistRoleId));
             var contains = blacklistRole != null && memberRoleIds.Contains(blacklistRole.Id);
             if (blacklistRole == null)
             {
@@ -81,7 +81,7 @@ public class RoleService : BaseService
         }
         else if (model.RequiredRoleId != 0)
         {
-            var whitelistRole = await guild.GetRoleAsync(model.RequiredRoleId);
+            var whitelistRole = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(model.RequiredRoleId));
             var contains = whitelistRole != null && memberRoleIds.Contains(whitelistRole.Id);
             if (whitelistRole == null)
             {
@@ -97,17 +97,18 @@ public class RoleService : BaseService
     }
     public async Task RevokeUser(IGuildUser user, RoleConfigModel model)
     {
-        var guild = _client.GetGuild(user.Guild.Id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(user.Guild.Id));
         if (guild == null)
             throw new InvalidOperationException($"Guild {user.Guild.Id} not found");
-        var member = guild.GetUser(user.Id);
+        var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
         if (member == null)
             throw new InvalidOperationException($"Member {user.Id} not found in guild {guild.Id}");
 
-        var targetRole = await guild.GetRoleAsync(model.RoleId);
+        var targetRole = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(model.RoleId));
         if (targetRole == null) return;
 
-        await member.RemoveRoleAsync(targetRole);
+        await ExceptionHelper.RetryOnTimedOut(async () =>
+            await member.RemoveRoleAsync(targetRole));
     }
 
     #region Reaction Handling
@@ -115,14 +116,15 @@ public class RoleService : BaseService
     {
         var messageConfig = await _messageConfig.Get(reaction.MessageId);
 
-        // Ignore if doesn't exist
+        // Ignore if it doesn't exist
         if (messageConfig == null)
             return;
 
         // Ignore if the emote isn't a valid reaction role.
         if (!messageConfig.ReactionRoleMap.TryGetValue(reaction.Emote.Name, out var targetRoleConfigId))
             return;
-        targetRoleConfigId ??= "";
+        if (string.IsNullOrWhiteSpace(targetRoleConfigId))
+            targetRoleConfigId = string.Empty;
 
         var roleConfigAll = await _config.GetAll(false, uid: targetRoleConfigId);
         var roleConfig = roleConfigAll?.FirstOrDefault();
@@ -132,9 +134,9 @@ public class RoleService : BaseService
         if (!validateResult)
             return;
 
-        var guild = _client.GetGuild(roleConfig.GuildId);
-        var role = guild.GetRole(roleConfig.RoleId);
-        var member = guild.GetUser(reaction.UserId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(roleConfig.GuildId));
+        var role = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(roleConfig.RoleId));
+        var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(reaction.UserId));
 
         await RevokeUser(member, roleConfig);
     }
@@ -142,15 +144,16 @@ public class RoleService : BaseService
     {
         var messageConfig = await _messageConfig.Get(reaction.MessageId);
 
-        // Ignore if doesn't exist
+        // Ignore if it doesn't exist
         if (messageConfig == null)
             return;
 
         // Ignore if the emote isn't a valid reaction role.
         if (!messageConfig.ReactionRoleMap.TryGetValue(reaction.Emote.Name, out var targetRoleConfigId))
             return;
-        targetRoleConfigId ??= "";
-
+        if (string.IsNullOrWhiteSpace(targetRoleConfigId))
+            targetRoleConfigId = string.Empty;
+        
         var roleConfigAll = await _config.GetAll(false, uid: targetRoleConfigId);
         var roleConfig = roleConfigAll.FirstOrDefault();
         if (roleConfig == null) return;
@@ -159,8 +162,8 @@ public class RoleService : BaseService
         if (!validateResult)
             return;
 
-        var guild = _client.GetGuild(roleConfig.GuildId);
-        var member = guild.GetUser(reaction.UserId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(roleConfig.GuildId));
+        var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(reaction.UserId));
 
         await GrantUser(member, roleConfig);
     }
@@ -173,14 +176,14 @@ public class RoleService : BaseService
             return false;
         }
 
-        var guild = _client.GetGuild(model.GuildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(model.GuildId));
         if (guild == null)
         {
             _log.Error($"Guild not found {model.GuildId}");
             Debugger.Break();
             return false;
         }
-        var role = guild.GetRole(model.RoleId);
+        var role = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(model.RoleId));
         if (role == null)
         {
             _log.Error($"Target role not found (guild: {model.GuildId}, role: {model.RoleId})");
@@ -188,7 +191,7 @@ public class RoleService : BaseService
             return false;
         }
 
-        var member = guild.GetUser(reaction.UserId);
+        var member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(reaction.UserId));
         if (member == null)
         {
             _log.Error($"Member not found (guild: {model.GuildId}, member: {reaction.UserId})");

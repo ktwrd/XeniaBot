@@ -13,13 +13,13 @@ namespace XeniaDiscord.Common.Services;
 public class GuildCacheService
 {
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GuildCacheRepository _repo;
     private readonly IMapper<IGuild, GuildCacheModel> _mapper;
 
     public GuildCacheService(IServiceProvider services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _mapper = services.GetRequiredService<IMapper<IGuild, GuildCacheModel>>();
 
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();

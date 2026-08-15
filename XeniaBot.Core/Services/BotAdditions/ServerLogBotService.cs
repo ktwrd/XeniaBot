@@ -29,7 +29,7 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class ServerLogBotService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogBotService));
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly DiscordCacheService _discordCache;
     private readonly DiscordSnapshotService _discordSnapshot;
     private readonly ErrorReportService _errorService;
@@ -40,7 +40,7 @@ public class ServerLogBotService : BaseService
     public ServerLogBotService(IServiceProvider services)
         : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
         _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
         _errorService = services.GetRequiredService<ErrorReportService>();
@@ -489,7 +489,7 @@ public class ServerLogBotService : BaseService
         try
         {
             var userSafe = user.FormatUsername().Replace("`", "'");
-            var banDetails = await guild.GetBanAsync(user.Id);
+            var banDetails = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetBanAsync(user.Id));
             var userCreatedAtSeconds = user.CreatedAt.ToUnixTimeSeconds();
             var accountAgeText = $"<t:{userCreatedAtSeconds}:R>\n<t:{userCreatedAtSeconds}:F>";
             var embed = new EmbedBuilder()
@@ -602,8 +602,8 @@ public class ServerLogBotService : BaseService
 
     private async Task DiscordOnMessageDeleteThread(Cacheable<IMessage, ulong> m, Cacheable<IMessageChannel, ulong> c)
     {
-        var message = await m.GetOrDownloadAsync();
-        var channel = await c.GetOrDownloadAsync();
+        var message = await ExceptionHelper.RetryOnTimedOut(async () => await m.GetOrDownloadAsync());
+        var channel = await ExceptionHelper.RetryOnTimedOut(async () => await c.GetOrDownloadAsync());
 
         if (channel is not SocketGuildChannel socketChannel) return;
         try
@@ -728,12 +728,12 @@ public class ServerLogBotService : BaseService
         catch (Exception ex)
         {
             _log.Error(ex, $"Failed to handle MessageChangeUpdate event!!");
-            var author = _discord.GetUser(current.AuthorId);
-            var guild = _discord.GetGuild(current.GuildId);
-            var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
+            var author = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(current.AuthorId));
+            var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(current.GuildId));
+            var channel = ExceptionHelper.RetryOnTimedOut(() => _discord.GetChannel(current.ChannelId) as IMessageChannel);
             IMessage? msg = null;
             if (channel != null)
-                msg = await channel.GetMessageAsync(current.Snowflake);
+                msg = await ExceptionHelper.RetryOnTimedOut(async () => await channel.GetMessageAsync(current.Snowflake));
             await _errorService.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithMessage(msg)

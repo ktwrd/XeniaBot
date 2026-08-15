@@ -21,11 +21,11 @@ namespace XeniaBot.Core.Services.BotAdditions;
 [XeniaController]
 public class TicketService : BaseService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     public TicketService(IServiceProvider services)
         : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
     }
     public override Task InitializeAsync() => Task.CompletedTask;
 
