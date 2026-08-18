@@ -708,6 +708,7 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
+            _log.Error(ex, $"Failed to refresh bans in guild ({guildId})");
             SocketGuild? guild = null;
             try
             {
@@ -732,7 +733,11 @@ public class BanSyncService : BaseService
         try
         {
             var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(model.GetGuildId()));
-            if (guild == null) return;
+            if (guild == null)
+            {
+                _log.Warn($"guild not found: {model.GuildId}");
+                return;
+            }
             var logGuild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_configData.BanSync.GuildId));
             var logChannel = ExceptionHelper.RetryOnTimedOut(() => logGuild.GetTextChannel(_configData.BanSync.LogChannelId));
 
@@ -756,6 +761,7 @@ public class BanSyncService : BaseService
         }
         catch (Exception ex)
         {
+            _log.Error(ex, $"Failed to tell bot owner about bansync guild state change (GuildId={model.GuildId}, State={model.State})");
             await _err.Submit(new ErrorReportBuilder()
                 .WithNotes($"Failed to tell bot owner about guild state change for GuildId={model.GuildId} (state changed to {model.State})")
                 .WithException(ex)
