@@ -40,6 +40,10 @@ public class RestrictToGuildAttribute : ActionFilterAttribute
         // Only allow authenticated users.
         if (!AuthAttributeHelper.HandleAuth(context))
             return;
+        
+        // Always allow bot developers
+        if (AuthAttributeHelper.IsBotDeveloper(context))
+            return;
 
         var targetGuildId = AuthAttributeHelper.ParseGuildIdFromRouteData(context, GuildIdRouteKey);
         
