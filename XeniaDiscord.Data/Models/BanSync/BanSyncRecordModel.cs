@@ -85,6 +85,7 @@ public class BanSyncRecordModel
     public UserPartialSnapshotModel UserPartialSnapshot { get; set; } = null!;
     public BanSyncGuildModel BanSyncGuild { get; set; } = null!;
     public GuildMemberCacheModel? CachedGuildMember { get; set; }
+    // FIXME dafuq not referenced in XeniaDbContext
     public List<GuildMemberCacheModel> CachedGuildMembersByUser { get; set; } = [];
 }
 
