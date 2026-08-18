@@ -34,13 +34,13 @@ public class RequestBanSyncFeatureResultTests
         Assert.That(msgEmbed, Is.EqualTo(
             string.Format(
                 RequestBanSyncFeatureResult.MsgTooYoung,
-                "12 weeks old (about 3 months)")));
+                "90 days old")));
 
         var msgDash = data.FormatMessage(FormatMessageKind.Dashboard);
         Assert.That(msgDash, Is.EqualTo(
             string.Format(
                 RequestBanSyncFeatureResult.MsgWebTooYoung,
-                "12 weeks old (about 3 months)")));
+                "90 days old")));
     }
 
     [Test]

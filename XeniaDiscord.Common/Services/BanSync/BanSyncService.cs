@@ -19,8 +19,8 @@ namespace XeniaDiscord.Common.Services.BanSync;
 public class BanSyncService : BaseService
 {
     public const int MinimumMemberLimit = 35;
-    public const string MinimumServerAgeLabel = "12 weeks old (about 3 months)";
-    public static TimeSpan MinimumServerAge => TimeSpan.FromDays(28);
+    public const string MinimumServerAgeLabel = "90 days old";
+    public static TimeSpan MinimumServerAge => TimeSpan.FromDays(90);
     
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(BanSyncService));
     private readonly DiscordSocketClient _client;
