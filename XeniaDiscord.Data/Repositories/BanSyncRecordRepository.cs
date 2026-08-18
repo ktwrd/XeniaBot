@@ -7,6 +7,7 @@ using XeniaDiscord.Data.Models.BanSync;
 // ReSharper disable RedundantDefaultMemberInitializer
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBeMadeStatic.Global
+// ReSharper disable ConvertToPrimaryConstructor
 #pragma warning disable CA1822
 
 namespace XeniaDiscord.Data.Repositories;
