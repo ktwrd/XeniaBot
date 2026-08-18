@@ -76,6 +76,7 @@ public class BanSyncRecordModel
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string? AuditLogBanEntryId { get; set; }
 
+    // TODO properly use the other values. MemberBanEvent and GuildRefresh isn't used but it should be
     public BanSyncRecordSource Source { get; set; }
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
@@ -93,6 +94,7 @@ public enum BanSyncRecordSource
 {
     Unknown,
     DataMigration_MongoDb,
+    // TODO properly use this in other places (BanSyncService)
     MemberBanEvent,
     GuildRefresh
 }
