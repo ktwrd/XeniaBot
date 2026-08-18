@@ -6,31 +6,39 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
+using NLog;
+using XeniaBot.DiscordCache.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Services;
-using XeniaBot.DiscordCache.Helpers;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
-using NLog;
-using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Data.Repositories;
+
 using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
 using RolePreserveGuildModel = XeniaDiscord.Data.Models.RolePreserve.RolePreserveGuildModel;
 using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
-using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.WebPanel.Helpers;
 
 public static class AspHelper
 {
+    private const string DiscordUserIdClaimType
+        = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+    
     public static ulong? GetUserId(HttpContext context)
     {
-        if (!(context.User?.Identity?.IsAuthenticated ?? false)) return null;
-        var claim = context.User.Claims.FirstOrDefault(e =>
-            e.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
-        if (ulong.TryParse(claim?.Value, out var value)) return value;
+        // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+        if (context.User?.Identity?.IsAuthenticated != true)
+            return null;
+        
+        var claim = context.User.Claims.FirstOrDefault(e => e.Type == DiscordUserIdClaimType);
+        
+        if (ulong.TryParse(claim?.Value, out var value))
+            return value;
         return null;
     }
     
@@ -39,7 +47,6 @@ public static class AspHelper
         var userId = GetUserId(context) ?? 0;
         return Program.Core.Config.Data.UserWhitelist.Contains(userId);
     }
-    
 
     public static bool CanAccessGuild(
         ulong guildId,
@@ -55,13 +62,11 @@ public static class AspHelper
                 return false;
 
             var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
+            if (guild == null)
+                return false;
+            
             var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
-            if (guildUser == null)
-                return false;
-            if (!guildUser.GuildPermissions.Has(permissionRequired))
-                return false;
-
-            return true;
+            return guildUser?.GuildPermissions.Has(permissionRequired) == true;
         }
         catch (Exception ex)
         {
@@ -72,6 +77,7 @@ public static class AspHelper
             return false;
         }
     }
+    
     public static readonly HashSet<string> ValidMessageTypes
         = [
         "primary",
@@ -116,10 +122,7 @@ public static class AspHelper
     {
         var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
         var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
-        if (guild == null)
-            return guildId.ToString();
-
-        return guild.Name;
+        return guild?.Name ?? guildId.ToString();
     }
 
     public static string GetChannelName(ulong guildId, ulong channelId)
@@ -155,9 +158,12 @@ public static class AspHelper
             targetUserId,
             allowGhost: IsCurrentUserAdmin(context));
     }*/
+
     public static async Task<T> FillServerModel<T>(
         IServiceProvider services,
-        ulong serverId, T data) where T : IBaseServerModel
+        ulong serverId,
+        T data)
+        where T : IBaseServerModel
     {
         var discord = services.GetRequiredService<DiscordSocketClient>();
         var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(serverId));
@@ -254,14 +260,9 @@ public static class AspHelper
         var dateTime = DateTime.UnixEpoch;
         if (timestamp < 1)
             return dateTime;
-        if (seconds)
-        {
-            dateTime = dateTime.AddSeconds(timestamp).ToLocalTime();
-        }
-        else
-        {
-            dateTime = dateTime.AddMilliseconds(timestamp).ToLocalTime();
-        }
+        dateTime = seconds
+            ? dateTime.AddSeconds(timestamp).ToLocalTime()
+            : dateTime.AddMilliseconds(timestamp).ToLocalTime();
         return dateTime;
     }
 
@@ -279,12 +280,17 @@ public static class AspHelper
     }
     
 
-    public static List<TSource> Paginate<TSource, TKey>(IEnumerable<TSource> data, Func<TSource, TKey> keySelector, int page = 1, int pageSize = 10)
+    public static List<TSource> Paginate<TSource, TKey>(
+        IEnumerable<TSource> data,
+        Func<TSource, TKey> keySelector,
+        int page = 1,
+        int pageSize = 10)
     {
         return Paginate(data, v => v.OrderBy(keySelector), page, pageSize);
     }
 
-    public static List<TSource> Paginate<TSource>(IEnumerable<TSource> data,
+    public static List<TSource> Paginate<TSource>(
+        IEnumerable<TSource> data,
         Func<IEnumerable<TSource>, IEnumerable<TSource>> logic,
         int page = 1,
         int pageSize = 10)

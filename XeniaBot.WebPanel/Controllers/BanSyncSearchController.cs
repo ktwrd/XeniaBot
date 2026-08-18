@@ -4,16 +4,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.WebPanel.Helpers;
+using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.BanSync;
 using XeniaBot.WebPanel.Models.BanSyncSearch;
 using XeniaDiscord.Common.Services;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.BanSync;
 using XeniaDiscord.Data.Repositories;
+// ReSharper disable AsyncMethodWithoutAwait
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -24,7 +28,6 @@ public class BanSyncSearchController : BaseXeniaController
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly BanSyncGuildRepository _bansyncGuildRepo;
     private readonly BanSyncRecordRepository _bansyncRecordRepo;
-    private readonly DiscordSocketClient _discord;
     private readonly GuildCacheService _guildCacheService;
     private readonly UserCacheService _userCacheService;
     public BanSyncSearchController(IServiceProvider services)
@@ -32,7 +35,6 @@ public class BanSyncSearchController : BaseXeniaController
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _bansyncGuildRepo = services.GetRequiredService<BanSyncGuildRepository>();
         _bansyncRecordRepo = services.GetRequiredService<BanSyncRecordRepository>();
-        _discord = services.GetRequiredService<DiscordSocketClient>();
         _guildCacheService = services.GetRequiredService<GuildCacheService>();
         _userCacheService = services.GetRequiredService<UserCacheService>();
     }
@@ -51,6 +53,7 @@ public class BanSyncSearchController : BaseXeniaController
         {
             guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         }
+        // ReSharper disable once EmptyGeneralCatchClause
         catch { }
 
         var guildModel = await _bansyncGuildRepo.GetAsync(guildId);
@@ -69,22 +72,27 @@ public class BanSyncSearchController : BaseXeniaController
             {
                 Page = page
             });
+        var thisGuildCount = await _bansyncRecordRepo.CountForGuild(
+            guildId, 
+            AspHelper.IsCurrentUserAdmin(HttpContext));
+        var otherGuildCount = await _bansyncRecordRepo.MutualRecordsCount(
+            guildId,
+            new BanSyncRecordRepository.QueryOptions
+            {
+                IncludeGhostedRecords = AspHelper.IsCurrentUserAdmin(HttpContext),
+                IncludeBanSyncGuild = true,
+                IncludeUserPartialSnapshot = true
+            }) - thisGuildCount;
         var model = new MutualRecordsListModel
         {
             GuildId = guildId,
             GuildName = guild?.Name ?? guildId.ToString(),
             GuildIconUrl = guild?.IconUrl,
             MemberCount = guild?.MemberCount,
-            Component = component
+            Component = component,
+            ThisServerRecordCount = thisGuildCount,
+            OtherServerRecordCount = otherGuildCount
         };
-
-        model.ThisServerRecordCount = await _bansyncRecordRepo.CountForGuild(guildId, AspHelper.IsCurrentUserAdmin(HttpContext));
-        model.OtherServerRecordCount = await _bansyncRecordRepo.MutualRecordsCount(guildId, new BanSyncRecordRepository.QueryOptions()
-        {
-            IncludeGhostedRecords = AspHelper.IsCurrentUserAdmin(HttpContext),
-            IncludeBanSyncGuild = true,
-            IncludeUserPartialSnapshot = true
-        }) - model.ThisServerRecordCount;
 
         return View("MutualRecordsList", model);
     }
@@ -119,16 +127,19 @@ public class BanSyncSearchController : BaseXeniaController
         });
         return PartialView("MutualRecordsListSection", model);
     }
-
-    private async Task<MutualRecordsListComponentModel> GetMutualRecordsModel(ulong guildId, BanSyncMutualRecordsQuery query)
+    
+    private async Task<MutualRecordsListComponentModel> GetMutualRecordsModel(
+        ulong guildId,
+        BanSyncMutualRecordsQuery query)
     {
-        var recordsOpts = new BanSyncRecordRepository.QueryOptions()
+        var recordsOpts = new BanSyncRecordRepository.QueryOptions
         {
             IncludeGhostedRecords = AspHelper.IsCurrentUserAdmin(HttpContext),
             IncludeBanSyncGuild = true,
             IncludeUserPartialSnapshot = true
         };
-        var records = await _bansyncRecordRepo.MutualRecords(guildId,
+        var records = await _bansyncRecordRepo.MutualRecords(
+            guildId,
             new()
             {
                 Page = query.Page,
@@ -136,17 +147,19 @@ public class BanSyncSearchController : BaseXeniaController
             }, recordsOpts);
 
 
-        var model = new MutualRecordsListComponentModel()
+        var currentGuildCount = await _bansyncRecordRepo.CountForGuild(guildId, recordsOpts.IncludeGhostedRecords);
+        var totalCount = await _bansyncRecordRepo.MutualRecordsCount(guildId, recordsOpts);
+        var model = new MutualRecordsListComponentModel
         {
             Items = records,
             Page = query.Page,
             PageSize = MaxPageSize,
-            GuildId = guildId
+            GuildId = guildId,
+            
+            CurrentGuildCount = currentGuildCount,
+            TotalCount = totalCount,
+            OtherGuildCount = totalCount - currentGuildCount
         };
-
-        model.CurrentGuildCount = await _bansyncRecordRepo.CountForGuild(guildId, recordsOpts.IncludeGhostedRecords);
-        model.TotalCount = await _bansyncRecordRepo.MutualRecordsCount(guildId, recordsOpts);
-        model.OtherGuildCount = model.TotalCount - model.CurrentGuildCount;
 
         await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
@@ -176,11 +189,79 @@ public class BanSyncSearchController : BaseXeniaController
         return model;
     }
 
-    public const int MaxPageSize = 10;
+    public const int MaxPageSize = 25;
 
-    [HttpPost("Perform")]
+    [HttpPost("PerformSearch")]
     public async Task<IActionResult> PerformSearch()
     {
         throw new NotImplementedException();
+    }
+
+    [AuthRequired]
+    [RestrictToGuild(GuildIdRouteKey = "guildId")]
+    [HttpPost("api/v1/PerformSearch")]
+    public async Task<IActionResult> PerformSearchApiRoute(
+        [FromQuery(Name = "guildId")]
+        ulong guildId,
+        [FromBody]
+        BanSyncSearchApiQueryDtoV1 searchQuery)
+    {
+        var searchQueryRecord = searchQuery.ToRecord();
+        searchQueryRecord.EnforceGuildVisibility = !AspHelper.IsCurrentUserAdmin(HttpContext);
+        var guildExists = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId) != null);
+        if (searchQueryRecord.EnforceGuildVisibility && !guildExists)
+        {
+            return Json(new NotFoundApiResponse
+            {
+                Message = "Guild not found: " + guildId
+            });
+        }
+        
+        var data = await GetSearchResults(searchQueryRecord);
+        return Json(data);
+    }
+
+    [SuppressMessage("ReSharper", "InvertIf")]
+    [SuppressMessage("ReSharper", "LoopCanBeConvertedToQuery")]
+    [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract")]
+    private async Task<BanSyncSearchApiResultV1> GetSearchResults(
+        BanSyncSearchApiQuery query)
+    {
+        var repoQuery = query.ToRepositoryOptions();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var count = await _bansyncRecordRepo.SearchQueryTotalCount(db, repoQuery);
+        List<BanSyncSearchApiResultRecordV1>? resultRecords = null;
+        if (count > 0)
+        {
+            var records = await _bansyncRecordRepo.SearchQuery(db, repoQuery);
+            resultRecords = new List<BanSyncSearchApiResultRecordV1>(records.Count);
+            foreach (var record in records)
+            {
+                var item = new BanSyncSearchApiResultRecordV1
+                {
+                    RecordId = record.Id.ToString("N", CultureInfo.InvariantCulture).ToLowerInvariant(),
+                    GuildId = record.GetGuildId(),
+                    UserId = record.GetUserId(),
+                    GuildName = record.GuildName,
+                    Username = record.UserPartialSnapshot?.FormatUsername() ?? string.Empty,
+                    CreatedAt = new DateTimeOffset(record.CreatedAt, TimeSpan.Zero).ToUnixTimeSeconds(),
+                    CreatedByUserId = record.GetBannedByUserId(),
+                    Reason = string.IsNullOrWhiteSpace(record.Reason?.Trim())
+                        ? null
+                        : record.Reason.Trim()
+                };
+                resultRecords.Add(item);
+            }
+        }
+
+        return new BanSyncSearchApiResultV1
+        {
+            RequestedForGuildId = query.RequestingGuildId.HasValue
+                ? query.RequestingGuildId.Value : null,
+            RequestedForUserId = AspHelper.GetUserId(HttpContext),
+            TotalRecordCount = count,
+            Records = resultRecords?.ToArray() ?? [],
+            RequestQuery = query.ToQueryDto(),
+        };
     }
 }
