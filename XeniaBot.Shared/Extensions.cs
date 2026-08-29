@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Text;
+using CSharpFunctionalExtensions;
 
 namespace XeniaBot.Shared;
 
@@ -26,4 +27,21 @@ public static class Extensions
     {
         return new MemoryStream(encoding.GetBytes(value));
     }
+
+    public static T? ToNullable<T>(this Maybe<T> value)
+        where T : struct
+    {
+        return value.HasValue ? value.Value : null;
+    }
+
+    public static long ToUnixTimeSeconds(this DateTime value, TimeSpan offset)
+    {
+        return new DateTimeOffset(value, offset).ToUnixTimeSeconds();
+    }
+    public static long ToUnixTimeSeconds(this DateTime value) => value.ToUnixTimeSeconds(TimeSpan.Zero);
+    public static long ToUnixTimeMilliseconds(this DateTime value, TimeSpan offset)
+    {
+        return new DateTimeOffset(value, offset).ToUnixTimeMilliseconds();
+    }
+    public static long ToUnixTimeMilliseconds(this DateTime value) => value.ToUnixTimeMilliseconds(TimeSpan.Zero);
 }

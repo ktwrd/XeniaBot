@@ -1,5 +1,19 @@
-﻿@using XeniaBot.WebPanel.Helpers
+﻿@using Microsoft.AspNetCore.Http
+@using XeniaBot.WebPanel.Extensions
+@using XeniaBot.WebPanel.Helpers
+@inject IHttpContextAccessor HttpContextAccessor
 @model BanSyncRecordViewModel
+@{
+    @if (HttpContextAccessor?.HttpContext?.IsHtmxRequest() == true)
+    {
+        Layout = null;
+    }
+    else
+    {
+        ViewBag.Title = "BanSync Record";
+        Layout = "_Layout";
+    }
+}
 
 <div class="container">
     <h1 class="mb-0">BanSync Record Details</h1>
@@ -13,23 +27,28 @@
         at
         <code>@Model.Record.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss tt")</code>
     </p>
+    @if (Model.Alert != null)
+    {
+        @await Component.InvokeAsync("Alert", Model.Alert)
+    }
     <h4>Reason</h4>
     <textarea class="form-control" readonly>@Model.Record.Reason</textarea>
-    @if (AspHelper.IsCurrentUserAdmin(this.Context))
+    @if (AspHelper.IsCurrentUserAdmin(Context))
     {
         <hr/>
         <label class="form-label" for="ghost-record">Set Ghost State</label>
-        <div class="btn-group" id="host-record" role="group" aria-label="Ghost Record">
+        <div class="btn-group" id="ghost-record" role="group" aria-label="Ghost Record">
             <a class="btn btn-sm btn-secondary"
-               hx-get="/BanSync/Record/@Model.Record.Id/Ghost/True"
+               hx-get="/BanSync/Record/@Model.Record.Id/Ghost?value=1"
                hx-target=".container">
                 True
             </a>
             <a class="btn btn-sm btn-secondary"
-               hx-get="/BanSync/Record/@Model.Record.Id/Ghost/False"
+               hx-get="/BanSync/Record/@Model.Record.Id/Ghost?value=0"
                hx-target=".container">
                 False
             </a>
         </div>
     }
 </div>
+

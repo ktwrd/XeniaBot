@@ -1,0 +1,34 @@
+-- FUNCTION: public.spBanSyncGetMutualRecordsForGuildUser_Paginate(character varying, character varying, integer, integer)
+
+DROP FUNCTION IF EXISTS public."spBanSyncGetMutualRecordsForGuildUser_Paginate"(character varying, character varying, integer, integer);
+
+CREATE OR REPLACE FUNCTION public."spBanSyncGetMutualRecordsForGuildUser_Paginate"(
+	"TargetGuildId" character varying,
+	"TargetUserId" character varying,
+	"Page" integer,
+	"PageSize" integer)
+    RETURNS SETOF "BanSyncRecords" 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+	BEGIN
+		return query
+		select bsr.* from "BanSyncRecords" bsr
+		left outer join "Cache_GuildMember" cgm on cgm."UserId" = $2 and cgm."GuildId" = $1
+		left outer join "BanSyncGuilds" bsg on bsg."GuildId" = bsr."GuildId"
+		where (bsr."GuildId" = $1
+			and bsr."Ghost" <> True
+			and bsg."State" in (3,4)
+			and bsg."Enable" = True)
+		or cgm."UserId" is not null
+		order by "CreatedAt" desc
+		offset ($2 * $3)
+		limit $3;
+	END
+$BODY$;
+
+ALTER FUNCTION public."spBanSyncGetMutualRecordsForGuildUser_Paginate"(character varying, character varying, integer, integer)
+    OWNER TO "xeniadiscordmainline-dev";

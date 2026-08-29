@@ -2,6 +2,6 @@
 
 public interface IAlertViewModel
 {
-    public string? Message { get; set; }
-    public string? MessageType { get; set; }
+    string? Message { get; set; }
+    string? MessageType { get; set; }
 }

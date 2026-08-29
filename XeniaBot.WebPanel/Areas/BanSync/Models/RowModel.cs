@@ -1,6 +1,6 @@
 ﻿using XeniaDiscord.Data.Models.BanSync;
 
-namespace XeniaBot.WebPanel.Models.BanSyncSearch;
+namespace XeniaBot.WebPanel.Areas.BanSync.Models;
 
 public class RowModel
 {

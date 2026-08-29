@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 using Discord.WebSocket;
+using XeniaDiscord.Data.Models.Cache;
+using XeniaDiscord.Data.Models.PartialSnapshot;
 using XeniaDiscord.Data.Models.Snapshot;
 
 namespace XeniaBot.WebPanel.Models;
@@ -12,7 +15,12 @@ public sealed class StrippedGuild
         return other?.Id == Id;
     }
     
+    [JsonIgnore]
     public ulong Id { get; set; }
+
+    // FUCK YOU JAVASCRIPT!!!
+    [JsonPropertyName("Id")]
+    public string IdString => Id.ToString("D");
 
     /// <summary>
     /// Name of the guild
@@ -73,6 +81,7 @@ public sealed class StrippedGuild
         }
     }
 
+    public static StrippedGuild FromExisting(SocketGuild? guild) => FromGuild(guild);
     public static StrippedGuild FromExisting(
         SocketGuild? guild,
         GuildSnapshotModel? model,
@@ -96,6 +105,52 @@ public sealed class StrippedGuild
             OwnerId = model.GetOwnerUserId(),
             IconUrl = model.IconUrl ?? "/DebugEmpty.png",
             Description = model.Description
+        };
+    }
+
+    public static StrippedGuild FromExisting(
+        GuildCacheModel? model,
+        ulong id)
+    {
+        if (model == null)
+            return new StrippedGuild
+            {
+                Id = id,
+                Name = id.ToString(),
+                MemberCount = -1,
+                OwnerId = 0,
+                IconUrl = "/DebugEmpty.png",
+            };
+        return new StrippedGuild()
+        {
+            Id = id,
+            Name = model.Name ?? model.Id,
+            MemberCount = -1,
+            OwnerId = model.GetOwnerUserId() ?? 0,
+            IconUrl = model.IconUrl ?? "/DebugEmpty.png"
+        };
+    }
+
+    public static StrippedGuild FromExisting(
+        GuildPartialSnapshotModel? model,
+        ulong id)
+    {
+        if (model == null)
+            return new StrippedGuild
+            {
+                Id = id,
+                Name = id.ToString(),
+                MemberCount = -1,
+                OwnerId = 0,
+                IconUrl = "/DebugEmpty.png",
+            };
+        return new StrippedGuild()
+        {
+            Id = id,
+            Name = model.Name,
+            MemberCount = -1,
+            OwnerId = 0,
+            IconUrl = "/DebugEmpty.png"
         };
     }
 }

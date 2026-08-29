@@ -1,4 +1,4 @@
-﻿namespace XeniaBot.WebPanel.Models.BanSyncSearch;
+﻿namespace XeniaBot.WebPanel.Areas.BanSync.Models.MutualRecords;
 
 public class MutualRecordsListModel
 {

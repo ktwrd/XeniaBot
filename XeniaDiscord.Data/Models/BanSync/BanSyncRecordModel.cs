@@ -93,8 +93,11 @@ public class BanSyncRecordModel
 public enum BanSyncRecordSource
 {
     Unknown,
+    [Description("Data Migration - From MongoDB")]
     DataMigration_MongoDb,
     // TODO properly use this in other places (BanSyncService)
+    [Description("Guild Event - Member Ban")]
     MemberBanEvent,
+    [Description("Refresh Guild Bans")]
     GuildRefresh
 }

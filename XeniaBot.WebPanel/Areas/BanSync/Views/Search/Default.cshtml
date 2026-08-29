@@ -1,0 +1,55 @@
+﻿@using System.Text
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using CSharpFunctionalExtensions.Json.Serialization
+@using Microsoft.AspNetCore.Http
+@using XeniaBot.WebPanel.Extensions
+@inject IHttpContextAccessor HttpContextAccessor
+@model XeniaBot.WebPanel.Areas.BanSync.Models.Search.SearchViewModel
+@{
+    
+    if (HttpContextAccessor?.HttpContext?.IsHtmxRequest() == true)
+    {
+        Layout = null;
+    }
+    else
+    {
+        ViewBag.Title = "BanSync Search";
+        Layout = "_Layout";
+    }
+    
+    var availableGuildsAsJson = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(Model.AvailableGuilds)));
+    var jsonOpts = new JsonSerializerOptions()
+    {
+        WriteIndented = true,
+        ReferenceHandler = ReferenceHandler.Preserve,
+        Converters =
+        {
+            new JsonStringEnumConverter()
+        }
+    }.AddCSharpFunctionalExtensionsConverters();
+}
+
+<div id="ban-search-root"
+     data-available-guilds="@availableGuildsAsJson">
+    @if (Model.Alert != null)
+    {
+        @await Component.InvokeAsync("Alert", Model.Alert)
+    }
+
+    @{ await Html.RenderPartialAsync("_Filter", Model); }
+    
+    <div class="card card-sm mt-3">
+        <div class="card-header">
+            debug shit
+        </div>
+        <div class="card-body">
+            <pre><code>@JsonSerializer.Serialize(Model, jsonOpts)</code></pre>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="~/js/site.banSearch.js"></script>
+}

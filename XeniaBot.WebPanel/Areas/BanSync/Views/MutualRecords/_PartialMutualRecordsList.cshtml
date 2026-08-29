@@ -1,5 +1,14 @@
-﻿@using XeniaBot.WebPanel.Models.BanSyncSearch
+﻿@using XeniaBot.WebPanel.Areas.BanSync.Models.MutualRecords
 @model MutualRecordsListComponentModel
+@{
+    Layout = null;
+
+    var url = "/BanSync/Search/MutualRecords/"+Model.GuildId+"/PageComponent";
+    if (Model.ForUserId.HasValue)
+    {
+        url += "?forUser=" + Model.ForUserId.Value.ToString("D");
+    }
+}
 
 @if (Model.Items.Count < 1)
 {
@@ -20,7 +29,7 @@ else
                 <th></th>
             </tr>
         </thead>
-        <tbody hx-get="/BanSync/Search/MutualRecords/@Model.GuildId/PageComponent"
+        <tbody hx-get="@url"
                hx-target="this"
                hx-swap="innerHTML"
                hx-trigger="load"

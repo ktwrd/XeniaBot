@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace XeniaBot.WebPanel.Models.BanSyncSearch;
+namespace XeniaBot.WebPanel.Areas.BanSync.Models.Search;
 
 public class BanSyncSearchApiQueryDtoPaginationV1
 {

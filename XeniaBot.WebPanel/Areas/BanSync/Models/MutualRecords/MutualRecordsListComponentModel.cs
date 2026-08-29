@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using XeniaDiscord.Data.Models.BanSync;
 
-namespace XeniaBot.WebPanel.Models.BanSyncSearch;
+namespace XeniaBot.WebPanel.Areas.BanSync.Models.MutualRecords;
 
 public class MutualRecordsListComponentModel
 {
@@ -21,6 +21,7 @@ public class MutualRecordsListComponentModel
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 50;
     public required ulong GuildId { get; set; }
+    public ulong? ForUserId { get; set; }
 
     public long CurrentGuildCount { get; set; }
     public long OtherGuildCount { get; set; }

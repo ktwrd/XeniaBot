@@ -7,7 +7,7 @@ using XeniaDiscord.Data;
 // ReSharper disable PropertyCanBeMadeInitOnly.Global
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace XeniaBot.WebPanel.Models.BanSyncSearch;
+namespace XeniaBot.WebPanel.Areas.BanSync.Models.Search;
 
 public class BanSyncSearchApiQueryDtoV1
 {

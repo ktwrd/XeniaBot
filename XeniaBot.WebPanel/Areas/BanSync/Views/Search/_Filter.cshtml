@@ -1,0 +1,80 @@
+﻿@using Humanizer
+@using XeniaBot.WebPanel.Areas.BanSync.Models.Search
+@using XeniaBot.WebPanel.Helpers
+@model XeniaBot.WebPanel.Areas.BanSync.Models.Search.SearchViewModel
+@{
+    var formUrl = Url.Action(
+        "PerformSearchForm",
+        "Search",
+        new {
+            Area = "BanSync"
+        });
+
+    var selectedRequestingGuild = Model.Query.RequestingGuildId.GetValueOrDefault(0);
+}
+
+<form enctype="multipart/form-data"
+      hx-post="@formUrl"
+      hx-target="#ban-search-root"
+      hx-swap="outerHTML">
+    <div class="mb-3">
+        <label class="form-label">Requesting Guild</label>
+        <select id="select_ban-sync-search-requesting-guild" name="requestedBy" class="form-select" aria-label="Guild you are performing the request on behalf of"
+                data-x-selected="@selectedRequestingGuild">
+        </select>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" name="includeRequestor" type="checkbox" value="true" id="ban-search-filter-includeRequestor" checked="@Model.Query.IncludeRequestingGuildRecordsInResult"/>
+        <label class="form-check-label" for="ban-search-filter-includeRequestor">Include requesting Guild</label>
+    </div>
+    @if (Model.IsSysadmin)
+    {
+        var inclGhost = Model.Query.GhostState == null;
+        var ghostState = Model.Query.GhostState ?? false;
+        <div class="form-check mb-3">
+            <input class="form-check-input" name="inclGhost" type="checkbox" value="true" id="ban-search-filter-includeGhost" checked="@inclGhost"/>
+            <label class="form-check-label" for="ban-search-filter-includeGhost">Include Ghosted Records</label>
+            <div id="ban-search-filter-includeGhost-help" class="form-text">
+                This overrides "Ghost State Match" when enabled.
+            </div>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" name="ghost"type="checkbox" value="true"id="ban-search-filter-ghost" checked="@ghostState"/>
+            <label class="form-check-label" for="ban-search-filter-ghost">Ghost State Match</label>
+        </div>
+    }
+    <div class="mb-3">
+        <label class="form-label">Sort By</label>
+        <select name="sortBy" class="form-select" aria-label="Sort records by">
+            @foreach (var value in Enum.GetValues<BanSyncSearchApiQuerySortBy>())
+            {
+                if (value == Model.Query.SortBy)
+                {
+                    <option value="@value.ToString()" selected>@value.Humanize()</option>
+                }
+                else
+                {
+                    <option value="@value.ToString()">@value.Humanize()</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Sort Direction</label>
+        <select name="sortBy" class="form-select" aria-label="Sort records ascending or descending">
+            @foreach (var value in Enum.GetValues<BanSyncSearchApiQuerySortDirection>())
+            {
+                if (value == Model.Query.SortDirection)
+                {
+                    <option value="@value.ToString()" selected>@value.Humanize()</option>
+                }
+                else
+                {
+                    <option value="@value.ToString()">@value.Humanize()</option>
+                }
+            }
+        </select>
+    </div>
+    <hr/>
+    <button type="submit" class="btn btn-success">Search</button>
+</form>

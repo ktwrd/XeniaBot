@@ -1,12 +1,16 @@
-﻿@using XeniaBot.WebPanel.Helpers
-@using XeniaBot.WebPanel.Models.BanSyncSearch
-@using XeniaDiscord.Common.Services
-@inject UserCacheService UserCache
+﻿@using XeniaBot.WebPanel.Areas.BanSync.Models.MutualRecords
 @model MutualRecordsListComponentModel
+@{
+    Layout = null;
+}
 
 @foreach (var row in Model.Rows)
 {
     var nextPageUrl = $"/BanSync/Search/MutualRecords/{Model.GuildId}/PageComponent?page={Model.Page + 1}";
+    if (Model.ForUserId.HasValue)
+    {
+        nextPageUrl += "&forUser=" + Model.ForUserId.Value.ToString("D");
+    }
     var userAvatar = Model.UserIdProfileDict.ContainsKey(row.Record.GetUserId()) ? Model.UserIdProfileDict[row.Record.GetUserId()] : null;
     var guildIcon = Model.GuildIdProfileDict.ContainsKey(row.Record.GetGuildId()) ? Model.GuildIdProfileDict[row.Record.GetGuildId()] : null;
     userAvatar ??= "/DebugEmpty.png";
@@ -15,7 +19,7 @@
     if (reasonText != null)
     {
         var pl = reasonText.Length;
-        reasonText = reasonText.Substring(0, Math.Min(50, reasonText.Length));
+        reasonText = reasonText[..Math.Min(50, reasonText.Length)];
         if (reasonText.Length != pl)
         {
             reasonText += "...";
@@ -32,12 +36,12 @@
         </text>
     } >
         <td>
-            <img src="@userAvatar" class="card-img-top smallUserIcon" />
+            <img src="@userAvatar" class="card-img-top smallUserIcon" width="32" height="32" alt="" />
             @row.Record.UserPartialSnapshot.FormatUsername()<br/>
             <sup><code>@row.Record.UserId</code></sup>
         </td>
         <td>
-            <img src="@guildIcon" class="card-img-top smallUserIcon" />
+            <img src="@guildIcon" class="card-img-top smallUserIcon" width="32" height="32" alt="" />
             @row.Record.GuildName<br/>
             <sup><code>@row.Record.GuildId</code></sup>
         </td>
@@ -48,7 +52,7 @@
             <code>@reasonText</code>
         </td>
         <td>
-            <a class="btn btn-secondary" asp-route-id="@row.Record.Id" asp-controller="BanSync" asp-action="Record">
+            <a class="btn btn-secondary" asp-route-id="@row.Record.Id" asp-controller="Details" asp-action="Index" asp-area="BanSync">
                 <i class="bi bi-info-circle"></i>
             </a>
         </td>

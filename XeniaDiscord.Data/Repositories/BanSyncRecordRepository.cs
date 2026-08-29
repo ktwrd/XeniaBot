@@ -248,6 +248,29 @@ public class BanSyncRecordRepository
             .AsNoTracking()
             .ToListAsync();
     }
+    public async Task<ICollection<BanSyncRecordModel>> MutualRecords(
+        ulong guildId,
+        ulong userId,
+        PaginationOptions paginationOptions,
+        QueryOptions? queryOptions = null)
+    {
+        // check is already done in SP
+        if (queryOptions != null)
+        {
+            queryOptions.IgnoreDisabledGuilds = false;
+            queryOptions.IncludeGhostedRecords = true;
+        }
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await ApplyOptions(
+                db.spBanSyncGetMutualRecordsForGuildUser_Paginate(
+                    guildId.ToString(),
+                    userId.ToString(),
+                    paginationOptions.Page - 1,
+                    paginationOptions.PageSize),
+                queryOptions ?? new())
+            .AsNoTracking()
+            .ToListAsync();
+    }
     public async Task<long> MutualRecordsCount(
         ulong guildId,
         QueryOptions? queryOptions = null)
@@ -261,6 +284,24 @@ public class BanSyncRecordRepository
         await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await ApplyOptions(
                 db.spBanSyncGetMutualRecordsForGuild(guildId.ToString()),
+                queryOptions ?? new())
+            .AsNoTracking()
+            .LongCountAsync();
+    }
+    public async Task<long> MutualRecordsCount(
+        ulong guildId,
+        ulong userId,
+        QueryOptions? queryOptions = null)
+    {
+        // check is already done in SP
+        if (queryOptions != null)
+        {
+            queryOptions.IgnoreDisabledGuilds = false;
+            queryOptions.IncludeGhostedRecords = true;
+        }
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await ApplyOptions(
+                db.spBanSyncGetMutualRecordsForGuildUser(guildId.ToString(), userId.ToString()),
                 queryOptions ?? new())
             .AsNoTracking()
             .LongCountAsync();

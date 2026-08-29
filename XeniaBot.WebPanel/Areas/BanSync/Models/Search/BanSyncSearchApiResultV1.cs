@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
-namespace XeniaBot.WebPanel.Models.BanSyncSearch;
+namespace XeniaBot.WebPanel.Areas.BanSync.Models.Search;
 
 public class BanSyncSearchApiResultV1
 {
