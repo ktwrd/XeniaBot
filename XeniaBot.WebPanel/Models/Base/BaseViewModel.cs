@@ -14,6 +14,6 @@ public class BaseViewModel : IBaseViewModel
 
 public interface IBaseViewModel : IAlertViewModel
 {
-    public DiscordSocketClient Client { get; set; }
-    public UserConfigModel UserConfig { get; set; }
+    DiscordSocketClient Client { get; }
+    UserConfigModel UserConfig { get; }
 }

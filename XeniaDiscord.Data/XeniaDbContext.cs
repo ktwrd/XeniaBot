@@ -530,18 +530,31 @@ public class XeniaDbContext : DbContext
         
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild), [typeof(string)])!)
             .HasName("spBanSyncGetMutualRecordsForGuild");
+        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuildUser), [typeof(string), typeof(string)])!)
+            .HasName("spBanSyncGetMutualRecordsForGuildUser");
         builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuild_Paginate), [typeof(string), typeof(int), typeof(int)])!)
             .HasName("spBanSyncGetMutualRecordsForGuild_Paginate");
+        builder.HasDbFunction(typeof(XeniaDbContext).GetMethod(nameof(spBanSyncGetMutualRecordsForGuildUser_Paginate), [typeof(string), typeof(string), typeof(int), typeof(int)])!)
+            .HasName("spBanSyncGetMutualRecordsForGuildUser_Paginate");
     }
 
     // ReSharper disable InconsistentNaming
     public IQueryable<BanSyncRecordModel> spBanSyncGetMutualRecordsForGuild(
         string guildId)
         => FromExpression(() => spBanSyncGetMutualRecordsForGuild(guildId));
+    public IQueryable<BanSyncRecordModel> spBanSyncGetMutualRecordsForGuildUser(
+        string guildId, string userId)
+        => FromExpression(() => spBanSyncGetMutualRecordsForGuildUser(guildId, userId));
     public IQueryable<BanSyncRecordModel> spBanSyncGetMutualRecordsForGuild_Paginate(
         string guildId,
         int page,
         int pageSize = 50)
         => FromExpression(() => spBanSyncGetMutualRecordsForGuild_Paginate(guildId, page, pageSize));
+    public IQueryable<BanSyncRecordModel> spBanSyncGetMutualRecordsForGuildUser_Paginate(
+        string guildId,
+        string userId,
+        int page,
+        int pageSize = 50)
+        => FromExpression(() => spBanSyncGetMutualRecordsForGuildUser_Paginate(guildId, userId, page, pageSize));
     // ReSharper restore InconsistentNaming
 }

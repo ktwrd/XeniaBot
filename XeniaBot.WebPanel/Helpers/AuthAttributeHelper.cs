@@ -44,6 +44,11 @@ public static class AuthAttributeHelper
         return true;
     }
 
+    public static bool IsBotDeveloper(ActionExecutingContext context)
+    {
+        return AspHelper.IsCurrentUserAdmin(context.HttpContext);
+    }
+
     /// <summary>
     /// <para>Handle setting the View to NotAuthorized when the provided <paramref name="userId"/> doesn't have the permission <paramref name="permissionRequired"/> in the provided <paramref name="guildId"/>.</para>
     ///
@@ -63,24 +68,21 @@ public static class AuthAttributeHelper
         ulong guildId,
         GuildPermission permissionRequired = GuildPermission.ManageGuild)
     {
-        bool canAccess = AspHelper.CanAccessGuild(guildId, userId, permissionRequired);
-        if (!canAccess)
+        var canAccess = AspHelper.CanAccessGuild(guildId, userId, permissionRequired);
+        if (canAccess) return true;
+        
+        context.Result = new ViewResult
         {
-            context.Result = new ViewResult
+            ViewName = "NotAuthorized",
+            ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), context.ModelState)
             {
-                ViewName = "NotAuthorized",
-                ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), context.ModelState)
+                Model = new NotAuthorizedViewModel()
                 {
-                    Model = new NotAuthorizedViewModel()
-                    {
-                        Message = "Missing permission Manage Server"
-                    }
+                    Message = "Missing permission Manage Server"
                 }
-            };
-            return false;
-        }
-
-        return true;
+            }
+        };
+        return false;
     }
     /// <summary>
     /// <inheritdoc cref="HandleUserAccessGuild(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext,ulong,ulong,Discord.GuildPermission)"/>

@@ -126,16 +126,22 @@ public delegate void IServiceScopeCallbackDelegate(IServiceScope scope);
 
 public class PaginationOptions
 {
+    /// <summary>
+    /// Min value: 1
+    /// </summary>
     public int Page
     {
         get;
-        set => field = Math.Max(1, value);
+        init => field = Math.Max(1, value);
     } = 1;
 
+    /// <summary>
+    /// Min value: 1
+    /// </summary>
     public int PageSize
     {
         get;
-        set => field = Math.Max(1, value);
+        init => field = Math.Max(1, value);
     } = 15;
 
     public int Skip => Page > 1 ? (Page - 1) * PageSize : 0;

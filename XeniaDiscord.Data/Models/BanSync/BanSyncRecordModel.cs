@@ -76,6 +76,7 @@ public class BanSyncRecordModel
     [MaxLength(DbGlobals.ulongMaxLength)]
     public string? AuditLogBanEntryId { get; set; }
 
+    // TODO properly use the other values. MemberBanEvent and GuildRefresh isn't used but it should be
     public BanSyncRecordSource Source { get; set; }
 
     public ulong GetGuildId() => GuildId.ParseRequiredULong(nameof(GuildId), false);
@@ -85,13 +86,18 @@ public class BanSyncRecordModel
     public UserPartialSnapshotModel UserPartialSnapshot { get; set; } = null!;
     public BanSyncGuildModel BanSyncGuild { get; set; } = null!;
     public GuildMemberCacheModel? CachedGuildMember { get; set; }
+    // FIXME dafuq not referenced in XeniaDbContext
     public List<GuildMemberCacheModel> CachedGuildMembersByUser { get; set; } = [];
 }
 
 public enum BanSyncRecordSource
 {
     Unknown,
+    [Description("Data Migration - From MongoDB")]
     DataMigration_MongoDb,
+    // TODO properly use this in other places (BanSyncService)
+    [Description("Guild Event - Member Ban")]
     MemberBanEvent,
+    [Description("Refresh Guild Bans")]
     GuildRefresh
 }

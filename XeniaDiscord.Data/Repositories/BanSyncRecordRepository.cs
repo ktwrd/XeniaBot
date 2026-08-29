@@ -1,6 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Globalization;
+using CSharpFunctionalExtensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Data.Models.BanSync;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+// ReSharper disable RedundantDefaultMemberInitializer
+// ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBeMadeStatic.Global
+// ReSharper disable ConvertToPrimaryConstructor
+#pragma warning disable CA1822
 
 namespace XeniaDiscord.Data.Repositories;
 
@@ -69,6 +77,7 @@ public class BanSyncRecordRepository
         return await q.LongCountAsync();
     }
 
+    #region Get Info
     public async Task<ICollection<BanSyncRecordModel>> GetInfoEnumerable(
         ulong userId, QueryOptions? options = null,
         PaginationOptions? paginationOptions = null)
@@ -157,7 +166,9 @@ public class BanSyncRecordRepository
         QueryOptions? options = null)
         => await GetInfoAllInGuildQuery(guildId, includedUsers, options)
             .LongCountAsync();
+    #endregion
     
+    #region Insert or Update
     public async Task InsertOrUpdate(BanSyncRecordModel model)
     {
         if (model.GetGuildId() <= 0)
@@ -199,7 +210,8 @@ public class BanSyncRecordRepository
                 .SetProperty(p => p.Source, model.Source));
         }
     }
-
+    #endregion
+    
     public async Task<bool> Exists(Guid id)
     {
         await using var db = await _dbContextFactory.CreateDbContextAsync();
@@ -214,6 +226,7 @@ public class BanSyncRecordRepository
         await db.SaveChangesAsync();
     }
 
+    #region Mutual Records
     public async Task<ICollection<BanSyncRecordModel>> MutualRecords(
         ulong guildId,
         PaginationOptions paginationOptions,
@@ -235,6 +248,29 @@ public class BanSyncRecordRepository
             .AsNoTracking()
             .ToListAsync();
     }
+    public async Task<ICollection<BanSyncRecordModel>> MutualRecords(
+        ulong guildId,
+        ulong userId,
+        PaginationOptions paginationOptions,
+        QueryOptions? queryOptions = null)
+    {
+        // check is already done in SP
+        if (queryOptions != null)
+        {
+            queryOptions.IgnoreDisabledGuilds = false;
+            queryOptions.IncludeGhostedRecords = true;
+        }
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await ApplyOptions(
+                db.spBanSyncGetMutualRecordsForGuildUser_Paginate(
+                    guildId.ToString(),
+                    userId.ToString(),
+                    paginationOptions.Page - 1,
+                    paginationOptions.PageSize),
+                queryOptions ?? new())
+            .AsNoTracking()
+            .ToListAsync();
+    }
     public async Task<long> MutualRecordsCount(
         ulong guildId,
         QueryOptions? queryOptions = null)
@@ -252,6 +288,177 @@ public class BanSyncRecordRepository
             .AsNoTracking()
             .LongCountAsync();
     }
+    public async Task<long> MutualRecordsCount(
+        ulong guildId,
+        ulong userId,
+        QueryOptions? queryOptions = null)
+    {
+        // check is already done in SP
+        if (queryOptions != null)
+        {
+            queryOptions.IgnoreDisabledGuilds = false;
+            queryOptions.IncludeGhostedRecords = true;
+        }
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await ApplyOptions(
+                db.spBanSyncGetMutualRecordsForGuildUser(guildId.ToString(), userId.ToString()),
+                queryOptions ?? new())
+            .AsNoTracking()
+            .LongCountAsync();
+    }
+    #endregion
+
+    #region Search Query
+    
+    public async Task<IReadOnlyCollection<BanSyncRecordModel>> SearchQuery(
+        XeniaDbContext db,
+        SearchQueryOptions options)
+    {
+        return await ApplySearchQueryPagination(
+            ApplySearchQuerySort(SearchQueryInternal(db, options), options),
+            options)
+            .ToArrayAsync();
+    }
+
+    public async Task<long> SearchQueryTotalCount(
+        XeniaDbContext db,
+        SearchQueryOptions options)
+    {
+        return await SearchQueryInternal(db, options).LongCountAsync();
+    }
+    
+    private static IQueryable<BanSyncRecordModel> SearchQueryInternal(
+        XeniaDbContext db,
+        SearchQueryOptions options)
+    {
+        IQueryable<BanSyncRecordModel> rs = db.BanSyncRecords
+            .Include(e => e.UserPartialSnapshot)
+            .Include(e => e.BanSyncGuild)
+            .Include(e => e.CachedGuildMember);
+        
+        if (options.FilterUserIds.HasValue)
+        {
+            var strArray =  options.FilterUserIds.Value
+                .Distinct()
+                .Select(e => e.ToString("D", CultureInfo.InvariantCulture))
+                .ToArray();
+            rs = rs.Where(e => ((IEnumerable<string>)strArray).Contains(e.UserId));
+        }
+        if (options.FilterCreatedByUserIds.HasValue)
+        {
+            var strArray =  options.FilterCreatedByUserIds.Value
+                .Distinct()
+                .Select(e => e.ToString("D", CultureInfo.InvariantCulture))
+                .ToArray();
+            rs = rs.Where(e => ((IEnumerable<string>)strArray).Contains(e.BannedByUserId));
+        }
+        if (options.FilterGuildIds.HasValue)
+        {
+            var strArray =  options.FilterGuildIds.Value
+                .Distinct()
+                .Select(e => e.ToString("D", CultureInfo.InvariantCulture))
+                .ToArray();
+            rs = rs.Where(e => ((IEnumerable<string>)strArray).Contains(e.GuildId));
+        }
+        if (options.FilterCreatedAtBefore.HasValue)
+        {
+            var dtValue = options.FilterCreatedAtBefore.Value;
+            rs = rs.Where(e => e.CreatedAt <= dtValue);
+        }
+        if (options.FilterCreatedAtAfter.HasValue)
+        {
+            var dtValue = options.FilterCreatedAtAfter.Value;
+            rs = rs.Where(e => e.CreatedAt >= dtValue);
+        }
+        if (options.GhostState.HasValue)
+        {
+            var value = options.GhostState.Value;
+            rs = rs.Where(e => e.Ghost == value);
+        }
+
+        return rs;
+    }
+
+    private static IQueryable<BanSyncRecordModel> ApplySearchQueryPagination(
+        IOrderedQueryable<BanSyncRecordModel> rs,
+        SearchQueryOptions options)
+    {
+        var limit = Math.Min(1, options.PageSize);
+        var skip = options.PageIndex * limit;
+        return rs.Skip(skip).Take(limit);
+    }
+
+    private static IOrderedQueryable<BanSyncRecordModel> ApplySearchQuerySort(
+        IQueryable<BanSyncRecordModel> rs,
+        SearchQueryOptions options)
+    {
+        return options.SortBy switch
+        {
+            SearchQuerySortBy.CreatedAt => options.SortDirection == SearchQuerySortDirection.Ascending
+                ? rs.OrderBy(e => e.CreatedAt)
+                : rs.OrderByDescending(e => e.CreatedAt),
+            SearchQuerySortBy.GuildId => options.SortDirection == SearchQuerySortDirection.Ascending
+                ? rs.OrderBy(e => e.GuildId)
+                : rs.OrderByDescending(e => e.GuildId),
+            SearchQuerySortBy.UserId => options.SortDirection == SearchQuerySortDirection.Ascending
+                ? rs.OrderBy(e => e.UserId)
+                : rs.OrderByDescending(e => e.UserId),
+            SearchQuerySortBy.Username => options.SortDirection == SearchQuerySortDirection.Ascending
+                ? rs.OrderBy(e => e.UserPartialSnapshot.Username)
+                : rs.OrderByDescending(e => e.UserPartialSnapshot.Username),
+            _ => options.SortDirection == SearchQuerySortDirection.Ascending
+                ? rs.OrderBy(e => e.CreatedAt)
+                : rs.OrderByDescending(e => e.CreatedAt)
+        };
+    }
+
+    public class SearchQueryOptions
+    {
+        public Maybe<ulong[]> FilterUserIds { get; set; } = Maybe.None;
+        public Maybe<ulong[]> FilterCreatedByUserIds { get; set; } = Maybe.None;
+        public Maybe<ulong[]> FilterGuildIds { get; set; } = Maybe.None;
+        public Maybe<DateTime> FilterCreatedAtBefore { get; init; } = Maybe.None;
+        public Maybe<DateTime> FilterCreatedAtAfter { get; init; } = Maybe.None;
+        
+        public SearchQuerySortBy SortBy { get; init; } = SearchQuerySortBy.CreatedAt;
+        public SearchQuerySortDirection SortDirection { get; init; } = SearchQuerySortDirection.Ascending;
+        
+        /// <summary>
+        /// null = don't check
+        /// true = Ghost must be True
+        /// false = Ghost must be False
+        /// </summary>
+        public bool? GhostState { get; set; }
+
+        /// <summary>
+        /// 0-based
+        /// </summary>
+        public int PageIndex
+        {
+            get;
+            set => field = Math.Min(0, value);
+        }
+
+        public int PageSize
+        {
+            get;
+            set => field = Math.Min(1, value);
+        }
+    }
+    public enum SearchQuerySortBy
+    {
+        CreatedAt,
+        GuildId,
+        UserId,
+        Username
+    }
+
+    public enum SearchQuerySortDirection
+    {
+        Ascending,
+        Descending
+    }
+    #endregion
 
     public class QueryOptions
     {
@@ -261,3 +468,4 @@ public class BanSyncRecordRepository
         public bool IgnoreDisabledGuilds { get; set; } = true;
     }
 }
+#pragma warning restore CA1822

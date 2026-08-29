@@ -1,0 +1,29 @@
+-- FUNCTION: public.spBanSyncGetMutualRecordsForGuildUser(character varying, character varying)
+
+DROP FUNCTION IF EXISTS public."spBanSyncGetMutualRecordsForGuildUser"(character varying, character varying);
+
+CREATE OR REPLACE FUNCTION public."spBanSyncGetMutualRecordsForGuildUser"(
+	"TargetGuildId" character varying,
+	"TargetUserId" character varying)
+    RETURNS SETOF "BanSyncRecords" 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
+	BEGIN
+		return query
+		select bsr.* from "BanSyncRecords" bsr
+		left outer join "Cache_GuildMember" cgm on cgm."UserId" = $2 and cgm."GuildId" = $1
+		left outer join "BanSyncGuilds" bsg on bsg."GuildId" = bsr."GuildId"
+		where (bsr."GuildId" = $1
+			and bsr."Ghost" <> True
+			and bsg."State" in (3,4)
+			and bsg."Enable" = True)
+		or cgm."UserId" is not null;
+	END
+$BODY$;
+
+ALTER FUNCTION public."spBanSyncGetMutualRecordsForGuildUser"(character varying, character varying)
+    OWNER TO "xeniadiscordmainline-dev";
