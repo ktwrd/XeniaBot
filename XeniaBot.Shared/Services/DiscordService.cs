@@ -120,14 +120,14 @@ public class DiscordService
         var connectingTime = 0;
         while (true)
         {
-            // TODO rewrite this entire method. it's not compatible with DiscordShardedClient!
-            // (ConnectionState is always Disconnected, but it's connected for the individual shard)
             if (_client.Shards != null)
             {
                 await Task.WhenAll(_client.Shards.Select(CheckShardConnectionStatus));
             }
             await Task.Delay(15_000);
-            /*switch (_client.ConnectionState)
+            /*
+            // old code before shading was added
+            switch (_client.ConnectionState)
             {
                 case ConnectionState.Disconnected:
                     connectingTime = 0;
