@@ -18,7 +18,7 @@ public partial class AdminController : BaseXeniaController
 {
     private readonly ILogger<AdminController> _logger;
     private readonly IServiceProvider _services;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly XeniaDbContext _db;
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
@@ -31,7 +31,7 @@ public partial class AdminController : BaseXeniaController
         _logger = logger;
         _services = Program.Core.Services;
 
-        _client = _services.GetRequiredService<DiscordSocketClient>();
+        _client = _services.GetRequiredService<DiscordShardedClient>();
         _config = _services.GetRequiredService<ConfigData>();
         _db = services.GetRequiredService<XeniaDbContext>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();

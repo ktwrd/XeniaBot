@@ -10,7 +10,7 @@ partial class DiscordStatisticsService
 {
     protected void InitializeIncreaseEvents()
     {
-        _client.﻿ApplicationCommandCreated += ClientIncOn﻿ApplicationCommandCreated;
+        _client.ApplicationCommandCreated += ClientIncOnApplicationCommandCreated;
         _client.ApplicationCommandDeleted += ClientIncOnApplicationCommandDeleted;
         _client.ApplicationCommandUpdated += ClientIncOnApplicationCommandUpdated;
         _client.AuditLogCreated += ClientIncOnAuditLogCreated;
@@ -96,10 +96,100 @@ partial class DiscordStatisticsService
         _client.VoiceServerUpdated += ClientIncOnVoiceServerUpdated;
         _client.WebhooksUpdated += ClientIncOnWebhooksUpdated;
     }
-
-    private Task ClientIncOn﻿ApplicationCommandCreated(SocketApplicationCommand arg1)
+    
+    protected void ShutdownIncreaseEvents()
     {
-        IncreaseEvent(DiscordStatisticsEventType.﻿ApplicationCommandCreated);
+        _client.ApplicationCommandCreated -= ClientIncOnApplicationCommandCreated;
+        _client.ApplicationCommandDeleted -= ClientIncOnApplicationCommandDeleted;
+        _client.ApplicationCommandUpdated -= ClientIncOnApplicationCommandUpdated;
+        _client.AuditLogCreated -= ClientIncOnAuditLogCreated;
+        _client.AutocompleteExecuted -= ClientIncOnAutocompleteExecuted;
+        _client.AutoModActionExecuted -= ClientIncOnAutoModActionExecuted;
+        _client.AutoModRuleCreated -= ClientIncOnAutoModRuleCreated;
+        _client.AutoModRuleDeleted -= ClientIncOnAutoModRuleDeleted;
+        _client.AutoModRuleUpdated -= ClientIncOnAutoModRuleUpdated;
+        _client.ButtonExecuted -= ClientIncOnButtonExecuted;
+        _client.ChannelCreated -= ClientIncOnChannelCreated;
+        _client.ChannelDestroyed -= ClientIncOnChannelDestroyed;
+        _client.ChannelUpdated -= ClientIncOnChannelUpdated;
+        _client.CurrentUserUpdated -= ClientIncOnCurrentUserUpdated;
+        _client.EntitlementCreated -= ClientIncOnEntitlementCreated;
+        _client.EntitlementDeleted -= ClientIncOnEntitlementDeleted;
+        _client.EntitlementUpdated -= ClientIncOnEntitlementUpdated;
+        _client.GuildAvailable -= ClientIncOnGuildAvailable;
+        _client.GuildJoinRequestDeleted -= ClientIncOnGuildJoinRequestDeleted;
+        _client.GuildMembersDownloaded -= ClientIncOnGuildMembersDownloaded;
+        _client.GuildMemberUpdated -= ClientIncOnGuildMemberUpdated;
+        _client.GuildScheduledEventCancelled -= ClientIncOnGuildScheduledEventCancelled;
+        _client.GuildScheduledEventCompleted -= ClientIncOnGuildScheduledEventCompleted;
+        _client.GuildScheduledEventCreated -= ClientIncOnGuildScheduledEventCreated;
+        _client.GuildScheduledEventStarted -= ClientIncOnGuildScheduledEventStarted;
+        _client.GuildScheduledEventUpdated -= ClientIncOnGuildScheduledEventUpdated;
+        _client.GuildScheduledEventUserAdd -= ClientIncOnGuildScheduledEventUserAdd;
+        _client.GuildScheduledEventUserRemove -= ClientIncOnGuildScheduledEventUserRemove;
+        _client.GuildStickerCreated -= ClientIncOnGuildStickerCreated;
+        _client.GuildStickerDeleted -= ClientIncOnGuildStickerDeleted;
+        _client.GuildStickerUpdated -= ClientIncOnGuildStickerUpdated;
+        _client.GuildUnavailable -= ClientIncOnGuildUnavailable;
+        _client.GuildUpdated -= ClientIncOnGuildUpdated;
+        _client.IntegrationCreated -= ClientIncOnIntegrationCreated;
+        _client.IntegrationDeleted -= ClientIncOnIntegrationDeleted;
+        _client.IntegrationUpdated -= ClientIncOnIntegrationUpdated;
+        _client.InteractionCreated -= ClientIncOnInteractionCreated;
+        _client.InviteCreated -= ClientIncOnInviteCreated;
+        _client.InviteDeleted -= ClientIncOnInviteDeleted;
+        _client.JoinedGuild -= ClientIncOnJoinedGuild;
+        _client.LeftGuild -= ClientIncOnLeftGuild;
+        _client.MessageCommandExecuted -= ClientIncOnMessageCommandExecuted;
+        _client.MessageDeleted -= ClientIncOnMessageDeleted;
+        _client.MessageReceived -= ClientIncOnMessageReceived;
+        _client.MessagesBulkDeleted -= ClientIncOnMessagesBulkDeleted;
+        _client.MessageUpdated -= ClientIncOnMessageUpdated;
+        _client.ModalSubmitted -= ClientIncOnModalSubmitted;
+        _client.PollVoteAdded -= ClientIncOnPollVoteAdded;
+        _client.PollVoteRemoved -= ClientIncOnPollVoteRemoved;
+        _client.ReactionAdded -= ClientIncOnReactionAdded;
+        _client.ReactionRemoved -= ClientIncOnReactionRemoved;
+        _client.ReactionsCleared -= ClientIncOnReactionsCleared;
+        _client.ReactionsRemovedForEmote -= ClientIncOnReactionsRemovedForEmote;
+        _client.RecipientAdded -= ClientIncOnRecipientAdded;
+        _client.RecipientRemoved -= ClientIncOnRecipientRemoved;
+        _client.RequestToSpeak -= ClientIncOnRequestToSpeak;
+        _client.RoleCreated -= ClientIncOnRoleCreated;
+        _client.RoleDeleted -= ClientIncOnRoleDeleted;
+        _client.RoleUpdated -= ClientIncOnRoleUpdated;
+        _client.SelectMenuExecuted -= ClientIncOnSelectMenuExecuted;
+        _client.SlashCommandExecuted -= ClientIncOnSlashCommandExecuted;
+        _client.SpeakerAdded -= ClientIncOnSpeakerAdded;
+        _client.SpeakerRemoved -= ClientIncOnSpeakerRemoved;
+        _client.StageEnded -= ClientIncOnStageEnded;
+        _client.StageStarted -= ClientIncOnStageStarted;
+        _client.StageUpdated -= ClientIncOnStageUpdated;
+        _client.SubscriptionCreated -= ClientIncOnSubscriptionCreated;
+        _client.SubscriptionDeleted -= ClientIncOnSubscriptionDeleted;
+        _client.SubscriptionUpdated -= ClientIncOnSubscriptionUpdated;
+        _client.ThreadCreated -= ClientIncOnThreadCreated;
+        _client.ThreadDeleted -= ClientIncOnThreadDeleted;
+        _client.ThreadMemberJoined -= ClientIncOnThreadMemberJoined;
+        _client.ThreadMemberLeft -= ClientIncOnThreadMemberLeft;
+        _client.ThreadUpdated -= ClientIncOnThreadUpdated;
+        _client.UserBanned -= ClientIncOnUserBanned;
+        _client.UserCommandExecuted -= ClientIncOnUserCommandExecuted;
+        _client.UserIsTyping -= ClientIncOnUserIsTyping;
+        _client.UserJoined -= ClientIncOnUserJoined;
+        _client.UserLeft -= ClientIncOnUserLeft;
+        _client.UserUnbanned -= ClientIncOnUserUnbanned;
+        _client.UserUpdated -= ClientIncOnUserUpdated;
+        _client.UserVoiceStateUpdated -= ClientIncOnUserVoiceStateUpdated;
+        _client.VoiceChannelStatusUpdated -= ClientIncOnVoiceChannelStatusUpdated;
+        _client.VoiceServerUpdated -= ClientIncOnVoiceServerUpdated;
+        _client.WebhooksUpdated -= ClientIncOnWebhooksUpdated;
+    }
+    
+
+    private Task ClientIncOnApplicationCommandCreated(SocketApplicationCommand arg1)
+    {
+        IncreaseEvent(DiscordStatisticsEventType.ApplicationCommandCreated);
         return Task.CompletedTask;
     }
     private Task ClientIncOnApplicationCommandDeleted(SocketApplicationCommand arg1)

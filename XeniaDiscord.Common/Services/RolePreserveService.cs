@@ -22,7 +22,7 @@ public class RolePreserveService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(RolePreserveService));
     private readonly ErrorReportService _err;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly RolePreserveUserRepository _userRepository;
     private readonly RolePreserveGuildRepository _guildRepository;
     private readonly RolePreserveLogService _rolePreserveLogService;
@@ -36,7 +36,7 @@ public class RolePreserveService : BaseService
         : base(services)
     {
         _err = services.GetRequiredService<ErrorReportService>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
         _userRepository = services.GetRequiredService<RolePreserveUserRepository>();

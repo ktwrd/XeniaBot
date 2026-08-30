@@ -3,6 +3,8 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Sentry;
@@ -16,7 +18,7 @@ namespace XeniaBot.Shared.Services;
 public class DiscordService
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia.DiscordService");
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ConfigData _configData;
     private readonly InteractionHandler? _interactionHandler;
     private readonly ProgramDetails _details;
@@ -25,7 +27,7 @@ public class DiscordService
         _details = services.GetRequiredService<ProgramDetails>();
 
         _configData = services.GetRequiredService<ConfigData>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
 
         if (_details.Platform == XeniaPlatform.Bot)
         {
@@ -33,28 +35,62 @@ public class DiscordService
         }
 
         _client.Log += DiscordClientLogHandler;
-        _client.Ready += OnClientReady;
-        _client.MessageReceived += async (arg) =>
-        {
-            MessageReceived?.Invoke(arg);
-        };
-        _client.Disconnected += OnClientDisconnected;
-        _client.LatencyUpdated += OnClientLatencyUpdated;
+        _client.ShardReady += OnShardReady;
+        _client.ShardLatencyUpdated += ClientOnShardLatencyUpdated;
+        // _client.Ready += OnClientReady;
+        _client.MessageReceived += OnMessageReceived;
+        _client.ShardDisconnected += OnClientDisconnected;
+        // _client.Disconnected += OnClientDisconnected;
+        // _client.LatencyUpdated += OnClientLatencyUpdated;
         CreateConnectionStatusThread();
         CreateLatencySanityCheckThread();
     }
 
-    private DateTimeOffset? _latencyLastUpdated;
-    private DateTimeOffset? _readyAt;
-    private Task OnClientLatencyUpdated(int before, int after)
+    private async Task OnMessageReceived(SocketMessage message)
     {
-        _latencyLastUpdated = DateTimeOffset.UtcNow;
+        if (MessageReceived is null) return;
+        await MessageReceived(message);
+    }
+
+    private readonly Dictionary<int, int> _shardLatency = [];
+    private Dictionary<int, int> _publicShardLatency = [];
+    public IReadOnlyDictionary<int, int> ShardLatency => _publicShardLatency;
+
+    private Task ClientOnShardLatencyUpdated(int before, int latency, DiscordSocketClient client)
+    {
+        var i = 0;
+        foreach (var e in _client.Shards)
+        {
+            if (ReferenceEquals(e, client)) break;
+            i++;
+        }
+
+        lock (_shardLatency)
+        {
+            _latencyLastUpdated = DateTimeOffset.UtcNow;
+            _shardLatency[i] = latency;
+            _publicShardLatency = new Dictionary<int, int>(_shardLatency.Where(e => e.Key < _client.Shards.Count && e.Key >= 0));
+        }
         return Task.CompletedTask;
     }
 
-    private static Task OnClientDisconnected(Exception error)
+    public int ShardsReady { get; private set; }
+    public int? ShardCount => _client?.Shards?.Count;
+
+    private async Task OnShardReady(DiscordSocketClient shard)
     {
-        Log.Error(error, "Disconnected from Discord!!!");
+        ShardsReady++;
+        if (ShardsReady >= ShardCount)
+        {
+            await InvokeReady();
+        }
+    }
+
+    private DateTimeOffset? _latencyLastUpdated;
+    private DateTimeOffset? _readyAt;
+    private Task OnClientDisconnected(Exception error, DiscordSocketClient client)
+    {
+        Log.Fatal(error, "Disconnected from Discord!!!");
         return Task.CompletedTask;
     }
 
@@ -84,6 +120,13 @@ public class DiscordService
         var connectingTime = 0;
         while (true)
         {
+            if (_client.Shards != null)
+            {
+                await Task.WhenAll(_client.Shards.Select(CheckShardConnectionStatus));
+            }
+            await Task.Delay(15_000);
+            /*
+            // old code before shading was added
             switch (_client.ConnectionState)
             {
                 case ConnectionState.Disconnected:
@@ -100,13 +143,13 @@ public class DiscordService
                             new InvalidOperationException(msg,
                                 ex));
                     }
-                    await Task.Delay(1000);
+                    await Task.Delay(2000);
                     break;
                 case ConnectionState.Disconnecting:
-                    await Task.Delay(500);
+                    await Task.Delay(1500);
                     break;
                 case ConnectionState.Connecting:
-                    await Task.Delay(500);
+                    await Task.Delay(1500);
                     connectingTime += 500;
                     if (connectingTime >= 15_000)
                     {
@@ -142,10 +185,51 @@ public class DiscordService
                     connectingTime = 0;
                     await Task.Delay(5000);
                     break;
-            }
+            }*/
         }
     }
 
+    private async Task CheckShardConnectionStatus(DiscordSocketClient client, int index)
+    {
+        try
+        {
+            while (client.ConnectionState == ConnectionState.Disconnected)
+            {
+                try
+                {
+                    Log.Warn($"[shard={index}] Reconnecting");
+                    await client.StartAsync();
+                    await Task.Delay(2000);
+                }
+                catch (Exception ex)
+                {
+                    const string msg = "Failed to re-connect client (after disconnected for some reason)";
+                    Log.Error(ex, msg);
+                    SentrySdk.CaptureException(
+                        new InvalidOperationException(msg,
+                            ex));
+                }
+            }
+
+            var c = 0;
+            while (client.ConnectionState == ConnectionState.Connecting && c < 15_000)
+            {
+                await Task.Delay(500);
+                c += 500;
+            }
+
+            if (c > 0)
+            {
+                Log.Info($"[shard={index}] Successfully reconnected");
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Fatal(e, $"[shard={index}] Failed to check connection status");
+        }
+    }
+
+    #region Thread - Sanity Check
     private void CreateLatencySanityCheckThread()
     {
         new Thread(() =>
@@ -170,28 +254,28 @@ public class DiscordService
         Log.Info("Created thread");
         while (true)
         {
-            if (_readyAt.HasValue && _latencyLastUpdated.HasValue)
+            if (!_readyAt.HasValue || !_latencyLastUpdated.HasValue)
             {
-                if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(5))
-                {
-                    Thread.Sleep(60_000);
-                    continue;
-                }
-                var now = DateTimeOffset.UtcNow;
-                var delta = now > _latencyLastUpdated
-                    ? now - _latencyLastUpdated
-                    : _latencyLastUpdated - now;
-                if (delta > TimeSpan.FromMinutes(5))
-                {
-                    Log.Fatal("Latency was last updated >5min ago!!! Aborting process so it can be automatically restarted by docker");
-                    Environment.Exit(0);
-                    return;
-                }
+                Thread.Sleep(1_000);
+                continue;
             }
-
-            Thread.Sleep(1_000);
+            if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(5))
+            {
+                Thread.Sleep(60_000);
+                continue;
+            }
+            var now = DateTimeOffset.UtcNow;
+            var delta = now > _latencyLastUpdated
+                ? now - _latencyLastUpdated
+                : _latencyLastUpdated - now;
+            if (delta < TimeSpan.FromMinutes(5)) continue;
+            
+            Log.Fatal("Latency was last updated >=5min ago!!! Aborting process so it can be automatically restarted by docker");
+            Environment.Exit(0);
+            return;
         }
     }
+    #endregion
 
     public async Task Run()
     {
@@ -202,23 +286,14 @@ public class DiscordService
     #region Event Emit
     public event DiscordControllerDelegate? Ready;
     public bool IsReady { get; private set; }
-    private void InvokeReady()
+    private async Task InvokeReady()
     {
+        _readyAt = DateTimeOffset.UtcNow;
         if (Ready != null && !IsReady)
         {
             IsReady = true;
             Ready?.Invoke(this);
         }
-    }
-
-    public event Func<SocketMessage, Task>? MessageReceived;
-    #endregion
-
-    #region Event Handling
-    private async Task OnClientReady()
-    {
-        _readyAt = DateTimeOffset.UtcNow;
-        InvokeReady();
         if (_interactionHandler != null)
             await _interactionHandler.InitializeAsync();
         var versionString = "v0.0";
@@ -234,6 +309,10 @@ public class DiscordService
         Log.Info("Bot is ready!");
     }
 
+    public event MessageReceivedEventHandler? MessageReceived;
+    #endregion
+
+    #region Event Handling
     private static Task DiscordClientLogHandler(LogMessage arg)
     {
         var discordLog = LogManager.LogFactory.GetLogger("Discord" + (string.IsNullOrEmpty(arg.Source) ? "" : "." + arg.Source));
@@ -260,3 +339,5 @@ public class DiscordService
     }
     #endregion
 }
+
+public delegate Task MessageReceivedEventHandler(SocketMessage message);

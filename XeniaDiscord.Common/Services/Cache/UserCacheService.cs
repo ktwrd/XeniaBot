@@ -13,14 +13,14 @@ namespace XeniaDiscord.Common.Services;
 public class UserCacheService
 {
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly UserCacheRepository _repo;
     private readonly IMapper<IUser, UserCacheModel> _mapper;
     private readonly IMapperMerger<IUser, UserCacheModel> _mapperMerger;
 
     public UserCacheService(IServiceProvider services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _repo = services.GetRequiredService<UserCacheRepository>();
         _mapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();

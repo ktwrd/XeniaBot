@@ -20,14 +20,14 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class WeatherModuleService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(WeatherModuleService));
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly WeatherAPIService _weather;
     private readonly ErrorReportService _error;
 
     public WeatherModuleService(IServiceProvider services)
         : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _weather = services.GetRequiredService<WeatherAPIService>();
         _error = services.GetRequiredService<ErrorReportService>();
         _discord.ButtonExecuted += DiscordOnButtonExecuted;

@@ -13,12 +13,12 @@ namespace XeniaBot.Core.Services.BotAdditions;
 [XeniaController]
 public class ConfessionService : BaseService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ConfessionConfigRepository _config;
     public ConfessionService(IServiceProvider services)
         : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _config = services.GetRequiredService<ConfessionConfigRepository>();
     }
 

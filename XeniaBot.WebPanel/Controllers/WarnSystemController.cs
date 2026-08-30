@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Services;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -41,8 +42,8 @@ public class WarnSystemController: BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (!userId.HasValue)
             return View("NotFound", "User not found");
-        var user = await _discord.GetUserAsync(userId.Value);
-        var guild = _discord.GetGuild(id);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
         var guildUser = guild.GetUser(user.Id);

@@ -15,14 +15,14 @@ public class StrippedUser
     public bool IsWebhook { get; set; }
     public ulong Id { get; set; }
     
-    public static IEnumerable<StrippedUser> FromGuild(DiscordSocketClient client, SocketGuild guild)
+    public static IEnumerable<StrippedUser> FromGuild(DiscordShardedClient client, SocketGuild guild)
     {
         return guild.Users
             .Select(i => FromUser(client, i))
             .ToList();
     }
 
-    public static StrippedUser FromUser(DiscordSocketClient client, IUser user)
+    public static StrippedUser FromUser(DiscordShardedClient client, IUser user)
     {
         var i = new StrippedUser();
 

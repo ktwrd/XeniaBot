@@ -10,11 +10,11 @@ public class DiscordCacheEventHandler : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly DiscordCacheService _cache;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     public DiscordCacheEventHandler(IServiceProvider services) : base(services)
     {
         _cache = services.GetRequiredService<DiscordCacheService>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
 
         if (services.GetRequiredService<ProgramDetails>().Platform == XeniaPlatform.Bot)
         {

@@ -18,14 +18,14 @@ namespace XeniaBot.Core.Modules;
 
 public class MiscModule : InteractionModuleBase
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ConfigData _config;
     private readonly ProgramDetails _details;
     private readonly PrometheusService _prometheus;
     private readonly ErrorReportService _error;
     public MiscModule(IServiceProvider services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _config = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
         _prometheus = services.GetRequiredService<PrometheusService>();

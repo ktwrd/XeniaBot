@@ -62,7 +62,7 @@ public class StrippedRole : IStrippedRole
     /// <summary>
     /// Generate a list of <see cref="StrippedRole"/> from a guild.
     /// </summary>
-    public static IEnumerable<StrippedRole> FromGuild(DiscordSocketClient client, SocketGuild guild)
+    public static IEnumerable<StrippedRole> FromGuild(DiscordShardedClient client, SocketGuild guild)
     {
         var roles = guild.Roles;
         var currentUserRoles = guild.GetUser(client.CurrentUser.Id).Roles.ToList();

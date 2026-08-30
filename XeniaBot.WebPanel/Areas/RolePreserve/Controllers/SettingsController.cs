@@ -32,7 +32,7 @@ public class SettingsController : Controller
     private readonly GuildCacheRepository _guildCacheRepo;
     private readonly DiscordSnapshotService _discordSnapshotService;
     private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ErrorReportService _err;
     private readonly XeniaDbContext _db;
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
@@ -42,7 +42,7 @@ public class SettingsController : Controller
         _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
         _discordSnapshotService = services.GetRequiredService<DiscordSnapshotService>();
         _rolePreserveGuildRepo = services.GetRequiredService<RolePreserveGuildRepository>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _err = services.GetRequiredService<ErrorReportService>();
         _db = services.GetRequiredService<XeniaDbContext>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();

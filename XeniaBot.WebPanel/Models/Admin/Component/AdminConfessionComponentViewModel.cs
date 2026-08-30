@@ -18,7 +18,7 @@ public class AdminConfessionComponentViewModel : IGuildViewModel, IConfessionVie
     
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
-        var discord = CoreContext.Instance!.GetRequiredService<DiscordSocketClient>();
+        var discord = CoreContext.Instance!.GetRequiredService<DiscordShardedClient>();
         Guild = discord.GetGuild(guildId);
         var repo = CoreContext.Instance!.GetRequiredService<ConfessionConfigRepository>();
         ConfessionModel = await repo.GetGuild(Guild.Id) ?? new ConfessionGuildModel()

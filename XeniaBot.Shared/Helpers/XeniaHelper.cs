@@ -22,7 +22,7 @@ public static class XeniaHelper
         if (CoreContext.Instance == null)
             throw new InvalidOperationException("CoreContext hasn't been initialized.");
 
-        var client = CoreContext.Instance.GetRequiredService<DiscordSocketClient>();
+        var client = CoreContext.Instance.GetRequiredService<DiscordShardedClient>();
         return BaseEmbed(client, builder);
     }
 
@@ -67,8 +67,21 @@ public static class XeniaHelper
     {
         try
         {
-            var guild = client.GetGuild(guildId);
-            var channel = guild.GetChannel(channelId);
+            var guild = ExceptionHelper.RetryOnTimedOut(() => client.GetGuild(guildId));
+            var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetChannel(channelId));
+            return channel != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    public static bool ChannelExists(DiscordShardedClient client, ulong guildId, ulong channelId)
+    {
+        try
+        {
+            var guild = ExceptionHelper.RetryOnTimedOut(() => client.GetGuild(guildId));
+            var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetChannel(channelId));
             return channel != null;
         }
         catch
@@ -108,7 +121,26 @@ public static class XeniaHelper
             .WithTimestamp(DateTimeOffset.UtcNow)
             .WithFooter(footer);
     }
-    
+    public static EmbedBuilder BaseEmbed(DiscordShardedClient client, EmbedBuilder? embed = null)
+    {
+        embed ??= new EmbedBuilder();
+
+        var icon = client.CurrentUser.GetAvatarUrl();
+
+        string? version = null;
+        if (CoreContext.Instance != null && CoreContext.Instance?.Details.Version != null)
+            version = CoreContext.Instance?.Details.Version;
+
+        var footer = new EmbedFooterBuilder()
+            .WithIconUrl(icon);
+        if (version != null)
+            footer.WithText($"Xenia v{version}");
+
+        return embed
+            .WithTimestamp(DateTimeOffset.UtcNow)
+            .WithFooter(footer);
+    }
+
     public static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions()
     {
         IgnoreReadOnlyFields = true,

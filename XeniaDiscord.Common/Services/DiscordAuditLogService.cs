@@ -13,10 +13,10 @@ namespace XeniaDiscord.Common.Services;
 
 public sealed class DiscordAuditLogService : BaseService
 {
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     public DiscordAuditLogService(IServiceProvider services) : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
     }
 
     public async Task<AuditLogEntryResult> GetLatestBanEvent(

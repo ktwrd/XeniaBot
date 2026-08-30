@@ -17,13 +17,13 @@ public class InteractionHandler
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(InteractionHandler));
     private readonly InteractionService _interactionService;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly CoreContext _coreContext;
     private readonly IServiceProvider _services;
     public InteractionHandler(IServiceProvider services)
     {
         _interactionService = services.GetRequiredService<InteractionService>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _coreContext = services.GetRequiredService<CoreContext>();
         _services = services;
     }
@@ -59,7 +59,7 @@ public class InteractionHandler
     {
         try
         {
-            var context = new SocketInteractionContext<SocketMessageComponent>(
+            var context = new ShardedInteractionContext<SocketMessageComponent>(
                 _client,
                 interaction);
             var result = await _interactionService.ExecuteCommandAsync(
@@ -84,7 +84,7 @@ public class InteractionHandler
     {
         try
         {
-            var context = new SocketInteractionContext<SocketModal>(
+            var context = new ShardedInteractionContext<SocketModal>(
                 _client,
                 interaction);
             var result = await _interactionService.ExecuteCommandAsync(
@@ -110,7 +110,7 @@ public class InteractionHandler
         try
         {
             Log.Trace(FormatName(interaction));
-            var context = new SocketInteractionContext(
+            var context = new ShardedInteractionContext(
                 _client,
                 interaction);
             var result = await _interactionService.ExecuteCommandAsync(

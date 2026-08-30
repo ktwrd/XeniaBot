@@ -12,13 +12,13 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public class BaseXeniaController : Controller
 {
-    protected readonly DiscordSocketClient _discord;
+    protected readonly DiscordShardedClient _discord;
     protected readonly UserConfigRepository _userConfig;
     
     public BaseXeniaController()
         : base()
     {
-        _discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        _discord = Program.Core.GetRequiredService<DiscordShardedClient>();
         _userConfig = Program.Core.GetRequiredService<UserConfigRepository>();
     }
 

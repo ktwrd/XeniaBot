@@ -23,6 +23,9 @@ public class XeniaHealthModel
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Latency { get; set; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ShardCount { get; set; }
+
     public XeniaHealthModel()
     {
         Version = "unknown";

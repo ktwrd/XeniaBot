@@ -23,7 +23,7 @@ public class BanSyncService : BaseService
     public static TimeSpan MinimumServerAge => TimeSpan.FromDays(90);
     
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(BanSyncService));
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ConfigData _configData;
     private readonly ErrorReportService _err;
     private readonly BanSyncGuildRepository _bansyncGuildRepository;
@@ -35,7 +35,7 @@ public class BanSyncService : BaseService
     public BanSyncService(IServiceProvider services)
         : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _configData = services.GetRequiredService<ConfigData>();
         _err = services.GetRequiredService<ErrorReportService>();
         _bansyncGuildRepository = services.GetRequiredService<BanSyncGuildRepository>();

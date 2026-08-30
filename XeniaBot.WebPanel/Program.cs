@@ -240,8 +240,8 @@ public static class Program
         builder.Services.AddSingleton(Core.Services.GetRequiredService<CronDaemon>());
         builder.Services.AddSingleton(Core.Services.GetRequiredService<ConfigService>());
         builder.Services.AddSingleton(Core.Services.GetRequiredService<ConfigData>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<DiscordSocketClient>());
-        builder.Services.AddSingleton<IDiscordClient>(Core.Services.GetRequiredService<DiscordSocketClient>());
+        builder.Services.AddSingleton(Core.Services.GetRequiredService<DiscordShardedClient>());
+        builder.Services.AddSingleton<IDiscordClient>(Core.Services.GetRequiredService<DiscordShardedClient>());
         builder.Services.AddSingleton(Core.Services.GetRequiredService<IMongoDatabase>());
         builder.Services.AddSingleton(Core.Services.GetRequiredService<DiscordService>());
         await CoreContextBeforeServiceBuild(builder.Services);

@@ -4,5 +4,5 @@ namespace XeniaBot.WebPanel.Models;
 
 public class DiscordModel
 {
-    public DiscordSocketClient Client { get; set; }
+    public DiscordShardedClient Client { get; set; }
 }

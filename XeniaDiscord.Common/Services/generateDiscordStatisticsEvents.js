@@ -2,6 +2,7 @@
 const inputContent = fs.readFileSync('generateDiscordStatisticsEvents.txt').toString().replaceAll('\r\n', '\n').split('\n').filter(e => e.trim().length > 0);
 
 const eventAdders = [];
+const eventRemovers = [];
 const eventHandlerFunctions = [];
 
 for (const line of inputContent) {
@@ -28,6 +29,7 @@ for (const line of inputContent) {
     });
     const funcName = `ClientIncOn${name}`;
     eventAdders.push(`_client.${name} += ${funcName};`);
+    eventRemovers.push(`_client.${name} -= ${funcName};`);
 
     const args = params.map(e => `${e.type} ${e.name}`).join(', ');
     eventHandlerFunctions.push([
@@ -40,10 +42,17 @@ for (const line of inputContent) {
 }
 
 const eventAddersText = eventAdders.map(e => ''.padStart(4, ' ') + e).join('\n');
+const eventRemoversText = eventRemovers.map(e => ''.padStart(4, ' ') + e).join('\n');
 const initEventContent = `protected void InitializeIncreaseEvents()
 {
 ${eventAddersText}
-}`.split('\n').map(e => ''.padStart(4, ' ') + e).join('\n');
+}
+
+protected void ShutdownIncreaseEvents()
+{
+${eventRemoversText}
+}
+`.split('\n').map(e => ''.padStart(4, ' ') + e).join('\n');
 const eventHandlerContent = eventHandlerFunctions.map(e => e.join('\n').split('\n').map(x => ''.padStart(4, ' ') + x).join('\n')).join('\n');
 
 fs.writeFileSync('DiscordStatisticsService.IncreaseEvents.Generated.cs', `using Discord;

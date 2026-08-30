@@ -25,7 +25,7 @@ public partial class AdmDataModule : InteractionModuleBase
     private readonly ConfigData _config;
     private readonly DiscordSnapshotService _snapshotService;
     private readonly DiscordCacheService _discordCacheService;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly IServiceProvider _services;
     public AdmDataModule(IServiceProvider services)
@@ -34,7 +34,7 @@ public partial class AdmDataModule : InteractionModuleBase
         _config = services.GetRequiredService<ConfigData>();
         _snapshotService = services.GetRequiredService<DiscordSnapshotService>();
         _discordCacheService = services.GetRequiredService<DiscordCacheService>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
     }
 
     private async Task FollowUpWithException(Exception exception, string message = "Failed to update database.")

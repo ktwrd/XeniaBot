@@ -6,7 +6,7 @@
         var a = "/Debugempty.png";
         if (string.IsNullOrEmpty(userId))
             return a;
-        var u = Model.Client.GetUserAsync(ulong.Parse(userId)).Result;
+        var u = Model.Client.GetUser(ulong.Parse(userId));
         if (u != null)
         {
             var x = u.GetAvatarUrl();

@@ -5,7 +5,7 @@ namespace XeniaBot.WebPanel.Models;
 
 public class BaseViewModel : IBaseViewModel
 {
-    public DiscordSocketClient Client { get; set; }
+    public DiscordShardedClient Client { get; set; }
     public UserConfigModel UserConfig { get; set; }
     
     public string? MessageType { get; set; }
@@ -14,6 +14,6 @@ public class BaseViewModel : IBaseViewModel
 
 public interface IBaseViewModel : IAlertViewModel
 {
-    public DiscordSocketClient Client { get; set; }
+    public DiscordShardedClient Client { get; set; }
     public UserConfigModel UserConfig { get; set; }
 }

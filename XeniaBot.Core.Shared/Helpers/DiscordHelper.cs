@@ -12,7 +12,7 @@ public static class DiscordHelper
     {
         embed ??= new EmbedBuilder();
         var core = CoreContext.Instance;
-        var client = core.GetRequiredService<DiscordSocketClient>();
+        var client = core.GetRequiredService<DiscordShardedClient>();
         var icon = ExceptionHelper.RetryOnTimedOut(() => client.CurrentUser.GetAvatarUrl());
 
         return embed
@@ -26,6 +26,17 @@ public static class DiscordHelper
         if (arg is not SocketUserMessage message)
             return;
         var context = new SocketCommandContext(client, message);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => context.Guild.GetTextChannel(arg.Channel.Id));
+        var msg = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetMessageAsync(arg.Id));
+
+        if (msg != null)
+            await msg.DeleteAsync();
+    }
+    public static async Task DeleteMessage(DiscordShardedClient client, SocketMessage arg)
+    {
+        if (arg is not SocketUserMessage message)
+            return;
+        var context = new ShardedCommandContext(client, message);
         var guild = ExceptionHelper.RetryOnTimedOut(() => context.Guild.GetTextChannel(arg.Channel.Id));
         var msg = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetMessageAsync(arg.Id));
 
