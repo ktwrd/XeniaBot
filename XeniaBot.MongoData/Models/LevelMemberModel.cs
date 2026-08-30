@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using System.Threading.Tasks;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Models;
 
 namespace XeniaBot.MongoData.Models;
@@ -14,11 +15,10 @@ public class LevelMemberModel : BaseModel
     public long LastMessageTimestamp { get; set; }
     public ulong LastMessageId { get; set; }
     public ulong LastMessageChannelId { get; set; }
-    public async Task<IMessage?> GetMessage(DiscordSocketClient client)
+
+    public async Task<IMessage?> GetMessage(SocketGuild? guild)
     {
-        var guild = client.GetGuild(GuildId);
-        
-        var textchannel = guild?.GetTextChannel(LastMessageChannelId);
+        var textchannel = ExceptionHelper.RetryOnTimedOut(() => guild?.GetTextChannel(LastMessageChannelId));
         IMessage? message = null;
         try
         {
@@ -26,45 +26,58 @@ public class LevelMemberModel : BaseModel
             {
                 message = await textchannel.GetMessageAsync(LastMessageId);
             }
-            else
+
+            if (message != null) return message;
+        }
+        catch { }
+        try
+        {
+            var vcchannel = ExceptionHelper.RetryOnTimedOut(() => guild?.GetVoiceChannel(LastMessageChannelId));
+            if (vcchannel != null)
             {
-                try
-                {
-                    var vcchannel = guild?.GetVoiceChannel(LastMessageChannelId);
-                    if (vcchannel != null)
-                    {
-                        message = await vcchannel.GetMessageAsync(LastMessageId);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var threadchannel = guild?.GetThreadChannel(LastMessageChannelId);
-                            if (threadchannel != null)
-                            {
-                                message = await threadchannel.GetMessageAsync(LastMessageId);
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    var stagechannel = guild?.GetStageChannel(LastMessageChannelId);
-                                    if (stagechannel != null)
-                                    {
-                                        message = await stagechannel.GetMessageAsync(LastMessageId);
-                                    }
-                                }
-                                catch { }
-                            }
-                        }
-                        catch { }
-                    }
-                }
-                catch { }
+                message = await vcchannel.GetMessageAsync(LastMessageId);
+            }
+            if (message != null) return message;
+        }
+        catch
+        {
+        }
+        try
+        {
+            var threadchannel = ExceptionHelper.RetryOnTimedOut(() => guild?.GetThreadChannel(LastMessageChannelId));
+            if (threadchannel != null)
+            {
+                message = await threadchannel.GetMessageAsync(LastMessageId);
+            }
+
+            if (message != null) return message;
+        }
+        catch
+        {
+        }
+        try
+        {
+            var stagechannel = ExceptionHelper.RetryOnTimedOut(() =>
+                guild?.GetStageChannel(LastMessageChannelId));
+            if (stagechannel != null)
+            {
+                message = await stagechannel.GetMessageAsync(LastMessageId);
             }
         }
-        catch{ }
+        catch
+        {
+        }
         return message;
+    }
+    public Task<IMessage?> GetMessage(DiscordSocketClient client)
+    {
+        var guild = ExceptionHelper.RetryOnTimedOut(() => client.GetGuild(GuildId));
+        return GetMessage(guild);
+    }
+    public Task<IMessage?> GetMessage(DiscordShardedClient client)
+    {
+        var guild = ExceptionHelper.RetryOnTimedOut(() => client.GetGuild(GuildId));
+        return GetMessage(guild);
     }
 
     public LevelMemberModel()

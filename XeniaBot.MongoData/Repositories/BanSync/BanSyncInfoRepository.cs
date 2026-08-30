@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Repositories;
 
 namespace XeniaBot.MongoData.Repositories;
@@ -19,13 +20,13 @@ public class BanSyncInfoRepository
     : BaseRepository<BanSyncInfoModel>
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly BanSyncStateHistoryRepository _banSyncStateController;
 
     public BanSyncInfoRepository(IServiceProvider services)
         : base(BanSyncInfoModel.CollectionName, services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _banSyncStateController = services.GetRequiredService<BanSyncStateHistoryRepository>();
         var collectionName = BanSyncInfoModel.CollectionName;
 
@@ -212,7 +213,7 @@ public class BanSyncInfoRepository
         bool allowGhost = false)
     {
         var result = new List<BanSyncInfoModel>();
-        var guild = _discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         foreach (var user in guild.Users)
         {
             var filter = Builders<BanSyncInfoModel>
@@ -309,7 +310,7 @@ public class BanSyncInfoRepository
         bool ignoreDisabledGuilds = false,
         bool allowGhost = false)
     {
-        var guild = _discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         var userIdList = guild.Users.Select(v => v.Id).ToArray();
         var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost, userIdList);
 
@@ -332,7 +333,7 @@ public class BanSyncInfoRepository
         bool ignoreDisabledGuilds = false,
         bool allowGhost = false)
     {
-        var guild = _discord.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         var userIdList = guild.Users.Select(v => v.Id).ToArray();
         var filter = GetInfoAllInGuild_Filter(guildId, filterByUserId, ignoreDisabledGuilds, allowGhost, userIdList);
 

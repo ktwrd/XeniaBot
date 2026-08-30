@@ -4,16 +4,16 @@ namespace XeniaBot.Shared.Schema
 {
     public static class WeatherAPIEndpoint
     {
-        public static int[] StatusCodeError => new int[]
-        {
+        public static int[] StatusCodeError =>
+        [
             400,
             401,
             403
-        };
-        public static int[] StatusCodeSuccess => new int[]
-        {
+        ];
+        public static int[] StatusCodeSuccess =>
+        [
             200
-        };
+        ];
         public static string BaseUrl => "http://api.weatherapi.com";
         private static string encode(string value) => HttpUtility.UrlEncode(value);
         private static string encodeBool(bool value) => value ? "yes" : "no";

@@ -12,23 +12,23 @@ namespace XeniaDiscord.Common.Services;
 
 public class GuildCacheService
 {
-    private readonly XeniaDbContext _db;
-    private readonly DiscordSocketClient _client;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
+    private readonly DiscordShardedClient _client;
     private readonly GuildCacheRepository _repo;
     private readonly IMapper<IGuild, GuildCacheModel> _mapper;
 
     public GuildCacheService(IServiceProvider services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _mapper = services.GetRequiredService<IMapper<IGuild, GuildCacheModel>>();
 
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
-        _repo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildCacheRepository>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
+        _repo = services.GetRequiredService<GuildCacheRepository>();
     }
 
     public async Task<string?> GetIconUrl(ulong id, bool saveChanges = true)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await GetIconUrl(db, id, saveChanges);
     }
     public async Task<string?> GetIconUrl(XeniaDbContext db, ulong id, bool saveChanges = true)

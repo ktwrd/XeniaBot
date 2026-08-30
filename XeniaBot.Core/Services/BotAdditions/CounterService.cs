@@ -18,13 +18,13 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class CounterService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(CounterService));
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DiscordService _discord;
     private readonly CounterConfigRepository _config;
     public CounterService(IServiceProvider services)
         : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _discord = services.GetRequiredService<DiscordService>();
         _config = services.GetRequiredService<CounterConfigRepository>();
     }
@@ -59,16 +59,16 @@ public class CounterService : BaseService
     }
     private async Task DiscordMessageReceived(SocketMessage arg)
     {
-        if (!(arg is SocketUserMessage message))
+        if (arg is not SocketUserMessage message)
             return;
         if (message.Source != MessageSource.User)
             return;
         if (!_config.CachedItems.ContainsKey(arg.Channel.Id))
             return;
 
-        // Try and parse the content as a ulong, if we fail
+        // Try and parse the content as an ulong, if we fail
         // then we delete the message. FormatException is
-        // thrown when we fail to parse as a ulong.
+        // thrown when we fail to parse as an ulong.
         ulong value = 0;
         try
         {
@@ -81,8 +81,9 @@ public class CounterService : BaseService
         }
 
         // If number is not the next number, then we delete the message.
-        var context = new SocketCommandContext(_client, message);
-        ulong targetValue = value + 1;
+        var context = new ShardedCommandContext(_client, message);
+        var data = await _config.Get(context.Guild, context.Channel);
+        var targetValue = data.Count + 1;
         if (value != targetValue)
         {
             await DiscordHelper.DeleteMessage(_client, arg);
@@ -90,7 +91,6 @@ public class CounterService : BaseService
         }
 
         // Update record
-        CounterGuildModel data = await _config.Get(context.Guild, context.Channel);
         data.Count = value;
         await _config.Set(data);
     }

@@ -1,19 +1,18 @@
 ﻿using System;
 
-namespace XeniaBot.Shared
+namespace XeniaBot.Shared;
+
+public static class RandomExtensions
 {
-    public static class RandomExtensions
+    public static void Shuffle<T>(this Random rng, T[] array)
     {
-        public static void Shuffle<T>(this Random rng, T[] array)
+        var n = array.Length;
+        while (n > 1)
         {
-            int n = array.Length;
-            while (n > 1)
-            {
-                int k = rng.Next(n--);
-                T temp = array[n];
-                array[n] = array[k];
-                array[k] = temp;
-            }
+            var k = rng.Next(n--);
+            var temp = array[n];
+            array[n] = array[k];
+            array[k] = temp;
         }
     }
 }

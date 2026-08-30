@@ -7,6 +7,7 @@ using NLog;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Shared;
 using NVImage = NetVips.Image;
@@ -55,6 +56,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
     }
     [SlashCommand("caption", "Add a caption to a piece of media")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task Caption(string caption,
         IAttachment attachment,
         [Summary(description: "Export as a GIF")]
@@ -150,17 +152,21 @@ public partial class MediaManipulationModule : InteractionModuleBase
                         i.Set("page-height", pageHeight + textHeight);
                 });
 
-            using var resultStream = new MemoryStream(isAnimated || saveAsGif
+            using var finalStream = new MemoryStream((isAnimated || saveAsGif
                 ? final.GifsaveBuffer(dither: 1, effort: 2, bitdepth: 8, interlace: true, reuse: true)
-                : final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true));
+                : final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true)));
+            using var resultStream = new MemoryStream();
+            await finalStream.CopyToAsync(resultStream);
+            resultStream.Seek(0, SeekOrigin.Begin);
             var filename = isAnimated || saveAsGif ? $"{Context.Interaction.Id}.gif" : $"{Context.Interaction.Id}.png";
             var optimizer = new ImageOptimizer()
             {
                 IgnoreUnsupportedFormats = true,
                 OptimalCompression = true
             };
-            resultStream.Seek(0, SeekOrigin.Begin);
             optimizer.Compress(resultStream);
+            if (resultStream.Length > resultStream.Position + 1 && resultStream.Position > 10)
+                resultStream.SetLength(resultStream.Position + 1);
             resultStream.Seek(0, SeekOrigin.Begin);
             Log.Debug($"Uploading file \"{filename}\" ({PrettySize.Bytes(resultStream.Length)})");
             await FollowupWithFileAsync(resultStream, filename);
@@ -307,6 +313,7 @@ public partial class MediaManipulationModule : InteractionModuleBase
 
     [SlashCommand("speechbubble", "Add a speech bubble to an image or a gif.")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task SpeechBubble(IAttachment attachment,
         [Summary(description: "When True, the speech bubble will be on the bottom, and when False it will be on top.")]
         bool flip = false,
@@ -360,17 +367,21 @@ public partial class MediaManipulationModule : InteractionModuleBase
             var final = await Watermark(
                 sourceImage, watermark, new WatermarkOptions(2, isAnimated, resize: true, yscale: 0.2f, alpha: alpha, flip: flip));
 
-            using var resultStream = new MemoryStream(isAnimated || saveAsGif
+            using var finalStream = new MemoryStream((isAnimated || saveAsGif
                 ? final.GifsaveBuffer(dither: 1, effort: 2, bitdepth: 8, interlace: true, reuse: true)
-                : final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true));
+                : final.PngsaveBuffer(compression: 4, dither: 1, bitdepth: 8, interlace: true)));
+            using var resultStream = new MemoryStream();
+            await finalStream.CopyToAsync(resultStream);
+            resultStream.Seek(0, SeekOrigin.Begin);
             var filename = isAnimated || saveAsGif ? $"{Context.Interaction.Id}.gif" : $"{Context.Interaction.Id}.png";
             var optimizer = new ImageOptimizer()
             {
                 IgnoreUnsupportedFormats = true,
                 OptimalCompression = true
             };
-            resultStream.Seek(0, SeekOrigin.Begin);
             optimizer.Compress(resultStream);
+            if (resultStream.Length > resultStream.Position + 1 && resultStream.Position > 10)
+                resultStream.SetLength(resultStream.Position + 1);
             resultStream.Seek(0, SeekOrigin.Begin);
             Log.Debug($"Uploading file \"{filename}\" ({PrettySize.Bytes(resultStream.Length)})");
             await FollowupWithFileAsync(resultStream, filename);

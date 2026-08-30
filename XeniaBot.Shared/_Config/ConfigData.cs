@@ -70,7 +70,11 @@ public class ConfigData
         && !string.IsNullOrEmpty(DashboardUrl)
         && Uri.TryCreate(DashboardUrl, UriKind.Absolute, out var _);
 
-    public string? DashboardUrl { get; set; }
+    public string? DashboardUrl
+    {
+        get;
+        set => field = value?.TrimEnd('/');
+    }
 
     /// <summary>
     /// <para>Is this instance responsible for upgrading database schema?</para>

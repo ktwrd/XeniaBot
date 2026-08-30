@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Models;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 
@@ -12,13 +13,13 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public class BaseXeniaController : Controller
 {
-    protected readonly DiscordSocketClient _discord;
+    protected readonly DiscordShardedClient _discord;
     protected readonly UserConfigRepository _userConfig;
     
     public BaseXeniaController()
         : base()
     {
-        _discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        _discord = Program.Core.GetRequiredService<DiscordShardedClient>();
         _userConfig = Program.Core.GetRequiredService<UserConfigRepository>();
     }
 
@@ -41,8 +42,8 @@ public class BaseXeniaController : Controller
             return false;
         
         var userId = AspHelper.GetUserId(HttpContext)!;
-        var guild = _discord.GetGuild(guildId);
-        var guildUser = guild.GetUser((ulong)userId!);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild?.GetUser(userId.Value));
         if (guildUser == null)
         {
             result = View("NotAuthorized");
@@ -84,8 +85,8 @@ public class BaseXeniaController : Controller
     /// <returns></returns>
     public virtual bool IsLoggedIn(ulong? userId, out IActionResult? result)
     {
-        bool isAuth = User?.Identity?.IsAuthenticated ?? false;
-        if (!isAuth || userId == null)
+        var isAuth = User?.Identity?.IsAuthenticated ?? false;
+        if (!isAuth || !userId.HasValue)
         {
             result = View("NotAuthorized", new NotAuthorizedViewModel()
             {
@@ -93,7 +94,7 @@ public class BaseXeniaController : Controller
             });
             return false;
         }
-        var user = _discord.GetUser((ulong)userId!);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
         if (user == null)
         {
             result = View("NotAuthorized");
@@ -113,15 +114,15 @@ public class BaseXeniaController : Controller
     /// <returns>Can access</returns>
     public virtual bool CanAccess(ulong guildId, ulong userId, out IActionResult? result)
     {
-        var user = _discord.GetUser(userId);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId));
         if (user == null)
         {
             result = View("NotAuthorized");
             return false;
         }
 
-        var guild = _discord.GetGuild(guildId);
-        var guildUser = guild.GetUser(user.Id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
         if (guildUser == null)
         {
             result = View("NotAuthorized");

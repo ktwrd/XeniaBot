@@ -9,7 +9,7 @@ public abstract class BaseService : IBaseService
     protected IServiceProvider Services { get; }
     protected BaseService(IServiceProvider services)
     {
-        Priority = Int32.MaxValue;
+        Priority = int.MaxValue;
         Services = services;
     }
 

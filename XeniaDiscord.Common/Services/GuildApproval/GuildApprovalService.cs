@@ -11,26 +11,28 @@ namespace XeniaDiscord.Common.Services;
 public partial class GuildApprovalService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
     private readonly ErrorReportService _err;
     private readonly ValidationService _validation;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
 
     public GuildApprovalService(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
         _err = services.GetRequiredService<ErrorReportService>();
         _validation = services.GetRequiredService<ValidationService>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }                       
 
     public async Task<bool> Exists(ulong guildId)
     {
         var guildIdStr = guildId.ToString();
-        return await _db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr);
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr);
     }
     public async Task<bool> IsEnabled(ulong guildId)
     {
         var guildIdStr = guildId.ToString();
-        return await _db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled);
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await db.GuildApprovals.AnyAsync(e => e.GuildId == guildIdStr && e.Enabled);
     }
     public async Task<bool> IsGreeterEnabled(
         XeniaDbContext db,

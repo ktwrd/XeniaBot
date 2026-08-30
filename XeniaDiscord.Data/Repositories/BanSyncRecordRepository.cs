@@ -1,26 +1,21 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Data.Repositories;
 
-public class BanSyncRecordRepository : IDisposable
+public class BanSyncRecordRepository
 {
-    public void Dispose()
-    {
-        _serviceScope?.Dispose();
-    }
-    private readonly IServiceScope? _serviceScope;
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     public BanSyncRecordRepository(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out _serviceScope);
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
     public async Task<long> CountAll()
     {
-        return await _db.BanSyncRecords.LongCountAsync();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await db.BanSyncRecords.LongCountAsync();
     }
 
     private static IQueryable<BanSyncRecordModel> ApplyOptions(
@@ -55,7 +50,8 @@ public class BanSyncRecordRepository : IDisposable
         QueryOptions? options = null,
         PaginationOptions? paginationOptions = null)
     {
-        var q = ApplyOptions(_db, options ?? new());
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var q = ApplyOptions(db, options ?? new());
         if (paginationOptions != null) q = q.ApplyPagination(paginationOptions);
         return await q.ToListAsync();
     }
@@ -63,7 +59,8 @@ public class BanSyncRecordRepository : IDisposable
     public async Task<long> CountForGuild(ulong guildId, bool includeGhostedRecords = false)
     {
         var guildIdStr = guildId.ToString();
-        var q = _db.BanSyncRecords
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var q = db.BanSyncRecords
             .Where(e => e.GuildId == guildIdStr);
         if (!includeGhostedRecords)
         {
@@ -77,7 +74,8 @@ public class BanSyncRecordRepository : IDisposable
         PaginationOptions? paginationOptions = null)
     {
         var userIdStr = userId.ToString();
-        var q = ApplyOptions(_db, options ?? new())
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var q = ApplyOptions(db, options ?? new())
             .Where(e => e.UserId == userIdStr);
         if (paginationOptions != null)
             q = q.ApplyPagination(paginationOptions);
@@ -90,7 +88,8 @@ public class BanSyncRecordRepository : IDisposable
     {
         var userIdStr = userId.ToString();
         var guildIdStr = guildId.ToString();
-        var q = ApplyOptions(_db, options ?? new())
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var q = ApplyOptions(db, options ?? new())
             .Where(e => e.UserId == userIdStr && e.GuildId == guildIdStr);
         if (paginationOptions != null)
             q = q.ApplyPagination(paginationOptions);
@@ -101,13 +100,15 @@ public class BanSyncRecordRepository : IDisposable
     {
         var userIdStr = userId.ToString();
         var guildIdStr = guildId.ToString();
-        return await ApplyOptions(_db, options ?? new())
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await ApplyOptions(db, options ?? new())
             .Where(e => e.UserId == userIdStr && e.GuildId == guildIdStr)
             .FirstOrDefaultAsync();
     }
     public async Task<BanSyncRecordModel?> GetInfo(BanSyncRecordModel model, QueryOptions options)
     {
-        return await ApplyOptions(_db, options)
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await ApplyOptions(db, options)
             .Where(e => e.Id == model.Id)
             .FirstOrDefaultAsync();
     }
@@ -119,7 +120,8 @@ public class BanSyncRecordRepository : IDisposable
     }
     public async Task<BanSyncRecordModel?> GetInfo(Guid id, QueryOptions? options = null)
     {
-        return await ApplyOptions(_db, options ?? new())
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await ApplyOptions(db, options ?? new())
             .Where(e => e.Id == id)
             .FirstOrDefaultAsync();
     }
@@ -132,7 +134,8 @@ public class BanSyncRecordRepository : IDisposable
     {
         var guildIdStr = guildId.ToString();
         var includedUsersStr = includedUsers.Select(e => e.ToString()).ToHashSet();
-        var q = ApplyOptions(_db, options ?? new())
+        using var db = _dbContextFactory.CreateDbContext();
+        var q = ApplyOptions(db, options ?? new())
             .Where(e => e.GuildId == guildIdStr && includedUsersStr.Contains(e.UserId))
             .OrderByDescending(e => e.CreatedAt);
         if (paginationOptions != null)
@@ -162,7 +165,7 @@ public class BanSyncRecordRepository : IDisposable
         if (model.GetUserId() <= 0)
             throw new ArgumentException($"Invalid value {model.UserId}", $"{nameof(model)}.{nameof(model.UserId)}");
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -196,13 +199,19 @@ public class BanSyncRecordRepository : IDisposable
                 .SetProperty(p => p.Source, model.Source));
         }
     }
-    public async Task<bool> Exists(Guid id) => await _db.BanSyncRecords.AnyAsync(e => e.Id == id);
+
+    public async Task<bool> Exists(Guid id)
+    {
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await db.BanSyncRecords.AnyAsync(e => e.Id == id);
+    }
     public async Task SetGhostState(Guid id, bool state)
     {
-        await _db.BanSyncRecords.Where(e => e.Id == id)
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        await db.BanSyncRecords.Where(e => e.Id == id)
             .ExecuteUpdateAsync(e => e
             .SetProperty(p => p.Ghost, state));
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
     }
 
     public async Task<ICollection<BanSyncRecordModel>> MutualRecords(
@@ -216,8 +225,9 @@ public class BanSyncRecordRepository : IDisposable
             queryOptions.IgnoreDisabledGuilds = false;
             queryOptions.IncludeGhostedRecords = true;
         }
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await ApplyOptions(
-                _db.spBanSyncGetMutualRecordsForGuild_Paginate(
+                db.spBanSyncGetMutualRecordsForGuild_Paginate(
                 guildId.ToString(),
                 paginationOptions.Page - 1,
                 paginationOptions.PageSize),
@@ -235,8 +245,9 @@ public class BanSyncRecordRepository : IDisposable
             queryOptions.IgnoreDisabledGuilds = false;
             queryOptions.IncludeGhostedRecords = true;
         }
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await ApplyOptions(
-                _db.spBanSyncGetMutualRecordsForGuild(guildId.ToString()),
+                db.spBanSyncGetMutualRecordsForGuild(guildId.ToString()),
                 queryOptions ?? new())
             .AsNoTracking()
             .LongCountAsync();

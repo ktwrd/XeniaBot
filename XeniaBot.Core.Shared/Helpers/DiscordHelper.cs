@@ -1,6 +1,7 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
 using Discord;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.Helpers;
@@ -11,8 +12,8 @@ public static class DiscordHelper
     {
         embed ??= new EmbedBuilder();
         var core = CoreContext.Instance;
-        var client = core.GetRequiredService<DiscordSocketClient>();
-        var icon = client.CurrentUser.GetAvatarUrl();
+        var client = core.GetRequiredService<DiscordShardedClient>();
+        var icon = ExceptionHelper.RetryOnTimedOut(() => client.CurrentUser.GetAvatarUrl());
 
         return embed
             .WithTimestamp(DateTimeOffset.UtcNow)
@@ -22,11 +23,22 @@ public static class DiscordHelper
     }
     public static async Task DeleteMessage(DiscordSocketClient client, SocketMessage arg)
     {
-        if (!(arg is SocketUserMessage message))
+        if (arg is not SocketUserMessage message)
             return;
         var context = new SocketCommandContext(client, message);
-        var guild = context.Guild.GetTextChannel(arg.Channel.Id);
-        var msg = await guild.GetMessageAsync(arg.Id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => context.Guild.GetTextChannel(arg.Channel.Id));
+        var msg = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetMessageAsync(arg.Id));
+
+        if (msg != null)
+            await msg.DeleteAsync();
+    }
+    public static async Task DeleteMessage(DiscordShardedClient client, SocketMessage arg)
+    {
+        if (arg is not SocketUserMessage message)
+            return;
+        var context = new ShardedCommandContext(client, message);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => context.Guild.GetTextChannel(arg.Channel.Id));
+        var msg = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetMessageAsync(arg.Id));
 
         if (msg != null)
             await msg.DeleteAsync();
@@ -49,25 +61,23 @@ public static class DiscordHelper
     #region HasGuildPermission
     public static async Task<bool> HasGuildPermission(IGuild guild, IUser user, GuildPermission[] permissions)
     {
-        var guildUser = await guild.GetUserAsync(user.Id);
-        foreach (var item in permissions)
-            if (guildUser.GuildPermissions.Has(item))
-                return true;
-        return false;
+        var guildUser = await ExceptionHelper.RetryOnTimedOut(async () =>
+            await guild.GetUserAsync(user.Id));
+        return permissions.Any(item => guildUser.GuildPermissions.Has(item));
     }
     public static async Task<bool> HasGuildPermission(IGuild guild, IUser user, GuildPermission permission)
     {
-        return await HasGuildPermission(guild, user, new GuildPermission[] { permission });
+        return await HasGuildPermission(guild, user, [permission]);
     }
     public static async Task<bool> HasGuildPermission(IInteractionContext context, GuildPermission[] permissions, bool sendReply = false)
     {
-        var missingPermissions = new List<GuildPermission>();
-        var guildUser = await context.Guild.GetUserAsync(context.User.Id);
-        foreach (var item in permissions)
-            if (!guildUser.GuildPermissions.Has(item))
-                missingPermissions.Add(item);
+        var guildUser = await ExceptionHelper.RetryOnTimedOut(async () =>
+            await context.Guild.GetUserAsync(context.User.Id));
+        var missingPermissions = permissions
+            .Where(item => !guildUser.GuildPermissions.Has(item))
+            .ToArray();
 
-        if (missingPermissions.Count > 0)
+        if (missingPermissions.Length > 0)
         {
             if (sendReply)
             {
@@ -83,7 +93,7 @@ public static class DiscordHelper
     }
     public static async Task<bool> HasGuildPermission(IInteractionContext context, GuildPermission permission, bool sendReply = false)
     {
-        return await HasGuildPermission(context, new GuildPermission[] { permission }, sendReply);
+        return await HasGuildPermission(context, [permission], sendReply);
     }
     #endregion
 

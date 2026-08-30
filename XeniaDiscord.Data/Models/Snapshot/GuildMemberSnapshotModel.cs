@@ -193,5 +193,7 @@ public enum GuildMemberSnapshotSource
 
     RoleDelete = 20,
 
-    GuildJoined = 30
+    GuildJoined = 30,
+
+    AdminTask = 1000
 }

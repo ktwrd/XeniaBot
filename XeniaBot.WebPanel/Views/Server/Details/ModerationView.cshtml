@@ -13,62 +13,90 @@
             guildId = Model.Guild.Id
         }
     );
+
+    const string navItemClassDefault = "nav-link";
+    const string tabPaneClassDefault = "tab-pane";
+    var navItemClassServerLog = navItemClassDefault;
+    var navItemClassWarnStrike = navItemClassDefault;
+    var navItemClassBanSync = navItemClassDefault;
+    var tabPaneClassServerLog = tabPaneClassDefault;
+    var tabPaneClassWarnStrike = tabPaneClassDefault;
+    var tabPaneClassBanSync = tabPaneClassDefault;
+    switch (Model.ActiveTab)
+    {
+        case "serverlog":
+            navItemClassServerLog += " active";
+            tabPaneClassServerLog += " show active";
+            break;
+        case "warnstrike":
+            navItemClassWarnStrike += " active";
+            tabPaneClassWarnStrike += " show active";
+            break;
+        case "bansync":
+            navItemClassBanSync += " active";
+            tabPaneClassBanSync += " show active";
+            break;
+        default:
+            navItemClassServerLog += " active";
+            tabPaneClassServerLog += " show active";
+            break;
+    }
 }
 
-@await Component.InvokeAsync("GuildBanner", new GuildBannerViewParameters(Model.Guild.Id, true,
-new List<BreadcrumbItem>()
-{
-    new BreadcrumbItem("Servers", "Server", "List"),
-    new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
-    {
-        {"id", Model.Guild.Id.ToString()}
-    }),
-    new BreadcrumbItem("Moderation")
-}))
+@await Component.InvokeAsync("GuildBanner",
+    new GuildBannerViewParameters(
+        Model.Guild.Id, true,
+        [
+            new BreadcrumbItem("Servers", "Server", "List"),
+            new BreadcrumbItem(Model.Guild.Name, "Server", "Index", new Dictionary<string, string>()
+            {
+                {"id", Model.Guild.Id.ToString()}
+            }),
+            new BreadcrumbItem("Moderation")
+        ]))
 
-<div class="row d-flex flex-row">
-    <div class="m-1 col-auto">
-        <div class="card">
-            <div class="card-header card-header-sm" id="bansync">Ban Sync</div>
-            <div class="card-body"
-                 hx-get="@bansyncComponentUrl"
-                 hx-swap="innerHTML"
-                 hx-trigger="load"
-                 hx-target="this"
-                 hx-indicator=".htmx-indicator">
-                <div class="d-flex justify-content-center htmx-indicator">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+@if (Model.Alert != null)
+{
+    @await Component.InvokeAsync("Alert", Model.Alert)
+}
+
+<ul class="nav nav-tabs" id="moderation-tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="@navItemClassServerLog" id="tab-serverlog" data-bs-toggle="tab" data-bs-target="#serverlog-content" type="button" role="tab" aria-controls="home" aria-selected="true">Server Logging</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="@navItemClassWarnStrike" id="tab-warnstrike" data-bs-toggle="tab" data-bs-target="#warnstrike-content" type="button" role="tab" aria-controls="profile" aria-selected="false">Warn Strike</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" href="~/Guild/@Model.Guild.Id/RolePreserve/Settings">Role Preserve</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="@navItemClassBanSync" id="tab-bansync" data-bs-toggle="tab" data-bs-target="#bansync-content" type="button" role="tab" aria-controls="profile" aria-selected="false">BanSync</button>
+    </li>
+</ul>
+<div class="tab-content pt-2 px-3">
+    <div class="@tabPaneClassServerLog" id="serverlog-content" aria-labelledby="tab-serverlog" role="tabpanel" tabindex="0">
+        @{ await Html.RenderPartialAsync("Details/ModerationView/Logging"); }
+    </div>
+    <div class="@tabPaneClassWarnStrike" id="warnstrike-content" role="tabpanel" tabindex="0" aria-labelledby="tab-warnstrike">
+        @{ await Html.RenderPartialAsync("Details/ModerationView/WarnStrike"); }
+    </div>
+    <div class="tab-pane" id="rolepreserve-content" role="tabpanel" tabindex="0" aria-labelledby="tab-rolepreserve"></div>
+    <div class="@tabPaneClassBanSync" id="bansync-content" role="tabpanel" tabindex="0" aria-labelledby="tab-bansync">
+        <div hx-get="@bansyncComponentUrl"
+             hx-swap="innerHTML"
+             hx-trigger="load"
+             hx-target="this"
+             hx-indicator=".htmx-indicator">
+            <div class="d-flex justify-content-center htmx-indicator">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         </div>
     </div>
-    <div class="m-1 col-auto">
-        <div class="card">
-            <div class="card-header card-header-sm" id="rolePreserve">Role Preserve</div>
-            <div class="card-body">
-                @{ await Html.RenderPartialAsync("Details/ModerationView/RolePreserve"); }
-            </div>
-        </div>
-    </div>
-    <div class="m-1 col-auto">
-        <div class="card">
-            <div class="card-header card-header-sm" id="warnStrike">Warn Strike</div>
-            <div class="card-body">
-                @{ await Html.RenderPartialAsync("Details/ModerationView/WarnStrike"); }
-            </div>
-        </div>
-    </div>
-    <div class="m-1 col-auto">
-        <div class="card">
-            <div class="card-header card-header-sm" id="log">Logging</div>
-            <div class="card-body">
-                @{ await Html.RenderPartialAsync("Details/ModerationView/Logging"); }
-            </div>
-        </div>
-    </div>
 </div>
+
 @section Scripts {
     <script src="~/js/site.serverLog.js" asp-append-version="true"></script>
 }

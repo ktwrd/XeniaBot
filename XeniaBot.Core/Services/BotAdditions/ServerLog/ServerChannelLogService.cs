@@ -17,14 +17,14 @@ namespace XeniaBot.Core.Services.BotAdditions;
 [XeniaController]
 public class ServerChannelLogService : BaseService
 {
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly DiscordCacheService _discordCache;
     private readonly ServerLogService _serverLogService;
 
     public ServerChannelLogService(IServiceProvider services)
         : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
         _serverLogService = services.GetRequiredService<ServerLogService>();
     }
@@ -45,7 +45,7 @@ public class ServerChannelLogService : BaseService
 
         if (current.Name != previous?.Name)
         {
-            string previousName = previous?.Name ?? "<null>";
+            var previousName = previous?.Name ?? "<null>";
             if (previousName.Length < 1)
                 previousName = "<empty>";
             await _serverLogService.EventHandle(current.Guild.Snowflake, ServerLogEvent.ChannelEdit, new EmbedBuilder()
@@ -66,8 +66,8 @@ public class ServerChannelLogService : BaseService
         }
 		*/
 
-        bool previousNsfw = false;
-        bool currentNsfw = false;
+        var previousNsfw = false;
+        var currentNsfw = false;
         string? previousTopic = null;
         string? currentTopic = null;
         ulong? previousCategory = null;
@@ -127,14 +127,14 @@ public class ServerChannelLogService : BaseService
                 .WithColor(Color.Blue));
         }
 
-        int currentBitrate = 0;
-        int previousBitrate = 0;
+        var currentBitrate = 0;
+        var previousBitrate = 0;
         int? currentUserLimit = null;
         int? previousUserLimit = null;
-        VideoQualityMode currentQuality = VideoQualityMode.Auto;
-        VideoQualityMode previousQuality = VideoQualityMode.Auto;
-        string currentRegion = "";
-        string previousRegion = "";
+        var currentQuality = VideoQualityMode.Auto;
+        var previousQuality = VideoQualityMode.Auto;
+        var currentRegion = string.Empty;
+        var previousRegion = string.Empty;
 
         if (current is CacheVoiceChannelModel currentVoice)
         {

@@ -1,4 +1,3 @@
-using CSharpFunctionalExtensions;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
@@ -6,11 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Data.Models.Archival;
 using XeniaBot.DiscordCache.Models;
@@ -27,28 +25,29 @@ using DiscordCacheService = XeniaBot.Core.Services.Wrappers.DiscordCacheService;
 namespace XeniaBot.Core.Services.BotAdditions;
 
 [XeniaController]
+[UsedImplicitly]
 public class ServerLogBotService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ServerLogBotService));
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly DiscordCacheService _discordCache;
     private readonly DiscordSnapshotService _discordSnapshot;
     private readonly ErrorReportService _errorService;
-    private readonly XeniaDbContext _db;
     private readonly ServerLogService _serverLogService;
     private readonly DiscordAuditLogService _auditLogService;
     private readonly ServerLogEventHandler _handler;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     public ServerLogBotService(IServiceProvider services)
         : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _discordCache = services.GetRequiredService<DiscordCacheService>();
         _discordSnapshot = services.GetRequiredService<DiscordSnapshotService>();
         _errorService = services.GetRequiredService<ErrorReportService>();
         _serverLogService = services.GetRequiredService<ServerLogService>();
         _auditLogService = services.GetRequiredService<DiscordAuditLogService>();
         _handler = services.GetRequiredService<ServerLogEventHandler>();
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
 
         var details = services.GetRequiredService<ProgramDetails>();
 
@@ -72,7 +71,7 @@ public class ServerLogBotService : BaseService
         GuildRoleSnapshotModel? before,
         GuildRoleSnapshotModel model)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await _handler.HandleGuildRoleUpdate(db, before, model);
     }
     #endregion
@@ -90,7 +89,7 @@ public class ServerLogBotService : BaseService
             _log.Trace($"Event. No before state (guildId={model.GuildId}, userId={model.UserId}, recordId={model.RecordId})");
             return;
         }
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         DiscordSnapshotMemberUpdateInfo? info = null;
         try
         {
@@ -264,9 +263,10 @@ public class ServerLogBotService : BaseService
     }
 
     #region Other Member Events
-    private async Task DiscordOnUserJoined(SocketGuildUser user)
+    private Task DiscordOnUserJoined(SocketGuildUser? user)
     {
-        if (user == null) return;
+        if (user == null)
+            return Task.CompletedTask;
         new Thread((roleArg) =>
         {
             if (roleArg is not SocketGuildUser socketGuildUser) return;
@@ -279,10 +279,12 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserJoinedThread)}");
             }
         }).Start(user);
+        return Task.CompletedTask;
     }
-    private async Task DiscordOnUserLeft(SocketGuild guild, SocketUser user)
+    private Task DiscordOnUserLeft(SocketGuild? guild, SocketUser? user)
     {
-        if (guild == null || user == null) return;
+        if (guild == null || user == null)
+            return Task.CompletedTask;
         new Thread((threadOptions) =>
         {
             if (threadOptions is not DiscordGuildUserPair pair) return;
@@ -295,10 +297,12 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserLeftThread)}");
             }
         }).Start(new DiscordGuildUserPair(guild, user));
+        return Task.CompletedTask;
     }
-    private async Task DiscordOnUserBanned(SocketUser user, SocketGuild guild)
+    private Task DiscordOnUserBanned(SocketUser? user, SocketGuild? guild)
     {
-        if (guild == null || user == null) return;
+        if (guild == null || user == null)
+            return Task.CompletedTask;
         new Thread((threadOptions) =>
         {
             if (threadOptions is not DiscordGuildUserPair pair) return;
@@ -311,10 +315,12 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserBannedThread)}");
             }
         }).Start(new DiscordGuildUserPair(guild, user));
+        return Task.CompletedTask;
     }
-    private async Task DiscordOnUserUnbanned(SocketUser user, SocketGuild guild)
+    private Task DiscordOnUserUnbanned(SocketUser? user, SocketGuild? guild)
     {
-        if (guild == null || user == null) return;
+        if (guild == null || user == null)
+            return Task.CompletedTask;
         new Thread((threadOptions) =>
         {
             if (threadOptions is not DiscordGuildUserPair pair) return;
@@ -327,9 +333,10 @@ public class ServerLogBotService : BaseService
                 _log.Error(ex, $"Failed to call {nameof(DiscordOnUserUnbannedThread)}");
             }
         }).Start(new DiscordGuildUserPair(guild, user));
+        return Task.CompletedTask;
     }
 
-    private sealed record DiscordGuildUserPair(SocketGuild Guild, SocketUser User);
+    private sealed record DiscordGuildUserPair(SocketGuild? Guild, SocketUser? User);
 
     private async Task DiscordOnUserJoinedThread(SocketGuildUser user)
     {
@@ -369,7 +376,7 @@ public class ServerLogBotService : BaseService
                 .WithUser(user));
         }
     }
-    private async Task DiscordOnUserLeftThread(DiscordGuildUserPair options)
+    private async Task DiscordOnUserLeftThread(DiscordGuildUserPair? options)
     {
         if (options == null) return;
 
@@ -434,7 +441,7 @@ public class ServerLogBotService : BaseService
                 .WithGuild(guild));
         }
     }
-    private async Task<bool> DiscordOnUserKickThread(SocketGuild guild, SocketUser user, IAuditLogEntry auditLogEntry)
+    private async Task<bool> DiscordOnUserKickThread(SocketGuild? guild, SocketUser? user, IAuditLogEntry? auditLogEntry)
     {
         if (guild == null || user == null || auditLogEntry == null) return false;
         try
@@ -472,7 +479,7 @@ public class ServerLogBotService : BaseService
             return false;
         }
     }
-    private async Task DiscordOnUserBannedThread(DiscordGuildUserPair options)
+    private async Task DiscordOnUserBannedThread(DiscordGuildUserPair? options)
     {
         if (options == null) return;
 
@@ -482,7 +489,7 @@ public class ServerLogBotService : BaseService
         try
         {
             var userSafe = user.FormatUsername().Replace("`", "'");
-            var banDetails = await guild.GetBanAsync(user.Id);
+            var banDetails = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetBanAsync(user.Id));
             var userCreatedAtSeconds = user.CreatedAt.ToUnixTimeSeconds();
             var accountAgeText = $"<t:{userCreatedAtSeconds}:R>\n<t:{userCreatedAtSeconds}:F>";
             var embed = new EmbedBuilder()
@@ -517,7 +524,7 @@ public class ServerLogBotService : BaseService
                 .WithGuild(guild));
         }
     }
-    private async Task DiscordOnUserUnbannedThread(DiscordGuildUserPair options)
+    private async Task DiscordOnUserUnbannedThread(DiscordGuildUserPair? options)
     {
         if (options == null) return;
 
@@ -595,8 +602,8 @@ public class ServerLogBotService : BaseService
 
     private async Task DiscordOnMessageDeleteThread(Cacheable<IMessage, ulong> m, Cacheable<IMessageChannel, ulong> c)
     {
-        var message = await m.GetOrDownloadAsync();
-        var channel = await c.GetOrDownloadAsync();
+        var message = await ExceptionHelper.RetryOnTimedOut(async () => await m.GetOrDownloadAsync());
+        var channel = await ExceptionHelper.RetryOnTimedOut(async () => await c.GetOrDownloadAsync());
 
         if (channel is not SocketGuildChannel socketChannel) return;
         try
@@ -626,7 +633,7 @@ public class ServerLogBotService : BaseService
             var authorId = message?.Author.Id ?? funkyMessage?.AuthorId ?? 0;
             if (authorId != 0)
             {
-                author = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetUser(authorId));
+                author = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(authorId));
             }
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Deleted")
@@ -683,12 +690,13 @@ public class ServerLogBotService : BaseService
         {
             var previousContent = previous?.Content ?? "";
             var currentContent = current.Content ?? "";
-            if (previousContent == currentContent) return;
+            if (previous?.Content == null ||
+                previousContent == currentContent) return;
 
-            var author = await ExceptionHelper.RetryOnTimedOut<IUser?>(async () => await _discord.GetUserAsync(current.AuthorId));
+            var author = ExceptionHelper.RetryOnTimedOut<IUser?>(() => _discord.GetUser(current.AuthorId));
             if (author == null) return;
 
-            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent ?? "", currentContent ?? ""));
+            var diffContent = string.Join("\n", SGeneralHelper.GenerateDifference(previousContent, currentContent));
             var username = author.FormatUsername().Replace('`', '\'').PadRight(1, ' ');
             var embed = DiscordHelper.BaseEmbed()
                 .WithTitle("Message Edited")
@@ -720,12 +728,12 @@ public class ServerLogBotService : BaseService
         catch (Exception ex)
         {
             _log.Error(ex, $"Failed to handle MessageChangeUpdate event!!");
-            var author = _discord.GetUser(current.AuthorId);
-            var guild = _discord.GetGuild(current.GuildId);
-            var channel = _discord.GetChannel(current.ChannelId) as IMessageChannel;
+            var author = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(current.AuthorId));
+            var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(current.GuildId));
+            var channel = ExceptionHelper.RetryOnTimedOut(() => _discord.GetChannel(current.ChannelId) as IMessageChannel);
             IMessage? msg = null;
             if (channel != null)
-                msg = await channel.GetMessageAsync(current.Snowflake);
+                msg = await ExceptionHelper.RetryOnTimedOut(async () => await channel.GetMessageAsync(current.Snowflake));
             await _errorService.Submit(new ErrorReportBuilder()
                 .WithException(ex)
                 .WithMessage(msg)

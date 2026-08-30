@@ -1,13 +1,16 @@
 using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data.Models.ServerLog;
 using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Interactions.Modules;
 
+[UsedImplicitly]
 [Group("log", "Configure Server Event Logging")]
 [RequireUserPermission(GuildPermission.ManageGuild)]
 [CommandContextType(InteractionContextType.Guild)]
@@ -15,13 +18,16 @@ public class ServerLogModule : InteractionModuleBase
 {
     private readonly ErrorReportService _err;
     private readonly ServerLogRepository _repo;
+    private readonly ConfigData _config;
 
     public ServerLogModule(IServiceProvider services)
     {
         _err = services.GetRequiredService<ErrorReportService>();
         _repo = services.GetRequiredService<ServerLogRepository>();
+        _config = services.GetRequiredService<ConfigData>();
     }
 
+    [UsedImplicitly]
     [SlashCommand("reset", "Reset server log configuration")]
     [RegisterDBLCommand]
     public async Task Reset()
@@ -53,6 +59,7 @@ public class ServerLogModule : InteractionModuleBase
     }
 
     #region Enable/Disable
+    [UsedImplicitly]
     [SlashCommand("enable", "Enable server logging")]
     [RegisterDBLCommand]
     public async Task Enable()
@@ -61,9 +68,12 @@ public class ServerLogModule : InteractionModuleBase
         try
         {
             await _repo.Enable(Context.Guild.Id);
+            var txt = "Server logging has been enabled. It's a good idea to [read the guide](https://xenia.kate.pet/guide/about_moderation) if you haven't already.";
+            if (_config.HasDashboard)
+                txt += $"\n\n-# [You can also configure server logging in the dashboard]({_config.DashboardUrl}/Server/{Context.Guild.Id}/Moderation)";
             await FollowupAsync(embed: new EmbedBuilder()
                 .WithTitle("Server Log - Enable")
-                .WithDescription("Server logging has been enabled. Make sure that you setup your log events [via the dashboard](), or with the `/log` commands.")
+                .WithDescription(txt)
                 .WithColor(Color.Blue)
                 .WithCurrentTimestamp()
                 .Build());
@@ -82,6 +92,7 @@ public class ServerLogModule : InteractionModuleBase
         }
     }
 
+    [UsedImplicitly]
     [SlashCommand("disable", "Disable server logging")]
     [RegisterDBLCommand]
     public async Task Disable()
@@ -113,6 +124,7 @@ public class ServerLogModule : InteractionModuleBase
     }
     #endregion
 
+    [UsedImplicitly]
     [SlashCommand("reset-channel", "Remove all events from a channel")]
     [RegisterDBLCommand]
     public async Task ResetChannel(
@@ -145,6 +157,7 @@ public class ServerLogModule : InteractionModuleBase
         }
     }
 
+    [UsedImplicitly]
     [SlashCommand("add-event", "Add an event to a channel")]
     [RegisterDBLCommand]
     public async Task AddChannelEvent(
@@ -158,8 +171,8 @@ public class ServerLogModule : InteractionModuleBase
             .WithCurrentTimestamp();
         try
         {
-            var currentMember = await Context.Guild.GetCurrentUserAsync();
-            var ourChannelPermissions = currentMember.GetPermissions(channel);
+            var currentMember = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Guild.GetCurrentUserAsync());
+            var ourChannelPermissions = ExceptionHelper.RetryOnTimedOut(() => currentMember.GetPermissions(channel));
             var missingPermissions = new List<string>();
             if (!ourChannelPermissions.ViewChannel)
             {
@@ -215,6 +228,7 @@ public class ServerLogModule : InteractionModuleBase
         }
     }
 
+    [UsedImplicitly]
     [SlashCommand("get-channel-events", "See events being sent to a channel")]
     [RegisterDBLCommand]
     public async Task GetEventsByChannel(
@@ -256,6 +270,7 @@ public class ServerLogModule : InteractionModuleBase
         }
     }
 
+    [UsedImplicitly]
     [SlashCommand("get-channels", "See channels that use an event")]
     [RegisterDBLCommand]
     public async Task GetChannelsByEvent(ServerLogEvent @event)

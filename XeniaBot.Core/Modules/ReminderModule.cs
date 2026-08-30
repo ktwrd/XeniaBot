@@ -1,11 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using System;
 using System.Threading.Tasks;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Logic.Services;
 using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Modules;
 
@@ -13,6 +15,7 @@ public class ReminderModule : InteractionModuleBase
 {
     [SlashCommand("remind", "Create a reminder")]
     [RegisterDBLCommand]
+    [UsedImplicitly]
     public async Task CreateReminder(
         [Summary(description: "When you will be reminded. Example 2d 1hrs 5seconds")]
         string when, string? note = null)
@@ -22,14 +25,16 @@ public class ReminderModule : InteractionModuleBase
         {
             timeSpan = TimeHelper.ParseFromString(when);
         }
-        catch (Exception exception)
+        catch (Exception e)
         {
-            await RespondAsync(embed: new EmbedBuilder()
+            var msg = e.Message.Length > 3000 ? e.Message[..3000] + "..." : e.Message;
+            msg = msg.Replace("`", "");
+            var embedErr = new EmbedBuilder()
                 .WithTitle("Failed to create Reminder")
-                .WithDescription($"Failed to parse `when` parameter.\n`{exception.Message}`")
-                .WithColor(Color.Red)
-                .Build());
-            await DiscordHelper.ReportError(exception, Context);
+                .WithDescription($"Failed to parse `when` parameter.\n```\n{msg}\n```")
+                .WithColor(Color.Red);
+            await ExceptionHelper.RetryOnTimedOut(async () => await RespondAsync(embed: embedErr.Build()));
+            await DiscordHelper.ReportError(e, Context);
             return;
         }
         var timestamp = DateTimeOffset.UtcNow.Add(timeSpan).ToUnixTimeSeconds();
@@ -40,21 +45,20 @@ public class ReminderModule : InteractionModuleBase
             var diff = timestamp - currentTimestamp;
             if (diff < 1)
             {
-                await RespondAsync(embed: new EmbedBuilder()
-                    .WithTitle($"Failed to create Reminder")
-                    .WithDescription($"You can't set a reminder for the past!")
-                    .WithColor(Color.Red)
-                    .Build());
+                var embedErr = new EmbedBuilder()
+                    .WithTitle("Failed to create Reminder")
+                    .WithDescription("You can't set a reminder for the past!")
+                    .WithColor(Color.Red);
+                await ExceptionHelper.RetryOnTimedOut(async () => await RespondAsync(embed: embedErr.Build()));
                 return;
             }
             else if (diff < 3)
             {
-                await RespondAsync(
-                    embed: new EmbedBuilder()
-                        .WithTitle($"Failed to create Reminder")
-                        .WithDescription($"Reminder timestamp is too soon! Must be more than 3s into the future.")
-                        .WithColor(Color.Red)
-                        .Build());
+                var embedErr = new EmbedBuilder()
+                    .WithTitle($"Failed to create Reminder")
+                    .WithDescription($"Reminder timestamp is too soon! Must be more than 3s into the future.")
+                    .WithColor(Color.Red);
+                await ExceptionHelper.RetryOnTimedOut(async () => await RespondAsync(embed: embedErr.Build()));
                 return;
             }
 
@@ -68,11 +72,13 @@ public class ReminderModule : InteractionModuleBase
         }
         catch (Exception e)
         {
-            await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
+            var msg = e.Message.Length > 3000 ? e.Message[..3000] + "..." : e.Message;
+            msg = msg.Replace("`", "");
+            var embedErr = new EmbedBuilder()
                 .WithTitle("Failed to create Reminder")
-                .WithDescription($"Failed to create reminder.\n`{e.Message}`")
-                .WithColor(Color.Red)
-                .Build());
+                .WithDescription($"Failed to create reminder.\n`{msg}`")
+                .WithColor(Color.Red);
+            await ExceptionHelper.RetryOnTimedOut(async () => await RespondAsync(embed: embedErr.Build()));
             await DiscordHelper.ReportError(e, Context);
             return;
         }
@@ -82,6 +88,6 @@ public class ReminderModule : InteractionModuleBase
             .WithDescription($"Reminder will be sent <t:{timestamp}:R>")
             .AddField("Notes", $"```\n{note}\n```")
             .WithColor(Color.Green);
-        await Context.Interaction.RespondAsync(embed: embed.Build());
+        await ExceptionHelper.RetryOnTimedOut(async () => await RespondAsync(embed: embed.Build()));
     }
 }

@@ -2,12 +2,13 @@
 using Discord;
 using Discord.WebSocket;
 using System.Collections.Frozen;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaDiscord.Interactions.Modules;
 
 partial class DeveloperModule
 {
-    private async Task<Result<ValidateChannelPermissionsResult, (string, Exception?)>> ValidatePermissions(
+    private async Task<Result<ValidateChannelPermissionsResult, ValidatePermissionsError>> ValidatePermissions(
         ulong guildId,
         ulong channelId,
         ChannelPermission[] expected,
@@ -18,39 +19,39 @@ partial class DeveloperModule
         SocketGuildUser? member = null;
         try
         {
-            guild = _client.GetGuild(guildId);
+            guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
             if (guild == null)
             {
-                return Result.Failure<ValidateChannelPermissionsResult, (string, Exception?)>(($"Guild not found: `{guildId}`", null));
+                return new ValidatePermissionsError($"Guild not found: `{guildId}`", null);
             }
         }
         catch (Exception ex)
         {
-            return Result.Failure<ValidateChannelPermissionsResult, (string, Exception?)>(($"Failed to get Guild: `{guildId}`", ex));
+            return new ValidatePermissionsError($"Failed to get Guild: `{guildId}`", ex);
         }
         try
         {
-            channel = guild.GetChannel(channelId);
+            channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetChannel(channelId));
             if (channel == null)
             {
-                return Result.Failure<ValidateChannelPermissionsResult, (string, Exception?)>(($"Channel `{channelId}` not found in Guild `{guildId}`", null));
+                return new ValidatePermissionsError($"Channel `{channelId}` not found in Guild `{guildId}`", null);
             }
         }
         catch (Exception ex)
         {
-            return Result.Failure<ValidateChannelPermissionsResult, (string, Exception?)>(($"Failed to get Channel `{channelId}` Guild `{guildId}`", ex));
+            return new ValidatePermissionsError($"Failed to get Channel `{channelId}` Guild `{guildId}`", ex);
         }
         try
         {
-            member = guild.GetUser(_client.CurrentUser.Id);
+            member = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(_client.CurrentUser.Id));
             if (member == null)
             {
-                return Result.Failure<ValidateChannelPermissionsResult, (string, Exception?)>(($"Member `{_client.CurrentUser.Id}` (me) not found in Guild `{guildId}`", null));
+                return new ValidatePermissionsError($"Member `{_client.CurrentUser.Id}` (me) not found in Guild `{guildId}`", null);
             }
         }
         catch (Exception ex)
         {
-            return Result.Failure<ValidateChannelPermissionsResult, (string, Exception?)>(($"Failed to get own user in Guild `{guildId}`", ex));
+            return new ValidatePermissionsError($"Failed to get own user in Guild `{guildId}`", ex);
         }
 
         var channelPermissions = member.GetPermissions(channel);
@@ -69,43 +70,50 @@ partial class DeveloperModule
         };
     }
 
+    internal sealed record ValidatePermissionsError(string Message, Exception? Exception);
+    
     internal class ValidateChannelPermissionsResult(
         IEnumerable<ChannelPermission> permissions)
     {
         public IReadOnlySet<ChannelPermission> Missing { get; } = permissions.ToFrozenSet();
         public IReadOnlySet<GuildPermission> GuildMissing { get; init; } = Array.Empty<GuildPermission>().ToFrozenSet();
 
+        private const string TextNothing = "No issues found.";
+        private const string EmoteAlert = "❗";
+        private const string EmoteOk = "✔️";
+        public string GetMissingText()
+        {
+            if (Missing.Count == 0) return TextNothing;
+            return string.Join("\n",
+                $"Missing {Missing.Count} permission(s)",
+                "```",
+                string.Join("\n", Missing.Select(e => e.ToString())),
+                "```");
+        }
+
+        public string GetGuildMissingText()
+        {
+            if (GuildMissing.Count == 0) return TextNothing;
+            return string.Join("\n",
+                $"Missing {GuildMissing.Count} permission(s)",
+                "```",
+                string.Join("\n", GuildMissing.Select(e => e.ToString())),
+                "```");
+        }
+        
         public void AddEmbedFields(EmbedBuilder embed)
         {
-            const string nothing = "No issues found.";
-            const string alert = "❗";
-            const string ok = "✔️";
-            if (Missing.Count < 1)
-            {
-                embed.AddField($"{ok} Channel", nothing);
-            }
-            else
-            {
-                embed.AddField($"{alert} Channel",
-                    string.Join("\n",
-                    $"Missing {Missing.Count} permission(s)",
-                    "```",
-                    string.Join("\n", Missing.Select(e => e.ToString())),
-                    "```"));
-            }
-            if (GuildMissing.Count < 1)
-            {
-                embed.AddField($"{ok} Guild", nothing);
-            }
-            else
-            {
-                embed.AddField($"{alert} Guild",
-                    string.Join("\n",
-                    $"Missing {GuildMissing.Count} permission(s)",
-                    "```",
-                    string.Join("\n", GuildMissing.Select(e => e.ToString())),
-                    "```"));
-            }
+            var channelText = GetMissingText();
+            var channelTitle = Missing.Count == 0
+                ? $"{EmoteOk} Channel"
+                : $"{EmoteAlert} Channel";
+            embed.AddField(channelTitle, channelText);
+
+            var guildText = GetGuildMissingText();
+            var guildTitle = GuildMissing.Count == 0
+                ? $"{EmoteOk} Guild"
+                : $"{EmoteAlert} Guild";
+            embed.AddField(guildTitle, guildText);
 
             var color = GuildMissing.Count == 0 && Missing.Count == 0
                 ? Color.Green

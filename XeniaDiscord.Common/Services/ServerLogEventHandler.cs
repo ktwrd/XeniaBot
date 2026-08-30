@@ -57,17 +57,17 @@ public class ServerLogEventHandler
             else if (before != null)
             {
                 permissionsAddedList.AddRange(model.Permissions
-                    .Where(a => !before.Permissions.Any(b => b.Value == a.Value))
+                    .Where(a => before.Permissions.All(b => b.Value != a.Value))
                     .Select(e => e.GetValue()));
                 permissionsRemovedList.AddRange(before.Permissions
-                    .Where(b => !model.Permissions.Any(a => a.Value == b.Value))
+                    .Where(b => model.Permissions.All(a => a.Value != b.Value))
                     .Select(e => e.GetValue()));
             }
             else
             {
                 permissionsAddedList.AddRange(model.Permissions.Select(e => e.GetValue()));
             }
-            info = new()
+            info = new DiscordSnapshotRoleUpdateInfo
             {
                 PermissionsAdded = permissionsAddedList,
                 PermissionsRemoved = permissionsRemovedList,

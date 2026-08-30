@@ -39,16 +39,21 @@ public class CacheGuildMemberModel : CacheUserModel
     [BsonIgnoreIfNull]
     public string? GuildBannerHash { get; set; }
 
-    public CacheGuildMemberModel()
+    public CacheGuildMemberModel() : base()
     {
         Roles = Array.Empty<CacheRole>();
         GuildPermissions = new();
     }
 
-    public CacheGuildMemberModel Update(SocketGuildUser? user)
+    public override void Update(IUser user)
     {
-        if (user == null)
-            return this;
+        base.Update(user);
+        if (user is SocketGuildUser guildUser) this.Update(guildUser);
+    }
+
+    public void Update(SocketGuildUser? user)
+    {
+        if (user == null) return;
         base.Update(user);
         this.GuildId = user.Guild.Id;
         this.Nickname = user.Nickname;
@@ -75,12 +80,13 @@ public class CacheGuildMemberModel : CacheUserModel
         this.VoiceSessionId = user.VoiceSessionId;
         this.VoiceState = CacheVoiceState.FromExisting(user.VoiceState);
         this.GuildBannerHash = string.IsNullOrEmpty(user.GuildBannerHash) ? null : user.GuildBannerHash;
-        return this;
     }
     public static CacheGuildMemberModel? FromExisting(SocketGuildUser? user)
     {
         if (user == null)
             return null;
-        return new CacheGuildMemberModel().Update(user);
+        var instance = new CacheGuildMemberModel();
+        instance.Update(user);
+        return instance;
     }
 }

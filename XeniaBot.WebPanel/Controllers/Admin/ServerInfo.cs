@@ -5,8 +5,8 @@ using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
+using XeniaDiscord.Common.Services.BanSync;
 using Microsoft.Extensions.Logging;
-using XeniaDiscord.Common.Services;
 using BanSyncGuildState = XeniaDiscord.Data.Models.BanSync.BanSyncGuildState;
 
 namespace XeniaBot.WebPanel.Controllers;

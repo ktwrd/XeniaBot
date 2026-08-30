@@ -7,12 +7,12 @@ namespace XeniaBot.Shared.Helpers
         /// <summary>
         /// When true, then the result given is perfectly fine. The result parameter in ValidateResponse will always be not-null when true.
         /// </summary>
-        public bool Success;
-        public string Message;
+        public bool Success { get; set; }
+        public string Message { get; set; }
         /// <summary>
         /// Populated when <see cref="WeatherResponse.Error"/> is not null.
         /// </summary>
-        public int ErrorCode = 0;
+        public int ErrorCode { get; set; }
         public override string ToString()
         {
             return Message;
@@ -28,29 +28,16 @@ namespace XeniaBot.Shared.Helpers
     {
         public static string FetchErrorDescription(WeatherError error)
         {
-            string content = $"`{error.Code}` ";
-            switch (error.Code)
+            var content = $"`{error.Code}` ";
+            content += error.Code switch
             {
-                case 1003:
-                case 1006:
-                    content += $"Location not found ({error.Code})";
-                    break;
-                case 1008:
-                    content += $"API key cannot fetch historical data.";
-                    break;
-                case 2006:
-                    content += $"API Key is invalid";
-                    break;
-                case 2009:
-                    content += $"API key does not have access to this resource.";
-                    break;
-                case 9999:
-                    content += $"Interal application error from weatherapi.com";
-                    break;
-                default:
-                    content += error.Message;
-                    break;
-            }
+                1003 or 1006 => $"Location not found ({error.Code})",
+                1008 => $"API key cannot fetch historical data.",
+                2006 => $"API Key is invalid",
+                2009 => $"API key does not have access to this resource.",
+                9999 => $"Internal application error from weatherapi.com",
+                _ => error.Message
+            };
             return content;
         }
         /// <summary>

@@ -9,7 +9,7 @@ public enum DiscordSnapshotSource
     UserUpdated,
     UserLeft,
     UserBanned,
-    UserUnballed,
+    UserUnbanned,
 
     RoleCreated,
     RoleUpdated,
@@ -18,4 +18,6 @@ public enum DiscordSnapshotSource
     JoinedGuild,
     LeftGuild,
     GuildUpdated,
+
+    AdminTask = 1000,
 }

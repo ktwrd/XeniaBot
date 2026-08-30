@@ -6,28 +6,30 @@ namespace XeniaBot.Shared.Schema.WeatherAPI
     public class WeatherResponse
     {
         [JsonPropertyName("location")]
-        public WeatherLocation? Location = null;
+        public WeatherLocation? Location { get; set; }
         [JsonPropertyName("current")]
-        public ForecastCurrent? Current = null;
+        public ForecastCurrent? Current { get; set; }
         [JsonPropertyName("forecast")]
-        public ForecastParent? Forecast = null;
+        public ForecastParent? Forecast { get; set; }
         [JsonPropertyName("alerts")]
-        public WeatherAlert? Alert = null;
+        public WeatherAlert? Alert { get; set; }
 
         [JsonPropertyName("astronomy")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public AstronomyParent? AstronomyValue = null;
+        public AstronomyParent? AstronomyValue { get; set; }
 
+        [JsonIgnore]
         public ForecastAstrology? Astronomy => AstronomyValue?.Data;
+        
         [JsonPropertyName("error")]
-        public WeatherError? Error = null;
+        public WeatherError? Error { get; set; }
     }
     public class WeatherError
     {
         [JsonPropertyName("code")]
-        public int Code;
+        public int Code { get; set; }
         [JsonPropertyName("message")]
-        public string Message = "";
+        public string Message { get; set; } = "";
     }
 
     public enum USEPAIndex
@@ -70,29 +72,29 @@ namespace XeniaBot.Shared.Schema.WeatherAPI
     public class WeatherCondition
     {
         [JsonPropertyName("text")]
-        public string Text;
+        public string Text { get; set; } = string.Empty;
         [JsonPropertyName("icon")]
-        public string IconUrl;
+        public string IconUrl { get; set; } = string.Empty;
         [JsonPropertyName("code")]
-        public int Code;
+        public int Code { get; set; }
     }
     public class WeatherLocation
     {
         [JsonPropertyName("name")]
-        public string Name;
+        public string Name { get; set; } = string.Empty;
         [JsonPropertyName("region")]
-        public string Region;
+        public string Region { get; set; } = string.Empty;
         [JsonPropertyName("country")]
-        public string Country;
+        public string Country { get; set; } = string.Empty;
         [JsonPropertyName("lat")]
-        public double Latitude;
+        public double Latitude { get; set; }
         [JsonPropertyName("lon")]
-        public double Longitude;
+        public double Longitude { get; set; }
         [JsonPropertyName("tz_id")]
-        public string TimezoneId;
+        public string TimezoneId { get; set; }
         [JsonPropertyName("localtime_epoch")]
-        public long LocalTimestampEpoch;
+        public long LocalTimestampEpoch { get; set; }
         [JsonPropertyName("localtime")]
-        public string LocalTimestamp;
+        public string LocalTimestamp { get; set; } = "0";
     }
 }

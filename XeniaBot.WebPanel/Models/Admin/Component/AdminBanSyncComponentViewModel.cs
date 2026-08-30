@@ -20,7 +20,7 @@ public class AdminBanSyncComponentViewModel : IGuildViewModel, IBanSyncViewModel
 
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
-        var discord = context.RequestServices.GetRequiredService<DiscordSocketClient>();
+        var discord = context.RequestServices.GetRequiredService<DiscordShardedClient>();
         var banSyncConfig = context.RequestServices.GetRequiredService<BanSyncGuildRepository>();
         var banSyncStateHistory = context.RequestServices.GetRequiredService<BanSyncGuildSnapshotRepository>();
         

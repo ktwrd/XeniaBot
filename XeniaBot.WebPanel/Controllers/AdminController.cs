@@ -1,6 +1,7 @@
 ﻿using System;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XeniaBot.Shared;
@@ -17,8 +18,9 @@ public partial class AdminController : BaseXeniaController
 {
     private readonly ILogger<AdminController> _logger;
     private readonly IServiceProvider _services;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
     private readonly ConfigData _config;
     public AdminController(
@@ -29,9 +31,10 @@ public partial class AdminController : BaseXeniaController
         _logger = logger;
         _services = Program.Core.Services;
 
-        _client = _services.GetRequiredService<DiscordSocketClient>();
+        _client = _services.GetRequiredService<DiscordShardedClient>();
         _config = _services.GetRequiredService<ConfigData>();
         _db = services.GetRequiredService<XeniaDbContext>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _rolePreserveGuildRepo = services.GetRequiredService<RolePreserveGuildRepository>();
     }
     

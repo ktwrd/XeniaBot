@@ -7,51 +7,55 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using Humanizer;
 
 namespace XeniaBot.Shared.Services;
 
 public class ErrorReportBuilder
 {
-    private Exception? _exception = null;
-    private string? _exceptionJson = null;
-    private HttpResponseMessage? _httpResponseMessage = null;
-    private string? _httpResponseText = null;
+    private string? _exceptionJson;
+    private HttpResponseMessage? _httpResponseMessage;
+    private string? _httpResponseText;
 
-    private IGuild? _guild = null;
-    private IChannel? _channel = null;
-    private IUser? _user = null;
-    private IMessage? _message = null;
-    private IRole? _role = null;
+    private IGuild? _guild;
+    private IChannel? _channel;
+    private IUser? _user;
+    private IMessage? _message;
+    private IRole? _role;
 
-    private ICommandContext? _commandContext = null;
-    private IInteractionContext? _interactionContext = null;
-
-    private string? _notes = null;
+    private ICommandContext? _commandContext;
+    private IInteractionContext? _interactionContext;
 
     private readonly List<KeyValuePair<string, string>> _extraAttachments = [];
 
-    public string? Notes => _notes;
-    public Exception? Exception => _exception;
+    public string? Notes { get; private set; }
+
+    public Exception? Exception { get; private set; }
 
     public void BuildAttachments(ref List<FileAttachment> attachments)
     {
-        _notes ??= _notes?.Trim();
-        if (_notes?.Length >= 1024)
+        Notes ??= Notes?.Trim();
+        if (Notes?.Length >= 1024)
         {
             attachments.Add(new FileAttachment(
-                new MemoryStream(Encoding.UTF8.GetBytes(_notes)),
+                new MemoryStream(Encoding.UTF8.GetBytes(Notes)),
                 fileName: "notes.txt"));
         }
-        if (_exception != null)
+        if (Exception != null)
         {
             attachments.Add(new FileAttachment(
-                new MemoryStream(Encoding.UTF8.GetBytes(_exception.ToString())),
+                new MemoryStream(Encoding.UTF8.GetBytes(Exception.ToString())),
                 fileName: "exception.txt"));
         }
-        if (!string.IsNullOrEmpty(_exceptionJson?.Trim()))
+
+        _exceptionJson = _exceptionJson?.Trim();
+        if (!string.IsNullOrWhiteSpace(_exceptionJson) &&
+            !string.Equals("[]", _exceptionJson, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals("[null]", _exceptionJson, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals("{}", _exceptionJson, StringComparison.OrdinalIgnoreCase))
         {
             attachments.Add(new FileAttachment(
-                new MemoryStream(Encoding.UTF8.GetBytes(_exceptionJson.ToString())),
+                new MemoryStream(Encoding.UTF8.GetBytes(_exceptionJson)),
                 fileName: "exception.json"));
         }
 
@@ -79,10 +83,12 @@ public class ErrorReportBuilder
             .WithColor(Color.Red)
             .WithCurrentTimestamp();
 
-        _notes ??= _notes?.Trim();
-        if (_notes?.Length > 0 && _notes?.Length < 1024)
+        Notes ??= Notes?.Trim();
+        Notes ??= string.Empty;
+        if (!string.IsNullOrWhiteSpace(Notes) &&
+            Notes.Length is > 0 and < 1024)
         {
-            embed.AddField("Notes", _notes);
+            embed.AddField("Notes", Notes);
         }
 
         if (_extraAttachments?.Count > 0)
@@ -91,10 +97,10 @@ public class ErrorReportBuilder
             if (attachmentCount < _extraAttachments.Count)
             {
                 var missedCount = _extraAttachments.Count - attachmentCount;
-                var plural = missedCount == -1 || missedCount == 1 ? "" : "s";
                 embed.AddField(
                     "⚠️ Missing Attachments",
-                    "Missing " + missedCount.ToString("n0") + $" attachment{plural} since only 9 can be uploaded in one message.");
+                    "Missing " + "attachment".ToQuantity(missedCount, "N0") +
+                    " since only 9 can be uploaded in one message.");
             }
         }
         return embed;
@@ -141,7 +147,7 @@ public class ErrorReportBuilder
         {
             extra["message.id"] = _message.Id.ToString();
             extra["message.channel.id"] = _message.Channel.Id.ToString();
-            extra["message.channel.name"] = string.IsNullOrEmpty(_message.Channel.Name) ? string.Empty : _message.Channel.Name;
+            extra["message.channel.name"] = string.IsNullOrWhiteSpace(_message.Channel.Name) ? string.Empty : _message.Channel.Name;
         }
         if (_role != null)
         {
@@ -171,16 +177,16 @@ public class ErrorReportBuilder
             extra["interactionContext.author.id"] = _interactionContext.User.Id.ToString();
             extra["interactionContext.author.username"] = FormatUsername(_interactionContext.User);
         }
-        if (!string.IsNullOrEmpty(_notes?.Trim()))
+        if (!string.IsNullOrEmpty(Notes?.Trim()))
         {
-            extra["notes"] = _notes;
+            extra["notes"] = Notes;
         }
-        scope.SetExtras(extra.Cast<KeyValuePair<string, object?>>());
+        scope.SetExtras(extra.Select(static e => new KeyValuePair<string, object?>(e.Key, e.Value)));
     }
 
     private static string FormatUsername(IUser user)
     {
-        return string.IsNullOrEmpty(user.Discriminator?.Trim('0').Trim())
+        return string.IsNullOrWhiteSpace(user.Discriminator?.Trim('0')) || user.DiscriminatorValue == 0
             ? user.Username
             : $"{user.Username}#{user.Discriminator}";
     }
@@ -188,7 +194,7 @@ public class ErrorReportBuilder
     #region Builder Methods
     public ErrorReportBuilder WithException(Exception exception)
     {
-        _exception = exception;
+        Exception = exception;
         _exceptionJson = ErrorReportService.SerializeJsonSafe(exception);
         return this;
     }
@@ -240,7 +246,7 @@ public class ErrorReportBuilder
     }
     public ErrorReportBuilder WithNotes(string? notes)
     {
-        _notes = notes;
+        Notes = notes;
         return this;
     }
     public ErrorReportBuilder AddAttachment(string filename, string content)

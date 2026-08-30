@@ -1,4 +1,4 @@
-﻿ApplicationCommandCreated|SocketApplicationCommand
+ApplicationCommandCreated|SocketApplicationCommand
 ApplicationCommandDeleted|SocketApplicationCommand
 ApplicationCommandUpdated|SocketApplicationCommand
 AuditLogCreated|SocketAuditLogEntry,SocketGuild
@@ -47,7 +47,6 @@ MessageUpdated|Cacheable<IMessage, ulong>;SocketMessage;ISocketMessageChannel
 ModalSubmitted|SocketModal
 PollVoteAdded|Cacheable<IUser, ulong>;Cacheable<ISocketMessageChannel, IRestMessageChannel, IMessageChannel, ulong>;Cacheable<IUserMessage, ulong>;Cacheable<SocketGuild, RestGuild, IGuild, ulong>?;ulong
 PollVoteRemoved|Cacheable<IUser, ulong>;Cacheable<ISocketMessageChannel, IRestMessageChannel, IMessageChannel, ulong>;Cacheable<IUserMessage, ulong>;Cacheable<SocketGuild, RestGuild, IGuild, ulong>?;ulong
-PresenceUpdated|SocketUser,SocketPresence,SocketPresence
 ReactionAdded|Cacheable<IUserMessage, ulong>;Cacheable<IMessageChannel, ulong>;SocketReaction
 ReactionRemoved|Cacheable<IUserMessage, ulong>;Cacheable<IMessageChannel, ulong>;SocketReaction
 ReactionsCleared|Cacheable<IUserMessage, ulong>;Cacheable<IMessageChannel, ulong>

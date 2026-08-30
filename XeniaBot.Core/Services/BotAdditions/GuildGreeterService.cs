@@ -17,14 +17,14 @@ public class GuildGreeterService : BaseService
     private readonly GuildGreeterConfigRepository _configWelcomeRepository;
     private readonly GuildGreetByeConfigRepository _configByeRepository;
     private readonly UserConfigRepository _userConfigRepo;
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     private readonly ErrorReportService _errReportService;
     public GuildGreeterService(IServiceProvider services) : base(services)
     {
         _configWelcomeRepository = services.GetRequiredService<GuildGreeterConfigRepository>();
         _configByeRepository = services.GetRequiredService<GuildGreetByeConfigRepository>();
         _userConfigRepo = services.GetRequiredService<UserConfigRepository>();
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
         _errReportService = services.GetRequiredService<ErrorReportService>();
 
         _discord.UserJoined += _discord_UserJoined;

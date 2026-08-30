@@ -1,0 +1,113 @@
+﻿@using Humanizer
+@using XeniaBot.Shared
+@using XeniaBot.WebPanel.Areas.RolePreserve.Models.Audit
+@using XeniaBot.WebPanel.Models
+@using XeniaDiscord.Data
+@model DetailsViewModel
+@{
+    var guildName = Model.Guild?.Name ?? Model.GuildSnapshot?.Name ?? Model.GuildId.ToString();
+    var guildIdStr = Model.GuildId.ToString();
+
+    var targetUsername = Model.TargetUser?.FormatUsername() ?? Model.TargetUserSnapshot?.FormatUsername() ?? Model.Record.TargetUserId?.ToString() ?? "Unknown User";
+    var targetUserAvatar = Model.TargetUser?.GetDisplayAvatarUrl() ?? Model.TargetUserSnapshot?.DisplayAvatarUrl ?? "/DebugEmpty.png";
+
+    var userFormatted = Model.User?.FormatUsername() ?? Model.UserSnapshot?.FormatUsername() ?? Model.Record.UserId;
+    var userAvatar = Model.User?.GetDisplayAvatarUrl() ?? Model.UserSnapshot?.DisplayAvatarUrl ?? "/DebugEmpty.png";
+}
+
+@await Component.InvokeAsync("GuildBanner",
+    new GuildBannerViewParameters(
+        Model.GuildId, true,
+        [
+            new("Servers", "Server", "List"),
+            new(guildName, "Server", "Index", new Dictionary<string, string>()
+            {
+                {"id", guildIdStr}
+            }),
+            new("Role Preserve", "Settings", "Index", new Dictionary<string, string>()
+            {
+                { "area", "RolePreserve" },
+                { "guildId", guildIdStr }
+            }),
+            new("Audit Log")
+        ]))
+
+@if (Model.Alert != null)
+{
+    @await Component.InvokeAsync("Alert", Model.Alert)
+}
+
+<table class="table table-fluid">
+    <tr>
+        <th>Record Id</th>
+        <td>
+            <code>@Model.Record.Id</code>
+        </td>
+    </tr>
+    <tr>
+        <th>Created At</th>
+        <td>
+            @Model.Record.RecordCreatedAt.ToString("yyyy/MM/dd")
+            <br/>
+            @Model.Record.RecordCreatedAt.ToString("hh:mm:ss tt") <sup>UTC</sup>
+        </td>
+    </tr>
+    <tr>
+        <th>Action</th>
+        <td>
+            @Model.Record.Action.Humanize(LetterCasing.Title)
+        </td>
+    </tr>
+    @if (Model.Record.TargetUserId != null)
+    {
+        <tr>
+            <th>Target User</th>
+            <td>
+                <img src="@targetUserAvatar" class="card-img-top smallUserIcon" />
+                @targetUsername<br />
+                <sup><code>@Model.Record.TargetUserId</code></sup>
+            </td>
+        </tr>
+    }
+    @if (Model.Record.UserId != null)
+    {
+        <tr>
+            <th>User</th>
+            <td>
+                <img src="@userAvatar" class="card-img-top smallUserIcon" />
+                @userFormatted<br />
+                <sup><code>@Model.Record.UserId</code></sup>
+            </td>
+        </tr>
+    }
+</table>
+
+@if (Model.Record.AppliedRoles.Count > 0)
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Applied Roles</h5>
+        </div>
+        <div class="card-body">
+            @foreach (var group in Model.Record.AppliedRoles.GroupBy(e => e.Action))
+            {
+                <h6>@group.Key.Humanize(LetterCasing.Title)</h6>
+                @foreach (var appliedRole in group)
+                {
+                    @if (Model.RoleLookup.TryGetValue(appliedRole.RoleId, out var strippedRole))
+                    {
+                        @await Component.InvokeAsync("RolePill", new RolePillComponentModel()
+                        {
+                            Role = strippedRole,
+                            TooltipMode = RolePillComponentTooltipMode.RoleIdAndPermissions
+                        })
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Could not find role snapshot"><code>@appliedRole.RoleId</code></span>
+                    }
+                }
+            }
+        </div>
+    </div>
+}

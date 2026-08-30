@@ -13,21 +13,25 @@ public static class StartupExtensions
     public static void WithDatabaseServices(this IServiceCollection services, DatabaseServicesOptions options)
     {
         // Add services to the container.
-        services.AddDbContextPool<XeniaDbContext>(
-            o =>
-            {
-                var connectionString = CoreContext.Instance!.Config.Data.Postgres.ToConnectionString();
-                LogManager.GetCurrentClassLogger().Info(connectionString);
-                o.UseNpgsql(connectionString);
-
-                o.EnableSensitiveDataLogging();
-            });
+        services.AddDbContextPool<XeniaDbContext>(ConfigureDbContextOptionsBuilder);
+        services.AddPooledDbContextFactory<XeniaDbContext>(ConfigureDbContextOptionsBuilder);
         // TODO for asp.net
         // if (options.DatabaseDeveloperPageExceptionFilter)
         // {
         //     services.AddDatabaseDeveloperPageExceptionFilter();
         // }
     }
+
+    private static void ConfigureDbContextOptionsBuilder(
+        DbContextOptionsBuilder optionsBuilder)
+    {
+        var connectionString = CoreContext.Instance!.Config.Data.Postgres.ToConnectionString();
+        Log.Debug(connectionString);
+        optionsBuilder.UseNpgsql(connectionString);
+        optionsBuilder.EnableSensitiveDataLogging();
+    }
+
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     public class DatabaseServicesOptions
     {

@@ -21,13 +21,13 @@ namespace XeniaBot.Shared.Services;
 public class ErrorReportService : BaseService
 {
     private static readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ErrorReportService));
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ConfigData _config;
 
     public ErrorReportService(IServiceProvider services)
         : base(services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _config = services.GetRequiredService<ConfigData>();
         if (_config == null)
         {
@@ -129,9 +129,9 @@ public class ErrorReportService : BaseService
         });
         embed.AddField("Response Headers", responseHeadersText);
 
-        var logGuild = _client.GetGuild(_config.ErrorReporting.GuildId);
-        var logChannel = logGuild.GetTextChannel(_config.ErrorReporting.ChannelId);
-        await logChannel.SendMessageAsync(embed: embed.Build());
+        var logGuild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_config.ErrorReporting.GuildId));
+        var logChannel = ExceptionHelper.RetryOnTimedOut(() => logGuild.GetTextChannel(_config.ErrorReporting.ChannelId));
+        await ExceptionHelper.RetryOnTimedOut(async () => await logChannel.SendMessageAsync(embed: embed.Build()));
     }
     #endregion
 
@@ -195,10 +195,14 @@ public class ErrorReportService : BaseService
             stack,
             response.ToString());
 
-        var errGuild = _client.GetGuild(_config.ErrorReporting.GuildId);
-        var errChannel = errGuild.GetTextChannel(_config.ErrorReporting.ChannelId);
+        var errGuild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_config.ErrorReporting.GuildId));
+        var errChannel = ExceptionHelper.RetryOnTimedOut(() => errGuild.GetTextChannel(_config.ErrorReporting.ChannelId));
 
-        await errChannel.SendFilesAsync(attachments: attachments, text: "", embed: embed.Build());
+        await ExceptionHelper.RetryOnTimedOut(async () =>
+            await errChannel.SendFilesAsync(
+                attachments: attachments,
+                text: "Error report",
+                embed: embed.Build()));
     }
     #endregion
 
@@ -242,16 +246,18 @@ public class ErrorReportService : BaseService
         {
             await ExceptionHelper.RetryOnTimedOut(async () =>
             {
-                var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
-                var textChannel = guild.GetTextChannel(_config.ErrorReporting.ChannelId);
+                var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_config.ErrorReporting.GuildId));
+                var textChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(_config.ErrorReporting.ChannelId));
 
                 if (attachments.Count > 0)
                 {
-                    await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
+                    await ExceptionHelper.RetryOnTimedOut(async () =>
+                        await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build()));
                 }
                 else
                 {
-                    await textChannel.SendMessageAsync(embed: embed.Build());
+                    await ExceptionHelper.RetryOnTimedOut(async () =>
+                        await textChannel.SendMessageAsync(embed: embed.Build()));
                 }
             });
         }
@@ -341,16 +347,18 @@ public class ErrorReportService : BaseService
             }
         }
 
-        var guild = _client.GetGuild(_config.ErrorReporting.GuildId);
-        var textChannel = guild.GetTextChannel(_config.ErrorReporting.ChannelId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(_config.ErrorReporting.GuildId));
+        var textChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(_config.ErrorReporting.ChannelId));
 
         if (attachments.Count > 0)
         {
-            await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+                await textChannel.SendFilesAsync(attachments, text: "", embed: embed.Build()));
         }
         else
         {
-            await textChannel.SendMessageAsync(embed: embed.Build());
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+                await textChannel.SendMessageAsync(embed: embed.Build()));
         }
     }
 
@@ -366,7 +374,7 @@ public class ErrorReportService : BaseService
             if (message.Length > 1024)
             {
                 embed.AddField("Message Content", "Attached as `messageContent.txt`");
-                embed.WithDescription($"Exception is attached as `exception.txt`");
+                embed.WithDescription("Exception is attached as `exception.txt`");
                 var ms = new MemoryStream(Encoding.UTF8.GetBytes(message));
                 attachments.Add(new FileAttachment(ms, fileName: "messageContent.txt"));
             }

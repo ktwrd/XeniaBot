@@ -26,7 +26,7 @@ partial class GuildApprovalService
 
 
         ulong? previousChannelId = null;
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

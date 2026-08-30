@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
+using Discord.Rest;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Bson.Serialization;
@@ -34,17 +35,22 @@ public class CoreContext
             throw new InvalidOperationException("An instance of CoreContext exists already.");
         }
 
+        HumanizerHelper.UpdateVocabulary();
         Details = details;
         RegisteredBaseControllers = [];
         Instance = this;
         Config = new ConfigService(Details);
-        Discord = new DiscordSocketClient(new DiscordSocketConfig()
+        var discordSocketConfig = new DiscordSocketConfig()
         {
-            GatewayIntents = GatewayIntents.All,
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers,
             UseInteractionSnowflakeDate = false,
             AlwaysDownloadUsers = true,
-            ShardId = Config.Data.ShardId
-        });
+        };
+        if (details.Platform == XeniaPlatform.Bot)
+        {
+            discordSocketConfig.GatewayIntents |= GatewayIntents.MessageContent;
+        }
+        Discord = new DiscordShardedClient(discordSocketConfig);
     }
 
     public async Task MainAsync(string[] args, CoreContextBeforeServiceBuildDelegate beforeServiceBuild)
@@ -54,8 +60,8 @@ public class CoreContext
 
         var objectSerializer = new ObjectSerializer(type
             => ObjectSerializer.DefaultAllowedTypes(type)
-            || type.FullName?.StartsWith("XeniaBot") == true
-            || type.FullName?.StartsWith("XeniaDiscord") == true);
+            || type.FullName?.StartsWith("XeniaBot", StringComparison.OrdinalIgnoreCase) == true
+            || type.FullName?.StartsWith("XeniaDiscord", StringComparison.OrdinalIgnoreCase) == true);
         BsonSerializer.RegisterSerializer(objectSerializer);
 
         InitMongoClient();
@@ -117,7 +123,7 @@ public class CoreContext
     }
     public ProgramDetails Details { get; private set; }
     public ConfigService Config { get; private set; }
-    public DiscordSocketClient Discord { get; private set; }
+    public DiscordShardedClient Discord { get; private set; }
     /// <summary>
     /// Created after <see cref="InjectServices"/> is called in <see cref="MainAsync"/>
     /// </summary>
@@ -164,8 +170,12 @@ public class CoreContext
             OnQuit(1);
         }
     }
-    public IMongoDatabase GetDatabase()
+    public IMongoDatabase? GetDatabase()
     {
+        var name = Config.Data.MongoDB.DatabaseName;
+        var names = MongoDB.ListDatabaseNames().ToList();
+        if (names.All(e => e != name))
+            return null;
         return MongoDB.GetDatabase(Config.Data.MongoDB.DatabaseName);
     }
 
@@ -194,10 +204,18 @@ public class CoreContext
             .AddSingleton(this)
             .AddSingleton(Details)
             .AddSingleton<CronDaemon>()
+            
             .AddSingleton(Config)
-            .AddSingleton(Config.Data)
+            .AddSingleton<ConfigData>(static s => s.GetRequiredService<ConfigService>().Data)
+            
             .AddSingleton(Discord)
-            .AddSingleton<IDiscordClient>(Discord)
+            .AddSingleton<IDiscordClient>(static svc => svc.GetRequiredService<DiscordShardedClient>())
+            .AddSingleton<BaseSocketClient>(static svc => svc.GetRequiredService<DiscordShardedClient>())
+            .AddSingleton<IRestClientProvider>(static svc => svc.GetRequiredService<DiscordShardedClient>())
+            .AddSingleton<DiscordRestClient>(static svc => svc.GetRequiredService<IRestClientProvider>().RestClient)
+            
+            .AddSingleton<DiscordClientProxy>()
+            .AddSingleton<IDiscordClientProxy>(static svc => svc.GetRequiredService<DiscordClientProxy>())
             .AddSingleton<HealthServer>();
 
         var mongoDb = GetDatabase();
@@ -207,10 +225,13 @@ public class CoreContext
             OnQuit(1);
         }
 
-        var s = new InteractionService(Discord);
-
         services.AddSingleton(mongoDb)
-            .AddSingleton(s)
+            .AddSingleton(static svc => new InteractionService(
+                svc.GetRequiredService<IRestClientProvider>(),
+                new InteractionServiceConfig()
+                {
+                    UseCompiledLambda = true
+                }))
             .AddSingleton<DiscordService>()
             .AddSingleton<CommandService>()
             .AddSingleton<InteractionHandler>();

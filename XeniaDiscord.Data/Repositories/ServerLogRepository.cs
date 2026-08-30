@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data.Models.ServerLog;
 
 namespace XeniaDiscord.Data.Repositories;
@@ -13,22 +14,27 @@ namespace XeniaDiscord.Data.Repositories;
 
 public class ServerLogRepository
 {
-    private readonly XeniaDbContext _db;
     private readonly GuildCacheRepository _guildCacheRepo;
-    private readonly DiscordSocketClient _discordClient;
+    private readonly DiscordShardedClient _discordClient;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public ServerLogRepository(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
-        _guildCacheRepo = (scope?.ServiceProvider ?? services).GetRequiredService<GuildCacheRepository>();
-        _discordClient = services.GetRequiredService<DiscordSocketClient>();
+        _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
+        _discordClient = services.GetRequiredService<DiscordShardedClient>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
+    public Task<bool> IsEnabled(IGuild guild)
+        => IsEnabled(guild.Id);
     public async Task<bool> IsEnabled(ulong guildId)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await IsEnabled(db, guildId);
     }
+
+    public Task<bool> IsEnabled(XeniaDbContext db, IGuild guild)
+        => IsEnabled(db, guild.Id);
     public async Task<bool> IsEnabled(XeniaDbContext db, ulong guildId)
     {
         var guildIdStr = guildId.ToString();
@@ -37,11 +43,21 @@ public class ServerLogRepository
         return model?.Enabled != false;
     }
 
+    public Task<ServerLogGuildModel?> GetGuild(
+        IGuild guild,
+        GuildQueryOptions? options = null)
+        => GetGuild(guild.Id, options);
     public async Task<ServerLogGuildModel?> GetGuild(ulong guildId, GuildQueryOptions? options = null)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await GetGuild(db, guildId, options);
     }
+
+    public Task<ServerLogGuildModel?> GetGuild(
+        XeniaDbContext db,
+        IGuild guild,
+        GuildQueryOptions? options = null)
+        => GetGuild(db, guild.Id, options);
     public async Task<ServerLogGuildModel?> GetGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -63,6 +79,11 @@ public class ServerLogRepository
             .FirstOrDefaultAsync();
     }
 
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        XeniaDbContext db,
+        IGuild guild,
+        ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(db, guild.Id, options);
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -75,14 +96,27 @@ public class ServerLogRepository
         return await Apply(query, options)
             .ToListAsync();
     }
+
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        IGuild guild,
+        ulong channelId,
+        ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(guild.Id, channelId, options);
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         ulong guildId,
         ulong channelId,
         ChannelQueryOptions? options = null)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await GetChannelsForGuild(db, guildId, channelId, options);
     }
+
+    public Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
+        XeniaDbContext db,
+        IGuild guild,
+        ulong channelId,
+        ChannelQueryOptions? options = null)
+        => GetChannelsForGuild(db, guild.Id, channelId, options);
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
         XeniaDbContext db,
         ulong guildId,
@@ -97,7 +131,8 @@ public class ServerLogRepository
     }
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(ulong guildId, ServerLogEvent[] events, ChannelQueryOptions? options = null)
     {
-        await using var db = _db.CreateSession();
+        if (events.Length == 0) return [];
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await GetChannelsForGuild(db, guildId, events, options);
     }
     public async Task<IReadOnlyCollection<ServerLogChannelModel>> GetChannelsForGuild(
@@ -106,6 +141,7 @@ public class ServerLogRepository
         ServerLogEvent[] events,
         ChannelQueryOptions? options = null)
     {
+        if (events.Length == 0) return [];
         var guildIdStr = guildId.ToString();
         var eventsSet = events.ToHashSet();
         var query = db.ServerLogChannels
@@ -120,7 +156,7 @@ public class ServerLogRepository
         ulong guildId,
         params IEnumerable<ServerLogChannelModel> channels)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -162,11 +198,12 @@ public class ServerLogRepository
     public async Task<int> RemoveChannel(
         ulong guildId, ulong channelId)
     {
-        await using var trans = await _db.Database.BeginTransactionAsync();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var result = await RemoveChannel(_db, guildId, channelId);
-            await _db.SaveChangesAsync();
+            var result = await RemoveChannel(db, guildId, channelId);
+            await db.SaveChangesAsync();
             await trans.CommitAsync();
             return result;
         }
@@ -203,7 +240,7 @@ public class ServerLogRepository
         ServerLogEvent @event,
         IUser? byUserId = null)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -236,7 +273,7 @@ public class ServerLogRepository
         IGuild? guild = null;
         try
         {
-            guild = _discordClient.GetGuild(guildId);
+            guild = ExceptionHelper.RetryOnTimedOut(() => _discordClient.GetGuild(guildId));
         }
         catch (Exception ex)
         {
@@ -269,11 +306,12 @@ public class ServerLogRepository
     }
     public async Task<int> RemoveEvents(ulong guildId, ServerLogEvent[] events)
     {
-        await using var trans = await _db.Database.BeginTransactionAsync();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
-            var result = await RemoveEvents(_db, guildId, events);
-            await _db.SaveChangesAsync();
+            var result = await RemoveEvents(db, guildId, events);
+            await db.SaveChangesAsync();
             await trans.CommitAsync();
             return result;
         }
@@ -306,11 +344,13 @@ public class ServerLogRepository
     #region Enable/Disable
     public async Task Enable(ulong guildId, bool enable = true)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
             await Enable(db, guildId, enable);
+            await db.SaveChangesAsync();
+            await trans.CommitAsync();
         }
         catch
         {
@@ -342,7 +382,7 @@ public class ServerLogRepository
     #region Insert or Update
     public async Task InsertOrUpdate(ServerLogGuildModel model)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -376,7 +416,7 @@ public class ServerLogRepository
 
     public async Task InsertOrUpdate(ServerLogChannelModel model)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -475,6 +515,7 @@ public class ServerLogRepository
         }
         if (options.IgnoreDisabledGuilds)
         {
+            q = q.Include(e => e.ServerLogGuild);
             q = q.Where(e => e.ServerLogGuild.Enabled);
         }
         return q.AsNoTracking();

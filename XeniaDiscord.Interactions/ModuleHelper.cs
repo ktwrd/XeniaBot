@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using XeniaDiscord.Data;
 
 namespace XeniaDiscord.Interactions;
 
 public static class ModuleHelper
 {
-
     /// <summary>
-    /// Callback for <see cref="PerformTransaction(Func{XeniaDbContext, Task{bool}})"/>
+    /// Callback for <see cref="PerformTransaction(IServiceProvider, PerformTransactionCallback)"/>
     /// </summary>
     /// <param name="db"></param>
     /// <returns>
@@ -16,11 +16,17 @@ public static class ModuleHelper
     /// Otherwise, it will rollback the transaction.
     /// </returns>
     public delegate Task<bool> PerformTransactionCallback(XeniaDbContext db);
-    public static async Task<TimeSpan> PerformTransaction(IServiceProvider services, PerformTransactionCallback callback)
+    
+    public static Task<TimeSpan> PerformTransaction(IServiceProvider services, PerformTransactionCallback callback)
+    {
+        var dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
+        return PerformTransaction(dbContextFactory, callback);
+    }
+    public static async Task<TimeSpan> PerformTransaction(IDbContextFactory<XeniaDbContext> dbContextFactory, PerformTransactionCallback callback)
     {
         var sw = new Stopwatch();
         sw.Start();
-        await using var db = services.GetRequiredService<XeniaDbContext>().CreateSession();
+        await using var db = await dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

@@ -10,7 +10,7 @@ public class CacheMessageAttachment
     
     public string Filename { get; set; }
     public string Url { get; set; }
-    public string ProxyUrl { get; set; }
+    public string? ProxyUrl { get; set; }
     public int Size { get; set; }
     [BsonIgnoreIfNull]
     public int? Height { get; set; }

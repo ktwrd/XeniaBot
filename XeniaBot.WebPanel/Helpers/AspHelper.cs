@@ -27,20 +27,11 @@ public static class AspHelper
 {
     public static ulong? GetUserId(HttpContext context)
     {
-        ulong? target = null;
-        if (context.User?.Identity?.IsAuthenticated ?? false)
-        {
-            foreach (var claim in context.User.Claims)
-            {
-                if (claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
-                {
-                    target = ulong.Parse(claim.Value);
-                    return target;
-                }
-            }
-        }
-
-        return target;
+        if (!(context.User?.Identity?.IsAuthenticated ?? false)) return null;
+        var claim = context.User.Claims.FirstOrDefault(e =>
+            e.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+        if (ulong.TryParse(claim?.Value, out var value)) return value;
+        return null;
     }
     
     public static bool IsCurrentUserAdmin(HttpContext context)
@@ -55,7 +46,7 @@ public static class AspHelper
         ulong userId,
         GuildPermission permissionRequired = GuildPermission.ManageGuild)
     {
-        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
         var errorReport = Program.Core.GetRequiredService<ErrorReportService>();
         try
         {
@@ -112,7 +103,7 @@ public static class AspHelper
 
     public static string GetGuildImage(ulong guildId)
     {
-        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
         var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null)
             return "/Debugempty.png";
@@ -123,7 +114,7 @@ public static class AspHelper
 
     public static string GetGuildName(ulong guildId)
     {
-        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
         var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null)
             return guildId.ToString();
@@ -133,7 +124,7 @@ public static class AspHelper
 
     public static string GetChannelName(ulong guildId, ulong channelId)
     {
-        var discord = Program.Core.GetRequiredService<DiscordSocketClient>();
+        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
         var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         if (guild == null)
             return channelId.ToString();
@@ -168,7 +159,7 @@ public static class AspHelper
         IServiceProvider services,
         ulong serverId, T data) where T : IBaseServerModel
     {
-        var discord = services.GetRequiredService<DiscordSocketClient>();
+        var discord = services.GetRequiredService<DiscordShardedClient>();
         var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(serverId));
         data.Guild = guild;
 

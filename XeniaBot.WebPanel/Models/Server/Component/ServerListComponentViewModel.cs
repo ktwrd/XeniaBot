@@ -14,9 +14,10 @@ public class ServerListComponentViewModel : BaseViewModel
 
     public bool IsGuildLast(ServerListViewModelItem guild)
     {
-        if (Items.Count() < 2)
+        var count = Items.Count();
+        if (count < 2)
             return true;
 
-        return Items.ElementAt(Items.Count() - 1).Guild.Id == guild.Guild.Id;
+        return Items.ElementAt(count - 1).Guild.Id == guild.Guild.Id;
     }
 }

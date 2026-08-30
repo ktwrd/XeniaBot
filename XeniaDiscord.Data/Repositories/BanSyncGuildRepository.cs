@@ -5,23 +5,18 @@ using XeniaDiscord.Data.Models.BanSync;
 
 namespace XeniaDiscord.Data.Repositories;
 
-public class BanSyncGuildRepository : IDisposable
+public class BanSyncGuildRepository
 {
-    public void Dispose()
-    {
-        _serviceScope?.Dispose();
-    }
-    private readonly IServiceScope? _serviceScope;
-    private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     public BanSyncGuildRepository(IServiceProvider services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out _serviceScope);
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
     public async Task<long> CountAll()
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await CountAll(db);
     }
     public async Task <long> CountAll(XeniaDbContext db)
@@ -30,7 +25,7 @@ public class BanSyncGuildRepository : IDisposable
     }
     public async Task<bool> Exists(ulong guildId)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await Exists(db, guildId);
     }
     public async Task<bool> Exists(XeniaDbContext db, ulong guildId)
@@ -41,7 +36,7 @@ public class BanSyncGuildRepository : IDisposable
     
     public async Task<BanSyncGuildModel?> GetAsync(ulong guildId)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         return await GetAsync(db, guildId);
     }
     public async Task<BanSyncGuildModel?> GetAsync(XeniaDbContext db, ulong guildId)
@@ -58,7 +53,7 @@ public class BanSyncGuildRepository : IDisposable
         if (model.GetGuildId() <= 1)
             throw new ArgumentException($"Invalid value {model.GuildId}", $"{nameof(model)}.{nameof(model.GuildId)}");
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

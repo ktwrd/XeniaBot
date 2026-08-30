@@ -1,10 +1,12 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Sentry;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
@@ -15,13 +17,13 @@ public class InteractionHandler
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(InteractionHandler));
     private readonly InteractionService _interactionService;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly CoreContext _coreContext;
     private readonly IServiceProvider _services;
     public InteractionHandler(IServiceProvider services)
     {
         _interactionService = services.GetRequiredService<InteractionService>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
         _coreContext = services.GetRequiredService<CoreContext>();
         _services = services;
     }
@@ -48,27 +50,57 @@ public class InteractionHandler
             lines.Add($"- {item.Name} ({count})");
         }
         Log.Debug($"Loaded [{_interactionService.Modules.Count}] modules\n" + string.Join("\n", lines));
-        _client.InteractionCreated += InteractionCreateAsync;
         _client.ModalSubmitted += ModalSubmittedAsync;
+        _client.ButtonExecuted += ButtonExecutedAsync;
+        _client.InteractionCreated += InteractionCreateAsync;
     }
 
-    private async Task ModalSubmittedAsync(SocketModal interaction)
+    private async Task ButtonExecutedAsync(SocketMessageComponent interaction)
     {
         try
         {
-            var context = new SocketInteractionContext(
+            var context = new ShardedInteractionContext<SocketMessageComponent>(
                 _client,
                 interaction);
-            await _interactionService.ExecuteCommandAsync(
+            var result = await _interactionService.ExecuteCommandAsync(
                 context,
                 _services);
+            if (result.Error != null)
+            {
+                Log.Warn(result.ErrorReason);
+            }
         }
         catch (Exception ex)
         {
             Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
             SentrySdk.CaptureException(ex, scope =>
             {
-                SentryHelper.SetInteractionInfo(scope, interaction);
+                scope.SetInteractionInfo(interaction);
+            });
+        }
+    }
+
+    private async Task ModalSubmittedAsync(SocketModal interaction)
+    {
+        try
+        {
+            var context = new ShardedInteractionContext<SocketModal>(
+                _client,
+                interaction);
+            var result = await _interactionService.ExecuteCommandAsync(
+                context,
+                _services);
+            if (result.Error != null)
+            {
+                Log.Warn(result.ErrorReason);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
+            SentrySdk.CaptureException(ex, scope =>
+            {
+                scope.SetInteractionInfo(interaction);
             });
         }
     }
@@ -77,20 +109,37 @@ public class InteractionHandler
     {
         try
         {
-            var context = new SocketInteractionContext(
+            Log.Trace(FormatName(interaction));
+            var context = new ShardedInteractionContext(
                 _client,
                 interaction);
-            await _interactionService.ExecuteCommandAsync(
+            var result = await _interactionService.ExecuteCommandAsync(
                 context,
                 _services);
+            if (!result.IsSuccess)
+            {
+                Log.Warn(result.ErrorReason);
+            }
         }
         catch (Exception ex)
         {
             Log.Error(ex, $"Failed to handle interation {interaction.Id} invoked by user \"{interaction.User.GlobalName}\" ({interaction.User.Username}, {interaction.User.Id})");
             SentrySdk.CaptureException(ex, scope =>
             {
-                SentryHelper.SetInteractionInfo(scope, interaction);
+                scope.SetInteractionInfo(interaction);
             });
         }
+    }
+
+    private static string FormatName(IDiscordInteraction interaction)
+    {
+        var sb = new StringBuilder(interaction.Id.ToString());
+        if (interaction.Data is SocketMessageComponentData messageComponentData)
+        {
+            sb.Append(" - ");
+            sb.Append(messageComponentData.CustomId);
+        }
+
+        return sb.ToString();
     }
 }

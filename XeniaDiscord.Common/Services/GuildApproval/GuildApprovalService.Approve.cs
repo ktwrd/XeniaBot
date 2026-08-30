@@ -13,7 +13,8 @@ partial class GuildApprovalService
         IUser doneByUser)
     {
         var guildIdStr = user.Guild.Id.ToString();
-        var config = await _db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr);
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        var config = await db.GuildApprovals.AsNoTracking().FirstOrDefaultAsync(e => e.GuildId == guildIdStr);
 
         if (config == null)
         {
@@ -46,7 +47,6 @@ partial class GuildApprovalService
         {
             await user.AddRoleAsync(role);
         });
-        await using var db = _db.CreateSession();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

@@ -1,4 +1,6 @@
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using Prometheus;
@@ -12,28 +14,27 @@ namespace XeniaDiscord.Common.Services;
 public partial class DiscordStatisticsService : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient? _client;
     private readonly ConfigData _configData;
     private readonly PrometheusService _prom;
     private readonly ProgramDetails _details;
-    private readonly XeniaDbContext _db;
-    private readonly IServiceScope? _dbScope;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     public void Shutdown()
     {
         _prom.ServerStart -= InitializePrometheus;
         _prom.ReloadMetrics -= ReloadMetrics;
-        _dbScope?.Dispose();
+        ShutdownIncreaseEvents();
     }
     public DiscordStatisticsService(IServiceProvider services) : base(services)
     {
         _details = services.GetRequiredService<ProgramDetails>();
 
         _configData = services.GetRequiredService<ConfigData>();
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
 
         _prom = services.GetRequiredService<PrometheusService>();
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out _dbScope);
-        
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
+
         _statGuilds = _prom.CreateGauge(
             "xenia_discord_guild_count",
             "Amount of guilds this bot is in",
@@ -71,8 +72,13 @@ public partial class DiscordStatisticsService : BaseService
                 "user_id",
                 "username",
                 "global_name",
-                "connection_state"
+                "connection_state",
+                "shard_id",
             ],
+            publish: false);
+        _statDiscordShards = _prom.CreateGauge(
+            "xenia_discord_shards",
+            "Shards",
             publish: false);
         _statInteractions = _prom.CreateCounter(
             "xenia_discord_interaction_count",
@@ -154,6 +160,7 @@ public partial class DiscordStatisticsService : BaseService
     private readonly Gauge _statGuildChannels;
     private readonly Gauge _statChannels;
     private readonly Gauge _statDiscordLatency;
+    private readonly Gauge _statDiscordShards;
     private readonly Counter _statInteractions;
     private readonly Counter _statMessages;
     private readonly Counter _statDiscordEvents;
@@ -161,11 +168,14 @@ public partial class DiscordStatisticsService : BaseService
     private readonly Gauge _statBanSyncRecords;
     private readonly Gauge _statBanSyncGuilds;
     private readonly Gauge _statBanSyncGuildSnapshots;
+    
+    public DateTimeOffset? ReceivedLastEventAt { get; private set; }
 
     private void IncreaseEvent(DiscordStatisticsEventType type)
     {
         try
         {
+            ReceivedLastEventAt = DateTimeOffset.UtcNow;
             _statDiscordEvents.WithLabels(type.ToString()).Inc();
         }
         catch (Exception ex)

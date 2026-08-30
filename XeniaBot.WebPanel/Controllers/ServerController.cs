@@ -1,6 +1,8 @@
-﻿using Discord;
+﻿using CSharpFunctionalExtensions;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -8,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.MongoData;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -22,17 +25,18 @@ public partial class ServerController : BaseXeniaController
 {
     private readonly ILogger<ServerController> _logger;
     private readonly XeniaDbContext _db;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly ErrorReportService _errorReporting;
     private readonly GuildCacheRepository _guildCacheRepo;
     private readonly ServerLogRepository _serverLogRepository;
     private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
-
     public ServerController(
         IServiceProvider services,
         ILogger<ServerController> logger)
         : base()
     {
         _db = services.GetRequiredService<XeniaDbContext>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
         _errorReporting = services.GetRequiredService<ErrorReportService>();
         _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
         _serverLogRepository = services.GetRequiredService<ServerLogRepository>();
@@ -48,11 +52,11 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = await _discord.GetUserAsync((ulong)userId);
-        var guild = _discord.GetGuild(id);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser((ulong)userId));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
@@ -71,26 +75,40 @@ public partial class ServerController : BaseXeniaController
     [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> ModerationView(ulong id, string? messageType = null, string? message = null)
     {
+        var result = await GetModerationView(id, messageType, message);
+        if (result.IsFailure) return result.Error;
+        return View("Details/ModerationView", result.Value);
+    }
+
+    private async Task<Result<ServerDetailsViewModel, IActionResult>> GetModerationView(
+        ulong id,
+        string? messageType = null, string? message = null)
+    {
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = await _discord.GetUserAsync(userId.Value);
-        var guild = _discord.GetGuild(id);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
-        
+
         await PopulateModel(data);
-        if (messageType != null)
-            data.MessageType = messageType;
-        if (message != null)
-            data.Message = message;
-        
-        return View("Details/ModerationView", data);
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            data.Alert = new AlertComponentViewModel
+            {
+                MessageType = messageType ?? "info",
+                Message = message,
+                ShowClose = true
+            };
+        }
+        return data;
     }
+
     [HttpGet("~/Server/{id}/Fun")]
     [AuthRequired]
     [RestrictToGuild(GuildIdRouteKey = "id")]
@@ -99,11 +117,11 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = await _discord.GetUserAsync(userId.Value);
-        var guild = _discord.GetGuild(id);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
@@ -121,11 +139,11 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = await _discord.GetUserAsync(userId.Value);
-        var guild = _discord.GetGuild(id);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
@@ -146,11 +164,11 @@ public partial class ServerController : BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
-        var guild = _discord.GetGuild(id);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
@@ -174,19 +192,19 @@ public partial class ServerController : BaseXeniaController
         {
             return View("NotFound", "User could not be found.");
         }
-        var user = _discord.GetUser(userId.Value);
+        var user = ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value));
         if (user == null)
         {
             return View("NotFound", "User could not be found.");
         }
-        var data = new ServerListViewModel()
+        var data = new ServerListViewModel
         {
             UserId = (ulong)userId,
-            UserAvatar = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()
+            UserAvatar = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl(),
+            Items = [.. FilterGuildsForUser(user)],
+            ListStyle = style
         };
 
-        data.Items = FilterGuildsForUser(user).ToArray();
-        data.ListStyle = style;
         await PopulateModel(data);
         return View("List", data);
     }
@@ -196,11 +214,11 @@ public partial class ServerController : BaseXeniaController
     public async Task<IActionResult> ListComponent(int cursor = 1, ListViewStyle style = ListViewStyle.List)
     {
         var userId = AspHelper.GetUserId(HttpContext);
-        if (userId == null)
+        var user = userId.HasValue ? ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value)) : null;
+        if (user == null || userId == null)
         {
             return View("NotFound", "User could not be found.");
         }
-        var user = _discord.GetUser((ulong)userId);
         var data = FilterGuildsForUser(user)
             .OrderByDescending(v => v.Guild.OwnerId == v.GuildUser.Id)
             .ThenByDescending(v => v.GuildUser.GuildPermissions.Has(GuildPermission.Administrator))
@@ -222,12 +240,10 @@ public partial class ServerController : BaseXeniaController
         var dataItems = new List<ServerListViewModelItem>();
         foreach (var item in _discord.Guilds)
         {
-            var guildUser = item.GetUser(user.Id);
-            if (guildUser == null)
+            var guildUser = ExceptionHelper.RetryOnTimedOut(() => item.GetUser(user.Id));
+            if (guildUser?.GuildPermissions.ManageGuild != true)
                 continue;
-            if (!guildUser.GuildPermissions.ManageGuild)
-                continue;
-            dataItems.Add(new ServerListViewModelItem()
+            dataItems.Add(new ServerListViewModelItem
             {
                 Guild = item,
                 GuildUser = guildUser

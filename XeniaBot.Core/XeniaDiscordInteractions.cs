@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using XeniaBot.Core.LevelSystem.Modules;
 using XeniaBot.Core.Modules;
 using XeniaBot.Shared.Helpers;
+// ReSharper disable CheckNamespace
+#pragma warning disable IDE0130
+#pragma warning disable S1186
 
 namespace XeniaDiscord;
 
@@ -15,7 +18,6 @@ public static class XeniaDiscordCoreInteractions
         await Task.WhenAll(
             interactions.AddModuleAsync<MediaManipulationModule>(services),
             interactions.AddModuleAsync<BackpackTFModule>(services),
-            interactions.AddModuleAsync<BanSyncModule>(services),
             interactions.AddModuleAsync<ConfessionAdminModule>(services),
             interactions.AddModuleAsync<ConfigModule>(services),
             interactions.AddModuleAsync<CounterModule>(services),
@@ -27,7 +29,6 @@ public static class XeniaDiscordCoreInteractions
             interactions.AddModuleAsync<ModerationModule>(services),
             interactions.AddModuleAsync<RandomAnimalModule>(services),
             interactions.AddModuleAsync<ReminderModule>(services),
-            interactions.AddModuleAsync<RolePreserveModule>(services),
             interactions.AddModuleAsync<TicketModule>(services),
             interactions.AddModuleAsync<TranslateModule>(services),
             interactions.AddModuleAsync<WeatherModule>(services),

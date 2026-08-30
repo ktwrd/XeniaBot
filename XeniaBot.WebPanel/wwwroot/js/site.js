@@ -1,6 +1,9 @@
 ﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
 /**
  * @typedef {object} CreateBootstrapToastOptions
  * @property {string|null} [iconUrl] - Url of an icon to display to the left of the title
@@ -159,6 +162,34 @@ const xeniaDiscord = {
         $(div).toast(toastOptions);
         $(div).toast('show');
         return div;
+    },
+    createRolePill: function (options) {
+        const span = document.createElement('span');
+        span.style = options.style;
+        span.id = options.id;
+        if (options.tooltipText) {
+            span.setAttribute('data-bs-toggle', 'tooltip');
+            span.setAttribute('data-bs-placement', 'bottom');
+            span.setAttribute('data-bs-title', options.tooltipText);
+        }
+        if (options.inputOptions) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = options.inputOptions.name;
+            input.value = options.inputOptions.value;
+            span.appendChild(input);
+        }
+        span.innerText += `@${options.name}`;
+        if (options.inputOptions && options.inputOptions.allowRemoval) {
+            const button = document.createElement('button');
+            button.className = 'btn-close btn-sm ms-1';
+            button.setAttribute('aria-label', 'Remove');
+            button.onclick = () => {
+                document.getElementById(`span#${options.Id}`).remove();
+            };
+            span.appendChild(button);
+        }
+        return span;
     }
 };
 

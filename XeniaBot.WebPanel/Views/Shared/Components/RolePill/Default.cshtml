@@ -1,0 +1,30 @@
+﻿@model XeniaBot.WebPanel.Models.RolePillComponentModel
+@{
+    var spanClass = "badge ";
+    spanClass += Model.Role.ShouldUseLightText() switch
+    {
+        false => "text-dark",
+        _ => "text-light",
+    };
+
+    var tooltipText = Model.GetTooltipText();
+    var style = Model.GetBadgeStyle();
+}
+
+<span class="@spanClass" style="@style" id="@Model.ElementId" 
+        @{
+            if (!string.IsNullOrEmpty(tooltipText))
+            {
+                <text>data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true" data-bs-title="@tooltipText"</text>
+            }
+        }>
+    @if (Model.InputOptions.HasValue)
+    {
+        <input type="hidden" value="@Model.InputOptions.Value.Value" name="@Model.InputOptions.Value.Name" />
+    }
+    @@@Model.Role.Name
+    @if (Model.InputOptions is { HasValue: true, Value.AllowRemoval: true })
+    {
+        <button type="button" class="btn-close btn-sm ms-1" aria-label="Close" onclick="document.getElementById('@Model.ElementId').remove()"></button>
+    }
+</span>

@@ -1,5 +1,6 @@
 ﻿@using XeniaBot.WebPanel.Areas.ServerSettings.Models.BanSync
 @using XeniaBot.WebPanel.Models
+@using XeniaDiscord.Common.Services.BanSync
 @using XeniaDiscord.Data.Models.BanSync
 @model BanSyncComponentModel
 
@@ -66,7 +67,7 @@
     </form>
     <ul class="list-group mb-3">
         <li class="list-group-item">
-            @if (@Model.Guild.MemberCount < 35)
+            @if (@Model.Guild.MemberCount < BanSyncService.MinimumMemberLimit)
             {
                 <i class="bi bi-x-circle" style="color: var(--red);"></i>
             }
@@ -77,7 +78,7 @@
             At least 35 members
         </li>
         <li class="list-group-item">
-            @if (@Model.Guild.CreatedAt > DateTimeOffset.UtcNow.AddMonths(-6))
+			@if (@Model.Guild.CreatedAt > DateTimeOffset.UtcNow.AddDays(-BanSyncService.MinimumServerAge.TotalDays))
             {
                 <i class="bi bi-x-circle" style="color: var(--red);"></i>
             }
@@ -85,7 +86,7 @@
             {
                 <i class="bi bi-check-circle" style="color: var(--green);"></i>
             }
-            Guild Older than 6 months
+            Guild Older than 90 days
         </li>
     </ul>
 }

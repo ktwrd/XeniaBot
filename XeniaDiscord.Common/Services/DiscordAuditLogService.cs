@@ -13,10 +13,10 @@ namespace XeniaDiscord.Common.Services;
 
 public sealed class DiscordAuditLogService : BaseService
 {
-    private readonly DiscordSocketClient _discord;
+    private readonly DiscordShardedClient _discord;
     public DiscordAuditLogService(IServiceProvider services) : base(services)
     {
-        _discord = services.GetRequiredService<DiscordSocketClient>();
+        _discord = services.GetRequiredService<DiscordShardedClient>();
     }
 
     public async Task<AuditLogEntryResult> GetLatestBanEvent(
@@ -63,7 +63,7 @@ public sealed class DiscordAuditLogService : BaseService
 
     private async Task<AuditLogEntryResult> GetLatest(ulong guildId, ActionType action, Maybe<TimeSpan> doneWithinTheLast, Func<IAuditLogEntry, bool> predicate)
     {
-        var guild = await ExceptionHelper.RetryOnTimedOut(async () => _discord.GetGuild(guildId));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
         if (guild == null)
         {
             return ErrorCode.GuildNotFound;

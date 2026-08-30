@@ -1,5 +1,6 @@
 using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
@@ -7,6 +8,7 @@ using XeniaDiscord.Common.Services;
 
 namespace XeniaDiscord.Interactions.Modules;
 
+[UsedImplicitly]
 [CommandContextType(InteractionContextType.Guild)]
 public class GuildApprovalModule : InteractionModuleBase
 {
@@ -18,6 +20,7 @@ public class GuildApprovalModule : InteractionModuleBase
         _service = services.GetRequiredService<GuildApprovalService>();
     }
 
+    [UsedImplicitly]
     [SlashCommand("approve", "Guild Approvals: Approve a user")]
     [RequireUserPermission(GuildPermission.ManageRoles)]
     [RequireBotPermission(GuildPermission.ManageRoles)]

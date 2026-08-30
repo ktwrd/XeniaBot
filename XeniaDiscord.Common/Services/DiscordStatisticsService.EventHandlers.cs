@@ -22,7 +22,7 @@ partial class DiscordStatisticsService
 
     private async Task<SlashCommandInteractionInfo> GetInfo(SocketSlashCommand interaction)
     {
-        var guild = interaction.GuildId.HasValue ? _client.GetGuild(interaction.GuildId.Value) : null;
+        var guild = interaction.GuildId.HasValue ? _client?.GetGuild(interaction.GuildId.Value) : null;
         var usernameFormatted = interaction.User.Username;
         if (!string.IsNullOrEmpty(interaction.User.Discriminator?.Trim('0')))
             usernameFormatted += $"#{interaction.User.Discriminator}";
@@ -31,8 +31,9 @@ partial class DiscordStatisticsService
         var guildName = guildIdStr;
         if (guildIdStr != null)
         {
+            await using var db = await _dbContextFactory.CreateDbContextAsync();
             guildName = guild?.Name
-                ?? await _db.GuildPartialSnapshots.AsNoTracking()
+                ?? await db.GuildPartialSnapshots.AsNoTracking()
                     .Where(e => e.GuildId == guildIdStr)
                     .OrderByDescending(e => e.Timestamp)
                     .Select(e => e.Name)
@@ -130,7 +131,7 @@ partial class DiscordStatisticsService
             info.InteractionId
         ).Inc();
 
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {

@@ -1,5 +1,5 @@
 const serverLogEvents = [
-    'Fallback',
+    'Fallback', // 0
 
     'MemberJoin',
     'MemberLeave',
@@ -22,8 +22,26 @@ const serverLogEvents = [
 
     'RoleCreate',
     'RoleEdit',
-    'RoleDelete'
+    'RoleDelete',
+
+    'RolePreserve', // 300
 ];
+
+/**
+ * @description
+ * Format an item from `serverLogEvents` so its more human readable (e.g; "RolePreserve" -> "Role Preserve")
+ * @param {any} value
+ * @returns
+ */
+function formatServerLogEvent(value) {
+    if (!value || typeof value !== 'string') throw new TypeError(`parameter 'value' has invalid type (got: ${typeof value}, expected: string)`);
+    let result = '';
+    for (const item of value) {
+        if (item == item.toUpperCase()) result += ' ';
+        result += item;
+    }
+    return result;
+}
 
 /**
  * @typedef {object} ServerLogChannelItem
@@ -41,6 +59,21 @@ const serverLogEvents = [
  * @property {string} channelId - Channel Id (snowflake as string)
  * @property {string} event - Event
  */
+
+function assertType(value, name, expected, cb = null) {
+    let typeEq = typeof value === expected;
+    if (expected === 'array') {
+        typeEq = Array.isArray(value) && typeof value === 'object';
+    }
+    if (!typeEq) {
+        const msg = `${name}: invalid type (got: ${typeof value}, expected: ${expected})`;
+        if (cb && typeof cb === 'function') {
+            cb(msg);
+        }
+        return msg;
+    }
+    return null;
+}
 
 const serverLogLogic = {
     _qs_jsonDataElement: '#server-log-channel-config input[name=jsonData]',
@@ -60,7 +93,7 @@ const serverLogLogic = {
             throw new Error(`missing attribute "${this._an_channelData}" on element "${this._qs_configElement}"`);
         }
         if (typeof attrValue !== 'string') {
-            throw new Error(`invalid type "${typeof attrValue}" on attribute "${this._an_channelData}" from element "${this._qs_configElement}"`);
+            throw new TypeError(`invalid type "${typeof attrValue}" on attribute "${this._an_channelData}" from element "${this._qs_configElement}"`);
         }
         let contentRaw;
         try {
@@ -81,25 +114,10 @@ const serverLogLogic = {
      * @returns {ServerLogChannelItem[]}
      */
     validateChannelData: function(channelData) {
-        function assertType(value, name, expected, cb = null) {
-            let typeEq = typeof value === expected;
-            if (expected === 'array') {
-                typeEq = Array.isArray(value) && typeof value === 'object';
-            }
-            if (!typeEq) {
-                const msg = `${name}: invalid type (got: ${typeof value}, expected: ${expected})`;
-                if (cb && typeof cb === 'function') {
-                    cb(msg);
-                }
-                return msg;
-            }
-            return null;
-        }
-
         if (!channelData || typeof channelData !== 'object')
-            throw new Error(`channelData: invalid type (got: ${typeof channelData}, expected: object)`);
+            throw new TypeError(`channelData: invalid type (got: ${typeof channelData}, expected: object)`);
         if (!Array.isArray(channelData))
-            throw new Error(`channelData: object is not an array`);
+            throw new TypeError(`channelData: object is not an array`);
         
         const errors = [];
         function assertTypeR(value, name, prop, expected) {
@@ -141,16 +159,6 @@ const serverLogLogic = {
      * @returns {ServerLogChannelItem[]}
      */
     validateConfig: function(config) {
-        function assertType(value, name, expected, cb = null) {
-            if (typeof value !== expected) {
-                const msg = `${name}: invalid type (got: ${typeof value}, expected: ${expected})`;
-                if (cb && typeof cb === 'function') {
-                    cb(msg);
-                }
-                return msg;
-            }
-            return null;
-        }
 
         if (!config || typeof config !== 'object')
             throw new Error(`config: invalid type (got: ${typeof config}, expected: object)`);
@@ -166,8 +174,8 @@ const serverLogLogic = {
             }
             return assertType(value, name + '.' + prop, expected, msg => errors.push(msg));
         }
-        const visitedKeys = [];
-        const removeIndexes = [];
+        /** @typedef {string[]} */ const visitedKeys = [];
+        /** @typedef {string[]} */ const removeIndexes = [];
         for (const i in config) {
             const item = config[i];
             if (!item || typeof item !== 'object')  {
@@ -193,7 +201,7 @@ const serverLogLogic = {
 
             if (item.channelId && item.event && typeof item.channelId == 'string' && typeof item.event === 'string') {
                 const key = `${item.channelId}|${item.event}`;
-                if (visitedKeys.filter(e => e == key).length > 0) {
+                if (visitedKeys.some(e => e == key)) {
                     removeIndexes.push(i);
                 } else {
                     visitedKeys.push(key);
@@ -251,6 +259,7 @@ const serverLogLogic = {
     _an_item_id: 'xenia-serverLog-id',
     _an_item_channelId: 'xenia-serverLog-channelId',
     _an_item_event: 'xenia-serverLog-event',
+
     /**
      * @description
      * Generates config based off the current elements in query `tbody#server-log-channel-list tr`
@@ -284,7 +293,7 @@ const serverLogLogic = {
      * @returns {ServerLogChannelItem|null}
      */
     channelFromId_inner: function(channel, id) {
-        if (channel.id == id) return channel;
+        if (channel.id === id) return channel;
         if (Array.isArray(channel.children)) {
             for (const inner of channel.children) {
                 const x = this.channelFromId_inner(inner, id);
@@ -299,7 +308,7 @@ const serverLogLogic = {
     writeChannelElements: function(config) {
         const elements = [];
         let currentChannelId = null;
-        const sortedConfig = config.sort((a, b) => {
+        const sortedConfig = config.toSorted((a, b) => {
             const nameA = a.channelId.toUpperCase(); // ignore upper and lowercase
             const nameB = b.channelId.toUpperCase(); // ignore upper and lowercase
             if (nameA < nameB) {
@@ -329,7 +338,7 @@ const serverLogLogic = {
             
             // -- col: event
             const eventElem = document.createElement('td');
-            eventElem.innerText = item.event;
+            eventElem.innerText = formatServerLogEvent(item.event);
 
             // -- col: buttons
             const buttonsElem = document.createElement('td');
@@ -337,10 +346,10 @@ const serverLogLogic = {
             deleteElem.setAttribute('class', 'btn btn-danger btn-sm');
             deleteElem.innerHTML = '<i class="bi bi-trash3-fill"></i>';
             deleteElem.title = 'Remove';
-            const self = this;
+            const serverLogInstance = this;
             $(deleteElem).click(() => {
                 row.remove();
-                self.writeChannelElements(self.readConfigFromElements());
+                serverLogInstance.writeChannelElements(serverLogInstance.readConfigFromElements());
             });
             buttonsElem.appendChild(deleteElem);
 
@@ -357,15 +366,18 @@ const serverLogLogic = {
         }
         document.querySelector(this._qs_jsonDataElement).value = btoa(JSON.stringify(sortedConfig));
     },
-    _addChannel: function(data) {
+    _addChannel: function (data) {
+        if (!data || typeof data !== 'object') {
+            throw new TypeError(`invalid type for parameter 'data' (got type: ${typeof data}, expected: object)`);
+        }
         if (!data.channelId || typeof data.channelId !== 'string') {
-            throw new Error('invalid property "channelId"');
+            throw new TypeError(`invalid type for property "channelId" (got: ${typeof data.channelId}, expected: string)`);
         }
         if (!data.event || typeof data.event !== 'string') {
-            throw new Error('invalid property "event"');
+            throw new TypeError(`invalid type for property "event" (got: ${typeof data.event}, expected: string)`);
         }
         const config = this.readConfigFromElements();
-        if (config.filter(e => e.channelId == data.channelId && e.event == data.event).length > 0) {
+        if (config.some(e => e.channelId == data.channelId && e.event == data.event)) {
             return {
                 error: `An item with the provided Channel Id and Event already exists!\nChannelId: ${data.channelId}\nEvent: ${data.event}`
             };
@@ -403,7 +415,9 @@ const serverLogLogic = {
         });
         if (result.error) {
             console.error(`[serverLog.serverLogAddChannel] failed to add channel (channelId=${selectedChannelId}, event=${selectedEvent})\n${result.error}`, result);
-            let content = '<code><pre>' + JSON.stringify(result, null, '  ').replaceAll('<', '&lt;').replaceAll('>', '&gt;') + "</pre></code>";
+            let contentElem = document.createElement('pre');
+            contentElem.innerText = JSON.stringify(result, null, '    ');
+            let content = '<code>' + contentElem.outerHTML + "</code>";
             if (typeof result.error === 'string') {
                 content = result.format && typeof result.format === 'function' ? result.format() : result.error;   
                 content = content.replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('\n', '<br>');
@@ -430,7 +444,7 @@ const serverLogLogic = {
         for (const value of serverLogEvents) {
             const elem = document.createElement('option');
             elem.value = value;
-            elem.innerText = value;
+            elem.innerText = formatServerLogEvent(value);
             eventSelect.appendChild(elem);
         }
     },
@@ -490,7 +504,7 @@ const serverLogLogic = {
         try {
             this.readConfigFromInput();
         } catch (err) {
-            console.error(err);
+            console.error('Failed to load data!', err);
             xeniaDiscord.createBootstrapToast({
                 title: 'Server Log - Failed to load data',
                 innerHTML: err.toString().replace('<', '&lt;').replaceAll('>', '&gt;').replace('\n', '<br>'),

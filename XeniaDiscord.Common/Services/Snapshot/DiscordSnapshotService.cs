@@ -1,31 +1,35 @@
 using Discord;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
-using System.Data;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Models.Snapshot;
+using XeniaDiscord.Data.Repositories;
 
 namespace XeniaDiscord.Common.Services;
 
+[UsedImplicitly]
 public class DiscordSnapshotService : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly XeniaDbContext _db;
-    private readonly DiscordSocketClient _client;
     private readonly DiscordCacheService _cacheService;
+    private readonly GuildCacheRepository _guildCacheRepository;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly IMapper<IRole, GuildRoleSnapshotModel> _roleMapper;
     private readonly IMapper<IGuildUser, GuildMemberSnapshotModel> _guildMemberMapper;
 
     private readonly ErrorReportService _err;
     public DiscordSnapshotService(IServiceProvider services) : base(services)
     {
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var _);
-        _client = services.GetRequiredService<DiscordSocketClient>();
+        var client = services.GetRequiredService<DiscordShardedClient>();
         _cacheService = services.GetRequiredService<DiscordCacheService>();
+        _guildCacheRepository = services.GetRequiredService<GuildCacheRepository>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
 
         _roleMapper = services.GetRequiredService<IMapper<IRole, GuildRoleSnapshotModel>>();
         _guildMemberMapper = services.GetRequiredService<IMapper<IGuildUser, GuildMemberSnapshotModel>>();
@@ -35,36 +39,40 @@ public class DiscordSnapshotService : BaseService
         var programDetails = services.GetRequiredService<ProgramDetails>();
         if (programDetails.Platform == XeniaPlatform.Bot)
         {
-            _client.JoinedGuild += OnGuildJoined;
-            _client.GuildUpdated += OnGuildUpdated;
-            _client.LeftGuild += OnGuildLeft;
+            client.JoinedGuild += OnGuildJoined;
+            client.GuildUpdated += OnGuildUpdated;
+            client.LeftGuild += OnGuildLeft;
 
-            _client.UserJoined += OnGuildMemberJoined;
-            _client.GuildMemberUpdated += OnGuildMemberUpdated;
-            _client.RoleCreated += OnGuildRoleCreated;
-            _client.RoleUpdated += OnGuildRoleUpdated;
-            _client.RoleDeleted += OnGuildRoleDeleted;
+            client.UserJoined += OnGuildMemberJoined;
+            client.GuildMemberUpdated += OnGuildMemberUpdated;
+            client.RoleCreated += OnGuildRoleCreated;
+            client.RoleUpdated += OnGuildRoleUpdated;
+            client.RoleDeleted += OnGuildRoleDeleted;
         }
     }
 
     /// <summary>
     /// Invoked when a member has been updated.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildMemberSnapshotModel>? GuildMemberUpdated;
 
     /// <summary>
     /// Invoked when a role has been updated, created, or deleted.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleUpdated;
 
     /// <summary>
     /// Invoked when a role has been deleted.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildRoleSnapshotModel>? GuildRoleDeleted;
 
     /// <summary>
     /// Invoked when the bot joins a guild, or when it's been updated.
     /// </summary>
+    [UsedImplicitly]
     public event DiscordSnapshotComparisonDelegate<GuildSnapshotModel>? GuildUpdated;
 
     private Task OnGuildJoined(SocketGuild guild)
@@ -200,7 +208,7 @@ public class DiscordSnapshotService : BaseService
     private async Task ProcessGuild(SocketGuild guild, DiscordSnapshotSource source,
         bool skipRoles = false, bool skipMembers = false)
     {
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -241,7 +249,7 @@ public class DiscordSnapshotService : BaseService
     {
         var userIdStr = socketMemberAfter.Id.ToString();
         var guildIdStr = socketMemberAfter.Guild.Id.ToString();
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         GuildMemberSnapshotModel? modelBefore = null;
         try
@@ -294,7 +302,94 @@ public class DiscordSnapshotService : BaseService
                 .AddSerializedAttachment("model.json", model));
             return;
         }
+
+        await PreventSpamForProcessGuildMember(db, modelBefore, model);
+    }
+
+    private async Task PreventSpamForProcessGuildMember(
+        XeniaDbContext db,
+        GuildMemberSnapshotModel? modelBefore,
+        GuildMemberSnapshotModel model)
+    {
+        var guildIdStr = model.GuildId;
+        var userIdStr = model.UserId;
+        var source = model.SnapshotSource;
+        await Task.Delay(1000);
+        var shouldReturnEarly = false;
+        await ProcessGuildMemberLock.WaitAsync();
+        try
+        {
+            if (ProcessGuildMemberLockData.Any(e =>
+                    e.GuildId == guildIdStr && e.UserId == userIdStr && e.Source == source))
+            {
+                shouldReturnEarly = true;
+            }
+            else
+            {
+                ProcessGuildMemberLockData.Add(new ProcessGuildMemberLockRecord(guildIdStr, userIdStr, source));
+            }
+        }
+        finally
+        {
+            ProcessGuildMemberLock.Release();
+        }
+
+        if (shouldReturnEarly) return;
+
+        await Task.Delay(500);
+        var modelLatest = await GetLatestGuildMemberFor(db, guildIdStr, userIdStr, source);
+        while (modelLatest != null && modelLatest.RecordId != model.RecordId)
+        {
+            if (modelLatest.RecordId == model.RecordId)
+                break;
+
+            if (modelLatest.RecordCreatedAt > model.RecordCreatedAt)
+            {
+                var modelLatestRecordId = modelLatest.RecordId;
+                model = await db.GuildMemberSnapshots.Where(e => e.RecordId == modelLatestRecordId)
+                    .AsNoTracking()
+                    .Include(e => e.Roles)
+                    .ThenInclude(e => e.GuildRoleSnapshot)
+                    .Include(e => e.Permissions)
+                    .FirstAsync();
+            }
+
+            await Task.Delay(500);
+
+            modelLatest = await GetLatestGuildMemberFor(db, guildIdStr, userIdStr, source);
+            if (modelLatest == null || modelLatest.RecordId == model.RecordId)
+                break;
+        }
+
         GuildMemberUpdated?.Invoke(modelBefore, model);
+        await ProcessGuildMemberLock.WaitAsync();
+        try
+        {
+            ProcessGuildMemberLockData.RemoveAll(e =>
+                e.GuildId == guildIdStr && e.UserId == userIdStr && e.Source == source);
+        }
+        finally
+        {
+            ProcessGuildMemberLock.Release();
+        }
+    }
+
+    private sealed record ProcessGuildMemberLockRecord(string GuildId, string UserId, GuildMemberSnapshotSource Source);
+
+    private readonly SemaphoreSlim ProcessGuildMemberLock = new(1, 1);
+    private readonly List<ProcessGuildMemberLockRecord> ProcessGuildMemberLockData = [];
+
+    private async Task<GuildMemberSnapshotModel?> GetLatestGuildMemberFor(
+        XeniaDbContext db,
+        string guildIdStr,
+        string userIdStr,
+        GuildMemberSnapshotSource source)
+    {
+        var rec = await db.GuildMemberSnapshots
+            .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr && e.SnapshotSource == source)
+            .OrderByDescending(e => e.RecordCreatedAt)
+            .FirstOrDefaultAsync();
+        return rec;
     }
 
     private async Task ProcessRole(
@@ -304,8 +399,9 @@ public class DiscordSnapshotService : BaseService
     {
         var roleIdStr = role.Id.ToString();
         var guildIdStr = role.Guild.Id.ToString();
+        var now = DateTime.UtcNow;
         GuildRoleSnapshotModel? modelBefore = null;
-        await using var db = _db.CreateSession();
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
         await using var trans = await db.Database.BeginTransactionAsync();
         try
         {
@@ -348,6 +444,7 @@ public class DiscordSnapshotService : BaseService
         {
             model = _roleMapper.Map(role);
             model.SnapshotSource = source;
+            model.RecordCreatedAt = now;
         }
         catch (Exception ex)
         {
@@ -361,6 +458,13 @@ public class DiscordSnapshotService : BaseService
                 .WithRole(role));
             return;
         }
+        bool? isDeletedValue = source switch
+        {
+            GuildRoleSnapshotSource.RoleDelete => true,
+            GuildRoleSnapshotSource.RoleCreate => false,
+            GuildRoleSnapshotSource.RoleEdit => false,
+            _ => null
+        };
         try
         {
             await db.AddAsync(model);
@@ -378,6 +482,23 @@ public class DiscordSnapshotService : BaseService
                 .WithRole(role)
                 .AddSerializedAttachment("model.json", model));
             return;
+        }
+
+        try
+        {
+            await using var db2 = await _dbContextFactory.CreateDbContextAsync();
+            await _guildCacheRepository.UpdateRoleCache(db2, model, isDeleted: isDeletedValue, now: now);
+            await db2.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            var msg = $"Failed to update cache for role (roleId={role.Id}, guildId={role.Guild.Id}, source={source}, snapshotId={model.Id})";
+            _log.Error(ex, msg);
+            await _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes(msg)
+                .WithRole(role)
+                .AddSerializedAttachment("model.json", model));
         }
         try
         {
@@ -417,7 +538,6 @@ public class DiscordSnapshotService : BaseService
             await UpdateGuildMembers(db, guild, now, source);
         }
 
-        GuildSnapshotModel? guildSnapshotBefore = null;
         GuildSnapshotModel guildSnapshot;
         try
         {
@@ -427,7 +547,7 @@ public class DiscordSnapshotService : BaseService
                 SnapshotSource = source
             };
             guildSnapshot.Update(guild);
-            guildSnapshotBefore = await db.GuildSnapshots
+            var guildSnapshotBefore = await db.GuildSnapshots
                 .AsNoTracking()
                 .OrderByDescending(e => e.RecordCreatedAt)
                 .Where(e => e.GuildId == guildSnapshot.GuildId)
@@ -469,6 +589,7 @@ public class DiscordSnapshotService : BaseService
                     DiscordSnapshotSource.RoleCreated => GuildRoleSnapshotSource.RoleCreate,
                     DiscordSnapshotSource.RoleUpdated => GuildRoleSnapshotSource.RoleEdit,
                     DiscordSnapshotSource.RoleDeleted => GuildRoleSnapshotSource.RoleDelete,
+                    DiscordSnapshotSource.AdminTask => GuildRoleSnapshotSource.AdminTask,
                     _ => GuildRoleSnapshotSource.Unknown
                 };
                 roles.Add(mapped);
@@ -481,6 +602,17 @@ public class DiscordSnapshotService : BaseService
         try
         {
             await db.AddRangeAsync(roles);
+            bool? isDeletedValue = source switch
+            {
+                DiscordSnapshotSource.RoleDeleted => true,
+                DiscordSnapshotSource.RoleCreated => false,
+                DiscordSnapshotSource.RoleUpdated => false,
+                _ => null
+            };
+            foreach (var role in roles)
+            {
+                await _guildCacheRepository.UpdateRoleCache(db, role, isDeleted: isDeletedValue);
+            }
         }
         catch (Exception ex)
         {
@@ -495,7 +627,10 @@ public class DiscordSnapshotService : BaseService
         DiscordSnapshotSource source)
     {
         var members = new List<GuildMemberSnapshotModel>();
-        foreach (var member in await guild.GetUsersAsync())
+        IEnumerable<IGuildUser> users;
+        if (guild is SocketGuild socketGuild) users = socketGuild.Users;
+        else users = await guild.GetUsersAsync();
+        foreach (var member in users)
         {
             try
             {
@@ -507,6 +642,7 @@ public class DiscordSnapshotService : BaseService
                     DiscordSnapshotSource.MemberUpdated => GuildMemberSnapshotSource.MemberUpdate,
                     DiscordSnapshotSource.RoleDeleted => GuildMemberSnapshotSource.RoleDelete,
                     DiscordSnapshotSource.JoinedGuild => GuildMemberSnapshotSource.GuildJoined,
+                    DiscordSnapshotSource.AdminTask => GuildMemberSnapshotSource.AdminTask,
                     _ => GuildMemberSnapshotSource.Unknown
                 };
                 members.Add(mapped);

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
 namespace XeniaBot.Shared.Helpers;
 
@@ -14,38 +12,47 @@ public static class ArrayHelper
     /// <returns>2D chunked array of <paramref name="source"/> with the inner array having the maximum size of <paramref name="itemsPerChunk"/></returns>
     public static T[][] Chunk<T>(IEnumerable<T> source, int itemsPerChunk)
     {
-        var result = new List<List<T>>();
-        for (int i = 0; i < source.Count(); i++)
+        var result = new List<T[]>();
+        var innerList = new List<T>();
+        foreach (var item in source)
         {
-            int rootArrayIndex = (int)Math.Floor(i / (float)itemsPerChunk);
-            if (result.Count <= rootArrayIndex)
-                result.Add(new List<T>());
-
-            int innerArrayIndex = i % itemsPerChunk;
-
-            result[rootArrayIndex].Add(source.ElementAt(i));
+            if (innerList.Count + 1 >= itemsPerChunk)
+            {
+                result.Add(innerList.ToArray());
+                innerList = [];
+            }
+            innerList.Add(item);
+        }
+        if (innerList.Count > 0)
+        {
+            result.Add(innerList.ToArray());
         }
 
-        return result.Select(v => v.ToArray()).ToArray();
+        return result.ToArray();
     }
 
     public static string[][] ChunkLength(IEnumerable<string> source, int maximumLengthPerChunk)
     {
-        var result = new List<List<string>>();
-        for (int i = 0; i < source.Count(); i++)
+        var result = new List<string[]>();
+        var innerList = new List<string>();
+        var innerListCount = 0;
+        foreach (var item in source)
         {
-            if (result.Count < 1)
+            if (innerListCount + item.Length >= maximumLengthPerChunk)
             {
-                result.Add(new List<string>());
+                result.Add(innerList.ToArray());
+                innerList = [];
+                innerListCount = 0;
             }
-
-            if (result.Last().Select(v => v.Length).Sum() > maximumLengthPerChunk)
-            {
-                result.Add(new List<string>());
-            }
-            result.Last().Add(source.ElementAt(i));
+            innerList.Add(item);
+            innerListCount += item.Length;
         }
 
-        return result.Select(v => v.ToArray()).ToArray();
+        if (innerList.Count > 0)
+        {
+            result.Add(innerList.ToArray());
+        }
+
+        return result.ToArray();
     }
 }

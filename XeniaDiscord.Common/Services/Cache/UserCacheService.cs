@@ -12,24 +12,24 @@ namespace XeniaDiscord.Common.Services;
 
 public class UserCacheService
 {
-    private readonly XeniaDbContext _db;
-    private readonly DiscordSocketClient _client;
+    private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
+    private readonly DiscordShardedClient _client;
     private readonly UserCacheRepository _repo;
     private readonly IMapper<IUser, UserCacheModel> _mapper;
     private readonly IMapperMerger<IUser, UserCacheModel> _mapperMerger;
 
     public UserCacheService(IServiceProvider services)
     {
-        _client = services.GetRequiredService<DiscordSocketClient>();
-        _db = services.GetRequiredScopedService<XeniaDbContext>(out var scope);
-        _repo = (scope?.ServiceProvider ?? services).GetRequiredService<UserCacheRepository>();
+        _client = services.GetRequiredService<DiscordShardedClient>();
+        _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
+        _repo = services.GetRequiredService<UserCacheRepository>();
         _mapper = services.GetRequiredService<IMapper<IUser, UserCacheModel>>();
         _mapperMerger = services.GetRequiredService<IMapperMerger<IUser, UserCacheModel>>();
     }
-    public async Task<string?> GetDisplayAvatarUrl(ulong id, bool saveChages = true)
+    public async Task<string?> GetDisplayAvatarUrl(ulong id, bool saveChanges = true)
     {
-        await using var db = _db.CreateSession();
-        return await GetDisplayAvatarUrl(db, id, saveChages);
+        await using var db = await _dbContextFactory.CreateDbContextAsync();
+        return await GetDisplayAvatarUrl(db, id, saveChanges);
     }
     
     public async Task<string?> GetDisplayAvatarUrl(XeniaDbContext db, ulong id, bool saveChanges = true)
@@ -46,7 +46,7 @@ public class UserCacheService
             if (user == null) return dbRecord?.DisplayAvatarUrl;
 
             var mapped = dbRecord == null ? _mapper.Map(user) : _mapperMerger.Map(dbRecord, user);
-            await _repo.InsertOrUpdate(_db, mapped);
+            await _repo.InsertOrUpdate(db, mapped);
             if (saveChanges)
             {
                 await db.SaveChangesAsync();

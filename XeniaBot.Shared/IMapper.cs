@@ -33,7 +33,7 @@ public interface IMapper<in TSource, out TTarget>
     /// Source instance to map from.
     /// </param>
     /// <returns>Mapped object. </returns>
-    public TTarget Map(TSource source);
+    TTarget Map(TSource source);
 }
 
 /// <summary>
@@ -55,5 +55,15 @@ public interface IMapperMerger<in TSource, TTarget>
     /// <returns>
     /// New instance that may include one or more properties from the <paramref name="existing"/> instance.
     /// </returns>
-    public TTarget Map(TTarget existing, TSource mapSource);
+    TTarget Map(TTarget existing, TSource mapSource);
+}
+
+/// <summary>
+/// Mapper for updating values in <see cref="TTarget"/>
+/// </summary>
+public interface IMapperUpdater<in TSource, TTarget>
+    where TSource : notnull
+    where TTarget : notnull
+{
+    void Update(TTarget existing, TSource mapSource);
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Discord;
+using Microsoft.EntityFrameworkCore;
 using NLog;
 using XeniaDiscord.Data.Models.RolePreserve;
 using XeniaDiscord.Data.Models.Snapshot;
@@ -8,7 +9,21 @@ namespace XeniaDiscord.Data.Repositories;
 public class RolePreserveUserRepository
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    
+
+    #region GetAsync
+    public Task<RolePreserveUserModel?> GetAsync(
+        XeniaDbContext db,
+        IGuildUser member,
+        QueryOptions? options = null)
+        => GetAsync(db, member.GuildId, member.Id, options);
+
+    public Task<RolePreserveUserModel?> GetAsync(
+        XeniaDbContext db,
+        IGuild guild,
+        IUser user,
+        QueryOptions? options = null)
+        => GetAsync(db, guild.Id, user.Id, options);
+
     public async Task<RolePreserveUserModel?> GetAsync(
         XeniaDbContext db,
         ulong guildId,
@@ -21,6 +36,7 @@ public class RolePreserveUserRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.GuildId == guildIdStr && e.UserId == userIdStr);
     }
+    #endregion
 
     public async Task InsertOrUpdate(
         XeniaDbContext db,
@@ -77,7 +93,7 @@ public class RolePreserveUserRepository
 
         await db.RolePreserveUserRoles
             .AsNoTracking()
-            .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr && delete.Contains(e.RoleId))
+            .Where(e => e.GuildId == guildIdStr && e.UserId == userIdStr && ((IEnumerable<string>)delete).Contains(e.RoleId))
             .ExecuteDeleteAsync();
         await db.RolePreserveUserRoles.AddRangeAsync(
             add.Select(roleIdStr => new RolePreserveUserRoleModel
