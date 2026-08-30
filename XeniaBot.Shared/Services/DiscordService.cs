@@ -117,6 +117,10 @@ public class DiscordService
         var connectingTime = 0;
         while (true)
         {
+            // TODO rewrite this entire method. it's not compatible with DiscordShardedClient!
+            // (ConnectionState is always Disconnected, but it's connected for the individual shard)
+            await Task.Delay(15_000);
+            continue;
             switch (_client.ConnectionState)
             {
                 case ConnectionState.Disconnected:
