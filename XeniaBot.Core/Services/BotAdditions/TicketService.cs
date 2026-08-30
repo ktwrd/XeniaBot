@@ -118,24 +118,45 @@ public class TicketService : BaseService
     }
     public async Task UserAccessRevoke(ulong channelId, ulong userId)
     {
-        var ticket = await Get(channelId);
-        if (ticket == null)
-            throw new TicketException("Ticket Details not found");
-
+        var ticket = await Get(channelId)
+            ?? throw new TicketNotFoundException("Ticket Details not found for channel: " + channelId)
+            {
+                TicketChannelId = channelId
+            };
+        
         if (!ticket.Users.Contains(userId))
-            throw new TicketException("User not included in ticket");
+        {
+            throw new TicketUserNotParticipantException("User not included in ticket")
+            {
+                TicketChannelId = channelId,
+                UserId = userId,
+                GuildId = ticket.GuildId,
+            };
+        }
 
         var guild = _client.GetGuild(ticket.GuildId);
         if (guild == null)
-            throw new TicketException($"Guild not found ({ticket.GuildId})");
+            throw new TicketGuildNotFoundException($"Guild not found ({ticket.GuildId})")
+            {
+                GuildId = ticket.GuildId
+            };
 
         var user = guild.GetUser(userId);
         if (user == null)
-            throw new TicketException($"User not found ({userId})");
+            throw new TicketUserNotFoundException($"User not found ({userId}) in guild \"{guild.Name}\" ({guild.Id})")
+            {
+                UserId = userId,
+                GuildId = guild.Id,
+                TicketChannelId = channelId
+            };
 
         var channel = guild.GetTextChannel(ticket.ChannelId);
         if (channel == null)
-            throw new TicketException($"Ticket Channel not found ({ticket.ChannelId})");
+            throw new TicketChannelNotFoundException($"Ticket Channel not found ({ticket.ChannelId})")
+            {
+                TicketChannelId = ticket.ChannelId,
+                GuildId = guild.Id
+            };
 
         // Remove user override
         try
@@ -154,21 +175,49 @@ public class TicketService : BaseService
     private async Task<InternalTicketDetails> GetTicketDetails(ulong ticketChannelId)
     {
         var ticket = await Get(ticketChannelId)
-            ?? throw new TicketException($"Ticket Details not found for channel {ticketChannelId}");
+            ?? throw new TicketNotFoundException("Ticket Details not found for channel: " + ticketChannelId)
+            {
+                TicketChannelId = ticketChannelId
+            };
+        
 
-        var config = await GetGuildConfig(ticket.GuildId) ?? throw new TicketException($"Guild {ticket.GuildId} not setup");
+        var config = await GetGuildConfig(ticket.GuildId)
+            ?? throw new TicketGuildNotConfiguredException($"Guild {ticket.GuildId} not setup")
+            {
+                TicketChannelId = ticketChannelId,
+                GuildId = ticket.GuildId
+            };
 
         var guild = _client.GetGuild(ticket.GuildId)
-            ?? throw new TicketException($"Guild not found ({ticket.GuildId})");
+            ?? throw new TicketGuildNotFoundException($"Guild not found ({ticket.GuildId})")
+            {
+                TicketChannelId = ticketChannelId,
+                GuildId = ticket.GuildId
+            };
 
         var role = guild.GetRole(config.RoleId)
-            ?? throw new TicketException($"Ticket Manager Role not found ({config.RoleId}) for guild \"{guild.Name}\" ({guild.Id})");
+            ?? throw new TicketManagerRoleNotFoundException($"Ticket Manager Role not found ({config.RoleId}) for guild \"{guild.Name}\" ({guild.Id})")
+            {
+                GuildId = guild.Id,
+                RoleId = config.RoleId
+            };
 
-        var logChannel = guild.GetTextChannel(config.LogChannelId)
-            ?? throw new TicketException($"Ticket Log Channel not found ({config.LogChannelId}) for guild \"{guild.Name}\" ({guild.Id})");
+        var logChannel = guild.GetTextChannel(config.LogChannelId);
+        if (logChannel == null)
+            throw new TicketLogChannelNotFoundException(
+                $"Ticket Log Channel not found ({config.LogChannelId}) for guild \"{guild.Name}\" ({guild.Id})")
+            {
+                GuildId = guild.Id,
+                LogChannelId = config.LogChannelId
+            };
 
         var ticketChannel = guild.GetTextChannel(ticket.ChannelId)
-            ?? throw new TicketException($"Ticket Channel not found ({ticket.ChannelId}) for guild \"{guild.Name}\" ({guild.Id})");
+            ?? throw new TicketChannelNotFoundException(
+                $"Ticket Channel not found ({ticket.ChannelId}) for guild \"{guild.Name}\" ({guild.Id})")
+            {
+                GuildId = guild.Id,
+                TicketChannelId = ticket.ChannelId
+            };
 
         return new InternalTicketDetails()
         {
@@ -186,7 +235,11 @@ public class TicketService : BaseService
         var details = await GetTicketDetails(ticketChannelId);
         var closingUser = details.Guild.GetUser(closingUserId);
         if (closingUser == null)
-            throw new TicketException($"Could not find user who closed this ticket ({closingUserId})");
+            throw new TicketUserNotFoundException($"Could not find moderator user who is closing this ticket ({closingUserId})")
+            {
+                TicketChannelId = ticketChannelId,
+                UserId = closingUserId
+            };
 
         details.ClosingUser = closingUser;
 
@@ -212,7 +265,11 @@ public class TicketService : BaseService
         await Set(details.Ticket);
 
         var ticket = await Get(details.Ticket.ChannelId)
-            ?? throw new TicketException($"Ticket Details not found for channel {details.Ticket.ChannelId}");
+            ?? throw new TicketNotFoundException("Ticket not found for channel: " + details.Ticket.ChannelId)
+            {
+                TicketChannelId = details.Ticket.ChannelId
+            };
+        
         details.Ticket = ticket;
 
         var transcript = await GenerateTranscript(details.Ticket);
@@ -498,3 +555,4 @@ public class InternalTicketDetails
     public required SocketTextChannel TicketChannel { get; init; }
     public SocketGuildUser? ClosingUser { get; set; }
 }
+
