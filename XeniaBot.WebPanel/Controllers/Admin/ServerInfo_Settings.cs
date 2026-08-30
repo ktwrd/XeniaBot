@@ -8,6 +8,7 @@ using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models.Component;
 using Microsoft.Extensions.Logging;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -75,7 +76,7 @@ partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_Confession(ulong id, string? modalChannelId, string? messageChannelId)
     {
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return PartialView("NotFound", "Guild not found");
 
@@ -132,7 +133,7 @@ partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> Confession_Purge(ulong id)
     {
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return PartialView("NotFound", "Guild not found");
 
@@ -169,7 +170,7 @@ partial class AdminController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return PartialView("NotFound", "User not found");
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return PartialView("NotFound", "Guild not found");
 
@@ -212,7 +213,7 @@ partial class AdminController
     public async Task<IActionResult> SaveSettings_RolePreserve(ulong id, bool enable)
     {
         var guildIdStr = id.ToString();
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return PartialView("NotFound", "Guild not found");
 

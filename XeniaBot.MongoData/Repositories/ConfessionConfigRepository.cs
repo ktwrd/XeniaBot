@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using XeniaBot.MongoData.Models;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.MongoData.Repositories;
 
@@ -40,12 +41,13 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
             Description = $"Add anonymous confession to <#{channelId}>"
         };
 
-        var guild = _client.GetGuild(guildId);
-        var channel = guild.GetTextChannel(modalChannelId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
+        var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(modalChannelId));
         var components = new ComponentBuilder()
             .WithButton("Confess", "confessioncontroller_confess_button", ButtonStyle.Primary);
 
-        var message = await channel.SendMessageAsync(embed: confessionEmbed.Build(), components: components.Build());
+        var message = await ExceptionHelper.RetryOnTimedOut(async () =>
+            await channel.SendMessageAsync(embed: confessionEmbed.Build(), components: components.Build()));
         data.ModalMessageId = message.Id;
         await Set(data);
     }
@@ -77,7 +79,7 @@ public class ConfessionConfigRepository : BaseRepository<ConfessionGuildModel>
     }
     public async Task Delete(ConfessionGuildModel model)
     {
-        var guild = _client.GetGuild(model.GuildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(model.GuildId));
         if (guild == null)
             throw new Exception($"Guild {model.GuildId} not found");
         var channel = guild.GetTextChannel(model.ModalChannelId);

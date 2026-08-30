@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord.Data.Models.RolePreserve;
 using XeniaDiscord.Data.Repositories;
@@ -18,7 +19,7 @@ public class AdminRolePreserveComponentViewModel : IGuildViewModel, IAlertViewMo
     {
         var discord = CoreContext.Instance!.GetRequiredService<DiscordShardedClient>();
         var repo = context.RequestServices.GetRequiredService<RolePreserveGuildRepository>();
-        Guild = discord.GetGuild(guildId);
+        Guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         RolePreserve = await repo.GetAsync(Guild.Id) ?? new RolePreserveGuildModel(Guild.Id);
     }
 }

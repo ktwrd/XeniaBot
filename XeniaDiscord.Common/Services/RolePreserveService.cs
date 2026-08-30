@@ -413,7 +413,7 @@ public class RolePreserveService : BaseService
         SocketGuild? guild;
         try
         {
-            guild = _client.GetGuild(guildId);
+            guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
             if (guild == null) return;
         }
         catch (Exception ex)
@@ -466,7 +466,7 @@ public class RolePreserveService : BaseService
         ulong guildId,
         DateTime? start = null)
     {
-        var guild = _client.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
         if (guild == null) return $"Guild does not exist: `{guildId}`";
 
         return await UseLatestSnapshotsForGuild(db, guild, start: start);
@@ -474,7 +474,7 @@ public class RolePreserveService : BaseService
 
     public async Task<UnitResult<string>> UseLatestSnapshotsForGuild(ulong guildId, DateTime? start = null)
     {
-        var guild = _client.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
         if (guild == null) return $"Guild does not exist: `{guildId}`";
 
         await using var db = await _dbContextFactory.CreateDbContextAsync();

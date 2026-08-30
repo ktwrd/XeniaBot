@@ -107,7 +107,7 @@ public class BanSyncService : BaseService
     }
 
     #region Refresh Bans
-    public Task RefreshBans(ulong guildId) => RefreshBans(_client.GetGuild(guildId));
+    public Task RefreshBans(ulong guildId) => RefreshBans(ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId)));
     public async Task RefreshBans(SocketGuild guild, bool ignoreExisting = true)
     {
         var config = await _bansyncGuildRepository.GetAsync(guild.Id);

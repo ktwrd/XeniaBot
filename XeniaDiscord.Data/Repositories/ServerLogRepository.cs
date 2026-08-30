@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Data.Models.ServerLog;
 
 namespace XeniaDiscord.Data.Repositories;
@@ -272,7 +273,7 @@ public class ServerLogRepository
         IGuild? guild = null;
         try
         {
-            guild = _discordClient.GetGuild(guildId);
+            guild = ExceptionHelper.RetryOnTimedOut(() => _discordClient.GetGuild(guildId));
         }
         catch (Exception ex)
         {

@@ -6,7 +6,7 @@
         var a = "/Debugempty.png";
         if (string.IsNullOrEmpty(userId))
             return a;
-        var u = Model.Client.GetUser(ulong.Parse(userId));
+        var u = ExceptionHelper.RetryOnTimedOut(() => Model.Client.GetUser(ulong.Parse(userId)));
         if (u != null)
         {
             var x = u.GetAvatarUrl();
@@ -18,6 +18,7 @@
     }
 
 }
+@using XeniaBot.Shared.Helpers
 @using XeniaBot.WebPanel.Helpers
 @model WarnInfoViewModel
 

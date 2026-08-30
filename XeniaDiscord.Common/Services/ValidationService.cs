@@ -79,7 +79,7 @@ public class ValidationService
         IGuildChannel? channel = null;
         try
         {
-            await ExceptionHelper.RetryOnTimedOut(async() =>
+            ExceptionHelper.RetryOnTimedOut(() =>
             {
                 guild = _discord.GetGuild(guildId);
             });

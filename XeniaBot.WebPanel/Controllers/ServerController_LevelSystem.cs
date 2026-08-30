@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models.Component.FunView;
 
@@ -12,11 +13,11 @@ public partial class ServerController
 {
     public async Task<ServerLevelSystemComponentViewModel> GetLevelSystemDetails(ulong serverId)
     {
-        var guild = _discord.GetGuild(serverId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(serverId));
         var model = new ServerLevelSystemComponentViewModel
         {
             Guild = guild,
-            User = guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0)
+            User = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0))
         };
         
         var repo = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
@@ -31,7 +32,7 @@ public partial class ServerController
 
     private async Task<(bool, string?, object?)> InternalLevelSystemComponent(ulong id)
     {
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return (true, "NotFound", "Guild Not Found");
 

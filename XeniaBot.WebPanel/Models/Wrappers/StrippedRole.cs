@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Wacton.Unicolour;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Common;
 using XeniaDiscord.Data.Models.Snapshot;
 
@@ -65,7 +66,8 @@ public class StrippedRole : IStrippedRole
     public static IEnumerable<StrippedRole> FromGuild(DiscordShardedClient client, SocketGuild guild)
     {
         var roles = guild.Roles;
-        var currentUserRoles = guild.GetUser(client.CurrentUser.Id).Roles.ToList();
+        var currentUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(client.CurrentUser.Id));
+        var currentUserRoles = currentUser?.Roles.ToList() ?? [];
         var ourHighestRolePosition = currentUserRoles
             .OrderByDescending(v => v.Position)
             .Select(v => v.Position)

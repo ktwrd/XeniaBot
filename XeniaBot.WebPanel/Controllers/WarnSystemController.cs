@@ -26,8 +26,8 @@ public class WarnSystemController: BaseXeniaController
     public async Task<WarnGuildDetailsViewModel> GetDetails(ulong serverId)
     {
         var data = new WarnGuildDetailsViewModel();
-        var guild = _discord.GetGuild(serverId);
-        data.User = guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(serverId));
+        data.User = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0));
         
         await AspHelper.FillServerModel(HttpContext.RequestServices, serverId, data);
         
@@ -46,7 +46,7 @@ public class WarnSystemController: BaseXeniaController
         var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
 
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
@@ -78,7 +78,7 @@ public class WarnSystemController: BaseXeniaController
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var guild = _discord.GetGuild(latestWarnData?.GuildId ?? (ulong)0);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(latestWarnData?.GuildId ?? (ulong)0));
         if (guild == null)
             return View("NotFound", "Guild not found");
         
@@ -103,13 +103,13 @@ public class WarnSystemController: BaseXeniaController
     public async Task<IActionResult> CreateWarnWizard(ulong id, string? messageType = null, string? message = null)
     {
         var userId = AspHelper.GetUserId(HttpContext);
-        if (userId == null)
+        var user = userId.HasValue ? ExceptionHelper.RetryOnTimedOut(() => _discord.GetUser(userId.Value)) : null;
+        if (userId == null || user == null)
             return View("NotFound", "User not found");
-        var user = _discord.GetUser((ulong)userId);
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
-        var guildUser = guild.GetUser(user.Id);
+        var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
         
         var data = await GetDetails(guild.Id);
         data.User = guildUser;
@@ -128,7 +128,7 @@ public class WarnSystemController: BaseXeniaController
     [RestrictToGuild(GuildIdRouteKey = "id")]
     public async Task<IActionResult> CreateWarn(ulong id, string user, string reason)
     {
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", "Guild not found");
 

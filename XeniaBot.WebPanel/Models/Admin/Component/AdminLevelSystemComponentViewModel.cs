@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Models.Component;
@@ -19,7 +20,7 @@ public class AdminLevelSystemComponentViewModel : IGuildViewModel, IAlertViewMod
     {
         var discord = CoreContext.Instance!.GetRequiredService<DiscordShardedClient>();
         var xpConfig = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
-        Guild = discord.GetGuild(guildId);
+        Guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         XpConfig = await xpConfig.Get(Guild.Id) ?? new LevelSystemConfigModel()
         {
             GuildId = Guild.Id

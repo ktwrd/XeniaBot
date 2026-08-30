@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Services;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
@@ -31,10 +32,10 @@ public partial class ServerController
         [FromForm] string jsonData)
     {
         var guildIdStr = id.ToString();
-        var guild = _discord.GetGuild(id);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(id));
         if (guild == null)
             return View("NotFound", $"Guild not found: {id}");
-        var currentUser = guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0);
+        var currentUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0));
         if (currentUser == null)
         {
             return View("NotAuthorized");

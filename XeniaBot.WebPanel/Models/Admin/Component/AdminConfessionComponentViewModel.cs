@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.WebPanel.Models.Component;
@@ -19,7 +20,7 @@ public class AdminConfessionComponentViewModel : IGuildViewModel, IConfessionVie
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
         var discord = CoreContext.Instance!.GetRequiredService<DiscordShardedClient>();
-        Guild = discord.GetGuild(guildId);
+        Guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         var repo = CoreContext.Instance!.GetRequiredService<ConfessionConfigRepository>();
         ConfessionModel = await repo.GetGuild(Guild.Id) ?? new ConfessionGuildModel()
         {

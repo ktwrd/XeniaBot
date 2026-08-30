@@ -7,6 +7,7 @@ using XeniaBot.Core.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Modules;
 
@@ -38,8 +39,8 @@ public class CounterModule : InteractionModuleBase
         data.ChannelId = targetChannel.Id;
         await counterConfig.Set(data);
 
-        var guild = await Context.Client.GetGuildAsync(Context.Guild.Id);
-        var targetTextChannel = await guild.GetTextChannelAsync(targetChannel.Id);
+        var guild = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Client.GetGuildAsync(Context.Guild.Id));
+        var targetTextChannel = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetTextChannelAsync(targetChannel.Id));
         await targetTextChannel.SendMessageAsync("Counting has been enabled, start with `1`");
 
         await Context.Interaction.RespondAsync($"Counting channel changed to <#{data.ChannelId}>");

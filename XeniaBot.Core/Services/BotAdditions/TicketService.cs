@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using XeniaBot.MongoData;
 using XeniaBot.MongoData.Models;
 using XeniaBot.DiscordCache.Models;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -36,15 +37,15 @@ public class TicketService : BaseService
             throw new TicketException("Guild not setup (config is null)");
 
         // Fetch guild and category, throw errors if they are null
-        var guild = _client.GetGuild(guildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(guildId));
         if (guild == null)
             throw new TicketException($"Guild not found ({guildId})");
 
-        var role = await guild.GetRoleAsync(config.RoleId);
+        var role = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(config.RoleId));
         if (role == null)
             throw new TicketException($"Ticket Manager Role not found ({config.RoleId})");
 
-        var category = guild.GetCategoryChannel(config.CategoryId);
+        var category = ExceptionHelper.RetryOnTimedOut(() => guild.GetCategoryChannel(config.CategoryId));
         if (category == null)
             throw new TicketException($"Category not found ({config.CategoryId})");
 
@@ -60,13 +61,13 @@ public class TicketService : BaseService
         // Attempt to create channel, then move it to category
         try
         {
-            textChannel = await guild.CreateTextChannelAsync($"ticket-{ticketDetails.Uid}");
-            await textChannel.ModifyAsync(prop => prop.CategoryId = category.Id);
+            textChannel = await ExceptionHelper.RetryOnTimedOut(() => guild.CreateTextChannelAsync($"ticket-{ticketDetails.Uid}"));
+            await ExceptionHelper.RetryOnTimedOut(() => textChannel.ModifyAsync(prop => prop.CategoryId = category.Id));
             ticketDetails.ChannelId = textChannel.Id;
             var ignoreOverwrite = new OverwritePermissions();
             ignoreOverwrite.Modify(viewChannel: PermValue.Deny);
-            await textChannel.AddPermissionOverwriteAsync(guild.EveryoneRole, ignoreOverwrite);
-            await textChannel.AddPermissionOverwriteAsync(role, GetOverwritePermissions());
+            await ExceptionHelper.RetryOnTimedOut(() => textChannel.AddPermissionOverwriteAsync(guild.EveryoneRole, ignoreOverwrite));
+            await ExceptionHelper.RetryOnTimedOut(() => textChannel.AddPermissionOverwriteAsync(role, GetOverwritePermissions()));
         }
         catch (Exception ex)
         {
@@ -89,22 +90,23 @@ public class TicketService : BaseService
         if (ticket.Users.Contains(userId))
             throw new TicketException("User already exists in ticket");
 
-        var guild = _client.GetGuild(ticket.GuildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(ticket.GuildId));
         if (guild == null)
             throw new TicketException($"Guild not found ({ticket.GuildId})");
 
-        var user = guild.GetUser(userId);
+        var user = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(userId));
         if (user == null)
             throw new TicketException($"User not found ({userId})");
 
-        var channel = guild.GetTextChannel(ticket.ChannelId);
+        var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(ticket.ChannelId));
         if (channel == null)
             throw new TicketException($"Ticket Channel not found ({ticket.ChannelId})");
 
         // Modify channel permission overwrites
         try
         {
-            await channel.AddPermissionOverwriteAsync(user, GetOverwritePermissions());
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+                await channel.AddPermissionOverwriteAsync(user, GetOverwritePermissions()));
         }
         catch (Exception ex)
         {
@@ -134,14 +136,14 @@ public class TicketService : BaseService
             };
         }
 
-        var guild = _client.GetGuild(ticket.GuildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(ticket.GuildId));
         if (guild == null)
             throw new TicketGuildNotFoundException($"Guild not found ({ticket.GuildId})")
             {
                 GuildId = ticket.GuildId
             };
 
-        var user = guild.GetUser(userId);
+        var user = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(userId));
         if (user == null)
             throw new TicketUserNotFoundException($"User not found ({userId}) in guild \"{guild.Name}\" ({guild.Id})")
             {
@@ -150,7 +152,7 @@ public class TicketService : BaseService
                 TicketChannelId = channelId
             };
 
-        var channel = guild.GetTextChannel(ticket.ChannelId);
+        var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(ticket.ChannelId));
         if (channel == null)
             throw new TicketChannelNotFoundException($"Ticket Channel not found ({ticket.ChannelId})")
             {
@@ -161,7 +163,8 @@ public class TicketService : BaseService
         // Remove user override
         try
         {
-            await channel.RemovePermissionOverwriteAsync(user);
+            await ExceptionHelper.RetryOnTimedOut(async () =>
+                await channel.RemovePermissionOverwriteAsync(user));
         }
         catch (Exception ex)
         {
@@ -188,21 +191,21 @@ public class TicketService : BaseService
                 GuildId = ticket.GuildId
             };
 
-        var guild = _client.GetGuild(ticket.GuildId)
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(ticket.GuildId))
             ?? throw new TicketGuildNotFoundException($"Guild not found ({ticket.GuildId})")
             {
                 TicketChannelId = ticketChannelId,
                 GuildId = ticket.GuildId
             };
 
-        var role = guild.GetRole(config.RoleId)
+        var role = ExceptionHelper.RetryOnTimedOut(() => guild.GetRole(config.RoleId))
             ?? throw new TicketManagerRoleNotFoundException($"Ticket Manager Role not found ({config.RoleId}) for guild \"{guild.Name}\" ({guild.Id})")
             {
                 GuildId = guild.Id,
                 RoleId = config.RoleId
             };
 
-        var logChannel = guild.GetTextChannel(config.LogChannelId);
+        var logChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(config.LogChannelId));
         if (logChannel == null)
             throw new TicketLogChannelNotFoundException(
                 $"Ticket Log Channel not found ({config.LogChannelId}) for guild \"{guild.Name}\" ({guild.Id})")
@@ -211,7 +214,7 @@ public class TicketService : BaseService
                 LogChannelId = config.LogChannelId
             };
 
-        var ticketChannel = guild.GetTextChannel(ticket.ChannelId)
+        var ticketChannel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(ticket.ChannelId))
             ?? throw new TicketChannelNotFoundException(
                 $"Ticket Channel not found ({ticket.ChannelId}) for guild \"{guild.Name}\" ({guild.Id})")
             {
@@ -233,7 +236,7 @@ public class TicketService : BaseService
     private async Task<InternalTicketDetails> GetTicketDetails(ulong ticketChannelId, ulong closingUserId)
     {
         var details = await GetTicketDetails(ticketChannelId);
-        var closingUser = details.Guild.GetUser(closingUserId);
+        var closingUser = ExceptionHelper.RetryOnTimedOut(() => details.Guild.GetUser(closingUserId));
         if (closingUser == null)
             throw new TicketUserNotFoundException($"Could not find moderator user who is closing this ticket ({closingUserId})")
             {
@@ -313,9 +316,10 @@ public class TicketService : BaseService
         {
             attachmentList.Add(new FileAttachment(ms, "channelContent.json"));
         }
-        await details.LogChannel.SendFilesAsync(attachmentList, "", embed: embed.Build());
-
-        await details.TicketChannel.DeleteAsync();
+        await ExceptionHelper.RetryOnTimedOut(async () =>
+            await details.LogChannel.SendFilesAsync(attachmentList, "", embed: embed.Build()));
+        await ExceptionHelper.RetryOnTimedOut(async () =>
+            await details.TicketChannel.DeleteAsync());
 
         return transcript;
     }
@@ -358,15 +362,16 @@ public class TicketService : BaseService
     }
     public async Task<TicketTranscriptModel?> GenerateTranscript(TicketModel ticket)
     {
-        var guild = _client.GetGuild(ticket.GuildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(ticket.GuildId));
         if (guild == null)
             throw new Exception($"Failed to fetch guild {ticket.GuildId}");
-        var channel = guild.GetTextChannel(ticket.ChannelId);
+        var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(ticket.ChannelId));
         if (channel == null)
             throw new Exception($"Failed to fetch ticket channel {ticket.ChannelId}");
 
         // Fetch all messages in channel
-        var messages = await channel.GetMessagesAsync(int.MaxValue).FlattenAsync();
+        var messages = await ExceptionHelper.RetryOnTimedOut(() =>
+            channel.GetMessagesAsync(int.MaxValue).FlattenAsync());
 
         var model = new TicketTranscriptModel()
         {
@@ -379,7 +384,7 @@ public class TicketService : BaseService
             await Set(_tk);
         }
 
-        model.Messages = messages.Select(v => TicketTranscriptMessage.FromMessage(v)).ToArray();
+        model.Messages = [.. messages.Select(TicketTranscriptMessage.FromMessage)];
 
         var collection = GetTranscriptCollection();
         if (collection == null)
@@ -398,15 +403,15 @@ public class TicketService : BaseService
     /// <exception cref="InnerTicketException">Thrown when logic inside of this function is fucked.</exception>
     public async Task<List<CacheMessageModel>> GenerateChannelBackup(TicketModel ticket)
     {
-        var guild = _client.GetGuild(ticket.GuildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(ticket.GuildId));
         if (guild == null)
             throw new InnerTicketException($"Guild {ticket.GuildId} not found.", ticket);
 
-        var channel = guild.GetTextChannel(ticket.ChannelId);
+        var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(ticket.ChannelId));
         if (channel == null)
             throw new InnerTicketException($"Guild {ticket.ChannelId} not found.", ticket);
 
-        var messages = await channel.GetMessagesAsync(int.MaxValue).FlattenAsync();
+        var messages = await ExceptionHelper.RetryOnTimedOut(() => channel.GetMessagesAsync(int.MaxValue).FlattenAsync());
         var msgArr = messages.ToArray();
 
         var result = new List<CacheMessageModel>();

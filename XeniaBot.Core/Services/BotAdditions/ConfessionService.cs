@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -43,9 +44,10 @@ public class ConfessionService : BaseService
             await arg.RespondAsync("Couldn't find configuration for guild " + arg.GuildId.ToString());
             return;
         }
-        var guild = _client.GetGuild(data.GuildId);
-        var channel = guild.GetTextChannel(data.ChannelId);
-        await channel.SendMessageAsync(embed: GenerateConfessionEmbed(content).Build());
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _client.GetGuild(data.GuildId));
+        var channel = ExceptionHelper.RetryOnTimedOut(() => guild.GetTextChannel(data.ChannelId));
+        await ExceptionHelper.RetryOnTimedOut(async () =>
+            await channel.SendMessageAsync(embed: GenerateConfessionEmbed(content).Build()));
 
         await arg.RespondAsync("Done!", ephemeral: true);
     }

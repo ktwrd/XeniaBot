@@ -6,6 +6,7 @@ using NLog;
 using System.Diagnostics;
 using System.Text;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Helpers;
 using XeniaDiscord.Common.Services;
 
 namespace XeniaDiscord.Interactions.Modules.Admin;
@@ -40,7 +41,8 @@ public class AdmRolePreserveModule : InteractionModuleBase
             await _service.PreserveAll();
             sw.Stop();
             var duration = Math.Round(sw.Elapsed.TotalMilliseconds / 1000f, 3);
-            var count = Context.Client.GetGuildsAsync().GetAwaiter().GetResult().Count;
+            var count = ExceptionHelper.RetryOnTimedOut(() =>
+                Context.Client.GetGuildsAsync().GetAwaiter().GetResult().Count);
             await FollowupAsync($"Took {duration}s to preserve all roles in {count} guild(s)");
         }
         catch (Exception ex)

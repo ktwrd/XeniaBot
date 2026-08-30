@@ -57,7 +57,7 @@ public class ServerLogService : BaseService
             return;
         }
         var targetChannels = await _serverLogRepo.GetChannelsForGuild(options.GuildId, [options.Event, ServerLogEvent.Fallback]);
-        var guild = _discord.GetGuild(options.GuildId);
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(options.GuildId));
 
         if (options.Attachments.Count > 10)
         {

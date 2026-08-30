@@ -237,7 +237,7 @@ public class DataMigrationModule : InteractionModuleBase
             foreach (var guildIdStr in missingGuildIds)
             {
                 var guildId = guildIdStr.ParseRequiredULong(nameof(guildIdStr), false);
-                var guild = _discord.GetGuild(guildId);
+                var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(guildId));
                 if (guild == null)
                 {
                     guildCache.Add(new GuildCacheModel(guildId)

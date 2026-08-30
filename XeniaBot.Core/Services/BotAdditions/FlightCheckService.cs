@@ -9,6 +9,7 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 using System.Threading;
 using NLog;
+using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Core.Services.BotAdditions;
 
@@ -132,7 +133,7 @@ public class FlightCheckService : BaseService
     private bool HasValidPermissions(SocketGuild guild)
     {
         // Check if we have the correct permissions
-        var selfMember = guild.GetUser(_discord.CurrentUser.Id);
+        var selfMember = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(_discord.CurrentUser.Id));
         var targetPerms = new GuildPermissions(_config.InvitePermissions);
         var permissions = selfMember.GuildPermissions.ToList();
         
