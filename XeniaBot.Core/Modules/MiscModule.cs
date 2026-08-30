@@ -37,6 +37,7 @@ public class MiscModule : InteractionModuleBase
     [UsedImplicitly]
     public async Task Info()
     {
+        var urlDashboard = _config.HasDashboard ? "\n[Dashboard](" + _config.DashboardUrl + ")" : string.Empty;
         var embed = DiscordHelper.BaseEmbed()
             .WithDescription(string.Join(" ",
                 "Heya I'm Xenia, a general-purpose Discord Bot made by [kate](https://kate.pet).",
@@ -51,6 +52,7 @@ public class MiscModule : InteractionModuleBase
                 $"Build Date: {_details.VersionDate}",
                 "```"
             ))
+            .AddField("Links", "[Privacy Policy](https://xenia.kate.pet/p/privacy_policy)\n[Github](https://github.com/ktwrd/XeniaBot)\n[Website](https://xenia.kate.pet)" + urlDashboard)
             .WithColor(new Color(255, 255, 255));
         await Context.Interaction.RespondAsync(embed: embed.Build());
     }
@@ -73,7 +75,7 @@ public class MiscModule : InteractionModuleBase
         {
             await Context.Interaction.RespondAsync(embed: new EmbedBuilder()
                 .WithTitle("Xenia Dashboard")
-                .WithDescription($"Unfortunately, the dashboard has not been setup yet. Please wait for the Xenia Dashboard to become publicly available.\n\nTo be the first to know, [join our discord server](https://kate.pet/l/discord)!")
+                .WithDescription("Unfortunately, the dashboard has not been setup yet. Please wait for the Xenia Dashboard to become publicly available.\n\nTo be the first to know, [join our discord server](https://kate.pet/l/discord)!")
                 .WithColor(Color.Red)
                 .WithCurrentTimestamp()
                 .Build());
