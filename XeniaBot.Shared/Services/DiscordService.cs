@@ -122,9 +122,12 @@ public class DiscordService
         {
             // TODO rewrite this entire method. it's not compatible with DiscordShardedClient!
             // (ConnectionState is always Disconnected, but it's connected for the individual shard)
+            if (_client.Shards != null)
+            {
+                await Task.WhenAll(_client.Shards.Select(CheckShardConnectionStatus));
+            }
             await Task.Delay(15_000);
-            continue;
-            switch (_client.ConnectionState)
+            /*switch (_client.ConnectionState)
             {
                 case ConnectionState.Disconnected:
                     connectingTime = 0;
@@ -182,7 +185,47 @@ public class DiscordService
                     connectingTime = 0;
                     await Task.Delay(5000);
                     break;
+            }*/
+        }
+    }
+
+    private async Task CheckShardConnectionStatus(DiscordSocketClient client, int index)
+    {
+        try
+        {
+            while (client.ConnectionState == ConnectionState.Disconnected)
+            {
+                try
+                {
+                    Log.Warn($"[shard={index}] Reconnecting");
+                    await client.StartAsync();
+                    await Task.Delay(2000);
+                }
+                catch (Exception ex)
+                {
+                    const string msg = "Failed to re-connect client (after disconnected for some reason)";
+                    Log.Error(ex, msg);
+                    SentrySdk.CaptureException(
+                        new InvalidOperationException(msg,
+                            ex));
+                }
             }
+
+            var c = 0;
+            while (client.ConnectionState == ConnectionState.Connecting && c < 15_000)
+            {
+                await Task.Delay(500);
+                c += 500;
+            }
+
+            if (c > 0)
+            {
+                Log.Info($"[shard={index}] Successfully reconnected");
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Fatal(e, $"[shard={index}] Failed to check connection status");
         }
     }
 
