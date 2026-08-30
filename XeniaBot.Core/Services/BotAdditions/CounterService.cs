@@ -82,7 +82,8 @@ public class CounterService : BaseService
 
         // If number is not the next number, then we delete the message.
         var context = new ShardedCommandContext(_client, message);
-        var targetValue = value + 1;
+        var data = await _config.Get(context.Guild, context.Channel);
+        var targetValue = data.Count + 1;
         if (value != targetValue)
         {
             await DiscordHelper.DeleteMessage(_client, arg);
@@ -90,7 +91,6 @@ public class CounterService : BaseService
         }
 
         // Update record
-        var data = await _config.Get(context.Guild, context.Channel);
         data.Count = value;
         await _config.Set(data);
     }
