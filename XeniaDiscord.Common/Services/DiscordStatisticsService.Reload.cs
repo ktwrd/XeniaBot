@@ -7,7 +7,7 @@ namespace XeniaDiscord.Common.Services;
 partial class DiscordStatisticsService
 {
     #region Collection Thread
-    private bool _collectionThreadExists = false;
+    private bool _collectionThreadExists;
     private void CreateCollectionThread()
     {
         if (_collectionThreadExists) return;
@@ -105,6 +105,7 @@ partial class DiscordStatisticsService
     }
     private async Task ReloadMetrics_BanSyncRecordsByGuild()
     {
+        if (_client == null) return;
         using var trans = SentryHelper.CreateTransaction();
         try
         {
@@ -194,7 +195,7 @@ partial class DiscordStatisticsService
     }
     private Task ReloadMetrics_Channels()
     {
-        if (!_configData.Prometheus.Enable) return Task.CompletedTask;
+        if (!_configData.Prometheus.Enable || _client == null) return Task.CompletedTask;
 
         long count = 0;
         count += _client.Shards.Sum(e => e.GroupChannels.Count);
@@ -207,7 +208,7 @@ partial class DiscordStatisticsService
     }
     private async Task ReloadMetrics_GuildChannels()
     {
-        if (!_configData.Prometheus.Enable) return;
+        if (!_configData.Prometheus.Enable || _client == null) return;
         var trans = SentryHelper.CreateTransaction();
         try
         {
@@ -262,8 +263,7 @@ partial class DiscordStatisticsService
     /// </summary>
     private Task ReloadMetrics_GuildCount()
     {
-        if (!_configData.Prometheus.Enable) return Task.CompletedTask;
-
+        if (!_configData.Prometheus.Enable || _client == null) return Task.CompletedTask;
         var trans = SentryHelper.CreateTransaction();
         try
         {
@@ -287,39 +287,89 @@ partial class DiscordStatisticsService
         return Task.CompletedTask;
     }
 
-    private string[] _metricsLatencyStrings = [];
+    private Dictionary<int, string[]> _metricsLatencyStrings = [];
+    private readonly SemaphoreSlim _reloadMetricsLatencyLock = new(1, 1);
     private Task ReloadMetrics_Latency()
     {
         if (!_configData.Prometheus.Enable) return Task.CompletedTask;
-
+        if (_client?.Shards == null)
+        {
+            _reloadMetricsLatencyLock.Wait();
+            try
+            {
+                _metricsLatencyStrings[0] =
+                [
+                    "0",
+                    "",
+                    "",
+                    "Connecting",
+                    "0"
+                ];
+                _statDiscordLatency.WithLabels(_metricsLatencyStrings[0]).Set(0);
+            }
+            finally
+            {
+                _reloadMetricsLatencyLock.Release();
+            }
+            return Task.CompletedTask;
+        }
         var usernameFormatted = "";
         var displayName = "";
         var userId = "";
-        var latency = _client.Latency;
-        if (_client.CurrentUser != null)
+        var userPopulated = false;
+        var details = new Dictionary<int, string[]>();
+        var latency = new Dictionary<int, int>();
+        _reloadMetricsLatencyLock.Wait();
+        try
         {
-            userId = _client.CurrentUser.Id.ToString();
-            usernameFormatted = _client.CurrentUser.Username;
-            if (!string.IsNullOrEmpty(_client.CurrentUser.Discriminator.Trim('0')))
-                usernameFormatted += $"#{_client.CurrentUser.Discriminator}";
-            displayName = usernameFormatted;
-            if (!string.IsNullOrEmpty(_client.CurrentUser.GlobalName))
-                displayName = _client.CurrentUser.GlobalName;
-        }
+            var count = _client.Shards.Count;
+            var i = 0;
+            foreach (var shard in _client.Shards)
+            {
+                if (shard.CurrentUser != null && !userPopulated)
+                {
+                    userId = shard.CurrentUser.Id.ToString();
+                    usernameFormatted = shard.CurrentUser.Username;
+                    if (!string.IsNullOrWhiteSpace(shard.CurrentUser.Discriminator.Trim('0')))
+                        usernameFormatted += $"#{shard.CurrentUser.Discriminator}";
+                    displayName = usernameFormatted;
+                    if (!string.IsNullOrEmpty(shard.CurrentUser.GlobalName))
+                        displayName = shard.CurrentUser.GlobalName;
+                    userPopulated = true;
+                }
 
-        var connectionState = _client.ConnectionState.ToString();
-        if (_metricsLatencyStrings.Length == 4 &&
-            connectionState != _metricsLatencyStrings[3])
-        {
-            _statDiscordLatency.RemoveLabelled(_metricsLatencyStrings);
+                details[i] =
+                [
+                    userId,
+                    usernameFormatted,
+                    displayName,
+                    shard.ConnectionState.ToString(),
+                    i.ToString("D"),
+                ];
+                latency[i] = shard.Latency;
+                i++;
+            }
+
+            foreach (var pair in details)
+            {
+                if (_metricsLatencyStrings.TryGetValue(pair.Key, out var strArr))
+                {
+                    _statDiscordLatency.RemoveLabelled(strArr);
+                }
+                _statDiscordLatency.WithLabels(pair.Value).Set(latency[pair.Key]);
+            }
+            foreach (var item in _metricsLatencyStrings.Where(e => e.Key >= count))
+            {
+                _statDiscordLatency.RemoveLabelled(item.Value);
+            }
+            _statDiscordShards.Set(count);
+
+            _metricsLatencyStrings = details;
         }
-        _metricsLatencyStrings = [
-            userId,
-            usernameFormatted,
-            displayName,
-            _client.ConnectionState.ToString()
-        ];
-        _statDiscordLatency.WithLabels(_metricsLatencyStrings).Set(latency);
+        finally
+        {
+            _reloadMetricsLatencyLock.Release();
+        }
         return Task.CompletedTask;
     }
     #endregion

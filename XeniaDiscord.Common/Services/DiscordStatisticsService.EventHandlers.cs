@@ -22,7 +22,7 @@ partial class DiscordStatisticsService
 
     private async Task<SlashCommandInteractionInfo> GetInfo(SocketSlashCommand interaction)
     {
-        var guild = interaction.GuildId.HasValue ? _client.GetGuild(interaction.GuildId.Value) : null;
+        var guild = interaction.GuildId.HasValue ? _client?.GetGuild(interaction.GuildId.Value) : null;
         var usernameFormatted = interaction.User.Username;
         if (!string.IsNullOrEmpty(interaction.User.Discriminator?.Trim('0')))
             usernameFormatted += $"#{interaction.User.Discriminator}";

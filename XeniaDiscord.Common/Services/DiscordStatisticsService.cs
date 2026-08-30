@@ -14,7 +14,7 @@ namespace XeniaDiscord.Common.Services;
 public partial class DiscordStatisticsService : BaseService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
-    private readonly DiscordShardedClient _client;
+    private readonly DiscordShardedClient? _client;
     private readonly ConfigData _configData;
     private readonly PrometheusService _prom;
     private readonly ProgramDetails _details;
@@ -71,8 +71,13 @@ public partial class DiscordStatisticsService : BaseService
                 "user_id",
                 "username",
                 "global_name",
-                "connection_state"
+                "connection_state",
+                "shard_id",
             ],
+            publish: false);
+        _statDiscordShards = _prom.CreateGauge(
+            "xenia_discord_shards",
+            "Shards",
             publish: false);
         _statInteractions = _prom.CreateCounter(
             "xenia_discord_interaction_count",
@@ -154,6 +159,7 @@ public partial class DiscordStatisticsService : BaseService
     private readonly Gauge _statGuildChannels;
     private readonly Gauge _statChannels;
     private readonly Gauge _statDiscordLatency;
+    private readonly Gauge _statDiscordShards;
     private readonly Counter _statInteractions;
     private readonly Counter _statMessages;
     private readonly Counter _statDiscordEvents;
