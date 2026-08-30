@@ -40,12 +40,17 @@ public class CoreContext
         RegisteredBaseControllers = [];
         Instance = this;
         Config = new ConfigService(Details);
-        Discord = new DiscordShardedClient(new DiscordSocketConfig()
+        var discordSocketConfig = new DiscordSocketConfig()
         {
-            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers,
             UseInteractionSnowflakeDate = false,
             AlwaysDownloadUsers = true,
-        });
+        };
+        if (details.Platform == XeniaPlatform.Bot)
+        {
+            discordSocketConfig.GatewayIntents |= GatewayIntents.MessageContent;
+        }
+        Discord = new DiscordShardedClient(discordSocketConfig);
     }
 
     public async Task MainAsync(string[] args, CoreContextBeforeServiceBuildDelegate beforeServiceBuild)
