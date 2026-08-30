@@ -364,7 +364,7 @@ public class XeniaDbContext : DbContext
             .HasForeignKey(e => e.GuildId);
 
             b.HasMany(e => e.ServerLogChannels)
-            .WithOne()
+            .WithOne(e => e.ServerLogGuild)
             .HasForeignKey(e => e.GuildId);
         });
         builder.Entity<ServerLogChannelModel>(b =>
