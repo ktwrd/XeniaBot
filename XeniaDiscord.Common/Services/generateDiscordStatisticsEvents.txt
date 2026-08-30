@@ -1,4 +1,4 @@
-﻿ApplicationCommandCreated|SocketApplicationCommand
+ApplicationCommandCreated|SocketApplicationCommand
 ApplicationCommandDeleted|SocketApplicationCommand
 ApplicationCommandUpdated|SocketApplicationCommand
 AuditLogCreated|SocketAuditLogEntry,SocketGuild

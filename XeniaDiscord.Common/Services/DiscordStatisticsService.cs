@@ -23,6 +23,7 @@ public partial class DiscordStatisticsService : BaseService
     {
         _prom.ServerStart -= InitializePrometheus;
         _prom.ReloadMetrics -= ReloadMetrics;
+        ShutdownIncreaseEvents();
     }
     public DiscordStatisticsService(IServiceProvider services) : base(services)
     {
@@ -167,11 +168,14 @@ public partial class DiscordStatisticsService : BaseService
     private readonly Gauge _statBanSyncRecords;
     private readonly Gauge _statBanSyncGuilds;
     private readonly Gauge _statBanSyncGuildSnapshots;
+    
+    public DateTimeOffset? ReceivedLastEventAt { get; private set; }
 
     private void IncreaseEvent(DiscordStatisticsEventType type)
     {
         try
         {
+            ReceivedLastEventAt = DateTimeOffset.UtcNow;
             _statDiscordEvents.WithLabels(type.ToString()).Inc();
         }
         catch (Exception ex)
