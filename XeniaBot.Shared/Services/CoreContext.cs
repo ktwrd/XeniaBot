@@ -17,7 +17,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Discord.Net.Rest;
 using XeniaBot.Shared.Helpers;
 
 namespace XeniaBot.Shared.Services;
@@ -46,7 +45,6 @@ public class CoreContext
             GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
             UseInteractionSnowflakeDate = false,
             AlwaysDownloadUsers = true,
-            // ShardId = Config.Data.ShardId
         });
     }
 
@@ -167,8 +165,12 @@ public class CoreContext
             OnQuit(1);
         }
     }
-    public IMongoDatabase GetDatabase()
+    public IMongoDatabase? GetDatabase()
     {
+        var name = Config.Data.MongoDB.DatabaseName;
+        var names = MongoDB.ListDatabaseNames().ToList();
+        if (names.All(e => e != name))
+            return null;
         return MongoDB.GetDatabase(Config.Data.MongoDB.DatabaseName);
     }
 
