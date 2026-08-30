@@ -38,10 +38,7 @@ public class DiscordService
         _client.ShardReady += OnShardReady;
         _client.ShardLatencyUpdated += ClientOnShardLatencyUpdated;
         // _client.Ready += OnClientReady;
-        _client.MessageReceived += async (arg) =>
-        {
-            MessageReceived?.Invoke(arg);
-        };
+        _client.MessageReceived += OnMessageReceived;
         _client.ShardDisconnected += OnClientDisconnected;
         // _client.Disconnected += OnClientDisconnected;
         // _client.LatencyUpdated += OnClientLatencyUpdated;
@@ -49,30 +46,36 @@ public class DiscordService
         CreateLatencySanityCheckThread();
     }
 
+    private async Task OnMessageReceived(SocketMessage message)
+    {
+        if (MessageReceived is null) return;
+        await MessageReceived(message);
+    }
+
     private readonly Dictionary<int, int> _shardLatency = [];
     private Dictionary<int, int> _publicShardLatency = [];
     public IReadOnlyDictionary<int, int> ShardLatency => _publicShardLatency;
 
-    private Task ClientOnShardLatencyUpdated(int arg1, int arg2, DiscordSocketClient arg3)
+    private Task ClientOnShardLatencyUpdated(int before, int latency, DiscordSocketClient client)
     {
         var i = 0;
         foreach (var e in _client.Shards)
         {
-            if (ReferenceEquals(e, arg3)) break;
+            if (ReferenceEquals(e, client)) break;
             i++;
         }
 
         lock (_shardLatency)
         {
             _latencyLastUpdated = DateTimeOffset.UtcNow;
-            _shardLatency[i] = arg2;
+            _shardLatency[i] = latency;
             _publicShardLatency = new Dictionary<int, int>(_shardLatency.Where(e => e.Key < _client.Shards.Count && e.Key >= 0));
         }
         return Task.CompletedTask;
     }
 
     public int ShardsReady { get; private set; }
-    public int ShardCount => _client.Shards.Count;
+    public int? ShardCount => _client?.Shards?.Count;
 
     private async Task OnShardReady(DiscordSocketClient shard)
     {
@@ -183,6 +186,7 @@ public class DiscordService
         }
     }
 
+    #region Thread - Sanity Check
     private void CreateLatencySanityCheckThread()
     {
         new Thread(() =>
@@ -207,28 +211,28 @@ public class DiscordService
         Log.Info("Created thread");
         while (true)
         {
-            if (_readyAt.HasValue && _latencyLastUpdated.HasValue)
+            if (!_readyAt.HasValue || !_latencyLastUpdated.HasValue)
             {
-                if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(5))
-                {
-                    Thread.Sleep(60_000);
-                    continue;
-                }
-                var now = DateTimeOffset.UtcNow;
-                var delta = now > _latencyLastUpdated
-                    ? now - _latencyLastUpdated
-                    : _latencyLastUpdated - now;
-                if (delta > TimeSpan.FromMinutes(5))
-                {
-                    Log.Fatal("Latency was last updated >5min ago!!! Aborting process so it can be automatically restarted by docker");
-                    Environment.Exit(0);
-                    return;
-                }
+                Thread.Sleep(1_000);
+                continue;
             }
-
-            Thread.Sleep(1_000);
+            if (_latencyLastUpdated.Value - _readyAt.Value < TimeSpan.FromMinutes(5))
+            {
+                Thread.Sleep(60_000);
+                continue;
+            }
+            var now = DateTimeOffset.UtcNow;
+            var delta = now > _latencyLastUpdated
+                ? now - _latencyLastUpdated
+                : _latencyLastUpdated - now;
+            if (delta < TimeSpan.FromMinutes(5)) continue;
+            
+            Log.Fatal("Latency was last updated >=5min ago!!! Aborting process so it can be automatically restarted by docker");
+            Environment.Exit(0);
+            return;
         }
     }
+    #endregion
 
     public async Task Run()
     {
@@ -262,7 +266,7 @@ public class DiscordService
         Log.Info("Bot is ready!");
     }
 
-    public event Func<SocketMessage, Task>? MessageReceived;
+    public event MessageReceivedEventHandler? MessageReceived;
     #endregion
 
     #region Event Handling
@@ -292,3 +296,5 @@ public class DiscordService
     }
     #endregion
 }
+
+public delegate Task MessageReceivedEventHandler(SocketMessage message);
