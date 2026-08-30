@@ -48,7 +48,8 @@ public class SettingsController : Controller
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
     }
 
-    [Route("", Name = "Guild_RolePreserve_Settings_Index")]
+    [HttpGet]
+    [HttpOptions]
     public async Task<IActionResult> Index(ulong guildId)
     {
         var vm = await GetViewModel(guildId);
