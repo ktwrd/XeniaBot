@@ -16,11 +16,11 @@ namespace XeniaDiscord.Hosting;
 
 public static class HostExtensions
 {
-    public static IHostBuilder UseXeniaCore(this IHostBuilder builder)
+    public static IHostBuilder UseXeniaCore(this IHostBuilder builder, XeniaCoreOptions options)
     {
         return builder.ConfigureServices(services =>
         {
-            services.AddXeniaCore(new());
+            services.AddXeniaCore(options);
         });
     }
     

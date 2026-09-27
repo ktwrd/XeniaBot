@@ -24,8 +24,8 @@ public class XeniaHostedService(IServiceProvider services, ILogger<XeniaHostedSe
         
         var discord = services.GetRequiredService<DiscordService>();
         discord.Ready += DiscordServiceOnReady;
-
         await discord.Run();
+        // await Task.Delay(-1, cancellationToken);
     }
 
     private void RunServiceInit()

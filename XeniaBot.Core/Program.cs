@@ -5,12 +5,17 @@ using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using XeniaBot.Core.Helpers;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog.Web;
+using Prometheus;
+using Sentry.AspNetCore;
 using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.Logic.Services;
 using XeniaBot.MongoData.Repositories;
@@ -18,14 +23,15 @@ using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaDiscord;
-using XeniaDiscord.Common;
+using XeniaDiscord.Data;
+using XeniaDiscord.Hosting;
 
 namespace XeniaBot.Core;
 
 public static class Program
 {
     #region Properties
-    private static readonly Logger log = LogManager.GetCurrentClassLogger();
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
     public static readonly JsonSerializerOptions SerializerOptions = new()
     {
         IgnoreReadOnlyFields = false,
@@ -59,11 +65,11 @@ public static class Program
             {
                 if (name == null)
                 {
-                    log.Warn($"`Assembly.GetName()` resulted in null (assembly: {asm})");
+                    Log.Warn($"`Assembly.GetName()` resulted in null (assembly: {asm})");
                 }
                 else if (name.Version == null)
                 {
-                    log.Warn($"`Assembly.GetName().Version` is null (assembly: {asm})");
+                    Log.Warn($"`Assembly.GetName().Version` is null (assembly: {asm})");
                 }
                 return null;
             }
@@ -79,35 +85,94 @@ public static class Program
         PlatformTag = "Master",
         Debug = Debug
     };
-#if DEBUG
+    #if DEBUG
     private const bool Debug = true;
-#else
+    #else
     private const bool Debug = false;
-#endif
-    public static CoreContext Core { get; private set; }
+    #endif
     #endregion
     public static void Main(string[] args)
     {
-        LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
-
         StartTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-        Core = new CoreContext(ProgramDetails)
-        {
-            StartTimestamp = StartTimestamp,
-            RegisterModules = CoreContextRegisterModules,
-            RegisterDeveloperModules = CoreContextRegisterDeveloperModules
-        };
         LogManager.Setup().LoadConfigurationFromFile(FeatureFlags.NLogFileLocation);
         if (!string.IsNullOrEmpty(FeatureFlags.SentryDSN))
         {
             SentrySdk.Init(Update);
-            LogManager.Configuration ??= new();
-            LogManager.Configuration!.AddSentry(Update);
+            LogManager.Configuration?.AddSentry(Update);
         }
-        Core.MainAsync(args, CoreContextBeforeServiceBuild).Wait();
+        var builder = WebApplication.CreateBuilder(args);
+        
+        builder.Logging.ClearProviders();
+        builder.Host.UseNLog();
+
+        builder.Host.UseXeniaCore(new HostExtensions.XeniaCoreOptions()
+        {
+            UseCommands = true,
+            Database = new HostExtensions.DatabaseServicesOptions()
+            {
+                DatabaseDeveloperPageExceptionFilter = false,
+                EnableSensitiveDataLogging = true
+            }
+        });
+        builder.WebHost.UseSentry(ConfigureSentry);
+        
+        builder.Services.AddSingleton(ProgramDetails);
+        builder.Services.AddSingleton(
+            new InteractionHandlerCallbacks()
+            {
+                RegisterModules = CoreContextRegisterModules,
+                RegisterDeveloperModules = CoreContextRegisterDeveloperModules
+            });
+        XeniaDiscordCommon.RegisterServices(builder.Services);
+        XeniaDiscordInteractionsDataMigration.RegisterServices(builder.Services);
+        AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", builder.Services);
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, builder.Services); // XeniaBot.Data
+        AttributeHelper.InjectControllerAttributes("XeniaBot.Core", builder.Services);
+        AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, builder.Services); // XeniaBot.Logic
+        AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, builder.Services);
+
+        builder.Services.AddHttpLogging();
+        builder.Services.AddHttpClient();
+        builder.Services.UseHttpClientMetrics();
+        builder.Services.AddHealthChecks()
+            .AddDbContextCheck<XeniaDbContext>()
+            .ForwardToPrometheus();
+
+        var app = builder.Build();
+        Application = app;
+        AppDomain.CurrentDomain.UnhandledException += (a, b) => CurrentDomain_UnhandledException(app.Services, a, b);
+
+        app.UseHttpLogging();
+        app.UseHttpMetrics();
+        
+        app.MapGet("/status", HealthServer.MapHealthGet);
+        app.MapMetrics();
+        app.MapHealthChecks("/healthz");
+        
+        try
+        {
+            app.Run();
+        }
+        finally
+        {
+            LogManager.Shutdown();
+            SentrySdk.Flush();
+        }
     }
+    private static WebApplication? Application { get; set; }
     private static void Update(SentryOptions options)
+    {
+        options.Dsn = FeatureFlags.SentryDSN;
+        options.Release = VersionRaw;
+        options.SendDefaultPii = true;
+        options.AttachStacktrace = true;
+        options.Environment = ProgramDetails.Debug ? "production" : "debug";
+        options.TracesSampleRate = 1.0;
+        options.IsGlobalModeEnabled = false;
+        options.Debug = ProgramDetails.Debug;
+    }
+
+    private static void ConfigureSentry(WebHostBuilderContext context, SentryAspNetCoreOptions options)
     {
         options.Dsn = FeatureFlags.SentryDSN;
         options.Release = VersionRaw;
@@ -144,28 +209,19 @@ public static class Program
         {
             transaction.Finish();
         }
-        return result.ToArray();
-    }
-    private static Task CoreContextBeforeServiceBuild(IServiceCollection services)
-    {
-        services.WithDatabaseServices();
-        XeniaDiscordData.RegisterServices(services, true);
-        XeniaDiscordCommon.RegisterServices(services);
-        XeniaDiscordInteractionsDataMigration.RegisterServices(services);
-        AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
-        AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, services); // XeniaBot.Data
-        AttributeHelper.InjectControllerAttributes("XeniaBot.Core", services);
-        AttributeHelper.InjectControllerAttributes(typeof(ReminderService).Assembly, services); // XeniaBot.Logic
-        AttributeHelper.InjectControllerAttributes(typeof(LevelSystemService).Assembly, services);
-        return Task.CompletedTask;
+
+        return [.. result];
     }
 
-    private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    private static void CurrentDomain_UnhandledException(
+        IServiceProvider services,
+        object sender,
+        UnhandledExceptionEventArgs e)
     {
         if (e.ExceptionObject is Exception ex)
         {
-            var cex = new XeniaFatalException(e, Core.Services.GetService<DiscordService>());
-            log.Fatal(cex);
+            var cex = new XeniaFatalException(e, services.GetService<DiscordService>());
+            Log.Fatal(cex);
             SentryId? eventId = null;
             try
             {
@@ -173,13 +229,13 @@ public static class Program
             }
             catch (Exception iex)
             {
-                log.Warn(iex, "Failed to report fatal exception");
+                Log.Warn(iex, "Failed to report fatal exception");
             }
 
             try
             {
-                var errorReportService = Core.Services.GetService<ErrorReportService>();
-                if (Core.Services.GetService<DiscordService>()?.IsReady == true &&
+                var errorReportService = services.GetService<ErrorReportService>();
+                if (services.GetService<DiscordService>()?.IsReady == true &&
                     errorReportService != null)
                 {
                     errorReportService.Submit(new ErrorReportBuilder()
@@ -189,7 +245,7 @@ public static class Program
             }
             catch (Exception iex)
             {
-                log.Fatal(iex, $"Failed to submit error for SentryId={eventId}");
+                Log.Fatal(iex, $"Failed to submit error for SentryId={eventId}");
             }
 
             try
@@ -198,12 +254,12 @@ public static class Program
             }
             catch (Exception iex)
             {
-                log.Warn(iex, "Failed to flush sentry");
+                Log.Warn(iex, "Failed to flush sentry");
             }
         }
         else
         {
-            log.Fatal("Unhandled exception!\n" + e.ExceptionObject);
+            Log.Fatal("Unhandled exception!\n" + e.ExceptionObject);
         }
         Console.Error.WriteLine("OH SHIT, UNHANDLED EXCEPTION!!!\n" + e.ExceptionObject?.ToString());
         if (Debug)
@@ -214,7 +270,9 @@ public static class Program
 
     public static void Quit(int exitCode = 0)
     {
-        Core.OnQuit(exitCode);
+        if (Application == null) Environment.Exit(exitCode);
+        Application?.StopAsync(TimeSpan.FromMinutes(5));
+        Environment.Exit(exitCode);
     }
 }
 

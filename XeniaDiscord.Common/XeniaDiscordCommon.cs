@@ -17,6 +17,7 @@ public static class XeniaDiscordCommon
     public static void RegisterServices(
         IServiceCollection services)
     {
+        services.AddHostedService<DiscordStatisticsService>();
         services.AddSingleton<ApplicationEmoteService>()
             .AddSingleton<BanSyncService>()
             .AddSingleton<DiscordAuditLogService>()
