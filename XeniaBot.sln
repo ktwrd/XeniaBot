@@ -46,6 +46,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.Resources", "X
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.UnitTest", "XeniaDiscord.UnitTest\XeniaDiscord.UnitTest.csproj", "{4D93DF5A-5F74-47E6-ACCD-0DAEECCCB439}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XeniaDiscord.Hosting", "XeniaDiscord.Hosting\XeniaDiscord.Hosting.csproj", "{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -224,6 +226,18 @@ Global
 		{4D93DF5A-5F74-47E6-ACCD-0DAEECCCB439}.Release|arm64.Build.0 = Release|Any CPU
 		{4D93DF5A-5F74-47E6-ACCD-0DAEECCCB439}.Release|x86.ActiveCfg = Release|Any CPU
 		{4D93DF5A-5F74-47E6-ACCD-0DAEECCCB439}.Release|x86.Build.0 = Release|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Debug|arm64.Build.0 = Debug|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Debug|x86.Build.0 = Debug|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Release|Any CPU.Build.0 = Release|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Release|arm64.ActiveCfg = Release|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Release|arm64.Build.0 = Release|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Release|x86.ActiveCfg = Release|Any CPU
+		{819C8A8A-DDF9-4C2F-B5AE-A8600FA18292}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
