@@ -15,6 +15,7 @@ using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Models;
 using NLog;
 using Microsoft.Extensions.DependencyInjection;
+using XeniaBot.Shared;
 using XeniaDiscord.Data.Repositories;
 using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
 using RolePreserveGuildModel = XeniaDiscord.Data.Models.RolePreserve.RolePreserveGuildModel;
@@ -37,41 +38,9 @@ public static class AspHelper
     public static bool IsCurrentUserAdmin(HttpContext context)
     {
         var userId = GetUserId(context) ?? 0;
-        return Program.Core.Config.Data.UserWhitelist.Contains(userId);
+        return context.RequestServices.GetRequiredService<ConfigData>().UserWhitelist.Contains(userId);
     }
     
-
-    public static bool CanAccessGuild(
-        ulong guildId,
-        ulong userId,
-        GuildPermission permissionRequired = GuildPermission.ManageGuild)
-    {
-        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
-        var errorReport = Program.Core.GetRequiredService<ErrorReportService>();
-        try
-        {
-            var user = ExceptionHelper.RetryOnTimedOut(() => discord.GetUser(userId));
-            if (user == null)
-                return false;
-
-            var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
-            var guildUser = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(user.Id));
-            if (guildUser == null)
-                return false;
-            if (!guildUser.GuildPermissions.Has(permissionRequired))
-                return false;
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            LogManager.GetCurrentClassLogger()
-                .Error(ex, $"Failed to run {guildId}, {userId}, {permissionRequired}");
-            errorReport.ReportException(
-                ex, $"Failed to run AspHelper.CanAccessGuild ({guildId}, {userId}, {permissionRequired})").GetAwaiter().GetResult();
-            return false;
-        }
-    }
     public static readonly HashSet<string> ValidMessageTypes
         = [
         "primary",
@@ -81,62 +50,6 @@ public static class AspHelper
         "warning",
         "info"
         ];
-
-    public static string GetUserProfilePicture(ulong userId)
-    {
-        var user = DiscordCacheHelper.TryGetUser(userId).GetAwaiter().GetResult();
-        if (user == null)
-        {
-            return "/Debugempty.png";
-        }
-        else
-        {
-            return user.GetDisplayAvatarUrl() ?? "/Debugempty.png";
-        }
-    }
-
-    public static string GetUserProfilePicture(SocketGuildUser guildUser)
-    {
-        return guildUser.GetGuildAvatarUrl()
-            ?? GetUserProfilePicture(guildUser.Id);
-    }
-
-    public static string GetGuildImage(ulong guildId)
-    {
-        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
-        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
-        if (guild == null)
-            return "/Debugempty.png";
-
-        var s = guild.IconUrl ?? "/Debugempty.png";
-        return s;
-    }
-
-    public static string GetGuildName(ulong guildId)
-    {
-        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
-        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
-        if (guild == null)
-            return guildId.ToString();
-
-        return guild.Name;
-    }
-
-    public static string GetChannelName(ulong guildId, ulong channelId)
-    {
-        var discord = Program.Core.GetRequiredService<DiscordShardedClient>();
-        var guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
-        if (guild == null)
-            return channelId.ToString();
-
-        foreach (var i in guild.Channels)
-        {
-            if (i.Id == channelId)
-                return i.Name;
-        }
-
-        return channelId.ToString();
-    }
 
     /*public static async Task FillServerModel(
         ulong serverId,
@@ -200,9 +113,10 @@ public static class AspHelper
             };
 
         var membersWhoCanAccess = new List<SocketGuildUser>();
+        var wh = services.GetRequiredService<XeniaWebHelper>();
         foreach (var item in guild.Users)
         {
-            if (CanAccessGuild(guild.Id, item.Id) && !item.IsBot)
+            if (wh.CanAccessGuild(guild.Id, item.Id) && !item.IsBot)
                 membersWhoCanAccess.Add(item);
         }
         data.UsersWhoCanAccess = membersWhoCanAccess;

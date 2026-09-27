@@ -3,15 +3,11 @@ using XeniaBot.Shared.Models;
 
 namespace XeniaBot.WebPanel.Controllers;
 
+[ApiController]
 [Controller]
-public class HealthController : BaseXeniaController
+public class HealthController : ControllerBase
 {
-    public HealthController()
-        : base()
-    {
-    }
-
-    [HttpGet("/Health")]
+    [HttpGet("~/Health")]
     [ProducesDefaultResponseType(type: typeof(XeniaHealthModel))]
     public IActionResult Health()
     {
@@ -21,6 +17,6 @@ public class HealthController : BaseXeniaController
             Version = Program.Version?.ToString() ?? "unknown (null)",
             ServiceName = "XeniaDiscordBot_Dashboard"
         };
-        return Json(data, Program.SerializerOptions);
+        return new JsonResult(data, Program.SerializerOptions);
     }
 }

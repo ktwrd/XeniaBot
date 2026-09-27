@@ -45,8 +45,7 @@ partial class AdminController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
-            var data = await controller.Get(id) ?? new LevelSystemConfigModel()
+            var data = await _levelSystemConfigRepository.Get(id) ?? new LevelSystemConfigModel()
             {
                 GuildId = id,
                 LevelUpChannel = targetChannelId,
@@ -100,14 +99,13 @@ partial class AdminController
             }
             var msgId = (ulong)channelResult.ChannelId;
             
-            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
             var data = model.ConfessionModel;
             if (data.ModalChannelId != modalId)
             {
-                await controller.InitializeModal(id, msgId, modalId);
+                await _confessionConfigRepository.InitializeModal(id, msgId, modalId);
             }
 
-            data = await controller.GetGuild(id) ??
+            data = await _confessionConfigRepository.GetGuild(id) ??
                    new ConfessionGuildModel()
                    {
                        GuildId = id
@@ -115,7 +113,7 @@ partial class AdminController
             data.ModalChannelId = modalId;
             data.ChannelId = msgId;
             model.ConfessionModel = data;
-            await controller.Set(data);
+            await _confessionConfigRepository.Set(data);
             model.MessageType = "success";
             model.Message = "Saved!";
             return PartialView("ServerInfo/ConfessionComponent", model);
@@ -141,21 +139,19 @@ partial class AdminController
         await model.PopulateModel(HttpContext, id);
         try
         {
-            var controller = Program.Core.GetRequiredService<ConfessionConfigRepository>();
-            var data = await controller.GetGuild(id)
+            var data = await _confessionConfigRepository.GetGuild(id)
                        ?? new ConfessionGuildModel()
                        {
                            GuildId = id
                        };
-            await controller.Delete(data);
+            await _confessionConfigRepository.Delete(data);
             model.MessageType = "success";
             model.Message = "Purged all confession messages";
             return PartialView("ServerInfo/ConfessionComponent", model);
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(ex, $"Failed to purge confession messages");
+            _errorReportService.ReportException(ex, $"Failed to purge confession messages");
             model.MessageType = "danger";
             model.Message = ex.Message;
             return PartialView("ServerInfo/ConfessionComponent", model);
@@ -193,14 +189,13 @@ partial class AdminController
             return PartialView("ServerInfo/CountingComponent", model);
         }
 
-        var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
-        var counterData = await controller.Get(guild) ?? new CounterGuildModel()
+        var counterData = await _counterConfigRepository.Get(guild) ?? new CounterGuildModel()
         {
             GuildId = guild.Id,
             ChannelId = (ulong)channelId
         };
         counterData.ChannelId = (ulong)channelId;
-        await controller.Set(counterData);
+        await _counterConfigRepository.Set(counterData);
 
         model.MessageType = "success";
         model.Message = "Saved";

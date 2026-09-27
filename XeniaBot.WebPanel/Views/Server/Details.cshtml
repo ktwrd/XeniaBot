@@ -1,5 +1,6 @@
 ﻿@using XeniaBot.Data.Models
 @using XeniaBot.WebPanel.Helpers
+@inject XeniaWebHelper XeniaWebHelper
 @model ServerDetailsViewModel
 
 @{
@@ -26,7 +27,7 @@ new List<BreadcrumbItem>()
                     @foreach (var user in @Model.UsersWhoCanAccess)
                     {
                         <li class="list-group-item">
-                            <img src="@AspHelper.GetUserProfilePicture(user)" height="32" width="32" class="rounded-circle mx-2"/> @user.DisplayName
+                            <img src="@XeniaWebHelper.GetUserProfilePicture(user)" height="32" width="32" class="rounded-circle mx-2"/> @user.DisplayName
                         </li>
                     }
                 </ul>

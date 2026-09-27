@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Helpers;
@@ -15,11 +16,15 @@ namespace XeniaBot.WebPanel.Controllers;
 [Controller]
 public class WarnSystemController: BaseXeniaController
 {
+    private readonly WarnService _warnService;
+    private readonly GuildWarnItemRepository _warnItemRepo;
     private readonly ILogger<WarnSystemController> _logger;
 
-    public WarnSystemController(ILogger<WarnSystemController> logger)
-        : base()
+    public WarnSystemController(IServiceProvider services, ILogger<WarnSystemController> logger)
+        : base(services)
     {
+        _warnService = services.GetRequiredService<WarnService>();
+        _warnItemRepo = services.GetRequiredService<GuildWarnItemRepository>();
         _logger = logger;
     }
 
@@ -68,17 +73,16 @@ public class WarnSystemController: BaseXeniaController
     [AuthRequired]
     public async Task<IActionResult> WarnInfo(string id, string? messageType = null, string? message = null)
     {
-        var controller = Program.Core.GetRequiredService<GuildWarnItemRepository>();
-        var warnData = await controller.GetItemsById(id);
-        if (warnData == null)
+        var warnData = await _warnItemRepo.GetItemsById(id);
+        var latestWarnData = warnData?.FirstOrDefault();
+        if (warnData == null || latestWarnData == null)
             return View("NotFound");
 
-        var latestWarnData = warnData.FirstOrDefault();
         
         var userId = AspHelper.GetUserId(HttpContext);
         if (userId == null)
             return View("NotFound", "User not found");
-        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(latestWarnData?.GuildId ?? (ulong)0));
+        var guild = ExceptionHelper.RetryOnTimedOut(() => _discord.GetGuild(latestWarnData.GuildId));
         if (guild == null)
             return View("NotFound", "Guild not found");
         
@@ -149,8 +153,7 @@ public class WarnSystemController: BaseXeniaController
 
         try
         {
-            var controller = Program.Core.GetRequiredService<WarnService>();
-            var data = await controller.CreateWarnAsync(
+            var data = await _warnService.CreateWarnAsync(
                 id, 
                 userId, 
                 AspHelper.GetUserId(HttpContext) ?? 0,

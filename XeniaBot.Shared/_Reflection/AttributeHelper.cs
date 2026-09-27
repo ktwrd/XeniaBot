@@ -21,6 +21,11 @@ public static class AttributeHelper
                        && e.ImplementationType == descriptor.ImplementationType
                        && e.Lifetime == descriptor.Lifetime)) continue;
             services.Add(descriptor);
+            services.Add(
+                new ServiceDescriptor(
+                    typeof(IBaseService),
+                    (s) => s.GetRequiredService(item),
+                    ServiceLifetime.Transient));
             Log.Trace($"Registered type: {item}");
         }
     }

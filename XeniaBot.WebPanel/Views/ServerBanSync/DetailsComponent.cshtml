@@ -1,11 +1,12 @@
 ﻿@using XeniaBot.WebPanel.Helpers
+@inject XeniaWebHelper XeniaWebHelper
 @model BanSyncRecordViewModel
 
 <div class="container">
     <h1 class="mb-0">BanSync Record Details</h1>
     <sup>@Model.Record.Id</sup>
     <p>
-        <img src="@(AspHelper.GetUserProfilePicture(Model.Record.GetUserId()))"
+        <img src="@(XeniaWebHelper.GetUserProfilePicture(Model.Record.GetUserId()))"
              class="smallUserIcon" />
         <code alt="@Model.Record.UserId">@Model.Record.UserPartialSnapshot.FormatUsername()</code>
         was banned in 

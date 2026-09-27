@@ -28,8 +28,10 @@ public class BanSyncController : BaseXeniaController
     private readonly BanSyncGuildRepository _bansyncGuildRepository;
     private readonly ErrorReportService _errorReporting;
     private readonly BanSyncService _bansyncService;
-    public BanSyncController(IServiceProvider services,
+    public BanSyncController(
+        IServiceProvider services,
          ILogger<BanSyncController> logger)
+        : base(services)
     {
         _logger = logger;
         _bansyncGuildRepository = services.GetRequiredService<BanSyncGuildRepository>();

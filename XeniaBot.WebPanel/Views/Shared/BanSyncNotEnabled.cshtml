@@ -7,5 +7,14 @@
 }
 
 <h1>BanSync Not Enabled</h1>
-<p>Unable to perform operation since BanSync is not enabled in your guild, <code>@Model.Guild.Name</code> (@Model.Guild.Id)</p>
+<p>Unable to perform operation since BanSync is not enabled in your guild,
+    @if (Model.Guild == null)
+    {
+        <code>@Model.GuildId</code>
+    }
+    else
+    {
+        <text><code>@Model.Guild.Name</code> (@Model.Guild.Id)</text>  
+    }
+</p>
 <p><a href="https://xenia.kate.pet/guide/about_bansync">More information</a></p>

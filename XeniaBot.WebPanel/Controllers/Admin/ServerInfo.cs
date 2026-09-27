@@ -45,8 +45,7 @@ partial class AdminController
         await model.PopulateModel(HttpContext, id);
         try
         {
-            var controller = Program.Core.GetRequiredService<BanSyncService>();
-            await controller.RefreshBans(id);
+            await _banSyncService.RefreshBans(id);
             model.MessageType = "success";
             model.Message = "Refreshed Ban Records";
             return PartialView("ServerInfo/BanSyncComponent", model);
@@ -54,8 +53,7 @@ partial class AdminController
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to refresh bans for Guild {GuildId}", id);
-            await Program.Core.GetRequiredService<ErrorReportService>()
-                .ReportException(ex, $"Failed to refresh bans in {id}");
+            await _errorReportService.ReportException(ex, $"Failed to refresh bans in {id}");
             model.MessageType = "danger";
             model.Message = $"Failed to refresh. {ex.Message}";
             return PartialView("ServerInfo/BanSyncComponent", model);
@@ -73,12 +71,11 @@ partial class AdminController
     [RequireSuperuser]
     public async Task<IActionResult> SaveSettings_BanSyncState(ulong id, BanSyncGuildState state, string reason, bool doRefreshBans)
     {
-        var controller = Program.Core.GetRequiredService<BanSyncService>();
         var model = new AdminBanSyncComponentViewModel();
         await model.PopulateModel(HttpContext, id);
         try
         {
-            var res = await controller.SetGuildState(id, state, reason, doRefreshBans);
+            var res = await _banSyncService.SetGuildState(id, state, reason, doRefreshBans);
             if (res == null)
                 throw new InvalidOperationException($"Server Config not found for Guild {id}");
         }

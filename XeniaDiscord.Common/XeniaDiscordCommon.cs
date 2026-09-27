@@ -15,8 +15,7 @@ namespace XeniaDiscord;
 public static class XeniaDiscordCommon
 {
     public static void RegisterServices(
-        IServiceCollection services,
-        bool includeAsSingleton)
+        IServiceCollection services)
     {
         services.AddSingleton<ApplicationEmoteService>()
             .AddSingleton<BanSyncService>()

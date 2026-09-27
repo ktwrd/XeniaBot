@@ -8,6 +8,7 @@ namespace XeniaBot.Core.Helpers;
 
 public static class DiscordHelper
 {
+    [Obsolete("References CoreContext.Instance")]
     public static EmbedBuilder BaseEmbed(EmbedBuilder? embed=null)
     {
         embed ??= new EmbedBuilder();
@@ -43,6 +44,8 @@ public static class DiscordHelper
         if (msg != null)
             await msg.DeleteAsync();
     }
+    
+    [Obsolete("References CoreContext.Instance")]
     public static string GetUptimeString()
     {
         var current = DateTimeOffset.UtcNow;

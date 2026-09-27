@@ -4,9 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
+using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
+using XeniaDiscord.Common.Services.BanSync;
 using XeniaDiscord.Data;
 
 using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
@@ -23,14 +26,28 @@ public partial class AdminController : BaseXeniaController
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
     private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
     private readonly ConfigData _config;
+
+    private readonly BanSyncService _banSyncService;
+    private readonly ErrorReportService _errorReportService;
+
+    private readonly LevelSystemConfigRepository _levelSystemConfigRepository;
+    private readonly ConfessionConfigRepository _confessionConfigRepository;
+    private readonly CounterConfigRepository _counterConfigRepository;
+    
     public AdminController(
         IServiceProvider services,
         ILogger<AdminController> logger)
-        : base()
+        : base(services)
     {
         _logger = logger;
-        _services = Program.Core.Services;
+        _services = services;
 
+        _errorReportService = services.GetRequiredService<ErrorReportService>();
+        _banSyncService = services.GetRequiredService<BanSyncService>();
+        _levelSystemConfigRepository = services.GetRequiredService<LevelSystemConfigRepository>();
+        _confessionConfigRepository = services.GetRequiredService<ConfessionConfigRepository>();
+        _counterConfigRepository = services.GetRequiredService<CounterConfigRepository>();
+        
         _client = _services.GetRequiredService<DiscordShardedClient>();
         _config = _services.GetRequiredService<ConfigData>();
         _db = services.GetRequiredService<XeniaDbContext>();

@@ -52,7 +52,7 @@ public static class Program
         get
         {
             var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
-            DateTime buildDate = ProgramDetails.VersionDateEpoch
+            var buildDate = ProgramDetails.VersionDateEpoch
                 .AddDays(v?.Build ?? 0)
                 .AddSeconds((v?.Revision ?? 0) * 2);
             return buildDate;
@@ -63,13 +63,13 @@ public static class Program
         get
         {
             var v = Assembly.GetAssembly(typeof(Program))?.GetName().Version;
-            if (v == null)
-                return null;
-
-            return new Version(v.Major, v.Minor, v.Build, (v.Revision * 2) / 60);
+            return v == null
+                ? v
+                : new Version(v.Major, v.Minor, v.Build, (v.Revision * 2) / 60);
         }
     }
-    public static ProgramDetails Details => new ProgramDetails()
+    private static readonly ProgramDetails Details
+        = new()
     {
         VersionRaw = Version,
         StartTimestamp = StartTimestamp,

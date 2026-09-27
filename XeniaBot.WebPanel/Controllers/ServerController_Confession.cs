@@ -19,8 +19,7 @@ public partial class ServerController
             User = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0))
         };
         
-        var confessionRepo = Program.Core.GetRequiredService<ConfessionConfigRepository>();
-        model.ConfessionConfig = await confessionRepo.GetGuild(model.Guild.Id) ?? new ConfessionGuildModel()
+        model.ConfessionConfig = await _confessionConfigRepository.GetGuild(model.Guild.Id) ?? new ConfessionGuildModel()
         {
             GuildId = model.Guild.Id
         };
@@ -65,20 +64,19 @@ public partial class ServerController
             return (false, null, model);
         }
         
-        var repo = Program.Core.GetRequiredService<ConfessionConfigRepository>();
         var modalId = (ulong)modalResult.ChannelId;
         var msgId = (ulong)channelResult.ChannelId;
 
         bool initialize = model.ConfessionConfig.ModalChannelId != modalId;
         if (initialize)
         {
-            await repo.InitializeModal(id, msgId, modalId);
+            await _confessionConfigRepository.InitializeModal(id, msgId, modalId);
             model = await GetConfessionDetails(id);
         }
 
         model.ConfessionConfig.ModalChannelId = modalId;
         model.ConfessionConfig.ChannelId = msgId;
-        await repo.Set(model.ConfessionConfig);
+        await _confessionConfigRepository.Set(model.ConfessionConfig);
         
         model.MessageType = "success";
         model.Message = "Saved Settings" + (initialize ? " (Created Modal)" : "");
@@ -95,8 +93,7 @@ public partial class ServerController
 
         var model = (componentResult.Item3 as ServerConfessionComponentViewModel)!;
 
-        var repo = Program.Core.GetRequiredService<ConfessionConfigRepository>();
-        await repo.Delete(model.ConfessionConfig);
+        await _confessionConfigRepository.Delete(model.ConfessionConfig);
         
         model.MessageType = "success";
         model.Message = "Purged all messages";

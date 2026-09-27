@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared.Helpers;
@@ -18,8 +19,8 @@ public class AdminLevelSystemComponentViewModel : IGuildViewModel, IAlertViewMod
     
     public async Task PopulateModel(HttpContext context, ulong guildId)
     {
-        var discord = CoreContext.Instance!.GetRequiredService<DiscordShardedClient>();
-        var xpConfig = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
+        var discord = context.RequestServices.GetRequiredService<DiscordShardedClient>();
+        var xpConfig = context.RequestServices.GetRequiredService<LevelSystemConfigRepository>();
         Guild = ExceptionHelper.RetryOnTimedOut(() => discord.GetGuild(guildId));
         XpConfig = await xpConfig.Get(Guild.Id) ?? new LevelSystemConfigModel()
         {

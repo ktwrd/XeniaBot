@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
@@ -14,7 +15,6 @@ namespace XeniaBot.WebPanel.Helpers;
 
 public static class AuthAttributeHelper
 {
-    private static CoreContext Core => CoreContext.Instance!;
     /// <summary>
     /// <para>Handle setting the View to NotAuthorized and showing the login button.</para>
     ///
@@ -63,7 +63,8 @@ public static class AuthAttributeHelper
         ulong guildId,
         GuildPermission permissionRequired = GuildPermission.ManageGuild)
     {
-        bool canAccess = AspHelper.CanAccessGuild(guildId, userId, permissionRequired);
+        var wh = context.HttpContext.RequestServices.GetRequiredService<XeniaWebHelper>();
+        bool canAccess = wh.CanAccessGuild(guildId, userId, permissionRequired);
         if (!canAccess)
         {
             context.Result = new ViewResult

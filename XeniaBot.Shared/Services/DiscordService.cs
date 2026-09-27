@@ -283,6 +283,8 @@ public class DiscordService
         await _client.StartAsync();
     }
 
+    public async Task Stop() => await _client.StopAsync();
+
     #region Event Emit
     public event DiscordControllerDelegate? Ready;
     public bool IsReady { get; private set; }

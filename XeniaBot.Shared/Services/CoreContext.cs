@@ -218,6 +218,8 @@ public class CoreContext
             .AddSingleton<IDiscordClientProxy>(static svc => svc.GetRequiredService<DiscordClientProxy>())
             .AddSingleton<HealthServer>();
 
+        // services.AddXeniaCore();
+        
         var mongoDb = GetDatabase();
         if (mongoDb == null)
         {

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using XeniaBot.WebPanel.Helpers;
 using XeniaBot.WebPanel.Models;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 
@@ -60,7 +61,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
         if (RequireWhitelist)
         {
             var userId = AspHelper.GetUserId(context.HttpContext) ?? 0;
-            if (!CoreContext.Instance?.GetRequiredService<ConfigData>().UserWhitelist.Contains((ulong)userId) ?? false)
+            if (!context.HttpContext.RequestServices?.GetRequiredService<ConfigData>().UserWhitelist.Contains((ulong)userId) ?? false)
             {
                 context.Result = new ViewResult
                 {
@@ -73,7 +74,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
         }
 
         var targetGuildId = RequireGuildId;
-        if (GuildIdRouteDataName != null)
+        if (!string.IsNullOrWhiteSpace(GuildIdRouteDataName))
         {
             if (context.RouteData.Values.TryGetValue(GuildIdRouteDataName, out var s))
             {
@@ -89,7 +90,7 @@ public class AuthRequiredAttribute : ActionFilterAttribute
                 }
             }
 
-            if (targetGuildId == null)
+            if (!targetGuildId.HasValue)
             {
                 context.Result = new ViewResult
                 {
@@ -105,10 +106,11 @@ public class AuthRequiredAttribute : ActionFilterAttribute
                 return;
             }
         }
-        if (targetGuildId != null)
+        if (targetGuildId.HasValue)
         {
             var userId = AspHelper.GetUserId(context.HttpContext) ?? 0;
-            var canAccess = AspHelper.CanAccessGuild((ulong)targetGuildId!, userId);
+            var wh = context.HttpContext.RequestServices.GetRequiredService<XeniaWebHelper>();
+            bool canAccess = wh.CanAccessGuild(targetGuildId.Value, userId);
             if (!canAccess)
             {
                 context.Result = new ViewResult

@@ -17,6 +17,7 @@ namespace XeniaBot.Shared.Helpers;
 
 public static class XeniaHelper
 {
+    [Obsolete("References CoreContext.Instance")]
     public static EmbedBuilder BaseEmbed(EmbedBuilder? builder = null)
     {
         if (CoreContext.Instance == null)
@@ -102,6 +103,7 @@ public static class XeniaHelper
             return false;
         }
     }
+    [Obsolete("References CoreContext.Instance")]
     public static EmbedBuilder BaseEmbed(DiscordSocketClient client, EmbedBuilder? embed=null)
     {
         embed ??= new EmbedBuilder();
@@ -121,6 +123,7 @@ public static class XeniaHelper
             .WithTimestamp(DateTimeOffset.UtcNow)
             .WithFooter(footer);
     }
+    [Obsolete("References CoreContext.Instance")]
     public static EmbedBuilder BaseEmbed(DiscordShardedClient client, EmbedBuilder? embed = null)
     {
         embed ??= new EmbedBuilder();

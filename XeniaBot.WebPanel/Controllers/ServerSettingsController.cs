@@ -162,8 +162,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()?
-                .ReportException(ex, $"Failed to save role preserve settings");
+            _errorReporting.ReportException(ex, $"Failed to save role preserve settings");
             _logger.LogError(ex, "Failed to save role preserve settings for Guild {GuildId}",
                 id);
             var result = await GetModerationView(id, "danger", $"Failed to save role preserve settings: {ex.Message}");
@@ -204,16 +203,13 @@ public partial class ServerController
                 };
                 return View("Details/ModerationView", result.Value);
             }
-            var warnStrikeService = CoreContext.Instance?.GetRequiredService<WarnStrikeService>()
-                ?? throw new InvalidOperationException($"Could not find service {typeof(WarnStrikeService)}");
-            var configRepo = CoreContext.Instance.GetRequiredService<GuildConfigWarnStrikeRepository>();
-            var model = await warnStrikeService.GetStrikeConfig(id);
+            var model = await _warnStrikeService.GetStrikeConfig(id);
 
             model.EnableStrikeSystem = enable;
             model.MaxStrike = maxStrike;
             model.StrikeWindow = TimeSpan.FromDays(strikeWindow).TotalSeconds;
 
-            await configRepo.InsertOrUpdate(model);
+            await _warnStrikeGuildRepository.InsertOrUpdate(model);
             result.Value.WarnStrikeConfig = model;
 
             result.Value.Alert = new AlertComponentViewModel()
@@ -226,8 +222,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()?
-                .ReportException(ex, $"Failed to save Warn Strike settings");
+            _errorReporting.ReportException(ex, $"Failed to save Warn Strike settings");
             _logger.LogError(ex, "Failed to save Warn Strike settings for Guild {GuildId}", id);
             result.Value.Alert = new AlertComponentViewModel()
             {
@@ -277,8 +272,7 @@ public partial class ServerController
         
         try
         {
-            var controller = Program.Core.GetRequiredService<GuildGreeterConfigRepository>();
-            var data = await controller.GetLatest(id)
+            var data = await _guildGreeterConfigRepository.GetLatest(id)
                 ?? new GuildGreeterConfigModel()
                 {
                     GuildId = id
@@ -297,7 +291,7 @@ public partial class ServerController
                 data.ChannelId = null;
             else
                 data.ChannelId = targetChannelId;
-            await controller.Add(data);
+            await _guildGreeterConfigRepository.Add(data);
         
             return await GreeterJoinView(id,
                 messageType: "success",
@@ -305,8 +299,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()?
-                .ReportException(ex, $"Failed to save greeter settings");
+            _errorReporting.ReportException(ex, $"Failed to save greeter settings");
             _logger.LogError(ex, "Failed to save greeter settings in Guild {GuildId}",
                 id);
             return await GreeterJoinView(id,
@@ -343,8 +336,7 @@ public partial class ServerController
             }
             catch (Exception ex)
             {
-                Program.Core.GetRequiredService<ErrorReportService>()
-                    .ReportException(ex, $"Failed to save goodbye settings");
+                _errorReporting.ReportException(ex, $"Failed to save goodbye settings");
                 return await GreeterLeaveView(id,
                     messageType: "danger",
                     message: $"Failed to parse Channel Id. {ex.Message}");
@@ -353,8 +345,7 @@ public partial class ServerController
         
         try
         {
-            var controller = Program.Core.GetRequiredService<GuildGreetByeConfigRepository>();
-            var data = await controller.GetLatest(id)
+            var data = await _guildGreetByeConfigRepository.GetLatest(id)
                 ?? new GuildByeGreeterConfigModel()
                 {
                     GuildId = id
@@ -373,7 +364,7 @@ public partial class ServerController
                 data.ChannelId = null;
             else
                 data.ChannelId = targetChannelId;
-            await controller.Add(data);
+            await _guildGreetByeConfigRepository.Add(data);
         
             return await GreeterLeaveView(id,
                 messageType: "success",
@@ -381,8 +372,7 @@ public partial class ServerController
         }
         catch (Exception ex)
         {
-            Program.Core.GetRequiredService<ErrorReportService>()?
-                .ReportException(ex, $"Failed to save goodbye settings");
+            _errorReporting.ReportException(ex, $"Failed to save goodbye settings");
             _logger.LogError(ex, "Failed to save goodbye settings for Guild {GuildId}",
                 id);
             return await GreeterLeaveView(id,

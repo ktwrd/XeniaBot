@@ -14,13 +14,18 @@ namespace XeniaBot.Shared.Services;
 public class ConfigService
 {
     private static readonly Logger Log = LogManager.GetLogger("Xenia.ConfigService");
+    
+    public static ConfigService Instance { get; private set; }
+    
     public ConfigService(IServiceProvider services)
     {
+        Instance = this;
         Data = FetchConfig(services.GetRequiredService<ProgramDetails>());
     }
 
     public ConfigService(ProgramDetails details)
     {
+        Instance = this;
         Data = FetchConfig(details);
         if (!FeatureFlags.ConfigReadOnly)
         {

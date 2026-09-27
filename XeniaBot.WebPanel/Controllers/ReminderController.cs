@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared.Services;
@@ -14,10 +15,15 @@ namespace XeniaBot.WebPanel.Controllers;
 [Controller]
 public class ReminderController : BaseXeniaController
 {
-    private readonly ILogger<HomeController> _logger;
-    public ReminderController(ILogger<ReminderController> logger)
-        : base()
-    { }
+    private readonly ILogger<ReminderController> _logger;
+    private readonly ReminderRepository _reminderRepo;
+
+    public ReminderController(IServiceProvider services, ILogger<ReminderController> logger)
+        : base(services)
+    {
+        _logger = logger;
+        _reminderRepo = services.GetRequiredService<ReminderRepository>();
+    }
 
     public async Task<ReminderViewModel> PopulateModel()
     {
@@ -26,10 +32,9 @@ public class ReminderController : BaseXeniaController
 
         var currentUserId = GetCurrentUserId();
         
-        var db = CoreContext.Instance?.GetRequiredService<ReminderRepository>();
         if (currentUserId != null)
         {
-            model.Reminders = await db.GetByUser((ulong)currentUserId);
+            model.Reminders = await _reminderRepo.GetByUser((ulong)currentUserId);
             model.Reminders = model.Reminders.Where(v => !v.HasReminded).OrderByDescending(v => v.ReminderTimestamp)
                 .ToList();
         }
@@ -51,7 +56,10 @@ public class ReminderController : BaseXeniaController
     public async Task<IActionResult> ListComponent(int cursor = 1)
     {
         var model = new ReminderListComponentViewModel();
-        await model.PopulateModel((ulong)AspHelper.GetUserId(HttpContext)!, cursor);
+        await model.PopulateModel(
+            Services.GetRequiredService<ReminderRepository>(),
+            AspHelper.GetUserId(HttpContext)!.Value,
+            cursor);
         return View("ReminderListComponent", model);
     }
 
@@ -66,8 +74,7 @@ public class ReminderController : BaseXeniaController
     [AuthRequired]
     public async Task<IActionResult> Remove(string id)
     {
-        var db = CoreContext.Instance?.GetRequiredService<ReminderRepository>();
-        var dbResult = await db.Get(id);
+        var dbResult = await _reminderRepo.Get(id);
         if (dbResult == null || dbResult.HasReminded)
         {
             return View("NotFound", "Reminder does not exist");
@@ -81,7 +88,7 @@ public class ReminderController : BaseXeniaController
         }
 
         dbResult.MarkAsComplete();
-        await db.Set(dbResult);
+        await _reminderRepo.Set(dbResult);
         _logger.LogInformation("Deleted reminder {ReminderId}", id);
         return RedirectToAction("Index", new Dictionary<string, object>()
         {

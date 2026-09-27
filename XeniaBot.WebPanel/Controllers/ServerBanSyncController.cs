@@ -18,7 +18,7 @@ public class ServerBanSyncController : BaseXeniaController
     public ServerBanSyncController(
         IServiceProvider services,
         ILogger<ServerBanSyncController> logger)
-        : base()
+        : base(services)
     {
         _bansyncRecordRepository = services.GetRequiredService<BanSyncRecordRepository>();
         _logger = logger;

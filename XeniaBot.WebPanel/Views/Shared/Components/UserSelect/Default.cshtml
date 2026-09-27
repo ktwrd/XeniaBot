@@ -1,5 +1,4 @@
 ﻿@model XeniaBot.WebPanel.Models.UserSelectModel
-@using Discord.WebSocket
 <div class="form-group mb-3">
     <label for="@Model.Id" class="form-label">@Model.DisplayName</label>
     <select class="form-select" name="@Model.Name" id="@Model.Id" form="@Model.ParentFormId" @(Model.Required ? "required" : "")> 

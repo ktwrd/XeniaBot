@@ -19,8 +19,7 @@ public partial class ServerController
             User = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0))
         };
         
-        var countingRepo = Program.Core.GetRequiredService<CounterConfigRepository>();
-        model.CounterConfig = await countingRepo.Get(model.Guild) ?? new CounterGuildModel()
+        model.CounterConfig = await _counterConfigRepository.Get(model.Guild) ?? new CounterGuildModel()
         {
             GuildId = model.Guild.Id
         };
@@ -59,9 +58,8 @@ public partial class ServerController
             return (false, null, model);
         }
 
-        var repo = Program.Core.GetRequiredService<CounterConfigRepository>();
         model.CounterConfig.ChannelId = parsedChannel.ChannelId;
-        await repo.Set(model.CounterConfig);
+        await _counterConfigRepository.Set(model.CounterConfig);
         
         model.MessageType = "success";
         model.Message = "Saved settings.";

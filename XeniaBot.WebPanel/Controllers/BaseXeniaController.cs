@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.MongoData.Models;
 using XeniaBot.Shared.Helpers;
@@ -13,14 +13,17 @@ namespace XeniaBot.WebPanel.Controllers;
 
 public class BaseXeniaController : Controller
 {
+    protected readonly IServiceProvider Services;
     protected readonly DiscordShardedClient _discord;
     protected readonly UserConfigRepository _userConfig;
+    private readonly XeniaWebHelper _wh;
     
-    public BaseXeniaController()
-        : base()
+    public BaseXeniaController(IServiceProvider services)
     {
-        _discord = Program.Core.GetRequiredService<DiscordShardedClient>();
-        _userConfig = Program.Core.GetRequiredService<UserConfigRepository>();
+        Services = services;
+        _discord = services.GetRequiredService<DiscordShardedClient>();
+        _userConfig = services.GetRequiredService<UserConfigRepository>();
+        _wh = services.GetRequiredService<XeniaWebHelper>();
     }
 
 
@@ -171,20 +174,19 @@ public class BaseXeniaController : Controller
 
     public bool CanAccessGuild(ulong guildId)
     {
-        bool isAuth = User?.Identity?.IsAuthenticated ?? false;
-        if (!isAuth)
+        if (User?.Identity?.IsAuthenticated != true)
             return false;
         var userId = AspHelper.GetUserId(HttpContext);
-        if (userId == null)
+        if (!userId.HasValue)
         {
             return false;
         }
 
-        return AspHelper.CanAccessGuild(guildId, (ulong)userId);
+        return _wh.CanAccessGuild(guildId, userId.Value);
     }
     public bool CanAccessGuild(ulong guildId, ulong userId)
     {
-        return AspHelper.CanAccessGuild(guildId, userId);
+        return _wh.CanAccessGuild(guildId, userId);
     }
 
     public class ParseChannelIdResult
@@ -201,13 +203,13 @@ public class BaseXeniaController : Controller
     
     public bool ParseChannelId(string? inputChannel, out ParseChannelIdResult result)
     {
-        ulong? channelId = null;
+        ulong? channelId;
         try
         {
             if (inputChannel == null)
                 throw new Exception("Input value not provided");
             channelId = ulong.Parse(inputChannel);
-            if (channelId == null)
+            if (!channelId.HasValue)
                 throw new Exception("Failed to cast as ulong");
         }
         catch (Exception e)
@@ -220,21 +222,21 @@ public class BaseXeniaController : Controller
         }
         result = new ParseChannelIdResult()
         {
-            ChannelId = (ulong)channelId
+            ChannelId = channelId.Value
         };
         return true;
     }
 
     public bool ParseUlong(string? inputNumber, out ParseIdResult<ulong> result)
     {
-        ulong? id = null;
+        ulong? id;
         try
         {
             if (inputNumber == null)
                 throw new Exception("Input value is null");
 
             id = ulong.Parse(inputNumber);
-            if (id == null)
+            if (!id.HasValue)
                 throw new Exception("Failed to cast as ulong");
         }
         catch (Exception ex)
@@ -248,7 +250,7 @@ public class BaseXeniaController : Controller
 
         result = new ParseIdResult<ulong>()
         {
-            Value = (ulong)id
+            Value = id.Value
         };
         return true;
     }

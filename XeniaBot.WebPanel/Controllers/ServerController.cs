@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.MongoData;
+using XeniaBot.MongoData.Repositories;
+using XeniaBot.MongoData.Services;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
 using XeniaBot.WebPanel.Helpers;
@@ -17,6 +19,8 @@ using XeniaBot.WebPanel.Models;
 using XeniaBot.WebPanel.Models.Component;
 using XeniaDiscord.Data;
 using XeniaDiscord.Data.Repositories;
+using RolePreserveGuildRepository = XeniaDiscord.Data.Repositories.RolePreserveGuildRepository;
+using ServerLogRepository = XeniaDiscord.Data.Repositories.ServerLogRepository;
 
 namespace XeniaBot.WebPanel.Controllers;
 
@@ -30,10 +34,17 @@ public partial class ServerController : BaseXeniaController
     private readonly GuildCacheRepository _guildCacheRepo;
     private readonly ServerLogRepository _serverLogRepository;
     private readonly RolePreserveGuildRepository _rolePreserveGuildRepo;
+    private readonly GuildGreeterConfigRepository _guildGreeterConfigRepository;
+    private readonly GuildGreetByeConfigRepository _guildGreetByeConfigRepository;
+    private readonly ConfessionConfigRepository _confessionConfigRepository;
+    private readonly CounterConfigRepository _counterConfigRepository;
+    private readonly LevelSystemConfigRepository _levelSystemConfigRepository;
+    private readonly GuildConfigWarnStrikeRepository _warnStrikeGuildRepository;
+    private readonly WarnStrikeService _warnStrikeService;
     public ServerController(
         IServiceProvider services,
         ILogger<ServerController> logger)
-        : base()
+        : base(services)
     {
         _db = services.GetRequiredService<XeniaDbContext>();
         _dbContextFactory = services.GetRequiredService<IDbContextFactory<XeniaDbContext>>();
@@ -41,6 +52,13 @@ public partial class ServerController : BaseXeniaController
         _guildCacheRepo = services.GetRequiredService<GuildCacheRepository>();
         _serverLogRepository = services.GetRequiredService<ServerLogRepository>();
         _rolePreserveGuildRepo = services.GetRequiredService<RolePreserveGuildRepository>();
+        _guildGreeterConfigRepository = services.GetRequiredService<GuildGreeterConfigRepository>();
+        _guildGreetByeConfigRepository = services.GetRequiredService<GuildGreetByeConfigRepository>();
+        _confessionConfigRepository = services.GetRequiredService<ConfessionConfigRepository>();
+        _counterConfigRepository = services.GetRequiredService<CounterConfigRepository>();
+        _levelSystemConfigRepository = services.GetRequiredService<LevelSystemConfigRepository>();
+        _warnStrikeGuildRepository = services.GetRequiredService<GuildConfigWarnStrikeRepository>();
+        _warnStrikeService = services.GetRequiredService<WarnStrikeService>();
         _logger = logger;
     }
 

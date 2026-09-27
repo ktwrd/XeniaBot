@@ -13,7 +13,7 @@ public class HomeController : BaseXeniaController
 {
     private readonly ILogger<HomeController> _logger;
 
-    public HomeController(ILogger<HomeController> logger) : base()
+    public HomeController(IServiceProvider services, ILogger<HomeController> logger) : base(services)
     {
         _logger = logger;
     }

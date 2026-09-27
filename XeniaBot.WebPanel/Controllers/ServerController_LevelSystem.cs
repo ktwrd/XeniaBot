@@ -20,8 +20,7 @@ public partial class ServerController
             User = ExceptionHelper.RetryOnTimedOut(() => guild.GetUser(AspHelper.GetUserId(HttpContext) ?? 0))
         };
         
-        var repo = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
-        model.LevelSystemConfig = await repo.Get(guild.Id) ?? new LevelSystemConfigModel()
+        model.LevelSystemConfig = await _levelSystemConfigRepository.Get(guild.Id) ?? new LevelSystemConfigModel()
         {
             GuildId = guild.Id
         };
@@ -70,8 +69,6 @@ public partial class ServerController
         var targetRoleId = roleIdResult.Value;
         var targetRequiredLevel = targetLevelResult.Value;
 
-        var repo = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
-        
         // only add if it doesn't exist
         var roleName = model.Guild.Roles.FirstOrDefault(v => v.Id == targetRoleId);
         var exists = model.LevelSystemConfig.RoleGrant.Any(v => v.RoleId == targetRoleId);
@@ -87,7 +84,7 @@ public partial class ServerController
             RoleId = targetRoleId,
             RequiredLevel = targetRequiredLevel
         });
-        await repo.Set(model.LevelSystemConfig);
+        await _levelSystemConfigRepository.Set(model.LevelSystemConfig);
         model.MessageType = "success";
         model.Message = $"Added role {roleName?.Name} to rewards";
         return (false, null, model);
@@ -115,11 +112,9 @@ public partial class ServerController
 
         var targetRoleId = roleIdResult.Value;
 
-        var repo = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
-        
         var roleName = model.Guild.Roles.FirstOrDefault(v => v.Id == targetRoleId);
         model.LevelSystemConfig.RoleGrant = model.LevelSystemConfig.RoleGrant.Where(v => v.RoleId != targetRoleId).ToList();
-        await repo.Set(model.LevelSystemConfig);
+        await _levelSystemConfigRepository.Set(model.LevelSystemConfig);
 
         model.MessageType = "success";
         model.Message = $"Removed role {roleName?.Name} from rewards";
@@ -149,14 +144,12 @@ public partial class ServerController
             return (false, null, model);
         }
         
-        var repo = Program.Core.GetRequiredService<LevelSystemConfigRepository>();
-
         var targetChannelId = channelIdResult.Value;
         
         model.LevelSystemConfig.LevelUpChannel = targetChannelId;
         model.LevelSystemConfig.ShowLeveUpMessage = show;
         model.LevelSystemConfig.Enable = enable;
-        await repo.Set(model.LevelSystemConfig);
+        await _levelSystemConfigRepository.Set(model.LevelSystemConfig);
 
         model.MessageType = "success";
         model.Message = $"Saved Settings";

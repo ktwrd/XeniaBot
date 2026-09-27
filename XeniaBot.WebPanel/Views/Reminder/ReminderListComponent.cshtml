@@ -1,5 +1,5 @@
 ﻿@using XeniaBot.WebPanel.Helpers
-@using Microsoft.AspNetCore.Mvc.TagHelpers
+@inject XeniaWebHelper XeniaWebHelper
 @model ReminderListComponentViewModel
 
 
@@ -16,12 +16,12 @@
                    hx-indicator=".htmx-indicator"</text>
            } }>
             <th>
-                <img src="@(AspHelper.GetGuildImage(item.GuildId))"
-                     class="card-img-top smallUserIcon" />
-                @(AspHelper.GetGuildName(item.GuildId))
+                <img src="@(XeniaWebHelper.GetGuildImage(item.GuildId))"
+                     class="card-img-top smallUserIcon" alt="" />
+                @(XeniaWebHelper.GetGuildName(item.GuildId))
             </th>
             <th>
-                @(AspHelper.GetChannelName(item.GuildId, item.ChannelId))
+                @(XeniaWebHelper.GetChannelName(item.GuildId, item.ChannelId))
             </th>
             <td>
                 @(AspHelper.DateTimeFromTimestamp(item.ReminderTimestamp * 1000).ToString("yyyy/MM/dd HH:mm:ss tt"))

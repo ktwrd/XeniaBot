@@ -7,10 +7,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.LevelSystem.Services;
 using XeniaBot.MongoData.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
+using XeniaBot.Shared;
 using XeniaBot.Shared.Services;
 
 namespace XeniaBot.Core.LevelSystem.Modules;
@@ -18,17 +20,19 @@ namespace XeniaBot.Core.LevelSystem.Modules;
 [Group("xp", "Experience")]
 public class XpModule : InteractionModuleBase
 {
+    private readonly LevelSystemService _levelService;
+    private readonly LevelMemberRepository _memberRepo;
+    private readonly LevelSystemConfigRepository _levelConfigRepo;
+    public XpModule(IServiceProvider services)
+    {
+        _levelService = services.GetRequiredService<LevelSystemService>();
+        _memberRepo = services.GetRequiredService<LevelMemberRepository>();
+        _levelConfigRepo = services.GetRequiredService<LevelSystemConfigRepository>();
+    }
     [SlashCommand("profile", "See the amount of XP you have and what level you are")]
     public async Task Profile()
     {
-        var controller = CoreContext.Instance?.GetRequiredService<LevelMemberRepository>();
-        if (controller == null)
-        {
-            await Context.Interaction.RespondAsync($"Error. Failed to get LevelMemberRepository.");
-            await DiscordHelper.ReportError(new Exception("Failed to get LevelMemberRepository"), Context);
-            return;
-        }
-        var data = await controller.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
+        var data = await _memberRepo.Get(Context.User.Id, Context.Guild.Id) ?? new LevelMemberModel();
         var metadata = LevelSystemHelper.Generate(data);
 
         var xp = (data?.Xp ?? 0).ToString("n0");
@@ -55,21 +59,13 @@ public class XpModule : InteractionModuleBase
     /// <param name="guildId">GuildId to use</param>
     /// <param name="size"></param>
     /// <returns></returns>
-    public static async Task<EmbedBuilder> GenerateServerLeaderboard(ulong guildId, int size = 5)
+    public async Task<EmbedBuilder> GenerateServerLeaderboard(ulong guildId, int size = 5)
     {
         size = Math.Min(size, 10);
         var embed = new EmbedBuilder()
             .WithTitle("Xp System - Guild Leaderboard");
-        
-        var controller = CoreContext.Instance?.GetRequiredService<LevelMemberRepository>();
-        if (controller == null)
-        {
-            embed.WithDescription($"Could not fetch LevelMemberRepository");
-            embed.WithColor(Color.Red);
-            return embed;
-        }
 
-        var data = await controller.GetGuild(guildId);
+        var data = await _memberRepo.GetGuild(guildId);
         GenerateLeaderboard(embed, data, size);
         return embed;
     }
@@ -128,11 +124,9 @@ public class XpModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemService>();
-
             try
             { 
-                await controller.ReGrantGuildMembers(Context.Guild.Id);
+                await _levelService.ReGrantGuildMembers(Context.Guild.Id);
             }
             catch (Exception ex)
             {
@@ -170,15 +164,14 @@ public class XpModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id)
+            var model = await _levelConfigRepo.Get(Context.Guild.Id)
                 ?? new LevelSystemConfigModel()
                 {
                     GuildId = Context.Guild.Id
                 };
 
             model.LevelUpChannel = logChannel.Id;
-            await controller.Set(model);
+            await _levelConfigRepo.Set(model);
             await FollowupAsync(
                 embed: new EmbedBuilder()
                     .WithTitle("Xp System - Set Log Channel")
@@ -207,15 +200,14 @@ public class XpModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id)
+            var model = await _levelConfigRepo.Get(Context.Guild.Id)
                 ?? new LevelSystemConfigModel()
                 {
                     GuildId = Context.Guild.Id
                 };
 
             model.Enable = true;
-            await controller.Set(model);
+            await _levelConfigRepo.Set(model);
             await FollowupAsync(
                 embed: new EmbedBuilder()
                     .WithTitle("Xp System - Show Level Up Message")
@@ -251,6 +243,7 @@ public class XpModule : InteractionModuleBase
     };
     
     [SlashCommand("leaderboard-global", "List the global leaderboard (top 10)")]
+    [RequireDeveloper]
     public async Task GlobalLeaderboard()
     {
         if (CoreContext.Instance?.Config.Data.UserWhitelist.Contains(Context.User.Id) != true)
@@ -266,17 +259,8 @@ public class XpModule : InteractionModuleBase
             var embed = new EmbedBuilder()
                 .WithTitle("Xp System - Global Leaderboard");
 
-            var controller = CoreContext.Instance.GetRequiredService<LevelMemberRepository>();
-            if (controller == null)
-            {
-                embed.WithDescription($"Could not fetch LevelMemberRepository");
-                embed.WithColor(Color.Red);
-                await FollowupAsync(embed: embed.Build());
-                return;
-            }
 
-
-            var data = await controller.GetAllUsersCombined();
+            var data = await _memberRepo.GetAllUsersCombined();
             GenerateLeaderboard(embed, data, 10);
             await FollowupAsync(embed: embed.Build());
         }
@@ -295,15 +279,14 @@ public class XpModule : InteractionModuleBase
         await DeferAsync();
         try
         {
-            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id)
+            var model = await _levelConfigRepo.Get(Context.Guild.Id)
                 ?? new LevelSystemConfigModel()
                 {
                     GuildId = Context.Guild.Id
                 };
 
             model.Enable = false;
-            await controller.Set(model);
+            await _levelConfigRepo.Set(model);
             await FollowupAsync(
                 embed: new EmbedBuilder()
                     .WithTitle("Xp System")
@@ -336,15 +319,14 @@ public class XpModule : InteractionModuleBase
             .WithCurrentTimestamp();
         try
         {
-            var controller = CoreContext.Instance!.GetRequiredService<LevelSystemConfigRepository>();
-            var model = await controller.Get(Context.Guild.Id)
+            var model = await _levelConfigRepo.Get(Context.Guild.Id)
                 ?? new LevelSystemConfigModel()
                 {
                     GuildId = Context.Guild.Id
                 };
 
             model.ShowLeveUpMessage = value;
-            await controller.Set(model);
+            await _levelConfigRepo.Set(model);
             await FollowupAsync(
                 embed: embed.WithDescription(value ? "Level Up notifications *will now be shown*" : "Level Up Notifications *will be hidden*").Build());
         }
