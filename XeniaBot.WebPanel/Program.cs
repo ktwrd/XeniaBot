@@ -1,6 +1,3 @@
-using CronNET;
-using Discord;
-using Discord.WebSocket;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -10,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Logging;
-using MongoDB.Driver;
 using NLog;
 using NLog.Web;
 using Sentry;
@@ -22,12 +18,14 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using XeniaBot.DiscordCache.Helpers;
 using XeniaBot.MongoData.Repositories;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
 using XeniaBot.Shared.Services;
+using XeniaBot.WebPanel.Helpers;
 using XeniaDiscord;
-using XeniaDiscord.Common;
+using XeniaDiscord.Hosting;
 
 namespace XeniaBot.WebPanel;
 
@@ -70,18 +68,17 @@ public static class Program
     }
     private static readonly ProgramDetails Details
         = new()
-    {
-        VersionRaw = Version,
-        StartTimestamp = StartTimestamp,
-        Platform = XeniaPlatform.WebPanel,
-        Debug = Debug
-    };
+        {
+            VersionRaw = Version,
+            StartTimestamp = StartTimestamp,
+            Platform = XeniaPlatform.WebPanel,
+            Debug = Debug
+        };
 #if DEBUG
     private const bool Debug = true;
 #else
     private const bool Debug = false;
 #endif
-    public static CoreContext Core { get; private set; }
     #endregion
     public static void Main(string[] args)
     {
@@ -94,14 +91,9 @@ public static class Program
         }
 
         LogManager.GetLogger("Main").Info($"Running version {Details.VersionRaw}");
-        Core = new CoreContext(Details)
-        {
-            StartTimestamp = StartTimestamp,
-            AlternativeMain = CoreContextAlternativeMain
-        };
         try
         {
-            Core.MainAsync(args, CoreContextBeforeServiceBuild).GetAwaiter().GetResult();
+            Main_AspNet(args).GetAwaiter().GetResult();
         }
         finally
         {
@@ -121,26 +113,8 @@ public static class Program
         options.IsGlobalModeEnabled = false;
         options.Debug = Details.Debug;
     }
-    private static async Task CoreContextAlternativeMain(string[] args)
-    {
-        await Main_AspNet(args);
-        await Task.Delay(-1);
-    }
-    private static Task CoreContextBeforeServiceBuild(IServiceCollection services)
-    {
-        services.WithDatabaseServices();
-        services.AddSingleton(Core);
-        services.AddSingleton(Details);
-        XeniaDiscordData.RegisterServices(services, false); // only allow scoped db stuff for web app
-        XeniaDiscordCommon.RegisterServices(services, false);
-        XeniaDiscordInteractionsDataMigration.RegisterServices(services);
-        AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, services); // XeniaBot.Shared
-        AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, services); // XeniaBot.Data
-        AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", services);
-        return Task.CompletedTask;
-    }
 
-    public static async Task Main_AspNet(string[] args)
+    private static async Task Main_AspNet(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -154,6 +128,7 @@ public static class Program
         {
             options.JsonSerializerOptions.WriteIndented = true;
         });
+        
         builder.Services
             .AddAuthentication(options =>
             {
@@ -164,10 +139,10 @@ public static class Program
                 options.LoginPath = "/signin";
                 options.LogoutPath = "/signout";
             })
-            .AddDiscord(options =>
+            .AddDiscord((options) =>
             {
-                options.ClientId = Core.Config.Data.OAuthId;
-                options.ClientSecret = Core.Config.Data.OAuthSecret;
+                options.ClientId = ConfigService.Instance.Data.OAuthId;
+                options.ClientSecret = ConfigService.Instance.Data.OAuthSecret;
 
                 options.ClaimActions.MapCustomJson("urn:discord:avatar:url", user =>
                     string.Format(
@@ -235,21 +210,24 @@ public static class Program
         });
         builder.WebHost.UseSentry(FeatureFlags.SentryDSN);
 
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<CoreContext>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<ProgramDetails>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<CronDaemon>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<ConfigService>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<ConfigData>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<DiscordShardedClient>());
-        builder.Services.AddSingleton<IDiscordClient>(Core.Services.GetRequiredService<DiscordShardedClient>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<IMongoDatabase>());
-        builder.Services.AddSingleton(Core.Services.GetRequiredService<DiscordService>());
-        await CoreContextBeforeServiceBuild(builder.Services);
-
-        if (builder.Environment.IsDevelopment())
+        builder.Services.AddSingleton(Details)
+            .AddSingleton<XeniaWebHelper>()
+            .AddSingleton<DiscordCacheHelper>();
+        builder.Services.AddXeniaCore(new HostExtensions.XeniaCoreOptions()
         {
-            builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-        }
+            UseCommands = false,
+            Database = new HostExtensions.DatabaseServicesOptions()
+            {
+                EnableSensitiveDataLogging = true,
+                DatabaseDeveloperPageExceptionFilter = builder.Environment.IsDevelopment(),
+            }
+        });
+        XeniaDiscordMongoData.RegisterServices(builder.Services);
+        XeniaMongoDiscordCache.RegisterServices(builder.Services);
+        XeniaDiscordCommon.RegisterServices(builder.Services);
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaHelper).Assembly, builder.Services); // XeniaBot.Shared
+        AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, builder.Services); // XeniaBot.Data
+        AttributeHelper.InjectControllerAttributes("XeniaBot.WebPanel", builder.Services);
 
         var app = builder.Build();
         
