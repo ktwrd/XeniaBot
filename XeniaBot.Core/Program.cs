@@ -150,7 +150,7 @@ public static class Program
     {
         services.WithDatabaseServices();
         XeniaDiscordData.RegisterServices(services, true);
-        XeniaDiscordCommon.RegisterServices(services, true);
+        XeniaDiscordCommon.RegisterServices(services);
         XeniaDiscordInteractionsDataMigration.RegisterServices(services);
         AttributeHelper.InjectControllerAttributes("XeniaBot.Shared", services);
         AttributeHelper.InjectControllerAttributes(typeof(XeniaVersionRepository).Assembly, services); // XeniaBot.Data
