@@ -28,7 +28,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.18.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.23.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="MimeTypesMap" Version="1.0.9" />
     <PackageVersion Include="MongoDB.Bson" Version="3.3.0" />
