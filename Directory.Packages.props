@@ -31,8 +31,8 @@
     <PackageVersion Include="Microsoft.IdentityModel.Logging" Version="8.23.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="MimeTypesMap" Version="1.0.9" />
-    <PackageVersion Include="MongoDB.Bson" Version="3.3.0" />
-    <PackageVersion Include="MongoDB.Driver" Version="3.3.0" />
+    <PackageVersion Include="MongoDB.Bson" Version="3.13.0" />
+    <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
     <PackageVersion Include="NeoSmart.PrettySize" Version="3.1.1" />
     <PackageVersion Include="NetVips" Version="3.2.0" />
     <PackageVersion Include="NetVips.Extensions" Version="3.2.0" />
