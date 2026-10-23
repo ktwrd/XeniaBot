@@ -5,7 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AspNet.Security.OAuth.Discord" Version="10.0.0" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
     <PackageVersion Include="CSharpFunctionalExtensions" Version="3.7.0" />
     <PackageVersion Include="DiffPlex" Version="1.9.0" />
     <PackageVersion Include="Discord.Net" Version="3.19.1" />
