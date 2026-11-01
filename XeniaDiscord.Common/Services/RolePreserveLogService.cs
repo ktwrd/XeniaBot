@@ -158,7 +158,7 @@ public class RolePreserveLogService
         }
     }
 
-    private static string FormatDescriptionText(RolePreserveAuditModel auditModel)
+    internal static string FormatDescriptionText(RolePreserveAuditModel auditModel)
     {
         const string defaultResult = "No actions applied.";
         var successCountValue = auditModel.AppliedRoles.Count(e => e.IsActionSuccess());
@@ -192,7 +192,7 @@ public class RolePreserveLogService
             default:
             {
                 var others = string.Join(", ", descriptionText.Take(count - 1));
-                return others + ", and " + descriptionText.Last() + ".";
+                return others + ", and " + descriptionText[^1] + ".";
             }
         }
     }

@@ -23,9 +23,11 @@ namespace XeniaBot.Core.Services.BotAdditions;
 public class TicketService : BaseService
 {
     private readonly DiscordShardedClient _client;
+    private readonly IMongoDatabase _db;
     public TicketService(IServiceProvider services)
         : base(services)
     {
+        _db = services.GetRequiredService<IMongoDatabase>();
         _client = services.GetRequiredService<DiscordShardedClient>();
     }
     public override Task InitializeAsync() => Task.CompletedTask;
@@ -343,11 +345,11 @@ public class TicketService : BaseService
 
     #region MongoDB TicketTranscript Boilerplate
     public const string MongoTranscriptCollectionName = "ticketTranscript";
-    protected static IMongoCollection<T>? GetTranscriptCollection<T>()
+    protected IMongoCollection<T>? GetTranscriptCollection<T>()
     {
-        return Program.Core.GetDatabase()?.GetCollection<T>(MongoTranscriptCollectionName);
+        return _db.GetCollection<T>(MongoTranscriptCollectionName);
     }
-    protected static IMongoCollection<TicketTranscriptModel>? GetTranscriptCollection()
+    protected IMongoCollection<TicketTranscriptModel>? GetTranscriptCollection()
         => GetTranscriptCollection<TicketTranscriptModel>();
     public async Task<TicketTranscriptModel?> GetTranscript(string transcriptUid)
     {
@@ -377,11 +379,11 @@ public class TicketService : BaseService
         {
             TicketUid = ticket.Uid,
         };
-        var _tk = await Get(ticket.ChannelId);
-        if (_tk != null)
+        var tk = await Get(ticket.ChannelId);
+        if (tk != null)
         {
-            _tk.TranscriptUid = model.Uid;
-            await Set(_tk);
+            tk.TranscriptUid = model.Uid;
+            await Set(tk);
         }
 
         model.Messages = [.. messages.Select(TicketTranscriptMessage.FromMessage)];
@@ -439,11 +441,11 @@ public class TicketService : BaseService
     // TODO move mongodb stuff to repository class
     #region MongoDB TicketModel Boilerplate
     public const string MongoTicketCollectionName = "ticketDetails";
-    protected static IMongoCollection<T>? GetTicketCollection<T>()
+    protected IMongoCollection<T>? GetTicketCollection<T>()
     {
-        return Program.Core.GetDatabase()?.GetCollection<T>(MongoTicketCollectionName);
+        return _db.GetCollection<T>(MongoTicketCollectionName);
     }
-    protected static IMongoCollection<TicketModel>? GetTicketCollection()
+    protected IMongoCollection<TicketModel>? GetTicketCollection()
         => GetTicketCollection<TicketModel>();
 
     public async Task<TicketModel?> Get(ulong channelId)
@@ -488,11 +490,11 @@ public class TicketService : BaseService
 
     #region MongoDB Config Boilerplate
     public const string MongoConfigCollectionName = "ticketGuildConfig";
-    protected static IMongoCollection<T>? GetConfigCollection<T>()
+    protected IMongoCollection<T>? GetConfigCollection<T>()
     {
-        return Program.Core.GetDatabase()?.GetCollection<T>(MongoConfigCollectionName);
+        return _db.GetCollection<T>(MongoConfigCollectionName);
     }
-    protected static IMongoCollection<ConfigGuildTicketModel>? GetConfigCollection()
+    protected IMongoCollection<ConfigGuildTicketModel>? GetConfigCollection()
         => GetConfigCollection<ConfigGuildTicketModel>();
     public async Task<ConfigGuildTicketModel?> GetGuildConfig(ulong guildId)
     {

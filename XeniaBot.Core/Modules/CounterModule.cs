@@ -3,6 +3,7 @@ using Discord.Interactions;
 using NLog;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
@@ -15,6 +16,12 @@ namespace XeniaBot.Core.Modules;
 [CommandContextType(InteractionContextType.Guild)]
 public class CounterModule : InteractionModuleBase
 {
+    private readonly CounterConfigRepository _configRepo;
+    public CounterModule(IServiceProvider services)
+    {
+        _configRepo = services.GetRequiredService<CounterConfigRepository>();
+    }
+    
     private static readonly Logger Log = LogManager.GetLogger("Xenia.Interaction." + nameof(CounterModule));
     
     [SlashCommand("setchannel", "Set the channel for counting")]
@@ -23,12 +30,11 @@ public class CounterModule : InteractionModuleBase
     public async Task SetChannel(
         [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
     {
-        var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
-        var data = await counterConfig.Get(Context.Guild);
+        var data = await _configRepo.Get(Context.Guild);
         if (data == null)
         {
             data = new CounterGuildModel(targetChannel, Context.Guild);
-            await counterConfig.Set(data);
+            await _configRepo.Set(data);
         }
         else if (targetChannel.Id == data.ChannelId)
         {
@@ -37,7 +43,7 @@ public class CounterModule : InteractionModuleBase
         }
 
         data.ChannelId = targetChannel.Id;
-        await counterConfig.Set(data);
+        await _configRepo.Set(data);
 
         var guild = await ExceptionHelper.RetryOnTimedOut(async () => await Context.Client.GetGuildAsync(Context.Guild.Id));
         var targetTextChannel = await ExceptionHelper.RetryOnTimedOut(async () => await guild.GetTextChannelAsync(targetChannel.Id));
@@ -52,8 +58,7 @@ public class CounterModule : InteractionModuleBase
     public async Task DeleteChannel(
         [ChannelTypes(ChannelType.Text)] IChannel targetChannel)
     {
-        var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
-        var data = await counterConfig.Get(targetChannel);
+        var data = await _configRepo.Get(targetChannel);
         if (data == null)
         {
             await Context.Interaction.RespondAsync($"Channel not found in database.");
@@ -62,7 +67,7 @@ public class CounterModule : InteractionModuleBase
 
         try
         {
-            await counterConfig.Delete(targetChannel);
+            await _configRepo.Delete(targetChannel);
         }
         catch (Exception ex)
         {
@@ -79,8 +84,7 @@ public class CounterModule : InteractionModuleBase
     [RegisterDBLCommand]
     public async Task Delete()
     {
-        var counterConfig = Program.Core.GetRequiredService<CounterConfigRepository>();
-        var data = await counterConfig.Get(Context.Guild);
+        var data = await _configRepo.Get(Context.Guild);
         if (data == null)
         {
             await Context.Interaction.RespondAsync("Server not found in database");
@@ -89,7 +93,7 @@ public class CounterModule : InteractionModuleBase
 
         try
         {
-            await counterConfig.Delete(Context.Guild);
+            await _configRepo.Delete(Context.Guild);
         }
         catch (Exception ex)
         {
@@ -106,8 +110,7 @@ public class CounterModule : InteractionModuleBase
     [RegisterDBLCommand]
     public async Task Info()
     {
-        var controller = Program.Core.GetRequiredService<CounterConfigRepository>();
-        var data = await controller.Get(Context.Guild);
+        var data = await _configRepo.Get(Context.Guild);
         if (data == null)
         {
             await Context.Interaction.RespondAsync($"The Counter Module has not been setup. Use `/counter setchannel` to do that");

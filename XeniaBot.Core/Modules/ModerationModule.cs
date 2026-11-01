@@ -102,7 +102,7 @@ public class ModerationModule : InteractionModuleBase
             if (_configData.HasDashboard)
             {
                 embed.Description +=
-                    $"\n[View on Dashboard]({Program.Core.Config.Data.DashboardUrl}/Warn/Info/{data.WarnId})";
+                    $"\n[View on Dashboard]({_configData.DashboardUrl}/Warn/Info/{data.WarnId})";
             }
 
             embed.WithColor(reachedWarnLimit ? Color.Red : Color.Blue);

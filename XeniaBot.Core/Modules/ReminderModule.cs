@@ -3,6 +3,7 @@ using Discord.Interactions;
 using JetBrains.Annotations;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Logic.Services;
 using XeniaBot.MongoData.Models;
@@ -13,6 +14,13 @@ namespace XeniaBot.Core.Modules;
 
 public class ReminderModule : InteractionModuleBase
 {
+    private readonly ReminderService _reminderService;
+
+    public ReminderModule(IServiceProvider services)
+    {
+        _reminderService = services.GetRequiredService<ReminderService>();
+    }
+    
     [SlashCommand("remind", "Create a reminder")]
     [RegisterDBLCommand]
     [UsedImplicitly]
@@ -40,7 +48,6 @@ public class ReminderModule : InteractionModuleBase
         var timestamp = DateTimeOffset.UtcNow.Add(timeSpan).ToUnixTimeSeconds();
         try
         {
-            var controller = Program.Core.GetRequiredService<ReminderService>();
             var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var diff = timestamp - currentTimestamp;
             if (diff < 1)
@@ -62,7 +69,7 @@ public class ReminderModule : InteractionModuleBase
                 return;
             }
 
-            await controller.CreateReminderTask(
+            await _reminderService.CreateReminderTask(
                 timestamp,
                 Context.User.Id,
                 Context.Channel.Id,
