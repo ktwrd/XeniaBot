@@ -192,7 +192,7 @@ public class RolePreserveLogService
             default:
             {
                 var others = string.Join(", ", descriptionText.Take(count - 1));
-                return others + ", and " + descriptionText.Last() + ".";
+                return others + ", and " + descriptionText[^1] + ".";
             }
         }
     }

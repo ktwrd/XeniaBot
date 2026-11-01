@@ -35,11 +35,12 @@ public sealed class DiscordAuditLogService : BaseService
         ulong targetUserId,
         Maybe<TimeSpan> doneWithinTheLast)
     {
-        return await GetLatest(guildId, ActionType.Ban, doneWithinTheLast, auditLogEntry =>
-        {
-            return (auditLogEntry.Data is BanAuditLogData data && data.Target.Id == targetUserId)
-                || (auditLogEntry.Data is SocketBanAuditLogData socketData && socketData.Target.Id == targetUserId);
-        });
+        return await GetLatest(
+            guildId,
+            ActionType.Ban,
+            doneWithinTheLast,
+            auditLogEntry => (auditLogEntry.Data is BanAuditLogData data && data.Target.Id == targetUserId)
+                          || (auditLogEntry.Data is SocketBanAuditLogData socketData && socketData.Target.Id == targetUserId));
     }
 
     public async Task<AuditLogEntryResult> GetLatestKickEvent(
@@ -47,11 +48,12 @@ public sealed class DiscordAuditLogService : BaseService
         ulong targetUserId,
         Maybe<TimeSpan> doneWithinTheLast)
     {
-        return await GetLatest(guildId, ActionType.Kick, doneWithinTheLast, auditLogEntry =>
-        {
-            return (auditLogEntry.Data is KickAuditLogData data && data.Target.Id == targetUserId)
-                || (auditLogEntry.Data is SocketKickAuditLogData socketData && socketData.Target.Id == targetUserId);
-        });
+        return await GetLatest(
+            guildId,
+            ActionType.Kick,
+            doneWithinTheLast,
+            auditLogEntry => (auditLogEntry.Data is KickAuditLogData data && data.Target.Id == targetUserId)
+                          || (auditLogEntry.Data is SocketKickAuditLogData socketData && socketData.Target.Id == targetUserId));
     }
 
     public enum ErrorCode
@@ -80,10 +82,8 @@ public sealed class DiscordAuditLogService : BaseService
                     foreach (var item in page)
                     {
                         if (start.HasValue && item.CreatedAt < start.Value) continue;
-                        if (predicate(item))
-                        {
-                            return item;
-                        }
+                        if (!predicate(item)) continue;
+                        return item;
                     }
                 }
                 return null;

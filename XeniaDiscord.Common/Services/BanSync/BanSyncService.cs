@@ -61,7 +61,7 @@ public class BanSyncService : BaseService
         }
         if (!_configData.RefreshBansOnStart)
         {
-            _log.Info($"Skipping ban refresh since it's disabled.");
+            _log.Info("Skipping ban refresh since it's disabled.");
             return;
         }
 
