@@ -10,10 +10,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using XeniaBot.MongoData.Models;
 using XeniaBot.MongoData.Repositories;
-using XeniaBot.MongoData.Services;
 using XeniaBot.Shared;
 using XeniaBot.Shared.Helpers;
-using XeniaBot.Shared.Services;
 using Timer = System.Timers.Timer;
 
 namespace XeniaBot.Logic.Services;
@@ -22,14 +20,12 @@ namespace XeniaBot.Logic.Services;
 public class ReminderService : BaseService
 {
     private readonly Logger _log = LogManager.GetLogger("Xenia." + nameof(ReminderService));
-    private readonly CoreContext _core;
     private readonly ConfigData _configData;
     private readonly DiscordShardedClient _discordClient;
     private readonly ReminderRepository _reminderDb;
     public ReminderService(IServiceProvider services)
         : base(services)
     {
-        _core = services.GetRequiredService<CoreContext>();
         _configData = services.GetRequiredService<ConfigData>();
         _discordClient = services.GetRequiredService<DiscordShardedClient>();
         _reminderDb = services.GetRequiredService<ReminderRepository>();

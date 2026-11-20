@@ -3,6 +3,7 @@ using Discord.Interactions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using XeniaBot.Core.Helpers;
 using XeniaBot.Core.Services.BotAdditions;
 using XeniaBot.MongoData.Models;
@@ -16,7 +17,16 @@ namespace XeniaBot.Core.Modules;
 [Group("config", "Configure Xenia")]
 public class ConfigModule : InteractionModuleBase
 {
-    private CoreContext _core => CoreContext.Instance!;
+    private readonly TicketService _ticketService;
+    private readonly WarnStrikeService _warnStrikeService;
+    private readonly GuildConfigWarnStrikeRepository _warnStrikeGuildRepository;
+    public ConfigModule(IServiceProvider services)
+    {
+        _ticketService = services.GetRequiredService<TicketService>();
+        _warnStrikeService = services.GetRequiredService<WarnStrikeService>();
+        _warnStrikeGuildRepository = services.GetRequiredService<GuildConfigWarnStrikeRepository>();
+    }
+    
     [SlashCommand("ticket", "Configure the Ticket Module. To view the current config, run with no options.")]
     [RequireUserPermission(GuildPermission.ManageGuild)]
     [CommandContextType(InteractionContextType.Guild)]
@@ -28,9 +38,7 @@ public class ConfigModule : InteractionModuleBase
         [Summary(description: "Channel where ticket states will be logged and archived.")]
         [ChannelTypes(ChannelType.Text)] ITextChannel? logChannel = null)
     {
-        TicketService service = Program.Core.GetRequiredService<TicketService>();
-
-        var model = await service.GetGuildConfig(Context.Guild.Id);
+        var model = await _ticketService.GetGuildConfig(Context.Guild.Id);
         model ??= new ConfigGuildTicketModel()
         {
             GuildId = Context.Guild.Id
@@ -65,7 +73,7 @@ public class ConfigModule : InteractionModuleBase
         }
         await Context.Interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
 
-        await service.SetGuildConfig(model);
+        await _ticketService.SetGuildConfig(model);
     }
 
     #region Warn Strike
@@ -79,11 +87,9 @@ public class ConfigModule : InteractionModuleBase
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Strikes - Config");
         try
         {
-            var strikeService = _core.GetRequiredService<WarnStrikeService>();
-            var configRepo = _core.GetRequiredService<GuildConfigWarnStrikeRepository>();
-            var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
+            var data = await _warnStrikeService.GetStrikeConfig(Context.Guild.Id);
             data.EnableStrikeSystem = true;
-            await configRepo.InsertOrUpdate(data);
+            await _warnStrikeGuildRepository.InsertOrUpdate(data);
             embed.WithDescription("Enabled Warn Strikes.").WithColor(Color.Blue);
             await FollowupAsync(embed: embed.Build());
         }
@@ -113,11 +119,9 @@ public class ConfigModule : InteractionModuleBase
         var embed = DiscordHelper.BaseEmbed().WithTitle("Warn Strikes - Config");
         try
         {
-            var strikeService = _core.GetRequiredService<WarnStrikeService>();
-            var configRepo = _core.GetRequiredService<GuildConfigWarnStrikeRepository>();
-            var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
+            var data = await _warnStrikeService.GetStrikeConfig(Context.Guild.Id);
             data.EnableStrikeSystem = false;
-            await configRepo.InsertOrUpdate(data);
+            await _warnStrikeGuildRepository.InsertOrUpdate(data);
             embed.WithDescription("Disabled Warn Strikes.").WithColor(Color.Blue);
             await FollowupAsync(embed: embed.Build());
         }
@@ -156,11 +160,9 @@ public class ConfigModule : InteractionModuleBase
                 await FollowupAsync(embed: embed.Build());
                 return;
             }
-            var strikeService = _core.GetRequiredService<WarnStrikeService>();
-            var configRepo = _core.GetRequiredService<GuildConfigWarnStrikeRepository>();
-            var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
+            var data = await _warnStrikeService.GetStrikeConfig(Context.Guild.Id);
             data.StrikeWindow = TimeSpan.FromDays(days).TotalSeconds;
-            await configRepo.InsertOrUpdate(data);
+            await _warnStrikeGuildRepository.InsertOrUpdate(data);
             var years = Math.Floor(days / 365f);
             var daysFormatted = days % 365;
             var description = "Set Strike Window to ";
@@ -216,11 +218,9 @@ public class ConfigModule : InteractionModuleBase
                 await FollowupAsync(embed: embed.Build());
                 return;
             }
-            var strikeService = _core.GetRequiredService<WarnStrikeService>();
-            var configRepo = _core.GetRequiredService<GuildConfigWarnStrikeRepository>();
-            var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
+            var data = await _warnStrikeService.GetStrikeConfig(Context.Guild.Id);
             data.MaxStrike = limit;
-            await configRepo.InsertOrUpdate(data);
+            await _warnStrikeGuildRepository.InsertOrUpdate(data);
 
             embed.WithDescription($"Set Warn Limit to {limit}");
 
@@ -262,8 +262,7 @@ public class ConfigModule : InteractionModuleBase
             {
                 return value ? "<:greencheck:1223209950617014325>" : "<:redcross:1223209928634925087>";
             }
-            var strikeService = _core.GetRequiredService<WarnStrikeService>();
-            var data = await strikeService.GetStrikeConfig(Context.Guild.Id);
+            var data = await _warnStrikeService.GetStrikeConfig(Context.Guild.Id);
             embed.WithDescription(string.Join("\n", new string[]
             {
                 $"{booleanToEmoji(data.EnableStrikeSystem)} Enabled",

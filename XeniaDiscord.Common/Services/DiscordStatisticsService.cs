@@ -1,7 +1,7 @@
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using NLog;
 using Prometheus;
 using XeniaBot.Shared;
@@ -10,8 +10,7 @@ using XeniaDiscord.Data;
 
 namespace XeniaDiscord.Common.Services;
 
-[XeniaController]
-public partial class DiscordStatisticsService : BaseService
+public partial class DiscordStatisticsService : IHostedService
 {
     private readonly Logger _log = LogManager.GetCurrentClassLogger();
     private readonly DiscordShardedClient? _client;
@@ -19,13 +18,8 @@ public partial class DiscordStatisticsService : BaseService
     private readonly PrometheusService _prom;
     private readonly ProgramDetails _details;
     private readonly IDbContextFactory<XeniaDbContext> _dbContextFactory;
-    public void Shutdown()
-    {
-        _prom.ServerStart -= InitializePrometheus;
-        _prom.ReloadMetrics -= ReloadMetrics;
-        ShutdownIncreaseEvents();
-    }
-    public DiscordStatisticsService(IServiceProvider services) : base(services)
+    
+    public DiscordStatisticsService(IServiceProvider services)
     {
         _details = services.GetRequiredService<ProgramDetails>();
 
@@ -144,9 +138,15 @@ public partial class DiscordStatisticsService : BaseService
         InitializeIncreaseEvents();
     }
 
-    public override async Task InitializeAsync()
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         await InitializePrometheus();
+    }
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _prom.ServerStart -= InitializePrometheus;
+        _prom.ReloadMetrics -= ReloadMetrics;
+        ShutdownIncreaseEvents();
     }
 
     private Task InitializePrometheus()

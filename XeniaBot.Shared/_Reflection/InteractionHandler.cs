@@ -18,23 +18,22 @@ public class InteractionHandler
     private static readonly Logger Log = LogManager.GetLogger("Xenia." + nameof(InteractionHandler));
     private readonly InteractionService _interactionService;
     private readonly DiscordShardedClient _client;
-    private readonly CoreContext _coreContext;
     private readonly IServiceProvider _services;
     public InteractionHandler(IServiceProvider services)
     {
         _interactionService = services.GetRequiredService<InteractionService>();
         _client = services.GetRequiredService<DiscordShardedClient>();
-        _coreContext = services.GetRequiredService<CoreContext>();
         _services = services;
     }
 
     public async Task InitializeAsync()
     {
-        await _coreContext.RegisterModules(_interactionService, _services);
+        var callbacks = _services.GetRequiredService<InteractionHandlerCallbacks>();
+        await callbacks.RegisterModules(_interactionService, _services);
         await _interactionService.RegisterCommandsGloballyAsync(deleteMissing: true);
-        if (_coreContext.RegisterDeveloperModules != null)
+        if (callbacks.RegisterDeveloperModules != null)
         {
-            var devModules = await _coreContext.RegisterDeveloperModules(_interactionService, _services);
+            var devModules = await callbacks.RegisterDeveloperModules(_interactionService, _services);
             await _interactionService.AddModulesToGuildAsync(SharedGlobals.InternalGuildId, true, devModules);
         }
         
@@ -141,5 +140,18 @@ public class InteractionHandler
         }
 
         return sb.ToString();
+    }
+}
+
+public class InteractionHandlerCallbacks
+{
+    public CoreContextRegisterInteractionModulesDelegate RegisterModules { get; set; } = DefaultRegisterModules;
+    public CoreContextGetDeveloperModulesDelegate? RegisterDeveloperModules { get; set; }
+    private static async Task DefaultRegisterModules(InteractionService interactions, IServiceProvider services)
+    {
+        foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            await interactions.AddModulesAsync(item, services);
+        }
     }
 }

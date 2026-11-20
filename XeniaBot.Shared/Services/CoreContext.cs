@@ -112,15 +112,6 @@ public class CoreContext
     /// When not null, it is called after <see cref="DiscordService.Run()"/> in <see cref="MainAsync"/>.
     /// </summary>
     public CoreContextAlternativeMainDelegate? AlternativeMain { get; set; }
-    public CoreContextRegisterInteractionModulesDelegate RegisterModules { get; set; } = DefaultRegisterModules;
-    public CoreContextGetDeveloperModulesDelegate? RegisterDeveloperModules { get; set; }
-    private static async Task DefaultRegisterModules(InteractionService interactions, IServiceProvider services)
-    {
-        foreach (var item in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            await interactions.AddModulesAsync(item, services);
-        }
-    }
     public ProgramDetails Details { get; private set; }
     public ConfigService Config { get; private set; }
     public DiscordShardedClient Discord { get; private set; }

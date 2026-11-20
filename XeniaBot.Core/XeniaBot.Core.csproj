@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
@@ -22,7 +22,11 @@
     <PackageReference Include="IdGen" />
     <PackageReference Include="JetBrains.Annotations" />
     <PackageReference Include="Magick.NET-Q16-HDRI-x64" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="MimeTypesMap" />
+    <PackageReference Include="NLog.Web.AspNetCore" />
+    <PackageReference Include="prometheus-net.AspNetCore" />
+    <PackageReference Include="prometheus-net.AspNetCore.HealthChecks" />
     <PackageReference Include="Sentry.AspNetCore" />
     <PackageReference Include="Snappier" />
   </ItemGroup>
@@ -44,6 +48,7 @@
     <ProjectReference Include="..\XeniaBot.Logic\XeniaBot.Logic.csproj" />
     <ProjectReference Include="..\XeniaBot.Shared\XeniaBot.Shared.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Common\XeniaDiscord.Common.csproj" />
+    <ProjectReference Include="..\XeniaDiscord.Hosting\XeniaDiscord.Hosting.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Interactions.DataMigration\XeniaDiscord.Interactions.DataMigration.csproj" />
     <ProjectReference Include="..\XeniaDiscord.Interactions\XeniaDiscord.Interactions.csproj" />
   </ItemGroup>
@@ -77,6 +82,13 @@
   <!-- T4 build support for .NET Core (Begin) -->
   <ItemGroup Condition="'$(MSBuildRuntimeType)'=='Core'">
     <TextTemplate Include="**\*.tt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="appsettings.Development.json">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
   <Target Name="TextTemplateTransform" BeforeTargets="BeforeBuild" Condition="'$(MSBuildRuntimeType)'=='Core'">

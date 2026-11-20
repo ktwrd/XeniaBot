@@ -249,7 +249,7 @@ public class RolePreserveService : BaseService
                 await EnsureRoleInCache(db, audit.RecordCreatedAt, user, roleId);
                 if (blacklist.Any(e => e.RoleId == item.ToString()))
                 {
-                    audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                    audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel
                     {
                         RolePreserveAuditId = audit.Id,
                         RoleId = item.ToString(),
@@ -265,7 +265,7 @@ public class RolePreserveService : BaseService
                     // continue, since the role doesn't exist anymore
                     if (existingRole == null)
                     {
-                        audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                        audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel
                         {
                             RolePreserveAuditId = audit.Id,
                             RoleId = item.ToString(),
@@ -275,7 +275,7 @@ public class RolePreserveService : BaseService
                     }
                     if (existingRole.Position > ourHighestRolePos)
                     {
-                        audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel()
+                        audit.AppliedRoles.Add(new RolePreserveAuditAppliedRoleModel
                         {
                             RolePreserveAuditId = audit.Id,
                             RoleId = item.ToString(),
@@ -338,9 +338,9 @@ public class RolePreserveService : BaseService
             tmpAuditModel = await db.RolePreserveAudit
                 .AsNoTracking()
                 .Include(e => e.AppliedRoles)
-                .ThenInclude(e => e.Role)
+                    .ThenInclude(e => e.Role)
                 .Include(e => e.ReferencedRoles)
-                .ThenInclude(e => e.Role)
+                    .ThenInclude(e => e.Role)
                 .FirstAsync(e => e.Id == auditId);
             await _rolePreserveLogService.SendAuditNotification(user, tmpAuditModel);
         }
@@ -380,6 +380,9 @@ public class RolePreserveService : BaseService
         catch (Exception ex)
         {
             _log.Error(ex, $"Failed to run {nameof(PreserveAll)}");
+            _err.Submit(new ErrorReportBuilder()
+                .WithException(ex)
+                .WithNotes("Failed to preserve all guilds")).GetAwaiter().GetResult();
         }
     }
 

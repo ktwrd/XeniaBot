@@ -20,10 +20,10 @@ public class PrometheusService : BaseService
     {
         _configData = services.GetRequiredService<ConfigData>();
         _details = services.GetRequiredService<ProgramDetails>();
-        Server = new KestrelMetricServer(
-        hostname: _configData.Prometheus.Hostname,
-            port: _configData.Prometheus.Port,
-             url: _configData.Prometheus.Url);
+        //Server = new KestrelMetricServer(
+        //hostname: _configData.Prometheus.Hostname,
+        //    port: _configData.Prometheus.Port,
+        //     url: _configData.Prometheus.Url);
     }
     public event TaskDelegate? ServerStart;
     public event TaskDelegate? ReloadMetrics;
@@ -68,6 +68,8 @@ public class PrometheusService : BaseService
             Log.Debug("Prometheus Metrics are disabled");
             return;
         }
+
+        return;
         Log.Debug("Starting server");
         try
         {
